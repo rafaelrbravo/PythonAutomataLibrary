@@ -32,9 +32,9 @@ The test harness is written for `pytest` and does not alter files outside `Testi
 | 02 | Typed Grid | C-order coordinate transforms; 1–3D indexing; slices; wrapping; dtype limits; safe invalid input | NumPy `ravel_multi_index` and arrays | **Authored; execution pending** |
 | 03 | IList | append, indexing, snapshots, shuffle permutation, random membership, clear/reuse, safe validation | Independent Python lists/multisets | **Authored; execution pending** |
 | 04 | Multinomial | binomial endpoints/ranges/mean; sequential sample conservation; safe invalid arguments | Mathematical invariants and six-SE mean check | **Authored; execution pending** |
-| 05 | RNG and Numba compilation | reproducibility, native vs compiled, diagnostics, compile/warm timing | Seeded independent expectations | Not started |
-| 06 | AgentGrid | movement, lifecycle, occupancy, wrapping, stacking, query iteration | Independent lattice/agent reference | Not started |
-| 07 | PopGrid | conservation, update/reset, stochastic draws, capacity | Independent integer-state reference | Not started |
+| 05 | RNG and Numba | seed replay, ranges, 32/64-bit RandInt, Python/compiled shared stream, IList stream | Deterministic replay and range invariants | **Authored; execution pending** |
+| 06 | AgentGrid core | geometry, lifecycle, occupancy, movement, properties, stacking, wrapping, safe collisions/dead agents | Independent lattice/agent invariants | **Authored; execution pending** |
+| 07 | PopGrid core | geometry, buffered adds/update, reset, occupancy list, wrapping, atomic invalid updates, capacity | Independent NumPy integer-state reference | **Authored; execution pending** |
 | 08 | PDEgrid | diffusion/advection, boundary conditions, conservation, analytic solutions, convergence | Independent finite-volume/reference solver | Not started |
 | 09 | Visualization | pixel/OpenGL API and headless smoke tests | Pixel/geometry assertions | Not started |
 | 10 | Integrated models | representative cancer research examples | Cross-component invariants and regression fixtures | Not started |
