@@ -42,10 +42,9 @@ def test_periodic_diffusion_sine_mode_converges_to_analytic_decay(api, method):
         dx = 1.0 / n
         x = np.arange(n, dtype=np.float64) * dx
         initial = np.sin(2*np.pi*x).astype(np.float32)
-        if method == "Diffusion":
-            dt_target = 0.18 * dx*dx / D
-        else:
-            dt_target = 0.002
+        # Scale dt with dx^2 for both methods so temporal error cannot mask
+        # the expected second-order spatial convergence under refinement.
+        dt_target = (0.18 if method == "Diffusion" else 0.5) * dx*dx / D
         steps = int(np.ceil(final_time / dt_target))
         dt = final_time / steps
         g = api.NewPDEgrid((-n,))
