@@ -68,8 +68,8 @@ def test_agentgrid_pickle_preserves_lifecycle_links_and_properties(api):
     g.Dispose(agents[1])
     restored = pickle.loads(pickle.dumps(g))
     assert restored.GetPop() == 2
-    assert restored[1, 2] == 1
-    assert restored[3, 1] == 1
+    assert restored.counts[1, 2] == 1
+    assert restored.counts[3, 1] == 1
     live = list(map(int, restored.All()))
     assert set(live) == {agents[0], agents[2]}
     for a in live:
