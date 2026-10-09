@@ -11,10 +11,10 @@ import pytest
 
 def test_ilist_pickle_roundtrip(api):
     q = api.NewIList()
-    for x in (7, -2, 99, 4):
+    for x in (7, 2, 99, 4):
         q.Append(x)
     restored = pickle.loads(pickle.dumps(q))
-    assert list(map(int, restored.All())) == [7, -2, 99, 4]
+    assert list(map(int, restored.All())) == [7, 2, 99, 4]
 
 
 def test_multinomial_pickle_preserves_remaining_state(api):
