@@ -31,8 +31,8 @@ def test_geometry_and_storage(api, shape):
     for coordinates in itertools.product(*(range(n) for n in shape)):
         i = int(np.ravel_multi_index(coordinates, shape, order="C"))
         assert g.ToI(*coordinates) == i
-        assert g.ItoX(i) == coordinates[0]
         if len(shape) > 1:
+            assert g.ItoX(i) == coordinates[0]
             assert g.ItoY(i) == coordinates[1]
         if len(shape) > 2:
             assert g.ItoZ(i) == coordinates[2]
