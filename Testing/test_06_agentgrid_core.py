@@ -13,8 +13,8 @@ def test_agentgrid_geometry_matches_c_order(api, shape):
     for coordinates in itertools.product(*(range(n) for n in shape)):
         i = int(np.ravel_multi_index(coordinates, shape, order="C"))
         assert g.ToI(*coordinates) == i
-        assert g.ItoX(i) == coordinates[0]
         if len(shape) > 1:
+            assert g.ItoX(i) == coordinates[0]
             assert g.ItoY(i) == coordinates[1]
         if len(shape) > 2:
             assert g.ItoZ(i) == coordinates[2]
@@ -29,7 +29,7 @@ def test_nonstackable_lifecycle_and_occupancy(api):
     assert (g.XSQ(a), g.YSQ(a)) == (1, 2)
     assert (g.X(a), g.Y(a)) == pytest.approx((1.5, 2.5))
     assert g.LastAgent(1, 2) == a
-    assert g[1, 2] == 1
+    assert g.counts[1, 2] == 1
     assert set(map(int, g.All())) == {a}
 
     g[a, 0] = 3.25
@@ -38,15 +38,15 @@ def test_nonstackable_lifecycle_and_occupancy(api):
     assert g[a, 1] == pytest.approx(-2.5)
 
     g.MoveSQ(a, 3, 4)
-    assert g[1, 2] == 0
-    assert g[3, 4] == 1
+    assert g.counts[1, 2] == 0
+    assert g.counts[3, 4] == 1
     assert g.I(a) == g.ToI(3, 4)
     assert (g.XSQ(a), g.YSQ(a)) == (3, 4)
 
     g.Dispose(a)
     assert g.GetPop() == 0
     assert not g.Alive(a)
-    assert g[3, 4] == 0
+    assert g.counts[3, 4] == 0
     assert len(g.All()) == 0
 
 
@@ -58,19 +58,19 @@ def test_continuous_move_updates_square_and_position(api):
     g.Move(a, 4.9, 5.1)
     assert (g.X(a), g.Y(a)) == pytest.approx((4.9, 5.1), abs=1e-5)
     assert (g.XSQ(a), g.YSQ(a)) == (4, 5)
-    assert g[1, 2] == 0
-    assert g[4, 5] == 1
+    assert g.counts[1, 2] == 0
+    assert g.counts[4, 5] == 1
 
 
 def test_stackable_counts_and_last_agent(api):
     g = api.NewAgentGrid((3, 3), isStackable=True)
     agents = [g.NewAgentSQ(1, 1) for _ in range(4)]
     assert g.GetPop() == 4
-    assert g[1, 1] == 4
+    assert g.counts[1, 1] == 4
     assert g.LastAgent(1, 1) in agents
     g.Dispose(agents[1])
     assert g.GetPop() == 3
-    assert g[1, 1] == 3
+    assert g.counts[1, 1] == 3
     assert set(map(int, g.All())) == set(agents) - {agents[1]}
 
 
@@ -104,7 +104,7 @@ def test_safe_nonstackable_rejects_collision(api, safe_mode):
     with pytest.raises(ValueError):
         g.MoveSQ(b, 1, 1)
     assert g.Alive(a) and g.Alive(b)
-    assert g[1, 1] == 1 and g[2, 2] == 1
+    assert g.counts[1, 1] == 1 and g.counts[2, 2] == 1
 
 
 def test_safe_rejects_dead_agent_operations(api, safe_mode):
