@@ -56,11 +56,14 @@ The benchmark records platform, Python/NumPy/Numba versions, construction time, 
 | 15 | PDE multidimensional boundaries | 2D/3D face-array orientation, anisotropic spacing, scalar/array Dirichlet BCs, invalid face size, fixed points across diffusion variants | Independent finite-volume face-flux reference | **Authored; execution pending** |
 | 16 | Long-horizon PDE | 1D–3D periodic diffusion invariants, exact discrete Fourier diffusion/advection modes, large-step ADI smoothing/conservation | Conservation, maximum principle, exact discrete eigenmodes | **Authored; execution pending** |
 | 17 | RNG statistical smoke | uniform moments/quartiles, bounded-integer buckets, >32-bit reachability, lag-1 correlation | Fixed-seed statistical invariants | **Authored; execution pending** |
+| 18 | Direct-iteration geometry | Python Box/Hood clipping+wrapping, AgentsAt mutation, minimum-image AgentsInRadius, exclude, safe generation guard | Independent modulo/minimum-image reference | **Authored; execution pending** |
+| 19 | State-machine stress | 1,500-step stackable AgentGrid lifecycle, 1,200-step nonstackable moves, 300 PopGrid buffered-update batches | Independent Python dict/NumPy state models | **Authored; execution pending** |
+| 20 | AST keyword regression | Named/mixed Grid/Pop/PDE/Agent calls, PDE transport BCs/radial rate, Hood/Box/AgentsAt/AgentsInRadius loop keywords | Python-call equivalence + known historical bug matrix | **Authored; execution pending** |
 
 ## Evidence and interpretation
 
 - **Authored ≠ passed.** The tests were inspected against the repository source but **have not been executed in this environment**. No correctness or performance claim is made from their mere presence.
-- Current systematic suite: `conftest.py` plus `test_01_hood_geometry.py` through `test_19_rng_statistics.py` (1971 source lines at the latest audit; performance benchmark counted separately). The coverage ledger was reconciled against these exact paths; a temporary apparent gap was traced to checking abbreviated filenames rather than the actual `_hood_geometry` / `_core` names.
+- Current systematic suite: `conftest.py` plus `test_01_hood_geometry.py` through `test_22_keyword_transformer_regression.py` (test source count to be refreshed at execution; performance benchmark counted separately). The coverage ledger was reconciled against these exact paths; a temporary apparent gap was traced to checking abbreviated filenames rather than the actual `_hood_geometry` / `_core` names.
 - Log actual command, platform, Python/Numba versions, source revision, mode, pass/fail/skip counts, and failures when an execution environment is available. Add a dated result file under `Testing/`.
 - Statistical smoke tests use loose, documented bounds to avoid flaky CI; they do not by themselves certify RNG quality.
 - Preserve minimal reproductions for every discovered bug. For each corrected component, record original path/blob SHA, corrected `Testing/` path, affected tests, and regression reruns.
