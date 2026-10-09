@@ -64,7 +64,7 @@ def test_boundary_face_array_orientation(api, shape, axis):
     initial = np.zeros(shape, dtype=np.float32)
     face_shape = shape[:axis] + shape[axis + 1:]
     face = (np.arange(np.prod(face_shape), dtype=np.float32).reshape(face_shape) + 1) / 10
-    kwargs = [{0: "xMinBC", 1: "yMinBC", 2: "zMinBC"}[axis]]
+    kwargs = {0: "xMinBC", 1: "yMinBC", 2: "zMinBC"}[axis]
     g = api.NewPDEgrid(shape)
     g[tuple(slice(None) for _ in shape)] = initial
     g.SetTimeSpaceStep(0.05, 1.0, 1.0, 1.0)
