@@ -133,7 +133,7 @@ def test_compiled_loop_keywords_for_hood_box_agents_and_radius(api):
         for a in grid.AgentsAt(x=0, y=0):
             at_count += 1
         radius_count = 0
-        for row in grid.AgentsInRadius(rad=1.1, x=0.5, y=0.5, exclude=center):
+        for a, dx, dy, dist_sq in grid.AgentsInRadius(rad=1.1, x=0.5, y=0.5, exclude=center):
             radius_count += 1
         return hood_count, box_count, at_count, radius_count
 
