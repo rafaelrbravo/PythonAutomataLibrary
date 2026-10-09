@@ -21,21 +21,27 @@ def test_agent_birth_death_lifecycle_over_many_steps(api):
         for a in grid.All():
             if grid.Alive(a) and (grid.XSQ(a) + tick) % 5 == 0:
                 grid.Dispose(a)
-        # Fill the first empty site found.
+        # Fill the first empty site found. AgentGrid.GetPop is global, so
+        # occupancy is tested by scanning the live-agent snapshot.
         for x in range(grid.xDim):
-            if grid.GetPop(x) == 0:
+            empty = True
+            for a in grid.All():
+                if grid.Alive(a) and grid.XSQ(a) == x:
+                    empty = False
+                    break
+            if empty:
                 a = grid.NewAgentSQ(x)
                 grid[a, 0] = tick
                 break
 
     for tick in range(30):
         turnover(g, tick)
-        occupied = [x for x in range(20) if g.GetPop(x)]
         live = list(map(int, g.All()))
+        occupied = sorted(g.XSQ(a) for a in live)
         assert len(live) == g.GetPop() == len(occupied)
         assert len(set(live)) == len(live)
+        assert len(set(occupied)) == len(occupied)
         assert all(g.Alive(a) for a in live)
-        assert sorted(g.XSQ(a) for a in live) == occupied
 
 
 def test_agent_secretion_diffusion_coupling_mass_balance(api):
