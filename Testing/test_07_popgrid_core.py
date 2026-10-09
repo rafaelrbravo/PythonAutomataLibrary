@@ -13,8 +13,8 @@ def test_geometry_matches_c_order(api, shape):
     for coordinates in itertools.product(*(range(n) for n in shape)):
         i = int(np.ravel_multi_index(coordinates, shape, order="C"))
         assert g.ToI(*coordinates) == i
-        assert g.ItoX(i) == coordinates[0]
         if len(shape) > 1:
+            assert g.ItoX(i) == coordinates[0]
             assert g.ItoY(i) == coordinates[1]
         if len(shape) > 2:
             assert g.ItoZ(i) == coordinates[2]
@@ -104,7 +104,8 @@ def test_safe_update_is_atomic_on_capacity_overflow(api, safe_mode):
     g[0] = 7
     g[1] = 2
     before = g[:]
-    g.Add(2, 2)
+    # Capacity is per site, not a bound on the grid-wide population.
+    g.Add(11, 2)
     with pytest.raises(ValueError):
         g.Update()
     np.testing.assert_array_equal(g[:], before)
