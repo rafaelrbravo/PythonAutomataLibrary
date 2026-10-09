@@ -76,12 +76,14 @@ def test_boundary_face_array_orientation(api, shape, axis):
     np.testing.assert_allclose(g[tuple(slice(None) for _ in shape)], expected, rtol=1e-6, atol=1e-7)
 
 
-def test_safe_rejects_wrong_boundary_face_shape(api, safe_mode):
+def test_safe_rejects_wrong_boundary_face_size(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode assumes valid boundary arrays")
     g = api.NewPDEgrid((3, 4, 5))
+    # x faces require 4*5 values. Shape itself is intentionally not part of
+    # PAL's contract because the native boundary interface consumes flat C order.
     with pytest.raises(ValueError):
-        g.Diffusion(0.1, xMinBC=np.zeros((3, 4), dtype=np.float32))
+        g.Diffusion(0.1, xMinBC=np.zeros(19, dtype=np.float32))
 
 
 @pytest.mark.parametrize("method", ["Diffusion", "DiffusionField", "DiffusionInterfaces"])
