@@ -9,7 +9,7 @@ import pytest
 
 
 def test_compiled_grid_toi_keywords(api):
-    g = api.NewGrid((4, 5, 6))
+    g = api.NewGrid((4, 5, 6), np.float32)
     @api.njit
     def f(grid):
         return grid.ToI(x=2, y=3, z=4)
