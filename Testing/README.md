@@ -44,7 +44,7 @@ The test harness is written for `pytest` and does not alter files outside `Testi
 
 ## Evidence and interpretation
 
-- **Authored ≠ passed.** The initial tests were inspected against the repository source but **have not been executed in this environment**. No correctness or performance claim is made from their mere presence.
+- **Authored ≠ passed.** The tests were inspected against the repository source but **have not been executed in this environment**. No correctness or performance claim is made from their mere presence.\n- Current systematic suite: `conftest.py` plus `test_01_hood_geometry.py` through `test_15_integrated_models.py` (1,624 source lines at the latest audit). The coverage ledger was reconciled against these exact paths; a temporary apparent gap was traced to checking abbreviated filenames rather than the actual `_hood_geometry` / `_core` names.
 - Log actual command, platform, Python/Numba versions, source revision, mode, pass/fail/skip counts, and failures when an execution environment is available. Add a dated result file under `Testing/`.
 - Statistical smoke tests use loose, documented bounds to avoid flaky CI; they do not by themselves certify RNG quality.
 - Preserve minimal reproductions for every discovered bug. For each corrected component, record original path/blob SHA, corrected `Testing/` path, affected tests, and regression reruns.
