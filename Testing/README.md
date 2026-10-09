@@ -39,8 +39,8 @@ The test harness is written for `pytest` and does not alter files outside `Testi
 | 09 | AgentGrid compiled iteration | All, AgentsAt, Hood, wrapped/unrolled Hood, structural mutation guard, dispose-current traversal | Independent expected site/agent sets and cross-path agreement | **Authored; execution pending** |
 | 10 | PDEgrid extended | scalar/face BCs, field/interface/mask diffusion, ADI, radial conservation, analytic convergence | Independent flux references, weighted conservation, analytic sine decay | **Authored; execution pending** |
 | 11 | Compiled PopGrid/PDEGrid | AST-lowered state updates, keywords, safe source-line diagnostics | Python-path agreement and diagnostic contract | **Authored; execution pending** |
-| 12 | Visualization | pixel/OpenGL API and headless smoke tests | Pixel/geometry assertions | Not started |
-| 13 | Integrated models | representative cancer research examples | Cross-component invariants and regression fixtures | Not started |
+| 12 | Visualization | Pix geometry/bounds, exact headless PNG orientation/RGB, async-save close flushing, OpenGL 2D/3D headless primitives | Independent image decoding and output existence; environment-aware OpenGL skips | **Authored; execution pending** |
+| 13 | Integrated models | deterministic agent turnover, agent secretion + diffusion, PopGrid-driven nutrient consumption, advection-diffusion transport | Population/occupancy invariants and independent mass balances | **Authored; execution pending** |
 
 ## Evidence and interpretation
 
