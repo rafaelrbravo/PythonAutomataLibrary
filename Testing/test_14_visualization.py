@@ -83,12 +83,12 @@ def test_opengl_headless_primitives_update_and_save(api, tmp_path, dims):
     path = tmp_path / ("gl3.png" if len(dims) == 3 else "gl2.png")
     try:
         draw.Background(0x101010)
-        draw.Borders(0.15, 0xFFFFFF)
         if len(dims) == 2:
             draw.Circle(1.0, 0xFF0000, 3.0, 4.0)
             draw.BoxSQ(0x00FF00, 5, 2)
             draw.Line(0.2, 0x0000FF, 0.5, 0.5, 8.5, 6.5)
         else:
+            draw.Borders(0.15, 0xFFFFFF)
             draw.Circle(0.8, 0xFF0000, 3.0, 4.0, 2.0)
             draw.BoxSQ(0x00FF00, 5, 2, 3)
             draw.Line(0.2, 0x0000FF, 0.5, 0.5, 8.5, 6.5, 1.0, 4.0)
