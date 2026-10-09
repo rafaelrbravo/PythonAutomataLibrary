@@ -8,9 +8,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-# Importing the source module directly keeps the immutable repository checkout
-# authoritative; a validated Testing/NativeCore.py can supersede it later.
-import NativeCore as pal  # noqa: E402
+# Import the complete PAL package, including PixWindow and OpenGLWindow APIs.
+# The repository root must be importable (e.g. PYTHONPATH=<repo parent>).
+import PythonAutomataLibrary as pal  # noqa: E402
 
 MODE = os.environ.get("PAL_TEST_MODE", "safe").lower()
 if MODE not in ("safe", "fast"):
