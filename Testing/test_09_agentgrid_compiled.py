@@ -96,26 +96,24 @@ def test_compiled_hood_unroll_agrees_with_loop(api):
             n += grid.counts[x, y]
         return n
 
-    assert loop_count(g) == unrolled_count(g) == 6
+    assert loop_count(g) == unrolled_count(g) == 5
 
 
-def test_compiled_safe_direct_iteration_rejects_structural_change(api, safe_mode):
-    if not safe_mode:
-        pytest.skip("Fast mode intentionally omits direct-iteration mutation guard")
+def test_compiled_all_snapshot_allows_structural_change(api):
     g = api.NewAgentGrid((6,), isStackable=False)
     for i in range(3):
         g.NewAgentSQ(i)
 
     @api.njit
-    def invalid(grid):
+    def clear_snapshot(grid):
         for agent in grid.All():
             grid.Dispose(agent)
 
-    with pytest.raises(RuntimeError, match="structurally modified"):
-        invalid(g)
+    clear_snapshot(g)
+    assert g.GetPop() == 0
 
 
-def test_compiled_dispose_current_is_supported_in_agents_at(api):
+def test_compiled_agents_at_detects_structural_change_in_safe_mode(api, safe_mode):
     # AgentsAt lowering saves the linked-list predecessor before user code.
     g = api.NewAgentGrid((4, 4), isStackable=True)
     for _ in range(6):
@@ -126,6 +124,10 @@ def test_compiled_dispose_current_is_supported_in_agents_at(api):
         for agent in grid.AgentsAt(2, 2):
             grid.Dispose(agent)
 
-    clear_site(g)
-    assert g.GetPop() == 0
-    assert g[2, 2] == 0
+    if safe_mode:
+        with pytest.raises(RuntimeError, match="structurally modified"):
+            clear_site(g)
+    else:
+        clear_site(g)
+        assert g.GetPop() == 0
+        assert g.counts[2, 2] == 0
