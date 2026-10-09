@@ -35,9 +35,9 @@ The test harness is written for `pytest` and does not alter files outside `Testi
 | 05 | RNG and Numba | seed replay, ranges, 32/64-bit RandInt, Python/compiled shared stream, IList stream | Deterministic replay and range invariants | **Authored; execution pending** |
 | 06 | AgentGrid core | geometry, lifecycle, occupancy, movement, properties, stacking, wrapping, safe collisions/dead agents | Independent lattice/agent invariants | **Authored; execution pending** |
 | 07 | PopGrid core | geometry, buffered adds/update, reset, occupancy list, wrapping, atomic invalid updates, capacity | Independent NumPy integer-state reference | **Authored; execution pending** |
-| 08 | PDEgrid | diffusion/advection, boundary conditions, conservation, analytic solutions, convergence | Independent finite-volume/reference solver | Not started |
-| 09 | Visualization | pixel/OpenGL API and headless smoke tests | Pixel/geometry assertions | Not started |
-| 10 | Integrated models | representative cancer research examples | Cross-component invariants and regression fixtures | Not started |
+| 08 | PDEgrid core | geometry/storage, buffered update/reset, explicit diffusion reference, zero-flux/wrapped conservation, periodic CFL=1 advection, safe transactional stability/CFL checks | Independent finite-difference reference and conservation laws | **Authored; execution pending** |
+| 09 | AgentGrid compiled iteration | All, AgentsAt, Hood, wrapped/unrolled Hood, structural mutation guard, dispose-current traversal | Independent expected site/agent sets and cross-path agreement | **Authored; execution pending** |\n| 10 | Visualization | pixel/OpenGL API and headless smoke tests | Pixel/geometry assertions | Not started |
+| 11 | Integrated models | representative cancer research examples | Cross-component invariants and regression fixtures | Not started |
 
 ## Evidence and interpretation
 
