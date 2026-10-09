@@ -12,7 +12,7 @@ import pytest
 
 @pytest.mark.parametrize("factory", ["NewGrid", "NewPopGrid", "NewPDEgrid"])
 def test_python_box_nonwrapped_clips_to_domain(api, factory):
-    g = getattr(api, factory)((4, 5))
+    g = getattr(api, factory)((4, 5), np.float32) if factory == "NewGrid" else getattr(api, factory)((4, 5))
     got = set(tuple(map(int, xy)) for xy in g.Box(-2, 3, 3, 7))
     expected = {(x, y) for x in range(0, 3) for y in range(3, 5)}
     assert got == expected
@@ -20,7 +20,7 @@ def test_python_box_nonwrapped_clips_to_domain(api, factory):
 
 @pytest.mark.parametrize("factory", ["NewGrid", "NewPopGrid", "NewPDEgrid"])
 def test_python_box_wrapped_maps_each_requested_coordinate(api, factory):
-    g = getattr(api, factory)((-4, -5))
+    g = getattr(api, factory)((-4, -5), np.float32) if factory == "NewGrid" else getattr(api, factory)((-4, -5))
     got = [tuple(map(int, xy)) for xy in g.Box(-2, 2, 4, 7)]
     expected = [(x % 4, y % 5) for x in range(-2, 2) for y in range(4, 7)]
     assert got == expected
@@ -39,8 +39,7 @@ def test_python_hood_matches_independent_modulo_reference(api, shape, center):
     offsets = list(itertools.product((-1, 0, 1), repeat=dim))
     offsets.remove((0,) * dim)
     expected = [tuple((center[d] + off[d]) % abs(shape[d]) for d in range(dim)) for off in offsets]
-    if dim == 1:
-        expected = [xy[0] for xy in expected]
+    expected = [g.ToI(*xy) for xy in expected]
     assert got == expected
 
 
@@ -49,7 +48,7 @@ def test_python_agents_at_stack_and_dispose_current(api):
     expected = {g.NewAgentSQ(2, 3) for _ in range(7)}
     g.NewAgentSQ(1, 1)
     seen = set()
-    for agent in g.AgentsAt(2, 3):
+    for agent in list(g.AgentsAt(2, 3)):
         seen.add(agent)
         g.Dispose(agent)
     assert seen == expected
