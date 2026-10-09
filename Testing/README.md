@@ -24,6 +24,17 @@ Remove-Item Env:PAL_TEST_MODE
 
 The test harness is written for `pytest` and does not alter files outside `Testing/` in Git. Python/Numba may create local runtime caches outside `Testing/` when running against source; these are generated artifacts, not committed changes. If strict filesystem immutability is required, run tests against a disposable checkout.
 
+## Performance benchmark
+
+Run compilation/startup and warm-runtime measurements separately from correctness tests:
+
+```bash
+python Testing/benchmark_core.py --mode safe --output Testing/results/perf_safe.json
+python Testing/benchmark_core.py --mode fast --output Testing/results/perf_fast.json
+```
+
+The benchmark records platform, Python/NumPy/Numba versions, construction time, first compiled-call time, and repeated warm-call distributions for AgentGrid movement, PopGrid update, and 2D PDE diffusion. Compare repeated runs rather than interpreting a single small difference. Result paths are deliberately restricted to `Testing/`.
+
 ## Coverage matrix
 
 | Order | Subsystem | Tests | Evidence | Status |
