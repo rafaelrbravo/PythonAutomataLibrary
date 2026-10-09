@@ -39,13 +39,14 @@ def test_randint_small_and_medium_bounds_are_roughly_uniform(api, bound):
     assert np.all(np.abs(counts - expected) <= 6.0 * sigma + 3.0)
 
 
-@pytest.mark.parametrize("bound", [2**32, 2**32 + 1, 2**40 + 123])
+@pytest.mark.parametrize("bound", [2**32, 2**33, 2**40 + 123])
 def test_randint_large_bound_exercises_upper_32_bits(api, bound):
     api.Seed(20261009)
     draws = np.asarray([api.RandInt(bound) for _ in range(5000)], dtype=np.int64)
     assert np.all((0 <= draws) & (draws < bound))
-    if bound > 2**32:
-        # A broken 32-bit-only implementation can never reach this region.
+    if bound >= 2**33:
+        # At least half (or nearly all) of the legal range lies above 2**32,
+        # so failure to reach it in 5000 draws is decisive rather than rare.
         assert np.any(draws >= 2**32)
 
 
