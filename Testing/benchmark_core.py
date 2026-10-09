@@ -68,8 +68,7 @@ def main():
     def agent_step(g):
         for a in g.All():
             x = g.XSQ(a)
-            if x + 1 < g.xDim and g.counts[x + 1] == 0:
-                g.MoveSQ(a, x + 1)
+            g.MoveSQ(a, x + 1 if x % 2 == 0 else x - 1)
 
     @pal.njit
     def pop_step(g):
@@ -109,7 +108,7 @@ def main():
         "pal_source": str(ROOT / "NativeCore.py"),
         "warm_repeats": args.warm_repeats,
         "benchmarks": [
-            bench("agent_move_1d", agent_factory, agent_step, args.warm_repeats),
+            bench("agent_oscillating_move_1d", agent_factory, agent_step, args.warm_repeats),
             bench("pop_add_update_1d", pop_factory, pop_step, args.warm_repeats),
             bench("pde_diffusion_2d", pde_factory, pde_step, args.warm_repeats),
         ],
