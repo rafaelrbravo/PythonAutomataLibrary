@@ -68,7 +68,7 @@ def main():
     def agent_step(g):
         for a in g.All():
             x = g.XSQ(a)
-            if x + 1 < g.xDim:
+            if x + 1 < g.xDim and g.counts[x + 1] == 0:
                 g.MoveSQ(a, x + 1)
 
     @pal.njit
@@ -90,7 +90,7 @@ def main():
 
     def pop_factory():
         g = pal.NewPopGrid((10000,), capacity=10**9)
-        g[::2] = 1
+        g[:] = np.arange(10000, dtype=np.int64) % 2
         return (g,)
 
     def pde_factory():
