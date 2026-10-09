@@ -23,9 +23,10 @@ def test_multinomial_pickle_preserves_remaining_state(api):
     m.Setup(100)
     m.Sample(0.2)
     restored = pickle.loads(pickle.dumps(m))
-    # Endpoint p=1 consumes exactly all remaining trials, exposing whether the
-    # hidden nRemaining state survived the snapshot without relying on RNG.
-    assert restored.Sample(1.0) == 80
+    # The remaining category probability is exactly 0.8. Sampling all of it is
+    # deterministic conditional on hidden nRemaining, so compare the restored
+    # object to its source without assuming the first random draw equaled 20.
+    assert restored.Sample(0.8) == m.Sample(0.8)
 
 
 def test_popgrid_pickle_preserves_field_and_pending_deltas(api):
