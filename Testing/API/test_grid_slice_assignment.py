@@ -32,7 +32,7 @@ def test_compiled_whole_grid_slice_scalar_assignment_unannotated(api):
     grid = api.NewGrid((3, 5), np.int8)
 
     @api.njit
-    def fill(g: api.Grid):
+    def fill(g):
         g[:] = 2
 
     fill(grid)
@@ -44,7 +44,7 @@ def test_compiled_whole_grid_slice_scalar_assignment_persian_regression(api):
     grid = api.NewGrid((3, 5), np.int8)
 
     @api.njit
-    def fill(g):
+    def fill(g: api.Grid):
         g[:] = 2
 
     fill(grid)
