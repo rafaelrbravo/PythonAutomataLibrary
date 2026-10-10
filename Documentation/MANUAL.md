@@ -99,6 +99,12 @@ Decorate computational functions with `@pal.njit`. PAL expands some model constr
 
 Keep model state in PAL objects and use `pal.Seed`, `pal.Random`, `pal.RandInt`, and `NewMultinomial` for reproducible PAL random sampling. Run a model in safe mode first. Fast mode removes selected checks; it does not make invalid indices, dead handles, or unstable numerical steps valid.
 
+### Testing a timestep
+
+Test a model's update function on a grid small enough to inspect by hand before running a large simulation. For population transport, check that an internal move subtracts and adds the same integer count, that all counts remain nonnegative, and that total population changes only through explicit birth/death terms. For a diffusion-only field with closed boundaries, compare total mass before and after an update within floating-point tolerance. For agents, check that every live handle remains valid and that moves respect occupancy and wrapping rules. Repeat the same test near an edge, not just in the interior.
+
+Keep tests for both the Python orchestration path and compiled `@pal.njit` updates when both are used. The latter exercises PAL's loop transformation and native calls; a Python-only test cannot establish compiled behavior. Include safe and fast runs in regression testing, but use safe-mode exceptions to diagnose invalid operations rather than expecting fast mode to detect them.
+
 ## 7. Drawing and output
 
 `StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False)` returns `(pix, window)`. Write packed RGB colors such as `0xFF0000` to `pix[x, y]`, then call `window.Update()` to publish the frame. `window.Save(path, block=True)` waits for the image to be written; use `window.Close()` to release resources. The pixel buffer also supports linear indices, slices, and writes from compiled code. For off-screen images, use `headless=True` (requires the relevant output dependencies). GIF recording uses `window.StartGif(path, delay=100)`, `window.AddGifFrame(block=False)`, and `window.StopGif()`; update the window before capturing each frame.
