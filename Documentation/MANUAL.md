@@ -202,4 +202,4 @@ assert restored["pop"][1] == 17
 
 ## 11. Where to go next
 
-Use the [Cheatsheet](CHEATSHEET.md) for short code patterns, the [API Guide](API_GUIDE.md) for behavioral contracts, and the generated [API Reference](API_REFERENCE.md) for current signatures. `Examples/` contains complete models; `Testing/` contains executable contract checks for boundaries, wrapping, pending updates, and invalid operations.
+Use the [Cheatsheet](CHEATSHEET.md) for short code patterns, the [API Guide](API_GUIDE.md) for behavioral contracts, and the generated [API Reference](API_REFERENCE.md) for current signatures. `Examples/` contains complete models; the [Testing guide](../Testing/README.md) describes regression coverage and how to run the suite.
