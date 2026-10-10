@@ -71,7 +71,7 @@ def _md():
 
 def _markup(s):
     s=html.escape(s, quote=False).replace("-&gt;", "→")
-    s=re.sub(r"`([^`]+)`", r"<b>\\1</b>", s)
+    s=re.sub(r"`([^`]+)`", r"<b>\1</b>", s)
     return s
 
 
