@@ -139,7 +139,7 @@ Keep model state in PAL objects and use `pal.Seed`, `pal.Random`, `pal.RandInt`,
 
 Test a model's update function on a grid small enough to inspect by hand before running a large simulation. For population transport, check that an internal move subtracts and adds the same integer count, that all counts remain nonnegative, and that total population changes only through explicit birth/death terms. For a diffusion-only field with closed boundaries, compare total mass before and after an update within floating-point tolerance. For agents, check that every live handle remains valid and that moves respect occupancy and wrapping rules. Repeat the same test near an edge, not just in the interior.
 
-Keep tests for both the Python orchestration path and compiled `@pal.njit` updates when both are used. The latter exercises PAL's loop transformation and native calls; a Python-only test cannot establish compiled behavior. Include safe and fast runs in regression testing, but use safe-mode exceptions to diagnose invalid operations rather than expecting fast mode to detect them.
+Test both the Python orchestration path and compiled `@pal.njit` updates when a model uses both; passing in Python does not establish compiled behavior. Include safe and fast runs in regression testing, but use safe-mode exceptions to diagnose invalid operations rather than expecting fast mode to detect them.
 
 ### Random streams and repeatability
 
