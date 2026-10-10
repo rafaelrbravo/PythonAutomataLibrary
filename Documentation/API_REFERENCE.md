@@ -84,6 +84,7 @@ NewPDEgrid(dimensions)
 | method | `MoveSQ(self, agent: int, x: int, y: int=-1, z: int=-1)` |
 | method | `Move(self, agent: int, x: float, y: float=-1.0, z: float=-1.0)` |
 | method | `AgentsAt(self, x: int, y: int=-1, z: int=-1)` |
+| method | `AgentsInRadius(self, rad: float, x: float, y: float=-1.0, z: float=-1.0, *, exclude: int=None)` |
 | method | `All(self, shuffle: bool=False) -> np.ndarray` |
 
 ## Grid
