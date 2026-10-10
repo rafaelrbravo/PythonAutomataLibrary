@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 
-def test_pix_compiled_write_geometry_and_slices(api):
+def test_pix_compiled_write_geometry_and_slices(api, tmp_path):
     pix, win = api.StartPixWindow(5, 4, headless=True)
     try:
         @api.njit
@@ -14,8 +14,12 @@ def test_pix_compiled_write_geometry_and_slices(api):
             return len(p), p.Xdim(), p.Ydim(), p.ToI(2, 3), p.ItoX(11), p.ItoY(11)
 
         assert draw(pix) == (20, 5, 4, 11, 2, 3)
-        assert int(pix._flat[1]) == 0x010203
-        assert int(pix._array[2, 3]) == 0xA0B0C0
+        win.Update()
+        out = tmp_path / "compiled.png"
+        win.Save(str(out), block=True)
+        image = pytest.importorskip("PIL.Image").open(out).convert("RGB")
+        arr = np.asarray(image)
+        np.testing.assert_array_equal(arr[0, 2], [0xA0, 0xB0, 0xC0])
     finally:
         win.Close()
 
