@@ -68,8 +68,8 @@ def render(source):
     pix_class = next(n for n in pix_tree.body if isinstance(n, ast.ClassDef) and n.name == "Pix")
     lines.extend(["## Pix drawing buffer", "", "| Kind | Declaration |", "| --- | --- |"])
     for member in pix_class.body:
-        if isinstance(member, ast.FunctionDef) and not member.name.startswith("_") or (
-                isinstance(member, ast.FunctionDef) and member.name in ("__setitem__", "__len__")):
+        if isinstance(member, ast.FunctionDef) and (not member.name.startswith("_") or
+                member.name in ("__setitem__", "__len__")):
             lines.append(f"| method | `{signature(member)}` |")
     lines.append("")
     gl_tree = ast.parse((ROOT / "OpenGLWindow.py").read_text(encoding="utf-8"))
