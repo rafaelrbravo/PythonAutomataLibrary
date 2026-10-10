@@ -198,3 +198,24 @@ def test_compiled_box_named_bounds_match_positional(api, kind):
     positional, named = collect(g)
     assert list(named) == list(positional)
     assert list(named) == [g.ToI(*xy) for xy in g.Box(1, 3, 1, 3)]
+
+
+@pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
+def test_compiled_hood_unroll_matches_default_sites(api, kind):
+    """Compare ordered Hood results with and without compiled unroll."""
+    g = _new(api, kind, (4, 5))
+    hood = api.VonNeumannHood(2, True)
+
+    @api.njit
+    def collect(grid):
+        ordinary = []
+        unrolled = []
+        for x, y in grid.Hood(hood, 1, 2):
+            ordinary.append(grid.ToI(x, y))
+        for x, y in grid.Hood(hood, 1, 2, unroll=True):
+            unrolled.append(grid.ToI(x, y))
+        return ordinary, unrolled
+
+    ordinary, unrolled = collect(g)
+    assert list(unrolled) == list(ordinary)
+    assert list(unrolled) == [g.ToI(*xy) for xy in g.Hood(hood, 1, 2)]
