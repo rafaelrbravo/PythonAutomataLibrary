@@ -64,12 +64,30 @@ def render(source):
             seen.add(member.name)
             lines.append(f"| method | `{signature(member).replace('|', chr(92) + '|')}` |")
         lines.append("")
+    pix_tree = ast.parse((ROOT / "PixWindow.py").read_text(encoding="utf-8"))
+    pix_class = next(n for n in pix_tree.body if isinstance(n, ast.ClassDef) and n.name == "Pix")
+    lines.extend(["## Pix drawing buffer", "", "| Kind | Declaration |", "| --- | --- |"])
+    for member in pix_class.body:
+        if isinstance(member, ast.FunctionDef) and not member.name.startswith("_") or (
+                isinstance(member, ast.FunctionDef) and member.name in ("__setitem__", "__len__")):
+            lines.append(f"| method | `{signature(member)}` |")
+    lines.append("")
+    gl_tree = ast.parse((ROOT / "OpenGLWindow.py").read_text(encoding="utf-8"))
+    draw_classes = [n for n in ast.walk(gl_tree) if isinstance(n, ast.ClassDef) and n.name == "OpenGLDraw"]
+    if len(draw_classes) != 1:
+        raise ValueError("Expected exactly one OpenGLDraw declaration")
+    lines.extend(["## OpenGLDraw primitive collector", "", "| Kind | Declaration |", "| --- | --- |"])
+    for member in draw_classes[0].body:
+        if isinstance(member, ast.FunctionDef) and (
+                member.name in ("Clear", "Circle", "Box", "BoxSQ", "Line")):
+            lines.append(f"| method | `{signature(member)}` |")
+    lines.append("")
     lines.extend([
         "## Scope and validation", "",
         "This reference lists public Protocol signatures, not internal safe/fast jitclass methods. "
         "A signature does not capture every runtime overload, indexing form, or validation rule. "
         "See the API Guide and executable tests. Visualization constructors and window Protocol methods are included; "
-        "pixel buffer and OpenGL draw-object internals are documented in the API Guide.", "",
+        "Pix buffer and OpenGLDraw method signatures are also included; consult the API Guide for behavior.", "",
     ])
     return "\n".join(lines)
 
