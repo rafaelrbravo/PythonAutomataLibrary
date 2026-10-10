@@ -61,6 +61,16 @@ Three fresh processes per mode, 30 warm iterations per workload; median of proce
 
 These are local workload measurements, not comprehensive benchmarks or evidence that a particular optimization improved performance. No robust new optimization was established in this audit.
 
+## Diagnostic failure mechanism (source inspection)
+
+Inspection of the staged `NativeCore.py` AST transformer identifies a concrete explanation for the unannotated-argument failures:
+
+- `_HoodExpander.visit_FunctionDef` initializes `self.palVars = {}` and registers parameter names only when their annotations resolve to `Grid`, `AgentGrid`, `PopGrid`, `PDEgrid`, `IList`, or `Multinomial`. An unannotated `grid` parameter is not registered.
+- In `_HoodExpander.visit_Call`, the generic method instrumentation appends `_palLine=node.lineno` only if `self.palVars.get(node.func.value.id) not in (None, 'Grid')`. For unannotated parameters, this condition is false, so the call receives no source-line argument.
+- The annotated tests in module 23 pass while their unannotated counterparts xfail, independently corroborating this mechanism. The original module 12 tests use unannotated `grid` parameters and reproduce the missing line number.
+
+This explains the observed instrumentation gap; it does **not** establish the safest implementation fix. Possible remedies should be evaluated for their effect on ordinary objects with methods sharing PAL names, Numba typing, nested functions, and diagnostics. No library implementation change was made.
+
 ## Reproduction and next decisions
 
 For independent reproduction, clone the GitHub PAL repository, build the native C library using the project's supported instructions, install its dependencies, and run `Testing/` in fresh safe/fast processes. The paths above refer to this audit's staging directory, not a portable checkout. Compare the new results with the counts above. Investigate the source-line diagnostic issue with both annotated and unannotated `@njit` grid arguments; preserve exception safety and existing validation semantics. Fixing PAL implementation code requires separate authorization. An OpenGL-capable runner is needed to exercise the skipped graphical backend tests.
