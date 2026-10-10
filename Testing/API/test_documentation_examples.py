@@ -62,4 +62,6 @@ def test_cheatsheet_draw_headless(tmp_path):
     exec("import PythonAutomataLibrary as pal\n" + snippet, namespace)
     assert output.exists()
     image = np.asarray(Image.open(output).convert("RGB"))
-    np.testing.assert_array_equal(image[12 * 4, 10 * 4], [255, 0, 0])
+    red = np.all(image == [255, 0, 0], axis=2)
+    assert red.sum() == 16, "Expected one 4x4 scaled red pixel"
+    assert np.all(image[~red] == 0), "Expected all other pixels to remain black"
