@@ -179,6 +179,46 @@ NewPDEgrid(dimensions)
 | method | `AdvectionField(self, xVels, yVels=None, zVels=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` |
 | method | `AdvectionInterfaces(self, xVels, yVels=None, zVels=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` |
 
+## PixWindow visualization
+
+```python
+StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False) -> tuple[Pix, PixWindow]
+```
+
+| Kind | Declaration |
+| --- | --- |
+| method | `IsOpen(self) -> bool` |
+| method | `Update(self)` |
+| method | `Save(self, path:str, block=False)` |
+| method | `StartGif(self, path:str, delay=100)` |
+| method | `AddGifFrame(self, block=False)` |
+| method | `StopGif(self)` |
+| method | `Close(self)` |
+
+## OpenGLWindow visualization
+
+```python
+StartOpenGLWindow(xDim, yDim, zDim=None, width=800, height=800, title='PAL', headless=False) -> tuple[OpenGLDraw, OpenGLWindow]
+```
+
+| Kind | Declaration |
+| --- | --- |
+| method | `Update(self)` |
+| method | `IsOpen(self) -> bool` |
+| method | `StartGif(self, path, delay=100)` |
+| method | `AddGifFrame(self, block=False, timeout=30)` |
+| method | `StopGif(self, timeout=30)` |
+| method | `Circle(self, rad, color, x, y, z=None)` |
+| method | `Box(self, xLen, color, x, y, z=None, yLen=None, zLen=None)` |
+| method | `BoxSQ(self, color, x, y, z=None)` |
+| method | `Line(self, width, color, x1, y1, x2, y2, z1=None, z2=None)` |
+| method | `Borders(self, width, color)` |
+| method | `Camera(self, x, y, z, yaw=None, pitch=None)` |
+| method | `Clear(self)` |
+| method | `Background(self, color)` |
+| method | `Save(self, path:str, block=False)` |
+| method | `Close(self)` |
+
 ## Scope and validation
 
-This reference lists public Protocol signatures, not internal safe/fast jitclass methods. A signature does not capture every runtime overload, indexing form, or validation rule. See the API Guide and executable tests. Visualization APIs are not yet included in the Protocol surface and must be documented separately.
+This reference lists public Protocol signatures, not internal safe/fast jitclass methods. A signature does not capture every runtime overload, indexing form, or validation rule. See the API Guide and executable tests. Visualization constructors and window Protocol methods are included; pixel buffer and OpenGL draw-object internals are documented in the API Guide.
