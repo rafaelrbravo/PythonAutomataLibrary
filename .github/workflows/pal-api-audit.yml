@@ -4,9 +4,15 @@ on:
     branches:
       - main
       - pal-audit-ci-fix
+    paths-ignore:
+      - 'Documentation/generators/**'
+      - '.github/workflows/refresh-documentation-pdfs.yml'
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - 'Documentation/generators/**'
+      - '.github/workflows/refresh-documentation-pdfs.yml'
 jobs:
   api-audit:
     runs-on: ubuntu-latest
