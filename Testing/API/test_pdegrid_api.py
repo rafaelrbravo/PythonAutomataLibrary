@@ -121,3 +121,59 @@ def test_safe_advection_rejects_extra_dimensions(api, safe_mode):
         one.Advection(0.1, 0.1)
     with pytest.raises(ValueError):
         two.Advection(0.1, 0.1, 0.1)
+
+
+@pytest.mark.parametrize("shape", [(7,), (5, 6), (4, 5, 6)])
+def test_python_njit_pdegrid_add_update_state_parity(api, shape):
+    """Compare deterministic floating-field mutations in both execution modes."""
+    py = api.NewPDEgrid(shape)
+    jit = api.NewPDEgrid(shape)
+    site = tuple(1 for _ in shape)
+
+    def python_work(g):
+        g.Add(1.25, *site)
+        g.Add(2.5, *site)
+        before = g[site if len(shape) > 1 else site[0]]
+        g.Update()
+        after = g[site if len(shape) > 1 else site[0]]
+        g.Add(-0.5, *site)
+        g.Update()
+        final = g[site if len(shape) > 1 else site[0]]
+        return before, after, final
+
+    if len(shape) == 1:
+        @api.njit
+        def compiled_work(g):
+            g.Add(1.25, 1)
+            g.Add(2.5, 1)
+            before = g[1]
+            g.Update()
+            after = g[1]
+            g.Add(-0.5, 1)
+            g.Update()
+            return before, after, g[1]
+    elif len(shape) == 2:
+        @api.njit
+        def compiled_work(g):
+            g.Add(1.25, 1, 1)
+            g.Add(2.5, 1, 1)
+            before = g[1, 1]
+            g.Update()
+            after = g[1, 1]
+            g.Add(-0.5, 1, 1)
+            g.Update()
+            return before, after, g[1, 1]
+    else:
+        @api.njit
+        def compiled_work(g):
+            g.Add(1.25, 1, 1, 1)
+            g.Add(2.5, 1, 1, 1)
+            before = g[1, 1, 1]
+            g.Update()
+            after = g[1, 1, 1]
+            g.Add(-0.5, 1, 1, 1)
+            g.Update()
+            return before, after, g[1, 1, 1]
+
+    assert compiled_work(jit) == pytest.approx(python_work(py))
+    np.testing.assert_allclose(jit[:], py[:], rtol=0, atol=1e-6)
