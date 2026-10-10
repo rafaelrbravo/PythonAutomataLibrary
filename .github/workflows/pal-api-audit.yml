@@ -20,4 +20,4 @@ jobs:
       - name: Run API audit
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
-        run: python -m pytest -q Testing/API
+        run: python -m pytest -q Testing/API\n      - name: Keyword-fix pre-change benchmark\n        env:\n          PAL_BENCH_MODE: ${{ matrix.mode }}\n          NUMBA_DISABLE_CACHE: '1'\n        run: |\n          for i in 1 2 3 4 5; do\n            cd ..\n            python PythonAutomataLibrary/Testing/benchmark_keyword_binding.py\n            cd PythonAutomataLibrary\n          done
