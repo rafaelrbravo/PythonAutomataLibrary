@@ -1456,7 +1456,7 @@ def _SetRegionPython(grid,key,value,safe,isPop):
             if arr.shape!=shape: raise ValueError("assigned array shape must match slice shape")
             flat=np.ascontiguousarray(arr).reshape(-1)
             fn=_pg_linear_set_array if isinstance(key,slice) and safe else _pg_linear_set_array_fast if isinstance(key,slice) else _pg_region_set_array if safe else _pg_region_set_array_fast
-            ok=fn(grid._ptr,bounds[0],bounds[1],flat.ctypes) if isinstance(key,slice) else fn(grid._ptr,*bounds,flat.ctypes)
+            ok=fn(grid._ptr,bounds[0],bounds[1],flat.ctypes.data_as(_I64_PTR)) if isinstance(key,slice) else fn(grid._ptr,*bounds,flat.ctypes.data_as(_I64_PTR))
         if safe and not ok: raise ValueError("PopGrid slice assignment value is outside capacity or population overflowed")
     else:
         if scalar:
@@ -1468,8 +1468,8 @@ def _SetRegionPython(grid,key,value,safe,isPop):
             if arr.shape!=shape: raise ValueError("assigned array shape must match slice shape")
             if safe and not np.all(np.isfinite(arr)): raise ValueError("values must be finite")
             flat=np.ascontiguousarray(arr).reshape(-1)
-            if isinstance(key,slice): _pd_linear_set_array(grid._ptr,bounds[0],bounds[1],flat.ctypes)
-            else: _pd_region_set_array(grid._ptr,*bounds,flat.ctypes)
+            if isinstance(key,slice): _pd_linear_set_array(grid._ptr,bounds[0],bounds[1],flat.ctypes.data_as(_F32_PTR))
+            else: _pd_region_set_array(grid._ptr,*bounds,flat.ctypes.data_as(_F32_PTR))
 
 
 
