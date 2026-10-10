@@ -44,13 +44,13 @@ Choose a representation based on what the model must preserve, not just on the n
 
 ## 3. Coordinates and neighborhoods
 
-A grid accepts linear lattice indices. In a 2D grid, `ToI(x, y)` converts coordinates to an index, and `ItoX(i)` and `ItoY(i)` convert back. Grid geometry is exposed as attributes such as `xDim`, `yDim`, `nDims`, and `wrapX`, not methods.
+A grid has integer lattice sites and may also store agents at continuous positions. A **site index** `i` is an integer identifying a lattice cell; a **position** `(x, y)` can contain fractional coordinates. In 2D, `ToI(x, y)` converts lattice coordinates to a site index, and `ItoX(i)` and `ItoY(i)` convert that index back to lattice coordinates. Do not use a site index as an agent's continuous position: agents at different positions can occupy the same site. Grid geometry is exposed as attributes such as `xDim`, `yDim`, `nDims`, and `wrapX`, not methods.
 
-PAL provides `MooreHood`, `VonNeumannHood`, and `CircleHood`. They return relative integer offsets. `grid.Hood(hood, x, y)` maps those offsets to **linear site indices**, wrapping periodic axes and omitting sites outside nonperiodic axes. It preserves the order and duplicates of the supplied offsets. `grid.Box(...)` instead iterates coordinates in a half-open rectangular region; in 2D it yields `(x, y)` tuples, not linear indices. A box wider than a wrapped axis can also visit a site more than once. This distinction matters when using the results for indexing versus coordinate-based operations.
+PAL provides `MooreHood`, `VonNeumannHood`, and `CircleHood`. They return relative integer offsets. `grid.Hood(hood, x, y)` maps those offsets to **lattice coordinates** (a scalar x in 1D, coordinate tuples in 2D/3D), wrapping periodic axes and omitting sites outside nonperiodic axes. It preserves the order and duplicates of the supplied offsets. `grid.Box(...)` instead iterates coordinates in a half-open rectangular region; in 2D it also yields `(x, y)` tuples, not linear indices. A box wider than a wrapped axis can also visit a site more than once. This distinction matters when using the results for indexing versus coordinate-based operations.
 
 ## 4. Individual agents
 
-An agent is an integer handle owned by an `AgentGrid`. Create it with `NewAgentSQ` for a lattice location or `NewAgent` for a continuous position. Move it with `MoveSQ` or `Move`, and remove it with `Dispose`.
+An agent is an integer handle owned by an `AgentGrid`, distinct from both its lattice site index and its continuous position. Create it with `NewAgentSQ` for a lattice site or `NewAgent` for a continuous position. The `SQ` operations use site indices; the unsuffixed operations use coordinates. An agent can move within a site without changing its site index. Move it with `MoveSQ` or `Move`, and remove it with `Dispose`.
 
 `agents.All()` returns a snapshot of living handles. That allows creation and disposal during an iteration without changing the iteration's current membership. On a nonstackable grid, safe mode rejects attempts to place two agents at the same site. Use `isStackable=True` only when multiple occupancy is part of the model.
 
