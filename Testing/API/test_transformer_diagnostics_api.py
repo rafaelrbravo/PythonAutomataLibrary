@@ -1,9 +1,10 @@
 """Annotated AST-transformer parity and diagnostic edge contracts."""
+import numpy as np
 import pytest
 
 
 def test_annotated_grid_augassign_preserves_value(api):
-    g = api.NewGrid((4,), int)
+    g = api.NewGrid((4,), np.int32)
     g[2] = 5
 
     @api.njit
@@ -98,7 +99,7 @@ def test_annotated_agent_all_default_and_keyword_shuffle(api):
 def test_annotated_safe_grid_augassign_error_reports_line(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode omits validation diagnostics")
-    g = api.NewGrid((4,), int)
+    g = api.NewGrid((4,), np.int32)
 
     @api.njit
     def invalid(grid: api.Grid):
