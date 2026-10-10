@@ -48,3 +48,5 @@ Not executed in the current audit environment. The Python runtime has NumPy, Num
 - `test_shared_geometry_api.py::test_compiled_hood_named_coordinate_forms_match_positional`: compiled named versus positional Hood coordinates and Python positional reference (H-03); unexecuted.
 
 - `test_shared_geometry_api.py::test_compiled_box_named_bounds_match_positional`: compiled Box keyword versus positional coordinates across Grid/PopGrid/PDEgrid (G-01); unexecuted.
+
+CI execution evidence (2026-10-10): GitHub Actions run 38068395512 on commit 40a10ec4 completed Linux safe 620 passed/5 failed and fast 504 passed/116 skipped/5 failed; both Windows example jobs succeeded. Failures were stale coordinate-vs-index expectations in `Testing/test_20_direct_iteration_geometry.py` (2 parametrizations) and wrong hardcoded VonNeumannHood order in `test_shared_geometry_api.py` (3 parametrizations). Test-only corrections committed as 09e6fbdb and 69e2291a. Await subsequent CI to verify; do not claim green yet.
