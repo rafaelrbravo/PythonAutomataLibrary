@@ -1,6 +1,6 @@
 # PAL API Guide
 
-This guide is the compact human reference for PAL's public API. It consolidates behavior shared across PAL objects instead of repeating the same geometry, indexing, wrapping, and compilation rules for each class. For exact signatures and validation details, use the generated API reference once available. For learning PAL from the beginning, use the manual.
+This guide is the compact human reference for PAL's public API. It consolidates behavior shared across PAL objects instead of repeating the same geometry, indexing, wrapping, and compilation rules for each class. For current public signatures, use the generated [API Reference](API_REFERENCE.md). For learning PAL from the beginning, use the manual.
 
 ## Core use
 
@@ -156,7 +156,7 @@ agents.Z(agent)
 agents.Move(agent, x, y, z)
 ```
 
-`NewAgentSQ(i)` and `MoveSQ(agent, i)` also accept a linear lattice index in every dimension.
+`NewAgentSQ(i)` and `MoveSQ(agent, i)` accept a linear lattice index in 1D. In 2D and 3D, supply all spatial coordinates, or convert the index with `ItoX`, `ItoY`, and `ItoZ`.
 
 ### Occupancy and queries
 
