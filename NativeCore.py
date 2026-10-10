@@ -4728,6 +4728,7 @@ def _UseFastMode():
     return _FAST_MODE
 
 def NewIList():
+    """Create an empty native-backed integer list in the selected safety mode."""
     fast=_UseFastMode()
     ptr=_q_new(0)
     if not ptr: raise MemoryError("unable to allocate IList")
@@ -4737,11 +4738,13 @@ def _HoodTuple(offsets):
     return tuple(tuple(int(v) for v in off) for off in offsets)
 
 def MooreHood(dim,excludeCenter=False):
+    """Return the 3**dim offsets of a Moore neighborhood, optionally excluding zero."""
     if dim not in (1,2,3): raise ValueError("dim must be 1, 2, or 3")
     import itertools
     return _HoodTuple(off for off in itertools.product((-1,0,1),repeat=dim) if not excludeCenter or any(off))
 
 def VonNeumannHood(dim,excludeCenter=False):
+    """Return center and axis-adjacent offsets, optionally excluding center."""
     if dim not in (1,2,3): raise ValueError("dim must be 1, 2, or 3")
     out=[]
     if not excludeCenter: out.append((0,)*dim)
@@ -4751,6 +4754,7 @@ def VonNeumannHood(dim,excludeCenter=False):
     return tuple(out)
 
 def CircleHood(dim,rad,excludeCenter=False):
+    """Return integer offsets within Euclidean radius rad (dimensions 1–3)."""
     import itertools,math
     if dim not in (1,2,3): raise ValueError("dim must be 1, 2, or 3")
     if not isinstance(rad,(int,float,np.integer,np.floating)) or not np.isfinite(rad) or rad<0: raise ValueError("radius must be finite and nonnegative")
@@ -4758,6 +4762,7 @@ def CircleHood(dim,rad,excludeCenter=False):
     return _HoodTuple(off for off in itertools.product(range(-r,r+1),repeat=dim) if sum(v*v for v in off)<=r2 and (not excludeCenter or any(off)))
 
 def NewMultinomial(other=None):
+    """Create a sampler; other reuses solver configuration, not sampling state."""
     if other is not None and not isinstance(other,(_MultinomialSafe,_MultinomialFast)):
         raise TypeError("other must be a PAL Multinomial or None")
     fast=_UseFastMode()
@@ -4770,6 +4775,7 @@ def NewMultinomial(other=None):
 
 
 def NewGrid(dimensions,dtype):
+    """Create a typed 1D–3D lattice; negative axis lengths enable wrapping."""
     dims=_dimensions_array(dimensions);dt=np.dtype(dtype)
     if dt not in _GRID_TYPE_CODES:raise ValueError("Grid dtype must be bool, int8/16/32/64, uint8/16/32/64, or float32/64")
     fast=_UseFastMode()
@@ -4787,6 +4793,11 @@ def _StaticGeometry(dims):
     return x,y,z,length,wrapX,wrapY,wrapZ
 
 def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
+    """Create an agent population, optionally with properties and site stacking.
+
+    Empty dimensions select a nonspatial population. Negative axis lengths
+    enable wrapping. numAgentProps counts float properties per agent.
+    """
     dims = _dimensions_array(dimensions,allowZero=True)
     try: props=float(numAgentProps)
     except (TypeError,ValueError,OverflowError): raise ValueError("numAgentProps must be a nonnegative int32")
@@ -4802,6 +4813,7 @@ def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
 
 
 def NewPopGrid(dimensions, capacity=None):
+    """Create a spatial integer population grid with optional total capacity."""
     dims = _dimensions_array(dimensions)
     if capacity is None: cap=np.iinfo(np.int64).max
     else:
@@ -4818,6 +4830,7 @@ def NewPopGrid(dimensions, capacity=None):
 
 
 def NewPDEgrid(dimensions):
+    """Create a 1D–3D float32 field supporting diffusion and advection."""
     dims = _dimensions_array(dimensions)
     fast=_UseFastMode()
     ptr = _pd_new(dims.ctypes.data_as(_I32_PTR), len(dims))
