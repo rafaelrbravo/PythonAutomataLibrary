@@ -418,3 +418,28 @@ def test_python_njit_agentgrid_coordinate_mapping_parity(api, shape):
     expected = tuple(g.ToI(*site) for site in sites)
     assert tuple(compiled(g)) == expected
     assert len(set(expected)) == 3
+
+
+def test_python_njit_agentgrid_last_agent_after_dispose_parity(api):
+    py = api.NewAgentGrid((6,), stacking=True)
+    jit = api.NewAgentGrid((6,), stacking=True)
+
+    def python_work(g):
+        a = g.NewAgentSQ(2)
+        b = g.NewAgentSQ(2)
+        before = g.LastAgent(2)
+        g.Dispose(b)
+        after = g.LastAgent(2)
+        return a, b, before, after, g.GetPop()
+
+    @api.njit
+    def compiled_work(g):
+        a = g.NewAgentSQ(2)
+        b = g.NewAgentSQ(2)
+        before = g.LastAgent(2)
+        g.Dispose(b)
+        after = g.LastAgent(2)
+        return a, b, before, after, g.GetPop()
+
+    assert compiled_work(jit) == python_work(py)
+    assert jit.GetPop() == py.GetPop() == 1
