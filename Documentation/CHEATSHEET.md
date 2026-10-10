@@ -25,7 +25,7 @@ Dimensions: 1–3 axes; negative size wraps that axis (`(-nx, ny)`). `pal.NewAge
 | Coordinates → index | `grid.ToI(x, y)` |
 | Index → coordinates | `grid.ItoX(i)`, `grid.ItoY(i)` |
 | Rectangular region | `grid.Box(x1, x2, y1, y2)` (half-open) |
-| Neighbor sites | `grid.Hood(hood, x, y)` |
+| Neighbor coordinates | `grid.Hood(hood, x, y)` |
 | Neighborhood offsets | `pal.MooreHood(2, True)`, `pal.VonNeumannHood(2)`, `pal.CircleHood(2, 3)` |
 
 ## Grid
@@ -88,8 +88,6 @@ count = m.Binomial(20, 0.3)
 ```
 
 ## Draw
-
-This example opens a window and requires a graphical display; the nonvisual snippets above are covered by automated tests.
 
 ```python
 pix, window = pal.StartPixWindow(40, 40, scale=4)
