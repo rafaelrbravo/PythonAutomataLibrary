@@ -39,3 +39,5 @@ Not executed in the current audit environment. The Python runtime has NumPy, Num
 4. Compare IList, RNG and Multinomial operations and return types, distinguishing seeded-stream equivalence from stochastic distribution equivalence.
 5. Compare PDEgrid diffusion/advection and PopGrid reset, overflow and full state; test visualizer methods where compilation is supported.
 6. Consolidate verified mismatches into this report for user decisions; leave implementation untouched except explicitly approved fixes.
+
+- `test_grid_api.py::test_safe_grid_failed_write_python_compiled_state_parity`: safe-mode invalid coordinate write, exception-class and unchanged state comparison; unexecuted.
