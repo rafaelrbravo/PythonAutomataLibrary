@@ -1,74 +1,44 @@
-# PAL systematic validation
+# PAL testing
 
-This directory is both an **executable test suite** and the **audit record** for the Python Automata Library. All repository paths outside `Testing/` are immutable audit baselines. If a bug is found, preserve the original and put the corrected PAL component in `Testing/`; rerun the affected earlier tests against that corrected implementation before continuing.
+`Testing/` is PAL's executable regression and correctness suite. It covers public behavior across neighborhood geometry, Grid/IList/Multinomial/RNG operations, AgentGrid and PopGrid state, PDE transport and boundaries, Python/`@pal.njit` parity, visualization, integrated models, stress cases, and historical regressions.
+
+Tests should establish public behavior with independent invariants or small reference calculations where practical. Prefer conservation laws, coordinate identities, exact hand-checkable cases, and Python/compiled agreement over reproducing PAL's implementation inside the test.
 
 ## Run the suite
 
-From the repository root, using Python with `numpy`, `numba`, and `pytest` installed and a compatible PAL native library available:
+Build or install a compatible PAL native library, then run safe and fast modes in separate Python processes from the repository root:
 
 ```bash
-python -m pip install numpy numba pytest
-python -m pytest Testing/ -v
-PAL_TEST_MODE=fast python -m pytest Testing/ -v
+PAL_TEST_MODE=safe python -m pytest -q Testing
+PAL_TEST_MODE=fast python -m pytest -q Testing
 ```
 
-On Windows PowerShell, replace the second command with:
+PAL locks its process-wide mode at first construction. Fast mode intentionally omits selected validation checks, so some invalid-input tests are safe-only.
 
-```powershell
-$env:PAL_TEST_MODE = "fast"
-python -m pytest Testing/ -v
-Remove-Item Env:PAL_TEST_MODE
-```
-
-**Run safe and fast in separate Python processes.** PAL locks the global mode at first construction. Fast mode intentionally skips some input checks; tests for invalid inputs are therefore safe-only. The suite imports `NativeCore.py` from the checkout directly, rather than assuming an installed package. When corrected components exist in `Testing/`, update the shared import fixture to use them; record the switch here and rerun the affected tests.
-
-The test harness is written for `pytest` and does not alter files outside `Testing/` in Git. Python/Numba may create local runtime caches outside `Testing/` when running against source; these are generated artifacts, not committed changes. If strict filesystem immutability is required, run tests against a disposable checkout.
-
-## Performance benchmark
-
-Run compilation/startup and warm-runtime measurements separately from correctness tests:
+For a focused change, run the affected test file first:
 
 ```bash
-python Testing/benchmark_core.py --mode safe --output Testing/results/perf_safe.json
-python Testing/benchmark_core.py --mode fast --output Testing/results/perf_fast.json
+PAL_TEST_MODE=safe python -m pytest -q Testing/API/test_pde_advection.py
 ```
 
-The benchmark records platform, Python/NumPy/Numba versions, construction time, first compiled-call time, and repeated warm-call distributions for AgentGrid movement, PopGrid update, and 2D PDE diffusion. Compare repeated runs rather than interpreting a single small difference. Result paths are deliberately restricted to `Testing/`.
+Then run the full suite in both modes.
 
-## Coverage matrix
+## Continuous integration
 
-| Order | Subsystem | Tests | Evidence | Status |
-| --- | --- | --- | --- | --- |
-| 01 | Neighborhood geometry | Moore, von Neumann, Euclidean radius; dimensions 1–3; exclusions; invalid arguments | Independent enumerated coordinate sets | **Authored; execution pending** |
-| 02 | Typed Grid | C-order coordinate transforms; 1–3D indexing; slices; wrapping; dtype limits; safe invalid input | NumPy `ravel_multi_index` and arrays | **Authored; execution pending** |
-| 03 | IList | append, indexing, snapshots, shuffle permutation, random membership, clear/reuse, safe validation | Independent Python lists/multisets | **Authored; execution pending** |
-| 04 | Multinomial | binomial endpoints/ranges/mean; sequential sample conservation; safe invalid arguments | Mathematical invariants and six-SE mean check | **Authored; execution pending** |
-| 05 | RNG and Numba | seed replay, ranges, 32/64-bit RandInt, Python/compiled shared stream, IList stream | Deterministic replay and range invariants | **Authored; execution pending** |
-| 06 | AgentGrid core | geometry, lifecycle, occupancy, movement, properties, stacking, wrapping, safe collisions/dead agents | Independent lattice/agent invariants | **Authored; execution pending** |
-| 07 | PopGrid core | geometry, buffered adds/update, reset, occupancy list, wrapping, atomic invalid updates, capacity | Independent NumPy integer-state reference | **Authored; execution pending** |
-| 08 | PDEgrid core | geometry/storage, buffered update/reset, explicit diffusion reference, zero-flux/wrapped conservation, periodic CFL=1 advection, safe transactional stability/CFL checks | Independent finite-difference reference and conservation laws | **Authored; execution pending** |
-| 09 | AgentGrid compiled iteration | All, AgentsAt, Hood, wrapped/unrolled Hood, structural mutation guard, dispose-current traversal | Independent expected site/agent sets and cross-path agreement | **Authored; execution pending** |
-| 10 | PDEgrid extended | scalar/face BCs, field/interface/mask diffusion, ADI, radial conservation, analytic convergence | Independent flux references, weighted conservation, analytic sine decay | **Authored; execution pending** |
-| 11 | Compiled PopGrid/PDEGrid | AST-lowered state updates, keywords, safe source-line diagnostics | Python-path agreement and diagnostic contract | **Authored; execution pending** |
-| 12 | Visualization | Pix geometry/bounds, exact headless PNG orientation/RGB, async-save close flushing, OpenGL 2D/3D headless primitives | Independent image decoding and output existence; environment-aware OpenGL skips | **Authored; execution pending** |
-| 13 | Integrated models | deterministic agent turnover, agent secretion + diffusion, PopGrid-driven nutrient consumption, advection-diffusion transport | Population/occupancy invariants and independent mass balances | **Authored; execution pending** |
-| 14 | Spatial advection | AdvectionField/AdvectionInterfaces variable velocity, constant-field equivalence, periodic conservation, safe NaN/CFL transactionality | Independent conservative face-flux reference | **Authored; execution pending** |
-| 15 | PDE multidimensional boundaries | 2D/3D face-array orientation, anisotropic spacing, scalar/array Dirichlet BCs, invalid face size, fixed points across diffusion variants | Independent finite-volume face-flux reference | **Authored; execution pending** |
-| 16 | Long-horizon PDE | 1D–3D periodic diffusion invariants, exact discrete Fourier diffusion/advection modes, large-step ADI smoothing/conservation | Conservation, maximum principle, exact discrete eigenmodes | **Authored; execution pending** |
-| 17 | RNG statistical smoke | uniform moments/quartiles, bounded-integer buckets, >32-bit reachability, lag-1 correlation | Fixed-seed statistical invariants | **Authored; execution pending** |
-| 18 | Direct-iteration geometry | Python Box/Hood clipping+wrapping, AgentsAt mutation, minimum-image AgentsInRadius, exclude, safe generation guard | Independent modulo/minimum-image reference | **Authored; execution pending** |
-| 19 | State-machine stress | 1,500-step stackable AgentGrid lifecycle, 1,200-step nonstackable moves, 300 PopGrid buffered-update batches | Independent Python dict/NumPy state models | **Authored; execution pending** |
-| 20 | AST keyword regression | Named/mixed Grid/Pop/PDE/Agent calls, PDE transport BCs/radial rate, Hood/Box/AgentsAt/AgentsInRadius loop keywords | Python-call equivalence + known historical bug matrix | **Authored; execution pending** |
+`.github/workflows/pal-api-audit.yml` is the authoritative CI recipe. On Linux it:
 
-## Evidence and interpretation
+1. installs the Python test and headless-rendering dependencies;
+2. verifies `Documentation/API_REFERENCE.md` matches the generator;
+3. builds `libpal_native.so`;
+4. runs the full `Testing/` suite in safe and fast modes;
+5. runs the API performance benchmark after successful correctness tests.
 
-- **Authored ≠ passed.** The tests were inspected against the repository source but **have not been executed in this environment**. No correctness or performance claim is made from their mere presence.
-- Current systematic suite: `conftest.py` plus `test_01_hood_geometry.py` through `test_22_keyword_transformer_regression.py` (test source count to be refreshed at execution; performance benchmark counted separately). The coverage ledger was reconciled against these exact paths; a temporary apparent gap was traced to checking abbreviated filenames rather than the actual `_hood_geometry` / `_core` names.
-- Log actual command, platform, Python/Numba versions, source revision, mode, pass/fail/skip counts, and failures when an execution environment is available. Add a dated result file under `Testing/`.
-- Statistical smoke tests use loose, documented bounds to avoid flaky CI; they do not by themselves certify RNG quality.
-- Preserve minimal reproductions for every discovered bug. For each corrected component, record original path/blob SHA, corrected `Testing/` path, affected tests, and regression reruns.
-- Keep compile-time and warm-runtime benchmarks separate from correctness assertions. Repeated measurements are required before attributing a performance difference to a code change.
+Separate Windows jobs build `pal_native.dll` with MSVC and run representative real-example regressions in safe and fast modes. Headless OpenGL execution requires a compatible graphics backend.
 
-## Baseline provenance
+## Performance
 
-The suite was initialized against `NativeCore.py` blob `f116e2dc9014ca5693d6a27eca4d1052745886ca` and `pal_native.c` blob `df8a9cba08f47bd7735431e52f5ae0afb143e4a3`. Existing root `test_native.py` is historical and remains untouched. No corrected component has yet been produced.
+Correctness tests and performance measurements are separate. The CI API benchmark runs `Testing/benchmark_keyword_binding.py` repeatedly after the test suite passes. Additional benchmarks under `Testing/` can be used for targeted profiling. Compare repeated warm measurements, and distinguish compilation/startup cost from steady-state runtime.
+
+## Adding tests
+
+Keep regressions minimal and public-facing. A useful test should make the intended contract obvious and fail for the defect it protects against. Exercise boundaries and wrapping where relevant, and test both Python and compiled paths when both are supported. Safe-mode failure tests should also verify transactionality when an operation promises to reject invalid input before mutating pending or current state.
