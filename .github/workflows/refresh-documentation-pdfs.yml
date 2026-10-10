@@ -7,6 +7,9 @@ on:
     paths:
       - 'Documentation/generators/*.py'
       - '.github/workflows/refresh-documentation-pdfs.yml'
+concurrency:
+  group: pal-docs-refresh-${{ github.ref }}
+  cancel-in-progress: false
 permissions:
   contents: write
 jobs:
@@ -40,4 +43,5 @@ jobs:
           git add Documentation/*.md Documentation/*.pdf Documentation/CHEATSHEET-preview.png
           git diff --cached --quiet && exit 0
           git commit -m "Refresh PAL documentation"
+          git pull --rebase origin main
           git push
