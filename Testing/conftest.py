@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT.parent))
 
 # Import the complete PAL package, including PixWindow and OpenGLWindow APIs.
 # The repository root must be importable (e.g. PYTHONPATH=<repo parent>).
