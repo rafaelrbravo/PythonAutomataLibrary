@@ -69,6 +69,8 @@ Inspection of the staged `NativeCore.py` AST transformer identifies a concrete e
 - In `_HoodExpander.visit_Call`, the generic method instrumentation appends `_palLine=node.lineno` only if `self.palVars.get(node.func.value.id) not in (None, 'Grid')`. For unannotated parameters, this condition is false, so the call receives no source-line argument.
 - The annotated tests in module 23 pass while their unannotated counterparts xfail, independently corroborating this mechanism. The original module 12 tests use unannotated `grid` parameters and reproduce the missing line number.
 
+**Controlled annotation-only reproduction:** Copied the exact six module-12 tests into a temporary local probe file, adding `PopGrid = object` and `PDEgrid = object` marker names and annotating only the two failing `invalid(grid)` parameters as `invalid(grid: PopGrid)` and `invalid(grid: PDEgrid)`. On the same staged native runtime in safe mode, **all 6 tests passed in 9.43 s, exit 0**. The original unannotated test12 still has the two failures. This A/B comparison supports the annotation-gating explanation. The temporary probe was removed; the original test12 and PAL source remain unchanged.
+
 This explains the observed instrumentation gap; it does **not** establish the safest implementation fix. Possible remedies should be evaluated for their effect on ordinary objects with methods sharing PAL names, Numba typing, nested functions, and diagnostics. No library implementation change was made.
 
 ## Reproduction and next decisions
