@@ -12,9 +12,9 @@ if mode == "fast":
 
 grid = pal.NewGrid((-32, -32, -32), int)
 items = pal.NewIList()
-pop1 = pal.NewPopGrid((-64,))
-pde1 = pal.NewPDEgrid((-64,))
-ag1 = pal.NewAgentGrid((-64,))
+pop1 = pal.NewPopGrid((-64, -2))
+pde1 = pal.NewPDEgrid((-64, -2))
+ag1 = pal.NewAgentGrid((-64, -2))
 
 @pal.njit(cache=False)
 def grid_wrap_positional(g, n):
@@ -33,10 +33,10 @@ def ilist_append_positional(out, n):
     return len(out)
 
 @pal.njit(cache=False)
-def itox_1d_positional(pop, pde, ag, n):
+def itox_positional(pop, pde, ag, n):
     total = 0
     for i in range(n):
-        j = i & 63
+        j = i & 127
         total += pop.ItoX(j)
         total += pde.ItoX(j)
         total += ag.ItoX(j)
@@ -57,5 +57,5 @@ print(json.dumps({
     "mode": mode,
     "grid_wrap": measure(grid_wrap_positional, grid, 200000),
     "ilist_append": measure(ilist_append_positional, items, 200000),
-    "itox_1d": measure(itox_1d_positional, pop1, pde1, ag1, 200000),
+    "itox": measure(itox_positional, pop1, pde1, ag1, 200000),
 }, sort_keys=True))
