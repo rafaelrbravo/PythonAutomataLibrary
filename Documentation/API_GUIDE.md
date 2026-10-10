@@ -166,7 +166,7 @@ agents.AgentsAt(x, y, z)
 agents.counts[x, y, z]
 ```
 
-`LastAgent` returns the most recently stacked agent at a site, or `-1` if the site is empty. Iterate with `for agent in agents.AgentsAt(x, y):` in Python or inside `@pal.njit`. Python iteration uses a runtime-installed wrapper that gathers matching handles; compiled loops are transformed into direct iteration. Do not structurally modify the AgentGrid during Python-side `AgentsAt` iteration: its iterator checks for such changes. `counts` exposes lattice occupancy counts and supports the same scalar/coordinate/slice indexing conventions used by PAL grids.
+`LastAgent` returns the most recently stacked agent at a site, or `-1` if the site is empty. Iterate with `for agent in agents.AgentsAt(x, y):` in Python or inside `@pal.njit`. Python iteration uses a runtime-installed wrapper that gathers matching handles; compiled loops are transformed into direct iteration. Do not structurally modify the AgentGrid during Python-side `AgentsAt` iteration. Safe mode detects changes to the grid's agent generation and raises `RuntimeError`; fast mode omits that check. The Python iterator materializes matching handles before yielding them, but this does not make structural changes during iteration supported. `counts` exposes lattice occupancy counts and supports the same scalar/coordinate/slice indexing conventions used by PAL grids.
 
 By default an `AgentGrid` is not stackable: at most one agent may occupy a lattice site. Set `isStackable=True` when multiple agents per site are required. Safe mode rejects creation or movement into an occupied site on a nonstackable grid without changing model state.
 
