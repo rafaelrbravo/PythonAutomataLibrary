@@ -38,7 +38,7 @@ GitHub Actions workflow `pal-api-audit.yml` executes the full `Testing` suite on
 1. Preserve the four-job green baseline from run `38068827082` (`7c9c31c7`); investigate any future regressions against it.
 2. Add paired tests for AgentGrid construction, lifecycle, movement, property access, iteration snapshots and mutation.
 3. Add paired tests for Grid scalar and slice indexing, argument defaults and keywords, and validation exceptions.
-4. Compare IList, RNG and Multinomial operations and return types, distinguishing seeded-stream equivalence from stochastic distribution equivalence.
+4. Compare remaining RNG/Multinomial return/error contracts. Exact seeded Multinomial sequence and Setup-reuse parity are now covered in `test_multinomial_api.py` at `30e39880`; CI pending.
 5. Compare PDEgrid diffusion/advection and PopGrid reset, overflow and full state; test visualizer methods where compilation is supported.
 6. Consolidate verified mismatches into this report for user decisions; leave implementation untouched except explicitly approved fixes.
 
@@ -117,3 +117,5 @@ Corrected stacked AgentGrid tests run `38071157733`: Linux fast and Windows safe
 Corrected stacked AgentGrid parity CI `38071157733` all four jobs SUCCESS: Linux safe **668 passed**, fast **551 passed/117 skipped**, Windows safe/fast green. Added paired IList `All()` snapshot retained across `Clear()` and subsequent append, PAL `97018448`; CI pending. No PAL implementation changes.
 
 IList repeated Clear CI `38071234273` all four jobs SUCCESS: Linux safe **669 passed**, fast **552 passed/117 skipped**; Windows green. Stacked AgentGrid non-top disposal CI `38071297077` all four jobs SUCCESS: Linux safe **670 passed**, fast **553 passed/117 skipped**; Windows green. Manual coordinates section corrected site indices vs continuous positions and stale Hood linear-index claim, PAL `a233bae4`. No implementation changes.
+
+Latest extension: PAL `30e39880` adds `test_python_njit_multinomial_seeded_sequence_parity` and `test_python_njit_multinomial_setup_reuse_parity`. Both reseed the shared PAL RNG before Python and compiled runs and compare exact results; CI execution pending. No implementation changes.
