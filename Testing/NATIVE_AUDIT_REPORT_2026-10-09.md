@@ -28,7 +28,7 @@ A separate local directory was populated with the staged `NativeCore.py`, `OpenG
 gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
 ```
 
-With `PYTHONPATH` pointing to this isolated build and `PAL_TEST_MODE` set in separate processes, exact tests 18 (long-horizon PDE) and 21 (state-machine stress) passed **11/11 safe** in 15.83 s and **11/11 fast** in 10.46 s. This confirms the tested behavior with a newly compiled native binary. **It is still not a fresh GitHub checkout:** the Python and C source inputs came from the staged reconstruction, so repository-source provenance and the full fresh-build suite remain unverified.
+**Import-path correction:** The shared `Testing/conftest.py` inserts its own parent directory into `sys.path`; therefore `PYTHONPATH` alone does not guarantee that a staged test run imports the isolated rebuild. The earlier 15.83 s / 10.46 s runs cannot independently establish which native library was imported. To eliminate this ambiguity, copied `conftest.py` and exact tests 18 (long-horizon PDE) and 21 (state-machine stress) into `/mnt/data/pal_fresh_build/Testing/`, adjacent to the newly rebuilt package, and ran pytest with current working directory `/mnt/data/pal_fresh_build`. **Safe 11/11 passed in 16.35 s; fast 11/11 passed in 9.71 s.** A separate import probe confirmed `PythonAutomataLibrary.__file__` resolves to `/mnt/data/pal_fresh_build/PythonAutomataLibrary/__init__.py`. This confirms the tested behavior with a newly compiled native binary. **It is still not a fresh GitHub checkout:** the Python and C source inputs came from the staged reconstruction, so repository-source provenance and the full fresh-build suite remain unverified.
 
 ## Known defects and limitations
 
