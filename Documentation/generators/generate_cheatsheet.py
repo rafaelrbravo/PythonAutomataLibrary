@@ -81,7 +81,7 @@ def _build_pdf(body_font):
     frames=[Frame(margin,margin,colw,usable,leftPadding=3,rightPadding=3,topPadding=1,bottomPadding=1),
             Frame(margin+colw+gap,margin,colw,usable,leftPadding=3,rightPadding=3,topPadding=1,bottomPadding=1)]
     def header_fn(canvas,doc):
-        canvas.saveState(); canvas.setFont("Helvetica-Bold",15); canvas.drawString(margin,ph-margin-9,TITLE)
+        canvas.saveState(); canvas.setFont("Helvetica-Bold",16); canvas.drawString(margin,ph-margin-9,TITLE)
         canvas.setStrokeColor(colors.HexColor("#888888")); canvas.setLineWidth(.5); canvas.line(margin,ph-margin-14,pw-margin,ph-margin-14); canvas.restoreState()
     intro=ParagraphStyle("intro",fontName="Helvetica",fontSize=body_font+.25,leading=(body_font+.25)*1.12,spaceAfter=3)
     heading=ParagraphStyle("heading",fontName="Helvetica-Bold",fontSize=body_font+1.8,leading=(body_font+1.8)*1.05,spaceBefore=2.2,spaceAfter=1.4)
@@ -100,7 +100,7 @@ def _build_pdf(body_font):
 
 def _pdf():
     for i in range(51):
-        size=round(11.5-i*.1,1)
+        size=round(13.5-i*.1,1)
         if size < 5.0: break
         data,pages=_build_pdf(size)
         if pages==1:
