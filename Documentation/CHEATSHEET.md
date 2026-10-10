@@ -13,15 +13,15 @@
 
 ## Shared lattice geometry
 
-- **Properties** — `xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`
+- **Properties** — `xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis.
 - **Index conversion** — `ToI(x[,y,z])`; `ItoX/Y/Z(i)`
-- **Regions** — `Box(lo..., hi...)` uses half-open bounds; `Hood(hood, x[,y,z])` maps relative offsets to coordinates.
-- **Neighborhoods** — `pal.MooreHood(dim, includeOrigin)` · `pal.VonNeumannHood(dim)` · `pal.CircleHood(dim, rad)`
+- **Regions** — `Box(x1,x2)` in 1D; `Box(x1,x2,y1,y2)` in 2D; add `(z1,z2)` in 3D. Each upper bound is exclusive: `[x1,x2)`, so `Box(0,4)` visits 0,1,2,3. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped.
+- **Neighborhoods** — `pal.MooreHood(dim, excludeCenter=False)` · `pal.VonNeumannHood(dim, excludeCenter=False)` · `pal.CircleHood(dim, rad, excludeCenter=False)`. These return relative offsets, not indices; pass them to `grid.Hood(hood, x[,y,z])`. Set `excludeCenter=True` to omit the center.
 
 ## Grid / common indexing
 
-- **Read/write** — `g[x,y]`, `g[x,y]=v`; slices return detached NumPy copies.
-- **Pattern** — `g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`
+- **Read/write** — `g[i]` linear index; `g[x,y]` / `g[x,y,z]` coordinates; assign with `g[x,y]=v`. Slices return detached NumPy copies, so editing a slice does not update the grid.
+- **Pattern** — `g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`; supported dtypes include bool, fixed-width integers, and float32/float64.
 
 ## Draw / output
 
@@ -32,22 +32,22 @@
 ## Lists + randomness
 
 - **IList** — `Append(i)`, `Clear()`, `Random()`, `Shuffle()`, indexing/`len`; `All()` detached copy; `Iter()` no-copy iteration.
-- **RNG** — `pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → `0..n-1`; use PAL RNG for shared-stream reproducibility.
+- **RNG** — `pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → integer `0..n-1`; seed once for repeatable runs. PAL calls share a call-order-dependent random stream distinct from NumPy’s RNG.
 - **Multinomial** — `m.Binomial(n,p)`; `Setup(...)` then `Sample(...)` for repeated multinomial draws.
 
 ## AgentGrid
 
-- **Create / move** — `NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` for lattice positions; `NewAgent(x,y)` / `Move(a,x,y)` for continuous positions.
-- **Agent state** — `grid[a,p]` property; `I(a)`, `XSQ/YSQ/ ZSQ(a)` lattice; `X/Y/Z(a)` continuous; `Alive(a)`, `Dispose(a)`.
+- **Create / move** — `NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` use lattice coordinates; `NewAgent(x,y)` / `Move(a,x,y)` use continuous positions. In 2D/3D, SQ forms take coordinates (or a linear index where supported); do not mix the two position systems.
+- **Agent state** — `grid[a,p]` reads/writes property `p`; `I(a)` is linear site index; `XSQ/YSQ/ZSQ(a)` are lattice coordinates; `X/Y/Z(a)` are continuous coordinates. Check `Alive(a)` before use when agents may be disposed; `Dispose(a)` removes an agent.
 - **Queries** — `GetPop()`, `AgentsAt(...)`, `LastAgent(...)`, `AgentsInRadius(...)`, `counts[...]`.
-- **Iteration** — `for a in agents.All(): ...` is a snapshot and is safe for structural mutation such as `Dispose`.
+- **Iteration** — `for a in agents.All(): ...` iterates a detached snapshot and is safe for structural mutation such as `Dispose`. `AgentsInRadius(...)` returns nearby agents; wrapped displacements account for periodic boundaries.
 - **Wrapping** — `DispWrapX/Y/Z(p1,p2)` gives wrapped displacement.
 
 ## PopGrid + PDEgrid
 
-- **Transactional update** — `Add(v, ...)` changes pending state; `Update()` applies it simultaneously; `Reset()` clears current + pending. Direct `grid[...] = v` changes current state immediately.
+- **Transactional update** — `Add(v, ...)` accumulates pending changes; `Update()` applies them together. `Reset()` clears both current and pending state. Direct `grid[...] = v` changes current state immediately, outside the transaction.
 - **Population** — `pop.GetPop()` total; `pop.All()` nonzero site indices. `capacity` limits total population.
-- **PDE setup** — `field.SetTimeSpaceStep(dt, dx[,dy,dz])`
+- **PDE setup** — `field.SetTimeSpaceStep(dt, dx[,dy,dz])` sets time and spatial steps before updates. Use spacing values that satisfy the selected scheme’s stability requirements.
 - **Diffusion** — `Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`; radial 1D: `DiffusionRadialCircle/Sphere`.
 - **Advection** — `Advection`, `AdvectionField`, `AdvectionInterfaces`.
 
