@@ -337,3 +337,27 @@ def test_python_njit_unstackable_occupancy_failure_atomic_parity(api, safe_mode)
     assert (py.I(py_a), py.I(py_b)) == (jit.I(jit_a), jit.I(jit_b)) == (2, 3)
     assert (py.LastAgent(2), py.LastAgent(3)) == (py_a, py_b)
     assert (jit.LastAgent(2), jit.LastAgent(3)) == (jit_a, jit_b)
+
+
+def test_python_njit_agent_dead_access_failure_atomic_parity(api, safe_mode):
+    """Safe-mode dead-agent coordinate access must fail without changing population."""
+    if not safe_mode:
+        pytest.skip("Fast mode intentionally omits agent validity checks")
+    py = api.NewAgentGrid((5,), numAgentProps=1)
+    jit = api.NewAgentGrid((5,), numAgentProps=1)
+    a = py.NewAgentSQ(2)
+    b = jit.NewAgentSQ(2)
+    py.Dispose(a)
+    jit.Dispose(b)
+
+    @api.njit
+    def compiled_read(g, agent):
+        return g.I(agent)
+
+    with pytest.raises(ValueError) as python_error:
+        py.I(a)
+    with pytest.raises(ValueError) as compiled_error:
+        compiled_read(jit, b)
+    assert type(python_error.value) is type(compiled_error.value)
+    assert py.GetPop() == jit.GetPop() == 0
+    assert list(py.All()) == list(jit.All()) == []
