@@ -97,6 +97,26 @@ This makes the physical distinction visible: advection transports the field alon
 
 The example is a qualitative comparison, **not** a convergence or mass-conservation test: it continually resets source cells and uses different boundary conditions for the two fields. For quantitative validation, remove the source, use equivalent boundary conditions, and check expected mass balance and grid/timestep convergence.
 
+### A hand-checkable field gradient
+
+`Examples/Diffusibles/Gradient2D.py` provides a simpler numerical check than a transport simulation. It assigns `grid[x, y] = y / grid.yDim` on a 10 × 10 `PDEgrid`. The centered finite differences at `(5, 5)` are therefore
+
+```python
+import PythonAutomataLibrary as pal
+
+field = pal.NewPDEgrid((10, 10))
+for x in range(10):
+    for y in range(10):
+        field[x, y] = y / 10
+
+dx = (field[6, 5] - field[4, 5]) / 2
+dy = (field[5, 6] - field[5, 4]) / 2
+assert abs(dx) < 1e-12
+assert abs(dy - 0.1) < 1e-12
+```
+
+The field is constant in x and linear in y, so its exact discrete gradients are 0 and 0.1. This verifies indexing and a finite-difference calculation without introducing boundary conditions or timestep integration. The repository example performs the same calculation inside `@pal.njit`; the snippet above keeps the arithmetic visible in Python.
+
 ### Numerical update order
 
 The timestep order is part of the model. For example, queue all births and deaths in a `PopGrid` before calling `Update()` if changes must be simultaneous. Reading current counts while queuing deltas then uses the same starting population throughout the step. By contrast, assigning directly to `pop[x, y]` changes the value that subsequent calculations read. Mixing immediate assignments and queued changes is possible, but their order then changes the model.
