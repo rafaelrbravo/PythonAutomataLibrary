@@ -1,6 +1,6 @@
 # PAL API Reference
 
-Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. Regenerate with `python Documentation/generate_api_reference.py`; use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; consult [API Guide](API_GUIDE.md) for behavior and the implementation/tests for runtime semantics.
+Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. Regenerate with `python Documentation/generate_api_reference.py`; use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; consult [API Guide](API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.
 
 ## Factories and utilities
 
