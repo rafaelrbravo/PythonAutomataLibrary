@@ -9,9 +9,9 @@ This inventory maps the intended public surface to dedicated Testing/API coverag
 | Seed / Random / RandInt | test_rng_api.py | test_05_random.py, test_09_random_distributions.py | Execute stream-boundary contracts |
 | IList | test_ilist_api.py | test_03_ilist.py, compiled iteration tests | Random() and Shuffle() behavior relies on older suite |
 | Multinomial | test_multinomial_api.py | test_09_random_distributions.py | Execute copy/state contracts |
-| Grid | test_grid_api.py, test_grid_slice_assignment.py | test_02_grid.py, compiled grid tests | Annotated slice get/set/augassign helper parity; known annotated set xfail |
+| Grid | test_grid_api.py, test_grid_slice_assignment.py | test_02_grid.py, compiled grid tests | Annotated whole/mixed slice get/set/augassign are explicitly tracked as strict xfails pending one helper-parity fix |
 | Shared geometry | test_shared_geometry_api.py | test_06_geometry.py, test_20_direct_iteration_geometry.py | AgentGrid geometry methods need dedicated parity coverage |
-| AgentGrid | test_agentgrid_api.py | test_04_agentgrid.py, state-machine/integration tests | Alive/Dispose, property indexing, AgentsAt and shuffle behavior mainly older-suite covered |
+| AgentGrid | test_agentgrid_api.py | test_06_agentgrid_core.py, state-machine/integration tests | Dedicated lifecycle/property/AgentsAt/shuffle/wrap coverage added; execution remains |
 | PopGrid | test_popgrid_api.py | test_07_popgrid_core.py, state-machine tests | Execute overflow/Reset/keyword contracts |
 | PDEgrid | test_pdegrid_api.py | test_08/10/16/17 + numerical oracles | Numerical correctness primarily older suite; execute API validation additions |
 | AST transformer / diagnostics | test_transformer_diagnostics_api.py | test_22_keyword_transformer_regression.py, test_23_diagnostic_annotations.py | Annotated Grid slice read/set/augassign is main known helper-parity gap |
@@ -19,7 +19,7 @@ This inventory maps the intended public surface to dedicated Testing/API coverag
 | Pix / PixWindow | test_visualization_api.py | test_14_visualization.py | Execute new compiled/GIF/lifecycle cases |
 | OpenGLDraw / OpenGLWindow | constructor validation in test_visualization_api.py | optional real headless primitives/save in test_14_visualization.py | Full method/lifecycle/GIF execution depends on standalone OpenGL backend |
 | AwaitWindows | none dedicated | exercised indirectly by examples/window registry behavior | Add deterministic lifecycle test if execution environment supports it |
-| ColorScale | none dedicated | example use | Dedicated endpoint/interpolation/validation tests still needed |
+| ColorScale | test_colorscale_api.py | example use | Dedicated endpoint/interpolation/compiled parity coverage added; execution remains |
 
 ## Immediate completeness work
 
