@@ -23,6 +23,18 @@
 - **Read/write** — `g[x,y]`, `g[x,y]=v`; slices return detached NumPy copies.
 - **Pattern** — `g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`
 
+## Lists + randomness
+
+- **IList** — `Append(i)`, `Clear()`, `Random()`, `Shuffle()`, indexing/`len`; `All()` detached copy; `Iter()` no-copy iteration.
+- **RNG** — `pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → `0..n-1`; use PAL RNG for shared-stream reproducibility.
+- **Multinomial** — `m.Binomial(n,p)`; `Setup(...)` then `Sample(...)` for repeated multinomial draws.
+
+## Draw / output
+
+- **Pixels** — `pix, win = pal.StartPixWindow(xDim,yDim,scale=1,title='PAL',headless=False)`; set `pix[x,y]=RGB`; `win.Update()`; `win.Save(path, block=True)`; `win.Close()`.
+- **GIF** — `StartGif(path,delay=100)` · `AddGifFrame(block=False)` · `StopGif()`; call `Update()` before capture.
+- **OpenGL** — `pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`.
+
 ## AgentGrid
 
 - **Create / move** — `NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` for lattice positions; `NewAgent(x,y)` / `Move(a,x,y)` for continuous positions.
@@ -38,17 +50,5 @@
 - **PDE setup** — `field.SetTimeSpaceStep(dt, dx[,dy,dz])`
 - **Diffusion** — `Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`; radial 1D: `DiffusionRadialCircle/Sphere`.
 - **Advection** — `Advection`, `AdvectionField`, `AdvectionInterfaces`.
-
-## Lists + randomness
-
-- **IList** — `Append(i)`, `Clear()`, `Random()`, `Shuffle()`, indexing/`len`; `All()` detached copy; `Iter()` no-copy iteration.
-- **RNG** — `pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → `0..n-1`; use PAL RNG for shared-stream reproducibility.
-- **Multinomial** — `m.Binomial(n,p)`; `Setup(...)` then `Sample(...)` for repeated multinomial draws.
-
-## Draw / output
-
-- **Pixels** — `pix, win = pal.StartPixWindow(xDim,yDim,scale=1,title='PAL',headless=False)`; set `pix[x,y]=RGB`; `win.Update()`; `win.Save(path, block=True)`; `win.Close()`.
-- **GIF** — `StartGif(path,delay=100)` · `AddGifFrame(block=False)` · `StopGif()`; call `Update()` before capture.
-- **OpenGL** — `pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`.
 
 **More detail: Manual · API Guide · API Reference (Documentation/).**
