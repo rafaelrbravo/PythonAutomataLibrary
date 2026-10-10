@@ -44,3 +44,5 @@ Not executed in the current audit environment. The Python runtime has NumPy, Num
 - `test_grid_api.py::test_safe_grid_failed_write_python_compiled_state_parity`: safe-mode invalid coordinate write, exception-class and unchanged state comparison; unexecuted.
 
 - `test_shared_geometry_api.py::test_python_hood_named_coordinates_rejected_pending_review`: documents current Python keyword rejection across three grid families (H-03).
+
+- `test_shared_geometry_api.py::test_compiled_hood_named_coordinate_forms_match_positional`: compiled named versus positional Hood coordinates and Python positional reference (H-03); unexecuted.
