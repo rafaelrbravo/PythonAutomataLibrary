@@ -60,6 +60,8 @@ The timestep order is part of the model. For example, queue all births and death
 
 For a `PDEgrid`, transport routines accumulate changes that become current at `Update()`. Check timestep stability and convergence by varying the timestep and grid spacing. Safe-mode checks do not replace numerical validation.
 
+Consider two sites with populations 10 and 0. Suppose each site sends half its starting population to the other site in one timestep. With queued deltas, site 0 queues -5 and site 1 queues +5, then a single `Update()` gives (5, 5). If the first transfer were assigned immediately and the second site were subsequently processed using its new count, the second calculation would see 5 rather than the original 0. This is an algorithmic difference, not a rounding issue. The same distinction applies when several agents consume a shared resource or when births and deaths are calculated from local densities.
+
 ## 6. Compiled model code
 
 Decorate computational functions with `@pal.njit`. PAL expands some model constructs before passing the function to Numba, including neighborhood iteration and source-aware safe-mode diagnostics. Annotate PAL arguments with their public types, such as `pal.AgentGrid` or `pal.PDEgrid`, for clarity and compiler support.
