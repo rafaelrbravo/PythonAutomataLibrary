@@ -140,3 +140,20 @@ def test_safe_unstackable_occupancy_rejected_without_state_change(api, safe_mode
     with pytest.raises(ValueError):
         g.MoveSQ(b, 2)
     assert g.I(b) == 3
+
+
+def test_python_agents_in_radius_dimensional_tuples(api):
+    for dims, pos, center in [
+        ((10,), (9.0,), (0.0,)),
+        ((10, 10), (9.0, 2.0), (0.0, 2.0)),
+        ((10, 10, 10), (9.0, 2.0, 3.0), (0.0, 2.0, 3.0)),
+    ]:
+        g = api.NewAgentGrid(tuple(-d for d in dims))
+        agent = g.NewAgent(*pos)
+        found = list(g.AgentsInRadius(1.5, *center))
+        assert len(found) == 1
+        assert found[0][0] == agent
+        assert found[0][1] == pytest.approx(-1.0)
+        if len(dims) > 1:
+            assert found[0][-1] == pytest.approx(1.0)
+        assert list(g.AgentsInRadius(1.5, *center, exclude=agent)) == []
