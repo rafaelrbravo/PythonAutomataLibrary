@@ -52,10 +52,10 @@ def test_rng_multinomial_agentgrid_composition_is_reproducible(api):
     a, ma = make(); b, mb = make()
     api.Seed(20261009)
     ca = seed_population(a, ma)
-    occ_a = np.array(a.counts[:], copy=True)
+    occ_a = np.array([a.counts[i] for i in range(32)], dtype=np.int32)
     api.Seed(20261009)
     cb = seed_population(b, mb)
-    occ_b = np.array(b.counts[:], copy=True)
+    occ_b = np.array([b.counts[i] for i in range(32)], dtype=np.int32)
     assert ca == cb
     np.testing.assert_array_equal(occ_a, occ_b)
     assert a.GetPop() == b.GetPop() == 20
