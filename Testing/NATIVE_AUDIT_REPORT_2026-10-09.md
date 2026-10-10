@@ -83,6 +83,8 @@ python Testing/run_native_audit.py --mode safe
 python Testing/run_native_audit.py --mode fast -- -k diffusion
 ```
 
+**Runner validation on staged runtime (2026-10-09):** Fetched the committed runner and verified Git blob SHA-1 `a6bec7ecd41f0613e74a6a7881e74bc40933d242` locally. `py_compile` passed. Running `--mode both -- -k test_random_lag1_correlation_smoke` gave safe 1 passed / 289 deselected and fast 1 passed / 289 deselected, overall exit 0. Running `--mode safe -- -k test_compiled_safe_popgrid_error_contains_source_line` reproduced the known diagnostic failure, pytest exit 1 and runner exit 1. Running `--mode safe --timeout 0.001 -- -k test_random_lag1_correlation_smoke` reported timeout status 124 and runner exit 1. These verify success, failure propagation, and timeout propagation in the staged environment; they do not replace fresh-checkout validation.
+
 The runner is a convenience wrapper, **not a test-result artifact**. Its GitHub version has not yet been executed from a fresh checkout; the full-suite results above came from direct pytest commands on the staged runtime. It deliberately returns failure for the currently known two safe-mode diagnostic tests.
 
 ## Reproduction and next decisions
