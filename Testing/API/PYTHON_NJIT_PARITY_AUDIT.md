@@ -59,3 +59,5 @@ Further CI evidence: run `38068643623` (09e6fbdb) Linux safe/fast each had four 
 CI run `38068743749` (6e8f760d) completed with Windows safe/fast success and exactly one Linux failure in each mode: stale 1D Hood test expected `(x,)` instead of `x`. Thus all newly added compiled named-Box, named-Hood, and unroll tests were included without reported failures in that run, although the overall suite failed. The 1D expectation was fixed in `7c9c31c7`; CI run `38068827082` on that fix was in progress at last check.
 
 CI follow-up: run `38068827082` on 1D Hood test fix `7c9c31c7`: Windows safe/fast completed successfully, Linux safe/fast still in progress when checked. No fresh failures established; do not claim green until both Linux jobs finish.
+
+Post-fix CI result: run `38068827082` on `7c9c31c7` completed Linux fast successfully (**521 passed, 116 skipped**, 91.66 s) and Windows safe/fast successfully. Linux safe remained in progress when checked. This validates the corrected 1D Hood test in fast mode and all newly added compiled keyword/unroll regressions within the passing fast suite; full four-job success remains pending safe completion.
