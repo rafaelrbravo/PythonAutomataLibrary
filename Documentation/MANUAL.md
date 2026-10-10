@@ -9,7 +9,7 @@ A PAL model normally has three parts: **Setup** creates state, **Step** changes 
 ```python
 import PythonAutomataLibrary as pal
 
-@pal.njit
+@pal.njit(cache=True)
 def Step(pop: pal.PopGrid):
     # Apply a synchronous increment to every site.
     for i in range(len(pop)):
@@ -131,7 +131,7 @@ When debugging a population model, test these properties separately: site counts
 
 ## 6. Compiled model code
 
-Decorate computational functions with `@pal.njit`. PAL expands some model constructs before passing the function to Numba, including neighborhood iteration and source-aware safe-mode diagnostics. Annotate PAL arguments with their public types, such as `pal.AgentGrid` or `pal.PDEgrid`, for clarity and compiler support.
+Decorate substantive computational functions with `@pal.njit(cache=True)` so compiled code can be reused across runs. PAL expands some model constructs before passing the function to Numba, including neighborhood iteration and source-aware safe-mode diagnostics. Annotate PAL arguments with their public types, such as `pal.AgentGrid` or `pal.PDEgrid`, for clarity and compiler support.
 
 Keep model state in PAL objects and use `pal.Seed`, `pal.Random`, `pal.RandInt`, and `NewMultinomial` for reproducible PAL random sampling. Run a model in safe mode first. Fast mode removes selected checks; it does not make invalid indices, dead handles, or unstable numerical steps valid.
 
