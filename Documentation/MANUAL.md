@@ -92,6 +92,24 @@ PAL's native-backed model objects support Python pickling, so a long-running mod
 
 For reproducibility, seed the random generator before a run and record the seed. Verify that a restored model continues from the expected state; don't assume that pickling a grid also captures unrelated Python variables or the state of every random-number generator used by external libraries. Compare a short uninterrupted run with a checkpoint-and-resume run as a regression test.
 
+A minimal checkpoint can be saved and resumed without opening a window:
+
+```python
+import pickle
+import PythonAutomataLibrary as pal
+
+pop = pal.NewPopGrid((5,))
+pop[1] = 10
+pop.Add(7, 1)  # Pending change is part of the checkpoint.
+state = {"pop": pop, "step": 3}
+checkpoint = pickle.dumps(state)
+
+restored = pickle.loads(checkpoint)
+restored["pop"].Update()
+assert restored["step"] == 3
+assert restored["pop"][1] == 17
+```
+
 The repository includes a working example at `Examples/Agents/SaveLoadModel.py`. It serializes a dictionary containing an `AgentGrid`, an `IList`, and the timestep, then restores all three before continuing. The regression suite `Testing/test_13_pickle_state.py` also verifies that `PopGrid` and `PDEgrid` retain pending deltas across a pickle round-trip and that restored agent grids preserve living handles and properties. These tests establish PAL object-state restoration, not restoration of external RNG streams.
 
 ## 10. Where to go next
