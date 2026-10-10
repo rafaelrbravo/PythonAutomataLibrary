@@ -390,3 +390,31 @@ def test_python_njit_agent_all_snapshot_survives_disposal_parity(api):
     assert list(compiled_snapshot) == list(python_snapshot)
     assert compiled_pop == python_pop == 0
     assert list(py.All()) == list(jit.All()) == []
+
+
+@pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
+def test_python_njit_agentgrid_coordinate_mapping_parity(api, shape):
+    """Compare spatial ToI mapping for first, interior and last sites."""
+    g = api.NewAgentGrid(shape)
+    if len(shape) == 1:
+        sites = ((0,), (2,), (6,))
+
+        @api.njit
+        def compiled(g):
+            return g.ToI(0), g.ToI(2), g.ToI(6)
+    elif len(shape) == 2:
+        sites = ((0, 0), (2, 3), (3, 4))
+
+        @api.njit
+        def compiled(g):
+            return g.ToI(0, 0), g.ToI(2, 3), g.ToI(3, 4)
+    else:
+        sites = ((0, 0, 0), (1, 2, 3), (2, 3, 4))
+
+        @api.njit
+        def compiled(g):
+            return g.ToI(0, 0, 0), g.ToI(1, 2, 3), g.ToI(2, 3, 4)
+
+    expected = tuple(g.ToI(*site) for site in sites)
+    assert tuple(compiled(g)) == expected
+    assert len(set(expected)) == 3
