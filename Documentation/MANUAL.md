@@ -115,7 +115,7 @@ assert abs(dx) < 1e-6
 assert abs(dy - 0.1) < 1e-6
 ```
 
-The field is constant in x and linear in y, so its expected discrete gradients are 0 and 0.1. The assertions allow floating-point storage and arithmetic error. This verifies indexing and a finite-difference calculation without introducing boundary conditions or timestep integration. The repository example performs the same calculation inside `@pal.njit`; the snippet above keeps the arithmetic visible in Python.
+The field is constant in x and linear in y, so its expected discrete gradients are 0 and 0.1. The assertions allow floating-point storage and arithmetic error. This verifies indexing and a finite-difference calculation without introducing boundary conditions or timestep integration. `Examples/Diffusibles/Gradient2D.py` performs the same calculation inside `@pal.njit`.
 
 ### Numerical update order
 
@@ -185,8 +185,8 @@ assert restored["step"] == 3
 assert restored["pop"][1] == 17
 ```
 
-The repository includes a working example at `Examples/Agents/SaveLoadModel.py`. It serializes a dictionary containing an `AgentGrid`, an `IList`, and the timestep, then restores all three before continuing. The regression suite `Testing/test_13_pickle_state.py` also verifies that `PopGrid` and `PDEgrid` retain pending deltas across a pickle round-trip and that restored agent grids preserve living handles and properties. These tests establish PAL object-state restoration, not restoration of external RNG streams.
+`Examples/Agents/SaveLoadModel.py` serializes a dictionary containing an `AgentGrid`, an `IList`, and the timestep, then restores all three before continuing. PAL object checkpoints do not include unrelated Python state or external RNG streams.
 
 ## 10. Where to go next
 
-Use the [Cheatsheet](CHEATSHEET.md) for short code patterns, the [API Guide](API_GUIDE.md) for behavioral contracts, and the generated [API Reference](API_REFERENCE.md) for current signatures. The repository's `Examples/` contains complete models; `Testing/` contains executable contract checks for boundaries, wrapping, pending updates, and invalid operations. In particular, `Testing/API/test_documentation_examples.py` executes the Manual's quickstart, radius, gradient, and checkpoint snippets so these examples are checked against the implementation.
+Use the [Cheatsheet](CHEATSHEET.md) for short code patterns, the [API Guide](API_GUIDE.md) for behavioral contracts, and the generated [API Reference](API_REFERENCE.md) for current signatures. `Examples/` contains complete models; `Testing/` contains executable contract checks for boundaries, wrapping, pending updates, and invalid operations.
