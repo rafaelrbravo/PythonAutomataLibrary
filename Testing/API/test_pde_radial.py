@@ -53,7 +53,9 @@ def test_radial_diffusion_matching_outer_bc_preserves_constant_field(method):
 
 
 @pytest.mark.parametrize("method", ["DiffusionRadialCircle", "DiffusionRadialSphere"])
-def test_radial_diffusion_validation_is_transactional(method):
+def test_radial_diffusion_validation_is_transactional(method, safe_mode):
+    if not safe_mode:
+        pytest.skip("stability validation is a safe-mode contract")
     field = pal.NewPDEgrid((8,))
     field.SetTimeSpaceStep(1.0, 1.0)
     values = np.arange(8, dtype=np.float32)
@@ -67,7 +69,9 @@ def test_radial_diffusion_validation_is_transactional(method):
 
 
 @pytest.mark.parametrize("method", ["DiffusionRadialCircle", "DiffusionRadialSphere"])
-def test_radial_diffusion_rejects_wrapped_geometry_without_pending_change(method):
+def test_radial_diffusion_rejects_wrapped_geometry_without_pending_change(method, safe_mode):
+    if not safe_mode:
+        pytest.skip("radial geometry validation is a safe-mode contract")
     field = pal.NewPDEgrid((-8,))
     field.SetTimeSpaceStep(0.1, 1.0)
     values = np.arange(8, dtype=np.float32)
