@@ -23,14 +23,15 @@ CONVENTIONS = "`x...` means `x,y` in 2D and `x,y,z` in 3D. `Box(x1,x2,...)` list
 
 SECTIONS = [
 ("Create state", [
-("`pal.NewGrid(dims, dtype)`", "typed lattice"), ("`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`", "individual agents; `dims=()` is nonspatial"),
-("`pal.NewPopGrid(dims, capacity=None)`", "integer population counts"), ("`pal.NewPDEgrid(dims)`", "continuous field"),
-("`pal.NewIList()` · `pal.NewMultinomial()`", "integer query list · random-count sampler"),
+("`pal.NewGrid(dims, dtype)`", "Create a typed lattice storing one value per site."), ("`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`", "Create agents with optional properties; `dims=()` makes a nonspatial grid."),
+("`pal.NewPopGrid(dims, capacity=None)`", "Create integer counts per site; capacity limits total population."), ("`pal.NewPDEgrid(dims)`", "Create a continuous field for PDE updates."),
+("`pal.NewIList()`", "Create a mutable integer list for collecting/reusing query results."), ("`pal.NewMultinomial()`", "Create a sampler for binomial/multinomial population draws."),
 ("Dimensions", "1–3 axes; a negative dimension wraps that axis, e.g. `(-nx, ny)`."),]),
 ("Shared lattice geometry", [
 ("Properties", "`xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis."),
-("Index conversion", "`ToI(x[,y,z])`; `ItoX/Y/Z(i)`"),
-("Regions", "`Box(x1,x2,...)` selects a rectangular region."),
+("`ToI(x...)`", "Convert 1D/2D/3D coordinates into one linear site index."),
+("`ItoX/Y/Z(i)`", "Convert a linear site index back to its axis coordinate."),
+("Regions", "`Box(x1,x2,...)` selects a rectangular region; each axis has a lower bound and exclusive upper bound."),
 ("Neighborhoods", "`pal.MooreHood(dim, excludeCenter=False)` · `pal.VonNeumannHood(dim, excludeCenter=False)` · `pal.CircleHood(dim, rad, excludeCenter=False)`. These return relative offsets, not indices; pass them to `grid.Hood(hood, x[,y,z])`. Set `excludeCenter=True` to omit the center."),]),
 ("Grid / common indexing", [
 ("Read/write", "`g[i]` linear index; `g[x,y]` / `g[x,y,z]` coordinates; assign with `g[x,y]=v`. Slices return detached NumPy copies, so editing a slice does not update the grid."),
@@ -79,7 +80,8 @@ def _markup(s):
 def _build_pdf(body_font):
     buf=BytesIO(); pw,ph=letter; margin=.38*inch; header=.34*inch
     usable=ph-2*margin-header
-    frames=[Frame(margin,margin,pw-2*margin,usable,leftPadding=5,rightPadding=5,topPadding=2,bottomPadding=2)]
+    gutter=.22*inch; col_w=(pw-2*margin-gutter)/2
+    frames=[Frame(margin,margin,col_w,usable,leftPadding=5,rightPadding=5,topPadding=2,bottomPadding=2), Frame(margin+col_w+gutter,margin,col_w,usable,leftPadding=5,rightPadding=5,topPadding=2,bottomPadding=2)]
     def header_fn(canvas,doc):
         canvas.saveState(); canvas.setFont("Helvetica-Bold",16); canvas.drawString(margin,ph-margin-9,TITLE)
         canvas.setStrokeColor(colors.HexColor("#888888")); canvas.setLineWidth(.5); canvas.line(margin,ph-margin-14,pw-margin,ph-margin-14); canvas.restoreState()
