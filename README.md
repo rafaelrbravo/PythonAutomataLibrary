@@ -26,9 +26,7 @@ PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL 
 - [API Reference](Documentation/API_REFERENCE.md) — source-derived public signatures; regenerate with `python Documentation/generate_api_reference.py`.
 - [Cheatsheet](Documentation/CHEATSHEET.md) — compact lookup for common operations.
 - `Examples/` — complete working models.
-- `Testing/` — correctness, API, integration, and regression tests.
-
-The documentation is being validated and expanded; examples and generated signatures may change as that work proceeds.
+- [Testing](Testing/README.md) — correctness, API, integration, and regression tests, with local and CI run instructions.
 
 ## Build from source
 
