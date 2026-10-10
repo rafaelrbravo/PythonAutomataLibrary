@@ -3658,6 +3658,9 @@ def _olGridGetAt(g,key,sourceLine):
     if not isinstance(g,_GridNumbaType): return None
     suffix=sourceLine.literal_value if isinstance(sourceLine,types.StringLiteral) else ""
     badI="Grid index out of bounds"+suffix; badD="Grid index dimensionality mismatch"+suffix; badC="Grid coordinate out of bounds"+suffix
+    if isinstance(key,types.SliceType) or isinstance(key,types.BaseTuple) and any(isinstance(t,types.SliceType) for t in key.types):
+        def impl(g,key,sourceLine): return g[key]
+        return impl
     if isinstance(key,types.Integer):
         n=int(np.prod(g.dims,dtype=np.int64))
         if g.safe:
@@ -3704,6 +3707,9 @@ def _olGridSetAt(g,key,value,sourceLine):
     if not isinstance(g,_GridNumbaType): return None
     suffix=sourceLine.literal_value if isinstance(sourceLine,types.StringLiteral) else ""
     badI="Grid index out of bounds"+suffix; badD="Grid index dimensionality mismatch"+suffix; badC="Grid coordinate out of bounds"+suffix
+    if isinstance(key,types.SliceType) or isinstance(key,types.BaseTuple) and any(isinstance(t,types.SliceType) for t in key.types):
+        def impl(g,key,value,sourceLine): g[key]=value
+        return impl
     if isinstance(key,types.Integer):
         n=int(np.prod(g.dims,dtype=np.int64))
         if g.safe:
