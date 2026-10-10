@@ -1,8 +1,4 @@
-"""Build the distributable PAL PDFs from their authoritative text sources.
-
-Requires: pip install reportlab
-Usage: python Documentation/generate_pdfs.py [--check]
-"""
+"""Shared deterministic ReportLab renderer for PAL documentation generators.\n\nThis module is infrastructure; run the dedicated generate_*.py scripts to build documents.\nRequires: pip install reportlab\n"""
 import argparse
 import io
 import re
@@ -20,8 +16,7 @@ from reportlab.platypus import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "Documentation"
-SOURCE = DOCS / "source"
-DOCUMENTS = {}
+
 INK = colors.HexColor("#172438")
 ACCENT = colors.HexColor("#245e83")
 LIGHT = colors.HexColor("#eef3f7")
@@ -153,26 +148,3 @@ def render(source, name):
     return buffer.getvalue()
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="verify committed PDFs match their sources")
-    args = parser.parse_args()
-    failed = []
-    for name, source in DOCUMENTS.items():
-        target = DOCS / (name + ".pdf")
-        result = render(source.read_text(encoding="utf-8"), name)
-        if args.check:
-            if not target.exists() or target.read_bytes() != result:
-                failed.append(name)
-        else:
-            target.write_bytes(result)
-            print(f"Wrote {target.relative_to(ROOT)} ({len(result)} bytes)")
-    if failed:
-        parser.exit(1, "Stale or missing PDFs: " + ", ".join(failed) +
-                    ". Run python Documentation/generate_pdfs.py\n")
-    if args.check:
-        print("All documentation PDFs are current")
-
-
-if __name__ == "__main__":
-    main()
