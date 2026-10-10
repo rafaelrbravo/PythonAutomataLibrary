@@ -201,3 +201,31 @@ def test_python_njit_popgrid_reset_pending_delta_parity(api, shape):
     assert tuple(compiled_work(jit)) == tuple(python_work(py)) == (5, 0)
     np.testing.assert_array_equal(jit[:], py[:])
     assert not np.any(py[:])
+
+
+@pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
+def test_python_njit_popgrid_coordinate_mapping_parity(api, shape):
+    """Check ToI parity at boundary and interior sites."""
+    g = api.NewPopGrid(shape, capacity=100)
+    if len(shape) == 1:
+        sites = ((0,), (2,), (6,))
+
+        @api.njit
+        def compiled(g):
+            return g.ToI(0), g.ToI(2), g.ToI(6)
+    elif len(shape) == 2:
+        sites = ((0, 0), (2, 3), (3, 4))
+
+        @api.njit
+        def compiled(g):
+            return g.ToI(0, 0), g.ToI(2, 3), g.ToI(3, 4)
+    else:
+        sites = ((0, 0, 0), (1, 2, 3), (2, 3, 4))
+
+        @api.njit
+        def compiled(g):
+            return g.ToI(0, 0, 0), g.ToI(1, 2, 3), g.ToI(2, 3, 4)
+
+    expected = tuple(g.ToI(*site) for site in sites)
+    assert tuple(compiled(g)) == expected
+    assert len(set(expected)) == 3
