@@ -2,6 +2,10 @@
 
 `import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`.
 
+## Conventions
+
+- **Coordinate notation** — `x...` means `x,y` in 2D and `x,y,z` in 3D. `Box(x1,x2,...)` lists lower/upper bounds for each axis; upper bounds are exclusive. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped.
+
 ## Create state
 
 - **`pal.NewGrid(dims, dtype)`** — typed lattice
@@ -15,7 +19,7 @@
 
 - **Properties** — `xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis.
 - **Index conversion** — `ToI(x[,y,z])`; `ItoX/Y/Z(i)`
-- **Regions** — `Box(x1,x2)` in 1D; `Box(x1,x2,y1,y2)` in 2D; add `(z1,z2)` in 3D. Each upper bound is exclusive: `[x1,x2)`, so `Box(0,4)` visits 0,1,2,3. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped.
+- **Regions** — `Box(x1,x2,...)` selects a rectangular region.
 - **Neighborhoods** — `pal.MooreHood(dim, excludeCenter=False)` · `pal.VonNeumannHood(dim, excludeCenter=False)` · `pal.CircleHood(dim, rad, excludeCenter=False)`. These return relative offsets, not indices; pass them to `grid.Hood(hood, x[,y,z])`. Set `excludeCenter=True` to omit the center.
 
 ## Grid / common indexing
