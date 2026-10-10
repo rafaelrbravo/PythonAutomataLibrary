@@ -68,7 +68,7 @@ field.Diffusion(0.1)
 field.Update()
 ```
 
-Direct `pop[x, y] = n` / `field[x, y] = value` changes current state immediately. `Add` changes only pending state until `Update`.
+Direct `pop[x, y] = n` / `field[x, y] = value` changes current state immediately. `Add` changes only pending state until `Update`. `PopGrid(..., capacity=n)` caps each site at `n`, not the total population.
 
 PDE methods: `Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`, `Advection`, `AdvectionField`, `AdvectionInterfaces`. Radial 1D grids: `DiffusionRadialCircle`, `DiffusionRadialSphere`.
 
