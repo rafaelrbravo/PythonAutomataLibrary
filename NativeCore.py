@@ -1114,15 +1114,17 @@ def _RegionBounds(grid,key,safe):
 def _PDEGetSlice(grid,key,safe):
     bounds,shape=_RegionBounds(grid,key,safe)
     out=np.empty(int(np.prod(shape)),dtype=np.float32)
-    if isinstance(key,slice): _pd_linear_get(grid._ptr,bounds[0],bounds[1],out.ctypes)
-    else: _pd_region_get(grid._ptr,*bounds,out.ctypes)
+    outPtr=out.ctypes.data_as(_F32_PTR)
+    if isinstance(key,slice): _pd_linear_get(grid._ptr,bounds[0],bounds[1],outPtr)
+    else: _pd_region_get(grid._ptr,*bounds,outPtr)
     return out.reshape(shape)
 
 def _PopGetSlice(grid,key,safe):
     bounds,shape=_RegionBounds(grid,key,safe)
     out=np.empty(int(np.prod(shape)),dtype=np.int64)
-    if isinstance(key,slice): _pg_linear_get(grid._ptr,bounds[0],bounds[1],out.ctypes)
-    else: _pg_region_get(grid._ptr,*bounds,out.ctypes)
+    outPtr=out.ctypes.data_as(_I64_PTR)
+    if isinstance(key,slice): _pg_linear_get(grid._ptr,bounds[0],bounds[1],outPtr)
+    else: _pg_region_get(grid._ptr,*bounds,outPtr)
     return out.reshape(shape)
 
 def _CountsGetSlice(grid,key,safe):
