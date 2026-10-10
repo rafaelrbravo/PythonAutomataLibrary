@@ -166,6 +166,9 @@ def test_counts_view_is_read_only_and_slice_is_detached(api):
     counts = g.counts
     assert len(counts) == 20
     assert counts[2, 3] == counts[g.ToI(2, 3)] == 2
+    linear = counts[0:len(g)]
+    assert linear.shape == (20,)
+    assert linear[g.ToI(2, 3)] == 2
     region = counts[:, :]
     assert region.shape == (4, 5)
     assert region[2, 3] == 2
