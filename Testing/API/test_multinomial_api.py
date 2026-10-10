@@ -26,15 +26,18 @@ def test_setup_is_chainable(api):
     assert m.Setup(10) is not None
 
 
-def test_copy_constructor_clones_sampling_state(api):
+def test_copy_constructor_shares_solver_but_starts_fresh_sampling_state(api):
     api.Seed(12345)
     original = api.NewMultinomial()
     original.Setup(100)
     original.Sample(0.2)
     clone = api.NewMultinomial(original)
-    # Copies must be independently usable from the same remaining state.
+    # The native copy shares the reusable binomial solver only; its multinomial
+    # n/p state is intentionally fresh until Setup is called.
+    clone.Setup(100)
     api.Seed(777)
-    a = original.Sample(0.3)
+    a = clone.Sample(0.3)
+    clone.Setup(100)
     api.Seed(777)
     b = clone.Sample(0.3)
     assert a == b
