@@ -44,7 +44,6 @@ def inline(text):
     text = re.sub(r"\[([^]]+)\]\(([^)]+)\)", lambda m: m.group(1), text)
     text = re.sub(r"`([^`]+)`", r'<font name="Courier" size="8.3">\1</font>', text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", text)
-    text = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<i>\1</i>", text)
     return text
 
 def styles(compact=False):
