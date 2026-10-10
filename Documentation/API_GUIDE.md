@@ -279,7 +279,7 @@ field.DiffusionRadialCircle(rateConstant, outerBC=None)
 field.DiffusionRadialSphere(rateConstant, outerBC=None)
 ```
 
-`Diffusion` uses one constant diffusion rate. `DiffusionField` uses spatially varying rates. `DiffusionInterfaces` supplies rates on cell interfaces. `DiffusionMask` restricts diffusion with a mask. `DiffusionADI` provides the alternating-direction implicit solver. Radial methods solve the corresponding radially symmetric circle/sphere geometry.
+`Diffusion` uses one constant diffusion rate. `DiffusionField` uses spatially varying rates. `DiffusionInterfaces` supplies rates on cell interfaces. `DiffusionMask` restricts diffusion with a mask. `DiffusionADI` provides the alternating-direction implicit solver. `DiffusionRadialCircle` and `DiffusionRadialSphere` operate on a nonwrapped 1D radial grid with at least two points; the left edge is the symmetry center and `outerBC` optionally sets the right boundary.
 
 Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxBC`, `zMinBC`, and `zMaxBC` boundary values. Wrapped axes use periodic boundaries. Field/interface arrays must match the grid geometry and dimensionality; safe mode validates these preconditions before changing pending state.
 
