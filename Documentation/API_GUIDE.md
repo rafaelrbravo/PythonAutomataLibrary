@@ -244,7 +244,6 @@ pop.Update()
 | `GetPop()` | Total population over all sites. |
 | `All()` | Copy of the linear indices of currently nonzero sites. |
 | `Reset()` | Clear current populations and pending changes. |
-| `InWrapX/Y/Z(value)` | Wrap a coordinate on the corresponding axis. |
 
 `capacity=None` uses the int64 maximum as the population cap. An explicit `capacity` must be a nonnegative int64 integer; invalid, fractional, nonfinite, or out-of-range values raise `ValueError` during construction. Capacity constrains the **total population**, not an independent limit per site. In safe mode, test births and transfers against capacity and nonnegative-count constraints before switching to fast mode.
 
