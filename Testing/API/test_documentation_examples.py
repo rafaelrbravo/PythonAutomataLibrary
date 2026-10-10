@@ -23,62 +23,43 @@ def test_manual_quickstart(tmp_path):
     assert pop[39, 39] == 10
 
 
-def _cheatsheet_source():
+def _cheatsheet_sections():
     path = Path(__file__).resolve().parents[2] / "Documentation" / "generators" / "generate_cheatsheet.py"
     tree = ast.parse(path.read_text(encoding="utf-8"))
     for node in tree.body:
-        if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "CHEATSHEET" for target in node.targets):
+        if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "SECTIONS" for target in node.targets):
             return ast.literal_eval(node.value)
-    raise AssertionError("CHEATSHEET assignment not found")
+    raise AssertionError("SECTIONS assignment not found")
 
 
-def test_cheatsheet_nonvisual_snippets():
-    """Check the published Grid, AgentGrid, PopGrid/PDEgrid, and list examples."""
-    sheet = _cheatsheet_source()
-    blocks = sheet.split("```python\n")[1:]
-    assert len(blocks) == 5, "Expected four nonvisual examples and one drawing example"
-    for index, block in enumerate(blocks[:4]):
-        snippet = block.split("\n```", 1)[0]
-        ast.parse(snippet)
-        namespace = {"__name__": "pal_cheatsheet_test"}
-        exec("import PythonAutomataLibrary as pal\n" + snippet, namespace)
-        if index == 0:
-            assert namespace["value"] == 1.0
-            assert namespace["copy"].shape == (3, 5)
-        elif index == 1:
-            assert namespace["agents"].GetPop() == 0
-        elif index == 2:
-            assert namespace["pop"].GetPop() == 0
-        elif index == 3:
-            assert list(namespace["snapshot"]) == [4, 8]
+def test_cheatsheet_core_api_coverage():
+    """Ensure the compact cheatsheet retains the main PAL API families."""
+    sections = _cheatsheet_sections()
+    source = repr(sections)
+    for term in (
+        "NewGrid", "NewAgentGrid", "NewPopGrid", "NewPDEgrid", "ToI",
+        "MooreHood", "StartPixWindow", "StartOpenGLWindow", "NewIList",
+        "RandInt", "NewAgentSQ", "AgentsInRadius", "DiffusionADI", "Advection",
+    ):
+        assert term in source, f"Missing core API term: {term}"
+    assert len(sections) >= 6
 
 
-def test_cheatsheet_draw_headless(tmp_path):
-    """Run the published drawing example off-screen and inspect its saved pixel."""
-    import numpy as np
-    import pytest
-    Image = pytest.importorskip("PIL.Image")
+def test_cheatsheet_markup_bolds_syntax_without_monospace():
+    """Keep API tokens bold in sans-serif markup, not rendered in Courier."""
+    path = Path(__file__).resolve().parents[2] / "Documentation" / "generators" / "generate_cheatsheet.py"
+    namespace = runpy.run_path(str(path), run_name="pal_cheatsheet_markup_test")
+    markup = namespace["_markup"]("Call `pal.NewGrid((3, 5), float)` for a grid.")
+    assert markup == "Call <b>pal.NewGrid((3, 5), float)</b> for a grid."
+    assert "Courier" not in path.read_text(encoding="utf-8")
 
-    sheet = _cheatsheet_source()
-    blocks = sheet.split("```python\n")[1:]
-    assert len(blocks) == 5
-    snippet = blocks[4].split("\n```", 1)[0]
-    ast.parse(snippet)
-    snippet = snippet.replace("pal.StartPixWindow(40, 40, scale=4)", "pal.StartPixWindow(40, 40, scale=4, headless=True)")
-    snippet = snippet.replace('"frame.png"', "str(output)")
-    output = tmp_path / "frame.png"
-    namespace = {"output": output}
-    exec("import PythonAutomataLibrary as pal\n" + snippet, namespace)
-    assert output.exists()
-    image = np.asarray(Image.open(output).convert("RGB"))
-    red = np.all(image == [255, 0, 0], axis=2)
-    assert red.sum() == 16, "Expected one 4x4 scaled red pixel"
-    # Headless output transposes x/y and reverses the y axis before scaling.
-    expected_y = (40 - 1 - 12) * 4
-    expected_x = 10 * 4
-    assert red[expected_y:expected_y + 4, expected_x:expected_x + 4].all()
-    assert np.all(image[~red] == 0), "Expected all other pixels to remain black"
 
+def test_cheatsheet_pdf_fits_one_page():
+    """Check the compact PDF renderer still fits its target page."""
+    path = Path(__file__).resolve().parents[2] / "Documentation" / "generators" / "generate_cheatsheet.py"
+    namespace = runpy.run_path(str(path), run_name="pal_cheatsheet_layout_test")
+    _pdf, pages = namespace["_build_pdf"](13.5)
+    assert pages == 1
 
 def test_manual_checkpoint_snippet():
     """Execute the checkpoint example as published in the Manual."""
