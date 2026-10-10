@@ -150,3 +150,54 @@ def test_python_njit_popgrid_state_transition_parity(api, shape):
 
     assert tuple(compiled_work(jit)) == tuple(python_work(py))
     np.testing.assert_array_equal(jit[:], py[:])
+
+
+@pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
+def test_python_njit_popgrid_reset_pending_delta_parity(api, shape):
+    """Reset must discard both committed population and uncommitted additions."""
+    py = api.NewPopGrid(shape, capacity=100)
+    jit = api.NewPopGrid(shape, capacity=100)
+
+    def python_work(g):
+        g.Add(5, *([1] * len(shape)))
+        g.Update()
+        before = g.GetPop()
+        g.Add(9, *([1] * len(shape)))
+        g.Reset()
+        g.Update()
+        return before, g.GetPop()
+
+    if len(shape) == 1:
+        @api.njit
+        def compiled_work(g):
+            g.Add(5, 1)
+            g.Update()
+            before = g.GetPop()
+            g.Add(9, 1)
+            g.Reset()
+            g.Update()
+            return before, g.GetPop()
+    elif len(shape) == 2:
+        @api.njit
+        def compiled_work(g):
+            g.Add(5, 1, 1)
+            g.Update()
+            before = g.GetPop()
+            g.Add(9, 1, 1)
+            g.Reset()
+            g.Update()
+            return before, g.GetPop()
+    else:
+        @api.njit
+        def compiled_work(g):
+            g.Add(5, 1, 1, 1)
+            g.Update()
+            before = g.GetPop()
+            g.Add(9, 1, 1, 1)
+            g.Reset()
+            g.Update()
+            return before, g.GetPop()
+
+    assert tuple(compiled_work(jit)) == tuple(python_work(py)) == (5, 0)
+    np.testing.assert_array_equal(jit[:], py[:])
+    assert not np.any(py[:])
