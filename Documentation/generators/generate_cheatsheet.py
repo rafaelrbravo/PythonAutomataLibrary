@@ -34,14 +34,14 @@ SECTIONS = [
 ("Grid / common indexing", [
 ("Read/write", "`g[x,y]`, `g[x,y]=v`; slices return detached NumPy copies."),
 ("Pattern", "`g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`"),]),
-("Lists + randomness", [
-("IList", "`Append(i)`, `Clear()`, `Random()`, `Shuffle()`, indexing/`len`; `All()` detached copy; `Iter()` no-copy iteration."),
-("RNG", "`pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → `0..n-1`; use PAL RNG for shared-stream reproducibility."),
-("Multinomial", "`m.Binomial(n,p)`; `Setup(...)` then `Sample(...)` for repeated multinomial draws."),]),
 ("Draw / output", [
 ("Pixels", "`pix, win = pal.StartPixWindow(xDim,yDim,scale=1,title='PAL',headless=False)`; set `pix[x,y]=RGB`; `win.Update()`; `win.Save(path, block=True)`; `win.Close()`."),
 ("GIF", "`StartGif(path,delay=100)` · `AddGifFrame(block=False)` · `StopGif()`; call `Update()` before capture."),
-("OpenGL", "`pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`."),]),("AgentGrid", [
+("OpenGL", "`pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`."),]),("Lists + randomness", [
+("IList", "`Append(i)`, `Clear()`, `Random()`, `Shuffle()`, indexing/`len`; `All()` detached copy; `Iter()` no-copy iteration."),
+("RNG", "`pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → `0..n-1`; use PAL RNG for shared-stream reproducibility."),
+("Multinomial", "`m.Binomial(n,p)`; `Setup(...)` then `Sample(...)` for repeated multinomial draws."),]),
+("AgentGrid", [
 ("Create / move", "`NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` for lattice positions; `NewAgent(x,y)` / `Move(a,x,y)` for continuous positions."),
 ("Agent state", "`grid[a,p]` property; `I(a)`, `XSQ/YSQ/ ZSQ(a)` lattice; `X/Y/Z(a)` continuous; `Alive(a)`, `Dispose(a)`."),
 ("Queries", "`GetPop()`, `AgentsAt(...)`, `LastAgent(...)`, `AgentsInRadius(...)`, `counts[...]`."),
@@ -89,7 +89,7 @@ def _build_pdf(body_font):
     box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
     story=[Paragraph(_markup(INTRO),box)]
     for section_i,(title,entries) in enumerate(SECTIONS):
-        if section_i == 5: story.append(FrameBreak())
+        if section_i == 4: story.append(FrameBreak())
         items=[Paragraph(f"<b>{_markup(k)}</b> — {_markup(d)}",entry) for k,d in entries]
         story.append(KeepTogether([Paragraph(title,heading)]+items))
     story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
