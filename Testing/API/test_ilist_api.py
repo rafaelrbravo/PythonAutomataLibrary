@@ -211,3 +211,30 @@ def test_python_njit_ilist_index_after_clear_parity(api):
 
     assert compiled_work(jit) == python_work(py) == (1, 30)
     np.testing.assert_array_equal(jit.All(), py.All())
+
+
+def test_python_njit_ilist_repeated_clear_parity(api):
+    py = api.NewIList()
+    jit = api.NewIList()
+
+    def python_work(q):
+        q.Clear()
+        q.Append(7)
+        q.Clear()
+        q.Clear()
+        q.Append(12)
+        q.Append(14)
+        return len(q), q[0], q[1]
+
+    @api.njit
+    def compiled_work(q):
+        q.Clear()
+        q.Append(7)
+        q.Clear()
+        q.Clear()
+        q.Append(12)
+        q.Append(14)
+        return len(q), q[0], q[1]
+
+    assert compiled_work(jit) == python_work(py) == (2, 12, 14)
+    np.testing.assert_array_equal(jit.All(), py.All())
