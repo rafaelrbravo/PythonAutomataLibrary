@@ -171,3 +171,15 @@ def test_python_box_rejects_invalid_bounds(api):
     for bad in (1.5, True, 2**40):
         with pytest.raises(ValueError, match="int32"):
             list(grid.Box(0, bad, 0, 2))
+
+
+def test_python_hood_maps_offsets_to_linear_sites(api):
+    grid = api.NewGrid((-3, 4), np.int32)
+    hood = ((-1, 0), (0, 0), (1, 0), (0, -1), (0, 1))
+    assert list(grid.Hood(hood, 0, 0)) == [grid.ToI(2, 0), grid.ToI(0, 0), grid.ToI(1, 0), grid.ToI(0, 1)]
+    # Offset order and duplicates are retained; Hood does not deduplicate wrapped sites.
+    assert list(grid.Hood(((0, 0), (3, 0)), 1, 2)) == [grid.ToI(1, 2)] * 2
+    with pytest.raises(TypeError, match="tuple"):
+        list(grid.Hood([(-1, 0)], 1, 2))
+    with pytest.raises(ValueError, match="dimensionality"):
+        list(grid.Hood(((1,),), 1, 2))
