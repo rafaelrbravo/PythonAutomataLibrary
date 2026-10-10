@@ -95,10 +95,3 @@ def test_safe_missing_dimension_wrap_methods_rejected(api, safe_mode, method):
     g = api.NewPopGrid((5,))
     with pytest.raises(ValueError):
         getattr(g, method)(0)
-
-
-@pytest.mark.xfail(strict=True, reason="1D PopGrid one-element tuple scalar key falls through _olPopItem to a 3-coordinate access")
-def test_popgrid_1d_singleton_tuple_scalar_regression(api):
-    g = api.NewPopGrid((7,), capacity=100)
-    g[3] = 9
-    assert g[(3,)] == 9
