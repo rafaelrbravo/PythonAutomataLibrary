@@ -108,7 +108,7 @@ grid[:] = 0
 region = grid[2:5, 3:8]
 ```
 
-Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. The Python wrapper stores Grid data in a native-backed NumPy array; a detached slice copy is not a live view of that storage.
+Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. A detached slice copy is not a live view of the Grid.
 
 ## AgentGrid
 
@@ -168,13 +168,13 @@ agents.AgentsAt(x, y, z)
 agents.counts[x, y, z]
 ```
 
-`LastAgent` returns the most recently stacked agent at a site, or `-1` if the site is empty. Iterate with `for agent in agents.AgentsAt(x, y):` in Python or inside `@pal.njit`. Python iteration uses a runtime-installed wrapper that gathers matching handles; compiled loops are transformed into direct iteration. Do not structurally modify the AgentGrid during Python-side `AgentsAt` iteration. Safe mode detects changes to the grid's agent generation and raises `RuntimeError`; fast mode omits that check. The Python iterator materializes matching handles before yielding them, but this does not make structural changes during iteration supported. In Python, `AgentsAt(i)` also accepts a linear site index, including for multidimensional grids; `AgentsAt(x, y)` and `AgentsAt(x, y, z)` use coordinates. This overload is distinct from the continuous-position `AgentsInRadius` query. `counts` exposes lattice occupancy counts and supports linear-site, coordinate, and slice indexing (`agents.counts[i]`, `agents.counts[x, y]`, or `agents.counts[:, :]`). It is a **read-only query view**, not a second mutable population grid. Slice queries return detached arrays of occupancy counts. A nonspatial (`dimensions=()`) AgentGrid has no lattice counts; querying `len(agents.counts)` raises `ValueError`.
+`LastAgent` returns the most recently stacked agent at a site, or `-1` if the site is empty. Iterate with `for agent in agents.AgentsAt(x, y):` in Python or inside `@pal.njit`. Do not structurally modify the AgentGrid during iteration. Safe mode detects structural changes and raises `RuntimeError`; fast mode omits that check. In Python, `AgentsAt(i)` also accepts a linear site index, including for multidimensional grids; `AgentsAt(x, y)` and `AgentsAt(x, y, z)` use coordinates. This overload is distinct from the continuous-position `AgentsInRadius` query. `counts` exposes lattice occupancy counts and supports linear-site, coordinate, and slice indexing (`agents.counts[i]`, `agents.counts[x, y]`, or `agents.counts[:, :]`). It is a **read-only query view**, not a second mutable population grid. Slice queries return detached arrays of occupancy counts. A nonspatial (`dimensions=()`) AgentGrid has no lattice counts; querying `len(agents.counts)` raises `ValueError`.
 
 By default an `AgentGrid` is not stackable: at most one agent may occupy a lattice site. Set `isStackable=True` when multiple agents per site are required. Safe mode rejects creation or movement into an occupied site on a nonstackable grid without changing model state.
 
 ### Radius iteration
 
-`AgentsInRadius(rad, x[, y[, z]], exclude=None)` iterates agents near a continuous point. It is available in Python through the runtime-installed iterator and in `@pal.njit` loops through PAL's loop transformer. The yielded tuple depends on dimensionality:
+`AgentsInRadius(rad, x[, y[, z]], exclude=None)` iterates agents near a continuous point in Python or inside `@pal.njit`. The yielded tuple depends on dimensionality:
 
 ```python
 for agent, dx in agents1.AgentsInRadius(rad, x):
@@ -229,7 +229,7 @@ pop[x, y] = 10
 pop[:] = 0
 ```
 
-Slice reads are detached NumPy arrays (`int64`); assigning to a slice writes directly to the native population, while modifying a previously read array does not. Both linear slices (`pop[:]`) and spatial slices (`pop[:, :]`) are supported. Population changes can instead be accumulated and applied together:
+Slice reads are detached NumPy arrays (`int64`); assigning to a slice writes to the population, while modifying a previously read array does not. Both linear slices (`pop[:]`) and spatial slices (`pop[:, :]`) are supported. Population changes can instead be accumulated and applied together:
 
 ```python
 pop.Add(delta, x, y)
@@ -253,7 +253,7 @@ pop.Update()
 field = pal.NewPDEgrid((xDim, yDim))
 ```
 
-`PDEgrid` stores a continuous `float32` scalar field. Direct indexing/assignment changes the current field immediately. Slice reads return detached `float32` NumPy arrays; array slice assignment writes to the native field, but editing a previously read slice does not. Linear (`field[:]`) and spatial (`field[:, :]`) slices are supported. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
+`PDEgrid` stores a continuous `float32` scalar field. Direct indexing/assignment changes the current field immediately. Slice reads return detached `float32` NumPy arrays; array slice assignment writes to the field, but editing a previously read slice does not. Linear (`field[:]`) and spatial (`field[:, :]`) slices are supported. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
 
 ### Space and time
 
