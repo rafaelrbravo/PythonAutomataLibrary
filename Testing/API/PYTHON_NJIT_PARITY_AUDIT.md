@@ -32,14 +32,10 @@ The API suite now compares Python and compiled behavior for:
 
 GitHub Actions `pal-api-audit.yml` is the authoritative execution environment. It runs the complete Testing suite on Linux in safe and fast modes and representative Windows safe/fast examples.
 
-Established green checkpoints include run `38068827082` at `7c9c31c7` (Linux safe 637 passed; Linux fast 521 passed, 116 skipped; both Windows jobs successful) and subsequent green extensions through the Grid/PopGrid/PDEgrid/IList/AgentGrid parity additions. The latest Multinomial and PDE Diffusion/Advection additions remain subject to the same CI gate; do not treat them as verified until their push run is observed successful.
+Established green checkpoints include run `38068827082` at `7c9c31c7` (Linux safe 637 passed; Linux fast 521 passed, 116 skipped; both Windows jobs successful) and subsequent green extensions through the Grid/PopGrid/PDEgrid/IList/AgentGrid parity additions. Final verification run `38088056182` completed successfully across all four jobs after the Multinomial and PDE Diffusion/Advection additions. Linux safe: 725 passed. Linux fast: 601 passed, 124 skipped. Both Windows safe/fast example jobs succeeded, and the performance benchmark step succeeded in both Linux modes.
 
-## Remaining scope
+## Completion
 
-No known unresolved Python/`@pal.njit` API discrepancy is currently recorded. Remaining work is verification and opportunistic coverage, not an identified semantic mismatch:
-
-1. Confirm the latest Multinomial and PDE Diffusion/Advection tests in GitHub Actions.
-2. If a new paired test exposes a mismatch, record the exact input/output/state difference here before changing semantics.
-3. Visualization parity is limited to methods intended to compile; renderer/window lifecycle is already covered separately by headless integration tests rather than forced into Python/njit equivalence.
+The planned Python/`@pal.njit` parity audit is complete. No known unresolved public-API semantic mismatch remains. Future paired tests are regression/extension work: if one exposes a mismatch, record the exact input/output/state difference here before changing semantics. Visualization parity remains limited to methods intended to compile; renderer/window lifecycle is covered separately by headless integration tests rather than forced into Python/njit equivalence.
 
 Compiler limitations outside the documented public contract (for example unsupported types beyond a native integer domain) are not parity defects.
