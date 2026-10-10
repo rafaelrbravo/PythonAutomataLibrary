@@ -1,6 +1,7 @@
 """Annotated AST-transformer parity and diagnostic edge contracts."""
 import numpy as np
 import pytest
+import PythonAutomataLibrary as pal
 
 
 def test_annotated_grid_augassign_preserves_value(api):
@@ -8,7 +9,7 @@ def test_annotated_grid_augassign_preserves_value(api):
     g[2] = 5
 
     @api.njit
-    def work(grid: api.Grid):
+    def work(grid: pal.Grid):
         grid[2] += 3
         return grid[2]
 
@@ -21,7 +22,7 @@ def test_annotated_popgrid_augassign_is_immediate_value_write(api):
     g[1] = 5
 
     @api.njit
-    def work(grid: api.PopGrid):
+    def work(grid: pal.PopGrid):
         grid[1] += 3
         return grid[1]
 
@@ -33,7 +34,7 @@ def test_annotated_pde_augassign_is_immediate_value_write(api):
     g[1] = 1.5
 
     @api.njit
-    def work(grid: api.PDEgrid):
+    def work(grid: pal.PDEgrid):
         grid[1] += 2.25
         return grid[1]
 
@@ -46,7 +47,7 @@ def test_annotated_agent_property_augassign(api):
     g[a, 0] = 4.0
 
     @api.njit
-    def work(grid: api.AgentGrid, agent):
+    def work(grid: pal.AgentGrid, agent):
         grid[agent, 0] += 2.5
         return grid[agent, 0]
 
@@ -57,7 +58,7 @@ def test_annotated_ilist_append_keyword_falls_through_with_python_signature(api)
     q = api.NewIList()
 
     @api.njit
-    def work(out: api.IList):
+    def work(out: pal.IList):
         out.Append(value=3)
         return out[0]
 
@@ -70,7 +71,7 @@ def test_annotated_multinomial_keyword_methods_match_positional(api):
     api.Seed(123)
 
     @api.njit
-    def keyword(m: api.Multinomial):
+    def keyword(m: pal.Multinomial):
         m.Setup(n=20)
         return m.Binomial(n=10, p=0.25)
 
@@ -87,7 +88,7 @@ def test_annotated_agent_all_default_and_keyword_shuffle(api):
         g.NewAgentSQ(i)
 
     @api.njit
-    def work(grid: api.AgentGrid):
+    def work(grid: pal.AgentGrid):
         a = grid.All()
         b = grid.All(shuffle=False)
         return a, b
@@ -102,7 +103,7 @@ def test_annotated_safe_grid_augassign_error_reports_line(api, safe_mode):
     g = api.NewGrid((4,), np.int32)
 
     @api.njit
-    def invalid(grid: api.Grid):
+    def invalid(grid: pal.Grid):
         grid[9] += 1
 
     with pytest.raises((IndexError, ValueError), match="source line"):
@@ -115,7 +116,7 @@ def test_annotated_safe_agent_counts_read_error_reports_line(api, safe_mode):
     g = api.NewAgentGrid((4,))
 
     @api.njit
-    def invalid(grid: api.AgentGrid):
+    def invalid(grid: pal.AgentGrid):
         return grid.counts[9]
 
     with pytest.raises((IndexError, ValueError), match="source line"):
