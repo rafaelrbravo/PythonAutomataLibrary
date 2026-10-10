@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - pal-audit-ci-fix
+      - final-pal-verification
   pull_request:
     branches:
       - main
