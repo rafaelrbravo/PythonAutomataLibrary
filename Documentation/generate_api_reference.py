@@ -1,4 +1,4 @@
-"""Regenerate Documentation/API_REFERENCE.md from NativeCore.py without importing PAL.
+"""Regenerate Documentation/source/API_REFERENCE.md from NativeCore.py without importing PAL.
 
 Usage: python Documentation/generate_api_reference.py
        python Documentation/generate_api_reference.py --check
@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "NativeCore.py"
-TARGET = ROOT / "Documentation" / "API_REFERENCE.md"
+TARGET = ROOT / "Documentation" / "source" / "API_REFERENCE.md"
 FACTORIES = ("FastMode", "NewIList", "MooreHood", "VonNeumannHood", "CircleHood",
              "NewMultinomial", "NewGrid", "NewAgentGrid", "NewPopGrid", "NewPDEgrid")
 PROTOCOLS = ("Multinomial", "IList", "AgentGrid", "Grid", "PopGrid", "PDEgrid")
