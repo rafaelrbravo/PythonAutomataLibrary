@@ -24,7 +24,9 @@
 
 ## Grid / common indexing
 
-- **Read/write** — `g[i]` linear index; `g[x,y]` / `g[x,y,z]` coordinates; assign with `g[x,y]=v`. Slices return detached NumPy copies, so editing a slice does not update the grid.
+- **`g[i]`** — Read or write a site by linear index.
+- **`g[x...]`** — Read or write a site using dimensional coordinates.
+- **Slices** — Return detached NumPy copies, not live views; editing a slice does not update the grid.
 - **Pattern** — `g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`; supported dtypes include bool, fixed-width integers, and float32/float64.
 
 ## Draw / output
