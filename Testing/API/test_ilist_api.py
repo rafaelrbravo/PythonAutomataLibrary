@@ -128,3 +128,33 @@ def test_python_njit_ilist_invalid_append_atomic_parity(api, safe_mode, value):
     assert type(python_error.value) is type(compiled_error.value)
     np.testing.assert_array_equal(py.All(), np.array([3, 7]))
     np.testing.assert_array_equal(jit.All(), np.array([3, 7]))
+
+
+def test_python_njit_ilist_iter_live_and_all_copy_parity(api):
+    """Mutating Iter must affect the list, while mutating All must not."""
+    py = api.NewIList()
+    jit = api.NewIList()
+
+    def python_work(q):
+        q.Append(2)
+        q.Append(4)
+        q.Append(6)
+        live = q.Iter()
+        detached = q.All()
+        live[1] = 19
+        detached[0] = 88
+        return q[0], q[1], detached[0], len(q)
+
+    @api.njit
+    def compiled_work(q):
+        q.Append(2)
+        q.Append(4)
+        q.Append(6)
+        live = q.Iter()
+        detached = q.All()
+        live[1] = 19
+        detached[0] = 88
+        return q[0], q[1], detached[0], len(q)
+
+    assert compiled_work(jit) == python_work(py) == (2, 19, 88, 3)
+    np.testing.assert_array_equal(jit.All(), py.All())
