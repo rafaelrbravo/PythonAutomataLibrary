@@ -83,7 +83,7 @@ def test_manual_checkpoint_snippet():
 def test_manual_radius_snippet():
     """Execute the Manual's wrapped radius search exactly as published."""
     manual = (Path(__file__).resolve().parents[2] / "Documentation" / "MANUAL.md").read_text(encoding="utf-8")
-    section = manual.split("### Iterating nearby agents\n", 1)[1].split("\n## 5.", 1)[0]
+    section = manual.split("### Iterating nearby agents\n", 1)[1].split("\n## ", 1)[0]
     assert section.count("```python\n") == 1
     snippet = section.split("```python\n", 1)[1].split("\n```", 1)[0]
     ast.parse(snippet)
