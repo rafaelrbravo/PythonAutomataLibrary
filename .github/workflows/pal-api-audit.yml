@@ -21,7 +21,7 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -U pip pytest numpy numba pillow moderngl
       - name: Install headless OpenGL backend
-        run: sudo apt-get update && sudo apt-get install -y libegl1-mesa libgl1-mesa-dri
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1-mesa-dri
       - run: gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
       - name: Run full Testing suite
         env:
