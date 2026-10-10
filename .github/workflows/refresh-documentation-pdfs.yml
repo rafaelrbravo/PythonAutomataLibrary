@@ -18,7 +18,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Documentation/API_REFERENCE.md Documentation/*.pdf
+          git add Documentation/source/API_REFERENCE.md Documentation/*.pdf
           git diff --cached --quiet && exit 0
           git commit -m "Refresh PAL documentation PDFs"
           git push
