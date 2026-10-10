@@ -20,10 +20,12 @@ jobs:
       - name: Run API audit
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
+          NUMBA_DISABLE_CACHE: '1'
         run: python -m pytest -q Testing/API
       - name: Run full Testing suite
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
+          NUMBA_DISABLE_CACHE: '1'
         run: python -m pytest -q Testing
       - name: API performance benchmark
         if: always()
