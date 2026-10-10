@@ -281,7 +281,7 @@ field.DiffusionRadialSphere(rateConstant, outerBC=None)
 
 `Diffusion` uses one constant diffusion rate. `DiffusionField` uses spatially varying cell-centered rates; each interior face uses the harmonic mean of its two adjacent cell rates, so a zero rate on either side blocks diffusion across that face. `DiffusionInterfaces` supplies the positive-face interface rate for each cell and axis directly; the negative face uses the neighboring cell's stored positive-face rate. `DiffusionMask` treats mask values `>= 0` as active and values `< 0` as blocked; diffusion occurs only between adjacent active cells, so the magnitude of a nonnegative mask value is irrelevant. `DiffusionADI` provides the alternating-direction implicit solver. `DiffusionRadialCircle` and `DiffusionRadialSphere` operate on a nonwrapped 1D radial grid with at least two points; the left edge is the symmetry center and `outerBC` optionally sets the right boundary.
 
-Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxBC`, `zMinBC`, and `zMaxBC` fixed boundary values. On a nonwrapped face, `None` means no flux through that face; wrapped axes are periodic. Field/interface arrays must match the grid geometry and dimensionality. Safe mode validates explicit-scheme stability and inputs before changing pending state.
+Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxBC`, `zMinBC`, and `zMaxBC` fixed boundary values. A boundary may be a scalar applied uniformly across the face or a C-contiguous `float32` array with one value per site on that face; for example, an x-face array has `yDim*zDim` values in 3D. On a nonwrapped face, `None` means no flux through that face; wrapped axes are periodic and do not accept explicit boundary conditions. Field/interface arrays must match the grid geometry and dimensionality. Safe mode validates boundary size/type/finite values, explicit-scheme stability, and other inputs before changing pending state.
 
 ### Advection
 
@@ -291,7 +291,7 @@ field.AdvectionField(xVels, yVels=None, zVels=None, ...)
 field.AdvectionInterfaces(xVels, yVels=None, zVels=None, ...)
 ```
 
-`Advection` uses constant velocity components. `AdvectionField` uses cell-centered velocity fields and averages adjacent values at interior faces. `AdvectionInterfaces` supplies positive-face velocities directly; the negative face uses the neighboring cell's stored positive-face velocity. Supply velocity components only for dimensions that exist. The same optional Cartesian boundary arguments used by diffusion are available: `None` closes a nonwrapped face to advective flux, while a supplied value provides the exterior concentration used for inflow. Safe mode checks the CFL condition before accumulating changes.
+`Advection` uses constant velocity components. `AdvectionField` uses cell-centered velocity fields and averages adjacent values at interior faces. `AdvectionInterfaces` supplies positive-face velocities directly; the negative face uses the neighboring cell's stored positive-face velocity. Supply velocity components only for dimensions that exist. The same scalar-or-face-array Cartesian boundary arguments used by diffusion are available: `None` closes a nonwrapped face to advective flux, while supplied values provide the exterior concentration used for inflow. Safe mode checks the CFL condition before accumulating changes.
 
 ## IList
 
