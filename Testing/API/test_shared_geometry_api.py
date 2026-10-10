@@ -157,3 +157,24 @@ def test_python_hood_named_coordinates_rejected_pending_review(api, kind):
     assert len(expected) == 4
     with pytest.raises(TypeError):
         list(g.Hood(hood=hood, x=1, y=2))
+
+
+@pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
+def test_compiled_hood_named_coordinate_forms_match_positional(api, kind):
+    """Exercise compiled keyword binding that ordinary Python currently rejects."""
+    g = _new(api, kind, (4, 5))
+    hood = api.VonNeumannHood(2, True)
+
+    @api.njit
+    def collect(grid):
+        positional = []
+        named = []
+        for x, y in grid.Hood(hood, 1, 2):
+            positional.append(grid.ToI(x, y))
+        for x, y in grid.Hood(hood=hood, x=1, y=2):
+            named.append(grid.ToI(x, y))
+        return positional, named
+
+    positional, named = collect(g)
+    assert list(named) == list(positional)
+    assert list(named) == [g.ToI(*xy) for xy in g.Hood(hood, 1, 2)]
