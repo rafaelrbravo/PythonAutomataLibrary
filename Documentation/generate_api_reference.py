@@ -33,7 +33,7 @@ def render(source):
         "Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. "
         "Regenerate with `python Documentation/generate_api_reference.py`; "
         "use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; "
-        "consult [API Guide](API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.",
+        "consult [API Guide](../API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.",
         "", "## Factories and utilities", "", "```python",
     ]
     for name in FACTORIES:
@@ -66,7 +66,7 @@ def render(source):
         lines.append("")
     pix_tree = ast.parse((ROOT / "PixWindow.py").read_text(encoding="utf-8"))
     pix_class = next(n for n in pix_tree.body if isinstance(n, ast.ClassDef) and n.name == "Pix")
-    lines.extend(["The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](API_GUIDE.pdf) for which object to use in Python and compiled drawing code.", ""])
+    lines.extend(["The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](../API_GUIDE.pdf) for which object to use in Python and compiled drawing code.", ""])
     lines.extend(["## Pix drawing buffer", "", "| Kind | Declaration |", "| --- | --- |"])
     for member in pix_class.body:
         if isinstance(member, ast.FunctionDef) and (not member.name.startswith("_") or
