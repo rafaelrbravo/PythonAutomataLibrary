@@ -109,3 +109,5 @@ PopGrid slice aliasing CI `38070710248` four jobs SUCCESS: Linux safe **665 pass
 Stacked AgentGrid disposal parity run `38070987884` Linux fast FAILED during test construction: test used unsupported `stacking=True` keyword instead of documented `isStackable=True`; this is a test-authoring error, not a PAL parity finding. Corrected both stacked disposal and movement tests in PAL `75d0aa3d`; await corrected CI before claiming either passed. Prior fully green test-bearing baseline remains IList post-Clear run `38070782957`: Linux safe 666 passed, fast 549 passed/117 skipped, Windows green. No PAL implementation changes.
 
 Corrected stacked AgentGrid tests (`isStackable=True`) remain in CI run `38071157733`; no corrected Linux result yet. Added paired IList repeated `Clear()` regression including clearing an empty list and repeated clearing before reuse, PAL `23cd79cd`; CI pending. No PAL implementation changes.
+
+Added AgentGrid stacked non-top disposal Python/njit parity test PAL 55994c21; checks LastAgent, survivor liveness and population. CI pending. Corrected prior stacked tests also awaiting Linux results. No implementation changes.
