@@ -186,7 +186,7 @@ for agent, dx, dy, dz, distSq in agents3.AgentsInRadius(rad, x, y, z):
     ...
 ```
 
-Displacements account for wrapped axes; `distSq` is squared Euclidean distance in 2D/3D. `exclude` omits a specified agent handle. As with Python-side `AgentsAt`, structural modification during iteration is unsupported, and the generation check is enabled only in safe mode.
+The radius is inclusive: agents with distance exactly `rad` are included. Returned displacements point from the query center to the agent and use the shortest periodic displacement on wrapped axes; `distSq` is their squared Euclidean distance in 2D/3D. `exclude` omits a specified agent handle. As with Python-side `AgentsAt`, structural modification during iteration is unsupported, and the generation check is enabled only in safe mode.
 
 ### Wrapping
 
