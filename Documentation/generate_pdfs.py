@@ -20,11 +20,12 @@ from reportlab.platypus import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "Documentation"
+SOURCE = DOCS / "source"
 DOCUMENTS = {
     "MANUAL": DOCS / "MANUAL.md",
-    "API_GUIDE": DOCS / "API_GUIDE.md",
-    "API_REFERENCE": DOCS / "API_REFERENCE.md",
-    "CHEATSHEET": DOCS / "CHEATSHEET.md",
+    "API_GUIDE": SOURCE / "API_GUIDE.md",
+    "API_REFERENCE": SOURCE / "API_REFERENCE.md",
+    "CHEATSHEET": SOURCE / "CHEATSHEET.md",
 }
 INK = colors.HexColor("#172438")
 ACCENT = colors.HexColor("#245e83")
