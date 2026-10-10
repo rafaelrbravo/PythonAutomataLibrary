@@ -113,3 +113,5 @@ Corrected stacked AgentGrid tests (`isStackable=True`) remain in CI run `3807115
 Added AgentGrid stacked non-top disposal Python/njit parity test PAL 55994c21; checks LastAgent, survivor liveness and population. CI pending. Corrected prior stacked tests also awaiting Linux results. No implementation changes.
 
 Corrected stacked AgentGrid tests run `38071157733`: Linux fast and Windows safe/fast SUCCESS, Linux safe pending. Added paired empty IList `All()` snapshot followed by append test, PAL `e1683729`; verifies original snapshot length remains zero and new list length/index match in Python/njit. CI pending. No implementation changes.
+
+Corrected stacked AgentGrid parity CI `38071157733` all four jobs SUCCESS: Linux safe **668 passed**, fast **551 passed/117 skipped**, Windows safe/fast green. Added paired IList `All()` snapshot retained across `Clear()` and subsequent append, PAL `97018448`; CI pending. No PAL implementation changes.
