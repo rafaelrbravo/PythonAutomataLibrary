@@ -1,6 +1,6 @@
 # PAL Manual
 
-This manual starts with a small working model and then explains how PAL's pieces fit together. Use the [API Guide](API_GUIDE.md) for compact behavior summaries and the [API Reference](API_REFERENCE.md) for signatures.
+This manual starts with a small working model and then explains how PAL's pieces fit together. Use the [API Guide](API_GUIDE.pdf) for compact behavior summaries and the [API Reference](API_REFERENCE.pdf) for signatures. A [PDF copy of this Manual](MANUAL.pdf) is also included for local/offline reading.
 
 ## 1. The model loop
 
