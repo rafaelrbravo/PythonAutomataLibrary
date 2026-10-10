@@ -170,6 +170,21 @@ agents.counts[x, y, z]
 
 By default an `AgentGrid` is not stackable: at most one agent may occupy a lattice site. Set `isStackable=True` when multiple agents per site are required. Safe mode rejects creation or movement into an occupied site on a nonstackable grid without changing model state.
 
+### Radius iteration
+
+`AgentsInRadius(rad, x[, y[, z]], exclude=None)` iterates agents near a continuous point. It is available in Python through the runtime-installed iterator and in `@pal.njit` loops through PAL's loop transformer. The yielded tuple depends on dimensionality:
+
+```python
+for agent, dx in agents1.AgentsInRadius(rad, x):
+    ...
+for agent, dx, dy, distSq in agents2.AgentsInRadius(rad, x, y):
+    ...
+for agent, dx, dy, dz, distSq in agents3.AgentsInRadius(rad, x, y, z):
+    ...
+```
+
+Displacements account for wrapped axes; `distSq` is squared Euclidean distance in 2D/3D. `exclude` omits a specified agent handle. As with Python-side `AgentsAt`, structural modification during iteration is unsupported, and the generation check is enabled only in safe mode.
+
 ### Wrapping
 
 Discrete coordinates:
