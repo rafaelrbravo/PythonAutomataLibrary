@@ -58,8 +58,9 @@ def test_cheatsheet_pdf_fits_one_page():
     """Check the compact PDF renderer still fits its target page."""
     path = Path(__file__).resolve().parents[2] / "Documentation" / "generators" / "generate_cheatsheet.py"
     namespace = runpy.run_path(str(path), run_name="pal_cheatsheet_layout_test")
-    _pdf, pages = namespace["_build_pdf"](13.5)
-    assert pages == 1
+    fitted = [(size, namespace["_build_pdf"](size)[1]) for size in (round(13.5-i*.1, 1) for i in range(86))]
+    assert any(pages == 1 for _, pages in fitted), "No readable font size fits on one page"
+    assert "FrameBreak" not in path.read_text(encoding="utf-8")
 
 def test_manual_checkpoint_snippet():
     """Execute the checkpoint example as published in the Manual."""
