@@ -70,7 +70,7 @@ field.Update()
 
 Direct `pop[x, y] = n` / `field[x, y] = value` changes current state immediately. `Add` changes only pending state until `Update`.
 
-PDE methods: `Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`, `DiffusionRadialCircle`, `DiffusionRadialSphere`, `Advection`, `AdvectionField`, `AdvectionInterfaces`.
+PDE methods: `Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`, `Advection`, `AdvectionField`, `AdvectionInterfaces`. Radial 1D grids: `DiffusionRadialCircle`, `DiffusionRadialSphere`.
 
 ## Lists and randomness
 
