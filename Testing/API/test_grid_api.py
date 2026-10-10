@@ -337,3 +337,31 @@ def test_python_njit_grid_slice_read_write_state_parity(api, shape):
 
     np.testing.assert_array_equal(compiled_work(jit), python_work(py))
     np.testing.assert_array_equal(jit[:], py[:])
+
+
+@pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
+def test_python_njit_grid_to_i_coordinate_parity(api, shape):
+    """Compare coordinate-to-linear mapping at first, interior, and last sites."""
+    g = api.NewGrid(shape, np.int32)
+    if len(shape) == 1:
+        sites = [(0,), (2,), (6,)]
+
+        @api.njit
+        def compiled_indices(grid):
+            return grid.ToI(0), grid.ToI(2), grid.ToI(6)
+    elif len(shape) == 2:
+        sites = [(0, 0), (2, 3), (3, 4)]
+
+        @api.njit
+        def compiled_indices(grid):
+            return grid.ToI(0, 0), grid.ToI(2, 3), grid.ToI(3, 4)
+    else:
+        sites = [(0, 0, 0), (1, 2, 3), (2, 3, 4)]
+
+        @api.njit
+        def compiled_indices(grid):
+            return grid.ToI(0, 0, 0), grid.ToI(1, 2, 3), grid.ToI(2, 3, 4)
+
+    expected = tuple(g.ToI(*site) for site in sites)
+    assert tuple(compiled_indices(g)) == expected
+    assert len(set(expected)) == len(sites)
