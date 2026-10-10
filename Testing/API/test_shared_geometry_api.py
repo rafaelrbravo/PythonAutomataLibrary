@@ -130,33 +130,29 @@ def test_python_njit_box_and_hood_coordinate_parity(api, kind, dims):
 
 
 @pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
-def test_python_hood_unroll_keyword_parity_pending_review(api, kind):
-    """Document current cross-mode discrepancy without forcing a design decision."""
+def test_python_hood_unroll_keyword_matches_default(api, kind):
     g = _new(api, kind, (4, 5))
     hood = api.VonNeumannHood(2, True)
-    assert list(g.Hood(hood, 1, 2)) == [(0, 2), (2, 2), (1, 1), (1, 3)]
-    with pytest.raises((TypeError, ValueError)):
-        list(g.Hood(hood, 1, 2, unroll=True))
+    expected = list(g.Hood(hood, 1, 2))
+    assert expected == [(0, 2), (2, 2), (1, 1), (1, 3)]
+    assert list(g.Hood(hood, 1, 2, unroll=True)) == expected
 
 
 @pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
-def test_python_box_named_bounds_rejected_pending_review(api, kind):
-    """Pin the observed Python input contract pending cross-mode API decision."""
+def test_python_box_named_bounds_match_positional(api, kind):
     g = _new(api, kind, (4, 5))
-    assert list(g.Box(1, 3, 1, 3)) == [(1, 1), (1, 2), (2, 1), (2, 2)]
-    with pytest.raises(TypeError):
-        list(g.Box(x1=1, x2=3, y1=1, y2=3))
+    expected = list(g.Box(1, 3, 1, 3))
+    assert expected == [(1, 1), (1, 2), (2, 1), (2, 2)]
+    assert list(g.Box(x1=1, x2=3, y1=1, y2=3)) == expected
 
 
 @pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
-def test_python_hood_named_coordinates_rejected_pending_review(api, kind):
-    """Document named-coordinate input mismatch without changing the API."""
+def test_python_hood_named_coordinates_match_positional(api, kind):
     g = _new(api, kind, (4, 5))
     hood = api.VonNeumannHood(2, True)
     expected = list(g.Hood(hood, 1, 2))
     assert len(expected) == 4
-    with pytest.raises(TypeError):
-        list(g.Hood(hood=hood, x=1, y=2))
+    assert list(g.Hood(hood=hood, x=1, y=2)) == expected
 
 
 @pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
