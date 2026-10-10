@@ -189,4 +189,4 @@ The repository includes a working example at `Examples/Agents/SaveLoadModel.py`.
 
 ## 10. Where to go next
 
-Read the [API Guide](API_GUIDE.md) for the complete public subsystem map. Consult the [API Reference](API_REFERENCE.md) for current declarations and the repository's `Examples/` for larger models. Use `Testing/` for executable contract examples, especially around boundaries, wrapping, pending updates, and invalid operations.
+Use the [Cheatsheet](CHEATSHEET.md) for short code patterns, the [API Guide](API_GUIDE.md) for behavioral contracts, and the generated [API Reference](API_REFERENCE.md) for current signatures. The repository's `Examples/` contains complete models; `Testing/` contains executable contract checks for boundaries, wrapping, pending updates, and invalid operations. In particular, `Testing/API/test_documentation_examples.py` executes the Manual's quickstart, radius, gradient, and checkpoint snippets so these examples are checked against the implementation.
