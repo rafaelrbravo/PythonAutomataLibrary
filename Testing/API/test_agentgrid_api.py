@@ -304,3 +304,36 @@ def test_python_njit_agent_lifecycle_state_parity(api, dims):
     assert actual[2] == expected[2]
     assert list(py.All()) == list(jit.All())
     assert py.GetPop() == jit.GetPop()
+
+
+def test_python_njit_unstackable_occupancy_failure_atomic_parity(api, safe_mode):
+    """Compare failed creation and movement on occupied sites in safe mode."""
+    if not safe_mode:
+        pytest.skip("Fast mode intentionally omits occupancy checks")
+    py = api.NewAgentGrid((5,))
+    jit = api.NewAgentGrid((5,))
+    py_a, py_b = py.NewAgentSQ(2), py.NewAgentSQ(3)
+    jit_a, jit_b = jit.NewAgentSQ(2), jit.NewAgentSQ(3)
+
+    @api.njit
+    def compiled_create(g):
+        return g.NewAgentSQ(2)
+
+    @api.njit
+    def compiled_move(g, a):
+        g.MoveSQ(a, 2)
+
+    with pytest.raises(ValueError) as py_create_error:
+        py.NewAgentSQ(2)
+    with pytest.raises(ValueError) as jit_create_error:
+        compiled_create(jit)
+    assert type(py_create_error.value) is type(jit_create_error.value)
+    with pytest.raises(ValueError) as py_move_error:
+        py.MoveSQ(py_b, 2)
+    with pytest.raises(ValueError) as jit_move_error:
+        compiled_move(jit, jit_b)
+    assert type(py_move_error.value) is type(jit_move_error.value)
+    assert py.GetPop() == jit.GetPop() == 2
+    assert (py.I(py_a), py.I(py_b)) == (jit.I(jit_a), jit.I(jit_b)) == (2, 3)
+    assert (py.LastAgent(2), py.LastAgent(3)) == (py_a, py_b)
+    assert (jit.LastAgent(2), jit.LastAgent(3)) == (jit_a, jit_b)
