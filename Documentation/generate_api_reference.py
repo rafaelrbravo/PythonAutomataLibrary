@@ -65,6 +65,10 @@ def main():
     result = render(SOURCE.read_text(encoding="utf-8"))
     if args.check:
         if not TARGET.exists() or TARGET.read_text(encoding="utf-8") != result:
+            import difflib
+            current = TARGET.read_text(encoding="utf-8") if TARGET.exists() else ""
+            diff = difflib.unified_diff(current.splitlines(True), result.splitlines(True), fromfile="committed", tofile="generated")
+            print("".join(diff))
             parser.exit(1, "API reference is stale; run Documentation/generate_api_reference.py\n")
         print("API reference is current")
     else:
