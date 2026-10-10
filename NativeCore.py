@@ -1128,8 +1128,9 @@ def _PopGetSlice(grid,key,safe):
 def _CountsGetSlice(grid,key,safe):
     bounds,shape=_RegionBounds(grid,key,safe)
     out=np.empty(int(np.prod(shape)),dtype=np.int32)
-    if isinstance(key,slice): _ag_counts_linear(grid._ptr,bounds[0],bounds[1],out.ctypes)
-    else: _ag_counts_region(grid._ptr,*bounds,out.ctypes)
+    outPtr=out.ctypes.data_as(_I32_PTR)
+    if isinstance(key,slice): _ag_counts_linear(grid._ptr,bounds[0],bounds[1],outPtr)
+    else: _ag_counts_region(grid._ptr,*bounds,outPtr)
     return out.reshape(shape)
 
 def _slice_shape_impl(grid,key,mask):
