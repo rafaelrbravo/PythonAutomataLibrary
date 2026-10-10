@@ -868,6 +868,50 @@ class _OpenGLWindowSafe:
         if not alive: self._Cleanup()
         return alive and not self._visualClosed.is_set()
 
+    def _WaitAck(self,op,token,timeout):
+        end=time.time()+timeout
+        while time.time()<end:
+            try:
+                msg=self._ackQ.get(timeout=min(.1,max(0,end-time.time())))
+                if msg[0]==op and msg[1]==token: return self
+            except queue.Empty:
+                if not self.IsOpen(): raise RuntimeError(f"OpenGLWindow closed while waiting for {op}")
+        raise TimeoutError(f"timed out waiting for OpenGLWindow {op}")
+
+    def StartGif(self,path,delay=100):
+        if not self.IsOpen(): raise Exception("cannot start GIF on a closed OpenGLWindow")
+        if self._gifActive: raise Exception("an OpenGLWindow GIF is already active")
+        if not isinstance(path,(str,Path)): raise Exception(f"GIF path must be a string or Path path:{path}")
+        _Finite('delay',delay)
+        if delay<=0: raise Exception(f"GIF delay must be positive delay:{delay}")
+        self._token+=1;token=self._token
+        self._cmdQ.put(('gif_start',str(Path(path)),int(delay),token))
+        self._WaitAck('gif_start',token,30)
+        self._gifActive=True
+        return self
+
+    def AddGifFrame(self,block=False,timeout=30):
+        if not self.IsOpen(): raise Exception("cannot add GIF frame from a closed OpenGLWindow")
+        if not self._gifActive: raise Exception("StartGif must be called before AddGifFrame")
+        if not isinstance(block,bool): raise Exception(f"block must be bool block:{block}")
+        _Finite('timeout',timeout)
+        if timeout<=0: raise Exception(f"timeout must be positive timeout:{timeout}")
+        kinds,data,colors=_OutputFrameSnapshot(self)
+        self._token+=1;token=self._token
+        self._cmdQ.put(('gif_frame',token,kinds,data,colors))
+        if block: return self._WaitAck('gif_frame',token,timeout)
+        return self
+
+    def StopGif(self,timeout=30):
+        if not self._gifActive: raise Exception("no OpenGLWindow GIF is active")
+        _Finite('timeout',timeout)
+        if timeout<=0: raise Exception(f"timeout must be positive timeout:{timeout}")
+        self._token+=1;token=self._token
+        self._cmdQ.put(('gif_stop',token))
+        self._WaitAck('gif_stop',token,timeout)
+        self._gifActive=False
+        return self
+
     def Update(self):
         _FlushDraw(self)
         return self
