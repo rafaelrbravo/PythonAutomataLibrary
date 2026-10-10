@@ -23,11 +23,10 @@ jobs:
         run: python -m pytest -q Testing/API
       - name: Keyword-fix pre-change benchmark
         if: always()
-        working-directory: ..
         env:
           PAL_BENCH_MODE: ${{ matrix.mode }}
           NUMBA_DISABLE_CACHE: '1'
         run: |
           for i in 1 2 3 4 5; do
-            python PythonAutomataLibrary/Testing/benchmark_keyword_binding.py
+            PYTHONPATH=.. python Testing/benchmark_keyword_binding.py
           done
