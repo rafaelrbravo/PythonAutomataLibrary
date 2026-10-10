@@ -1,6 +1,6 @@
 # PAL public API coverage inventory — 2026-10-09
 
-This inventory maps the intended public surface to dedicated `Testing/API` coverage and the older algorithmic suite. The authoritative integration gate is now the complete `Testing/` tree, which includes all dedicated API tests. GitHub Actions run `38027661459` completed from repository source with zero failures/xfails: safe **558 passed, 2 skipped**; fast **458 passed, 102 skipped**. Windows Python 3.12/MSVC also passed Persian plus four representative real-example regressions in both modes.
+This inventory maps the intended public surface to dedicated `Testing/API` coverage and the older algorithmic suite. The authoritative integration gate is the complete `Testing/` tree, which includes all dedicated API tests. The audited implementation was promoted to `main`; the permanent `PAL API Audit` workflow now runs on pushes to `main` and pull requests targeting `main` (and retains the historical audit-branch trigger). Main run `38028359559` completed from repository source with zero failures/xfails: safe **558 passed, 2 skipped**; fast **458 passed, 102 skipped**. Windows Python 3.12/MSVC also passed Persian plus four representative real-example regressions in both modes.
 
 | Surface | Dedicated API coverage | Verified status / remaining limitation |
 |---|---|---|
