@@ -2,8 +2,6 @@
 
 This inventory maps the intended public surface to dedicated `Testing/API` coverage and the older algorithmic suite. Dedicated API execution is now verified in GitHub Actions from repository source: safe **267 passed**; fast **205 passed, 62 intentional skips**; zero failures and zero xfails at commit `3be0b19742fdc4189fdb5629309093ad4ead7813`.
 
-| Surface | Dedicated API coverage | Older suite / status | Remaining gap |
-|---|---|---|---|
 | Surface | Dedicated API coverage | Verified status / remaining limitation |
 |---|---|---|
 | Global mode / constructors | `test_constructors.py` | Verified safe/fast |
