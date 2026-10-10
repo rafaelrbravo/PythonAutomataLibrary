@@ -5007,7 +5007,7 @@ def _PythonHoodIndices(grid,hood,*coords):
                 valid=False;break
             vals.append(int(v))
         if valid:
-            yield grid.ToI(*vals)
+            yield vals[0] if dim==1 else tuple(vals)
 
 def _PythonBox(self,*bounds):
     if len(bounds) not in (2,4,6): raise TypeError("Box expects x1,x2[,y1,y2[,z1,z2]]")
