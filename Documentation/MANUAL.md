@@ -46,7 +46,7 @@ Choose a representation based on what the model must preserve, not just on the n
 
 A grid accepts linear lattice indices. In a 2D grid, `ToI(x, y)` converts coordinates to an index, and `ItoX(i)` and `ItoY(i)` convert back. Grid geometry is exposed as attributes such as `xDim`, `yDim`, `nDims`, and `wrapX`, not methods.
 
-PAL provides `MooreHood`, `VonNeumannHood`, and `CircleHood`. They return relative integer offsets. `grid.Hood(hood, x, y)` maps a neighborhood around a site, taking the grid's periodic boundaries into account. `grid.Box(...)` iterates a half-open rectangular region.
+PAL provides `MooreHood`, `VonNeumannHood`, and `CircleHood`. They return relative integer offsets. `grid.Hood(hood, x, y)` maps those offsets to **linear site indices**, wrapping periodic axes and omitting sites outside nonperiodic axes. It preserves the order and duplicates of the supplied offsets. `grid.Box(...)` instead iterates coordinates in a half-open rectangular region; in 2D it yields `(x, y)` tuples, not linear indices. A box wider than a wrapped axis can also visit a site more than once. This distinction matters when using the results for indexing versus coordinate-based operations.
 
 ## 4. Individual agents
 
