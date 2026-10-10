@@ -45,7 +45,9 @@ grid = pal.NewAgentGrid((-100, 100))   # x wraps, y does not
 grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
 ```
 
-`numAgentProps` is the number of per-agent floating-point properties. `isStackable=True` allows multiple agents at one lattice site. `PopGrid.capacity` is an optional nonnegative total-population limit.
+`numAgentProps` is the number of per-agent floating-point properties. It must be a nonnegative integer fitting AgentGrid's int32 metadata budget (which also reserves entries for spatial dimensions); fractional, nonfinite, negative, or oversized values raise `ValueError`. `isStackable` accepts booleans or `0`/`1`; other values raise `ValueError`. When false, at most one agent occupies each lattice site. `PopGrid.capacity` is an optional nonnegative total-population limit.
+
+`NewMultinomial(other)` accepts another PAL Multinomial in the **same safety mode** and copies its solver configuration, not its current sampling state. An unrelated object raises `TypeError`; mixing safe and fast samplers raises `ValueError`. Create a new sampler without `other` to use the default solver.
 
 ## Shared spatial API
 
