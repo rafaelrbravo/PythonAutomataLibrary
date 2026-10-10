@@ -1,10 +1,8 @@
 # PAL Cheatsheet
 
-`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`.
-
 ## Conventions
 
-- **Coordinate notation** — `x...` means `x,y` in 2D and `x,y,z` in 3D. `Box(x1,x2,...)` lists lower/upper bounds for each axis; upper bounds are exclusive. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped.
+`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`. `x...` means `x,y` in 2D and `x,y,z` in 3D. `Box(x1,x2,...)` lists lower/upper bounds for each axis; upper bounds are exclusive. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped.
 
 ## Create state
 
