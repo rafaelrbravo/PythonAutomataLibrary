@@ -40,8 +40,14 @@ SECTIONS = [
 ("`g[i]`", "Read or write a site by linear index."), ("`g[x...]`", "Read or write a site using dimensional coordinates."), ("Slices", "Return detached NumPy copies, not live views; editing a slice does not update the grid."),
 ("Pattern", "`g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`; supported dtypes include bool, fixed-width integers, and float32/float64."),]),
 ("Draw / output", [
-("Pixels", "`pix, win = pal.StartPixWindow(xDim,yDim,scale=1,title='PAL',headless=False)`; set `pix[x,y]=RGB`; `win.Update()`; `win.Save(path, block=True)`; `win.Close()`."),
-("GIF", "`StartGif(path,delay=100)` · `AddGifFrame(block=False)` · `StopGif()`; call `Update()` before capture."),
+("`pal.StartPixWindow(...)`", "Create a pixel buffer and display window; `headless=True` supports noninteractive rendering."),
+("`pix[x,y] = RGB`", "Set a pixel color in the shared pixel buffer."),
+("`win.Update()`", "Refresh the displayed window after drawing."),
+("`win.Save(path, block=True)`", "Save the current image; blocking waits for completion."),
+("`win.Close()`", "Close the window and release display resources."),
+("`StartGif(path,delay=100)`", "Begin recording an animated GIF with the requested frame delay."),
+("`AddGifFrame(block=False)`", "Append the current rendered frame to the GIF."),
+("`StopGif()`", "Finish the GIF; update the window before capturing frames."),
 ("OpenGL", "`pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`."),]),("Lists + randomness", [
 ("IList methods", "`Append(i)` adds an integer; `Clear()` empties the list; `Random()` picks an entry; `Shuffle()` reorders entries; `All()` copies the list; `Iter()` traverses without copying."),
 ("`pal.Seed(seed)`", "Seed PAL’s shared random stream for reproducible call sequences."),
