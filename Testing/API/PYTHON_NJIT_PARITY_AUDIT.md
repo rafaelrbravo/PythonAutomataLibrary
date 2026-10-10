@@ -115,3 +115,5 @@ Added AgentGrid stacked non-top disposal Python/njit parity test PAL 55994c21; c
 Corrected stacked AgentGrid tests run `38071157733`: Linux fast and Windows safe/fast SUCCESS, Linux safe pending. Added paired empty IList `All()` snapshot followed by append test, PAL `e1683729`; verifies original snapshot length remains zero and new list length/index match in Python/njit. CI pending. No implementation changes.
 
 Corrected stacked AgentGrid parity CI `38071157733` all four jobs SUCCESS: Linux safe **668 passed**, fast **551 passed/117 skipped**, Windows safe/fast green. Added paired IList `All()` snapshot retained across `Clear()` and subsequent append, PAL `97018448`; CI pending. No PAL implementation changes.
+
+IList repeated Clear CI `38071234273` all four jobs SUCCESS: Linux safe **669 passed**, fast **552 passed/117 skipped**; Windows green. Stacked AgentGrid non-top disposal CI `38071297077` all four jobs SUCCESS: Linux safe **670 passed**, fast **553 passed/117 skipped**; Windows green. Manual coordinates section corrected site indices vs continuous positions and stale Hood linear-index claim, PAL `a233bae4`. No implementation changes.
