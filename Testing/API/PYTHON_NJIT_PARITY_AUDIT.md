@@ -11,7 +11,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 | H-03 | `grid.Hood(hood=..., x=..., y=...)` | Python `_PythonHood(self,hood,*coords)` rejects named coordinate arguments | Compiled AST `_bind_args(call,('hood','x','y','z','unroll'),...)` accepts them | Source-confirmed; not executed | Decide whether Python should support named hood coordinates |
 | H-02 | `grid.Hood(hood, x[, y[, z]], unroll=True)` | Keyword rejected by Python fallback `_PythonHood(self,hood,*coords)` | Accepted by AST transformer as compile-time bool literal | Source-confirmed mismatch, not yet executed | Consider accepting `unroll` as a Python no-op; user decision pending |
 
-## Paired test inventory (committed; CI execution underway)
+## Paired test inventory (committed; CI verified)
 
 - `test_shared_geometry_api.py::test_python_njit_box_and_hood_coordinate_parity`: Grid/PopGrid/PDEgrid × 1D/2D/3D; exact ordered wrapped Box/Hood results.
 - `test_agentgrid_api.py::test_python_njit_agentgrid_hood_and_box_order_parity`: AgentGrid × 1D/2D/3D; exact ordered wrapped results.
@@ -35,7 +35,7 @@ GitHub Actions workflow `pal-api-audit.yml` executes the full `Testing` suite on
 
 ## Next systematic sweep
 
-1. Confirm GitHub Actions Linux safe/fast runs on or after `7c9c31c7` and inspect any remaining failures; Windows examples have already passed.
+1. Preserve the four-job green baseline from run `38068827082` (`7c9c31c7`); investigate any future regressions against it.
 2. Add paired tests for AgentGrid construction, lifecycle, movement, property access, iteration snapshots and mutation.
 3. Add paired tests for Grid scalar and slice indexing, argument defaults and keywords, and validation exceptions.
 4. Compare IList, RNG and Multinomial operations and return types, distinguishing seeded-stream equivalence from stochastic distribution equivalence.
@@ -61,3 +61,5 @@ CI run `38068743749` (6e8f760d) completed with Windows safe/fast success and exa
 CI follow-up: run `38068827082` on 1D Hood test fix `7c9c31c7`: Windows safe/fast completed successfully, Linux safe/fast still in progress when checked. No fresh failures established; do not claim green until both Linux jobs finish.
 
 Post-fix CI result: run `38068827082` on `7c9c31c7` completed Linux fast successfully (**521 passed, 116 skipped**, 91.66 s) and Windows safe/fast successfully. Linux safe remained in progress when checked. This validates the corrected 1D Hood test in fast mode and all newly added compiled keyword/unroll regressions within the passing fast suite; full four-job success remains pending safe completion.
+
+**Four-job green baseline:** GitHub Actions run [`38068827082`](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38068827082) on `7c9c31c7` completed SUCCESS. Linux safe **637 passed** in 165.86s; Linux fast **521 passed, 116 skipped** in 91.66s; Windows safe and fast examples both SUCCESS. This executes the committed Python/compiled geometry parity and named-argument/unroll regressions. G-01/H-02/H-03 remain user-review API design discrepancies, not CI failures.
