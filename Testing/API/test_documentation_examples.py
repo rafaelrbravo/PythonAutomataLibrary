@@ -23,8 +23,17 @@ def test_cheatsheet_nonvisual_snippets():
     sheet = (Path(__file__).resolve().parents[2] / "Documentation" / "CHEATSHEET.md").read_text(encoding="utf-8")
     blocks = sheet.split("```python\n")[1:]
     assert len(blocks) >= 4, "Expected four nonvisual Cheatsheet examples"
-    for block in blocks[:4]:
+    for index, block in enumerate(blocks[:4]):
         snippet = block.split("\n```", 1)[0]
         ast.parse(snippet)
         namespace = {"__name__": "pal_cheatsheet_test"}
         exec("import PythonAutomataLibrary as pal\n" + snippet, namespace)
+        if index == 0:
+            assert namespace["value"] == 1.0
+            assert namespace["copy"].shape == (3, 5)
+        elif index == 1:
+            assert namespace["agents"].GetPop() == 0
+        elif index == 2:
+            assert namespace["pop"].GetPop() == 0
+        elif index == 3:
+            assert list(namespace["snapshot"]) == [4, 8]
