@@ -137,3 +137,12 @@ def test_python_hood_unroll_keyword_parity_pending_review(api, kind):
     assert list(g.Hood(hood, 1, 2)) == [(0, 2), (1, 1), (1, 3), (2, 2)]
     with pytest.raises((TypeError, ValueError)):
         list(g.Hood(hood, 1, 2, unroll=True))
+
+
+@pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
+def test_python_box_named_bounds_rejected_pending_review(api, kind):
+    """Pin the observed Python input contract pending cross-mode API decision."""
+    g = _new(api, kind, (4, 5))
+    assert list(g.Box(1, 3, 1, 3)) == [(1, 1), (1, 2), (2, 1), (2, 2)]
+    with pytest.raises(TypeError):
+        list(g.Box(x1=1, x2=3, y1=1, y2=3))
