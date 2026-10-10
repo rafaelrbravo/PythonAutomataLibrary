@@ -32,7 +32,10 @@ SECTIONS = [
 ("`ToI(x...)`", "Convert 1D/2D/3D coordinates into one linear site index."),
 ("`ItoX/Y/Z(i)`", "Convert a linear site index back to its axis coordinate."),
 ("Regions", "`Box(x1,x2,...)` selects a rectangular region; each axis has a lower bound and exclusive upper bound."),
-("Neighborhoods", "`pal.MooreHood(dim, excludeCenter=False)` · `pal.VonNeumannHood(dim, excludeCenter=False)` · `pal.CircleHood(dim, rad, excludeCenter=False)`. These return relative offsets, not indices; pass them to `grid.Hood(hood, x[,y,z])`. Set `excludeCenter=True` to omit the center."),]),
+("`pal.MooreHood(dim, excludeCenter=False)`", "Build offsets for all neighboring sites, including diagonals."),
+("`pal.VonNeumannHood(dim, excludeCenter=False)`", "Build axis-aligned offsets, excluding diagonal neighbors."),
+("`pal.CircleHood(dim, rad, excludeCenter=False)`", "Build offsets within a radius; hood constructors return relative offsets, not absolute indices."),
+("`grid.Hood(hood, x...)`", "Apply relative offsets at a coordinate; `excludeCenter=True` omits the center when constructing the hood."),]),
 ("Grid / common indexing", [
 ("`g[i]`", "Read or write a site by linear index."), ("`g[x...]`", "Read or write a site using dimensional coordinates."), ("Slices", "Return detached NumPy copies, not live views; editing a slice does not update the grid."),
 ("Pattern", "`g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`; supported dtypes include bool, fixed-width integers, and float32/float64."),]),
@@ -41,8 +44,11 @@ SECTIONS = [
 ("GIF", "`StartGif(path,delay=100)` · `AddGifFrame(block=False)` · `StopGif()`; call `Update()` before capture."),
 ("OpenGL", "`pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`."),]),("Lists + randomness", [
 ("IList methods", "`Append(i)` adds an integer; `Clear()` empties the list; `Random()` picks an entry; `Shuffle()` reorders entries; `All()` copies the list; `Iter()` traverses without copying."),
-("RNG", "`pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → integer `0..n-1`; seed once for repeatable runs. PAL calls share a call-order-dependent random stream distinct from NumPy’s RNG."),
-("Multinomial", "`m.Binomial(n,p)`; `Setup(...)` then `Sample(...)` for repeated multinomial draws."),]),
+("`pal.Seed(seed)`", "Seed PAL’s shared random stream for reproducible call sequences."),
+("`pal.Random()`", "Draw a uniform random number from PAL’s random stream."),
+("`pal.RandInt(n)`", "Draw an integer from 0 through n−1; n must be positive. PAL’s stream is separate from NumPy’s RNG."),
+("`m.Binomial(n,p)`", "Draw a binomial count with n trials and probability p."),
+("`m.Setup(...)` / `m.Sample(...)`", "Configure a multinomial sampler, then draw counts from it."),]),
 ("AgentGrid", [
 ("Create / move", "`NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` use lattice coordinates; `NewAgent(x,y)` / `Move(a,x,y)` use continuous positions. In 2D/3D, SQ forms take coordinates (or a linear index where supported); do not mix the two position systems."),
 ("Agent state", "`grid[a,p]` reads/writes property `p`; `I(a)` is linear site index; `XSQ/YSQ/ZSQ(a)` are lattice coordinates; `X/Y/Z(a)` are continuous coordinates. Check `Alive(a)` before use when agents may be disposed; `Dispose(a)` removes an agent."),
