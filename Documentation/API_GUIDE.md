@@ -37,7 +37,7 @@ def Step(grid: pal.AgentGrid):
 | `NewIList()` | Reusable integer query/list container. |
 | `NewMultinomial(other=None)` | Binomial/multinomial sampler. |
 
-Spatial grids use one to three dimensions. A **negative dimension enables wrapping on that axis** while its absolute value gives the size:
+Spatial grids use one to three nonzero integer dimensions. A **negative dimension enables wrapping on that axis** while its absolute value gives the size. `AgentGrid` alone also accepts `()` for a zero-dimensional nonspatial population:
 
 ```python
 grid = pal.NewAgentGrid((100, 100))    # 100 x 100, no wrapping
@@ -45,7 +45,7 @@ grid = pal.NewAgentGrid((-100, 100))   # x wraps, y does not
 grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
 ```
 
-`AgentGrid` additionally supports a zero-dimensional form for nonspatial agent populations.
+`numAgentProps` is the number of per-agent floating-point properties. `isStackable=True` allows multiple agents at one lattice site. `PopGrid.capacity` is an optional nonnegative total-population limit.
 
 ## Shared spatial API
 
@@ -76,7 +76,7 @@ grid.Hood(hood, x, y)
 grid.Hood(hood, x, y, z)
 ```
 
-`Box` returns lattice indices in the requested rectangular region. `Hood` maps a neighborhood's relative offsets around a lattice position, respecting the grid's wrapping behavior.
+`Box` iterates coordinates in the half-open rectangular region `[x1, x2)`, `[y1, y2)`, `[z1, z2)` for the dimensions supplied. `Hood` maps a neighborhood's relative offsets around a lattice position, respecting the grid's wrapping behavior.
 
 Built-in neighborhoods:
 
@@ -86,7 +86,7 @@ pal.VonNeumannHood(dim, excludeCenter=False)
 pal.CircleHood(dim, rad, excludeCenter=False)
 ```
 
-`MooreHood` contains offsets with each coordinate in `[-1, 1]`. `VonNeumannHood` contains the center and axis-adjacent offsets. `CircleHood` contains integer offsets whose Euclidean distance from the center is at most `rad`. Set `excludeCenter=True` to omit the zero offset.
+`MooreHood` contains offsets with each coordinate in `[-1, 1]`. `VonNeumannHood` contains the center and axis-adjacent offsets. `CircleHood` contains integer offsets whose Euclidean distance from the center is at most `rad`; `rad` may be noninteger. Set `excludeCenter=True` to omit the zero offset. All three constructors support dimensions 1–3.
 
 ## Grid
 
