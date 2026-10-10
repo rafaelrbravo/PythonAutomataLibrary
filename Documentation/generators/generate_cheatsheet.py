@@ -19,7 +19,7 @@ MD_TARGET = ROOT / "Documentation" / "CHEATSHEET.md"
 PDF_TARGET = ROOT / "Documentation" / "CHEATSHEET.pdf"
 TITLE = "Python Automata Library (PAL) Cheat Sheet"
 INTRO = "`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`."
-CONVENTIONS = "`x...` means `x,y` in 2D and `x,y,z` in 3D. `Box(x1,x2,...)` lists lower/upper bounds for each axis; upper bounds are exclusive. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped."
+CONVENTIONS = "`dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D; `dims=()` is nonspatial. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D. `Box(x1,x2,...)` alternates lower and exclusive upper bounds per axis. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes."
 
 SECTIONS = [
 ("Create state", [
