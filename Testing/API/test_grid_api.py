@@ -183,3 +183,47 @@ def test_python_hood_maps_offsets_to_coordinates(api):
         list(grid.Hood([(-1, 0)], 1, 2))
     with pytest.raises(ValueError, match="dimensionality"):
         list(grid.Hood(((1,),), 1, 2))
+
+
+@pytest.mark.parametrize("shape", [(7,), (5, 6), (4, 5, 6)])
+def test_python_njit_grid_scalar_mutation_parity(api, shape):
+    """Compare coordinate assignment, linear indexing, and full-array state."""
+    py = api.NewGrid(shape, np.int32)
+    jit = api.NewGrid(shape, np.int32)
+
+    def python_work(g):
+        site = tuple(1 for _ in shape)
+        key = site if len(shape) > 1 else site[0]
+        g[key] = 11
+        index = g.ToI(*site)
+        before = g[index]
+        g[index] = -4
+        return index, before, g[key]
+
+    if len(shape) == 1:
+        @api.njit
+        def compiled_work(g):
+            g[1] = 11
+            index = g.ToI(1)
+            before = g[index]
+            g[index] = -4
+            return index, before, g[1]
+    elif len(shape) == 2:
+        @api.njit
+        def compiled_work(g):
+            g[1, 1] = 11
+            index = g.ToI(1, 1)
+            before = g[index]
+            g[index] = -4
+            return index, before, g[1, 1]
+    else:
+        @api.njit
+        def compiled_work(g):
+            g[1, 1, 1] = 11
+            index = g.ToI(1, 1, 1)
+            before = g[index]
+            g[index] = -4
+            return index, before, g[1, 1, 1]
+
+    assert compiled_work(jit) == python_work(py)
+    np.testing.assert_array_equal(jit[:], py[:])
