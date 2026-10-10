@@ -27,7 +27,7 @@ def test_cheatsheet_nonvisual_snippets():
     """Check the published Grid, AgentGrid, PopGrid/PDEgrid, and list examples."""
     sheet = (Path(__file__).resolve().parents[2] / "Documentation" / "CHEATSHEET.md").read_text(encoding="utf-8")
     blocks = sheet.split("```python\n")[1:]
-    assert len(blocks) >= 4, "Expected four nonvisual Cheatsheet examples"
+    assert len(blocks) == 5, "Expected four nonvisual examples and one drawing example"
     for index, block in enumerate(blocks[:4]):
         snippet = block.split("\n```", 1)[0]
         ast.parse(snippet)
