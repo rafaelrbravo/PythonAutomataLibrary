@@ -89,6 +89,8 @@ count = m.Binomial(20, 0.3)
 
 ## Draw
 
+This example opens a window and requires a graphical display; the nonvisual snippets above are covered by automated tests.
+
 ```python
 pix, window = pal.StartPixWindow(40, 40, scale=4)
 x, y = 10, 12
