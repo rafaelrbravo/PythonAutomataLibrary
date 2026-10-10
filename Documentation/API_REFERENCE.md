@@ -1,6 +1,6 @@
 # PAL API Reference
 
-Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. Regenerate rather than editing signature tables manually. These declarations describe the annotation/autocomplete surface; consult [API Guide](API_GUIDE.md) for behavior and the implementation/tests for authoritative runtime semantics.
+Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. Regenerate with `python Documentation/generate_api_reference.py`; use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; consult [API Guide](API_GUIDE.md) for behavior and the implementation/tests for runtime semantics.
 
 ## Factories and utilities
 
@@ -180,4 +180,4 @@ NewPDEgrid(dimensions)
 
 ## Scope and validation
 
-This reference deliberately lists public Protocol signatures, not internal safe/fast jitclass methods. A signature here is not evidence that every runtime overload, Python indexing form, or validation rule is represented. See the API Guide and executable tests. Visualization APIs are not yet included in the Protocol surface and must be documented separately.
+This reference lists public Protocol signatures, not internal safe/fast jitclass methods. A signature does not capture every runtime overload, indexing form, or validation rule. See the API Guide and executable tests. Visualization APIs are not yet included in the Protocol surface and must be documented separately.
