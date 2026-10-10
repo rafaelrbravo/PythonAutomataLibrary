@@ -127,3 +127,13 @@ def test_python_njit_box_and_hood_coordinate_parity(api, kind, dims):
     compiled_box, compiled_hood = collect(g)
     assert list(compiled_box) == python_box
     assert list(compiled_hood) == python_hood
+
+
+@pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
+def test_python_hood_unroll_keyword_parity_pending_review(api, kind):
+    """Document current cross-mode discrepancy without forcing a design decision."""
+    g = _new(api, kind, (4, 5))
+    hood = api.VonNeumannHood(2, True)
+    assert list(g.Hood(hood, 1, 2)) == [(0, 2), (1, 1), (1, 3), (2, 2)]
+    with pytest.raises((TypeError, ValueError)):
+        list(g.Hood(hood, 1, 2, unroll=True))
