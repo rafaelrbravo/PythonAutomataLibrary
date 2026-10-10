@@ -25,7 +25,11 @@ def test_manual_quickstart(tmp_path):
 
 def _cheatsheet_source():
     path = Path(__file__).resolve().parents[2] / "Documentation" / "generate_cheatsheet.py"
-    return runpy.run_path(str(path))["CHEATSHEET"]
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "CHEATSHEET" for target in node.targets):
+            return ast.literal_eval(node.value)
+    raise AssertionError("CHEATSHEET assignment not found")
 
 
 def test_cheatsheet_nonvisual_snippets():
