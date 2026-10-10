@@ -1,0 +1,25 @@
+name: PAL API Audit
+on:
+  push:
+    paths:
+      - 'NativeCore.py'
+      - 'pal_native.c'
+      - 'Testing/**'
+      - '.github/workflows/pal-api-audit.yml'
+jobs:
+  api-audit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        mode: [safe, fast]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -U pip pytest numpy numba
+      - run: gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
+      - name: Run API audit
+        env:
+          PAL_TEST_FAST: ${{ matrix.mode == 'fast' && '1' || '0' }}
+        run: python -m pytest -q Testing/API
