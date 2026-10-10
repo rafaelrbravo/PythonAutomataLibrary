@@ -64,7 +64,7 @@ pop.Reset()       # clear current + pending
 field = pal.NewPDEgrid((40, 40))
 dt, dx, dy = 0.01, 1.0, 1.0
 field.SetTimeSpaceStep(dt, dx, dy)
-field.Diffusion(rateConstant)
+field.Diffusion(0.1)
 field.Update()
 ```
 
