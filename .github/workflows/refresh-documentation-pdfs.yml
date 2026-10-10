@@ -1,11 +1,11 @@
-name: Refresh documentation PDFs
+name: Refresh documentation
 on:
   workflow_dispatch:
   push:
     branches:
       - main
     paths:
-      - 'Documentation/generate_*.py'
+      - 'Documentation/generators/*.py'
       - '.github/workflows/refresh-documentation-pdfs.yml'
 permissions:
   contents: write
@@ -20,15 +20,15 @@ jobs:
       - run: python -m pip install reportlab==5.0.1
       - name: Generate documentation
         run: |
-          python Documentation/generate_manual.py
-          python Documentation/generate_api_guide.py
-          python Documentation/generate_api_reference.py
-          python Documentation/generate_cheatsheet.py
+          python Documentation/generators/generate_manual.py
+          python Documentation/generators/generate_api_guide.py
+          python Documentation/generators/generate_api_reference.py
+          python Documentation/generators/generate_cheatsheet.py
       - name: Commit generated documentation
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Documentation/MANUAL.md Documentation/*.pdf
+          git add Documentation/*.md Documentation/*.pdf
           git diff --cached --quiet && exit 0
-          git commit -m "Refresh PAL documentation PDFs"
+          git commit -m "Refresh PAL documentation"
           git push

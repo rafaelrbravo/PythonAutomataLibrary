@@ -1,16 +1,17 @@
-"""Generate Documentation/API_REFERENCE.pdf from PAL source without importing PAL.
+"""Generate Documentation/API_REFERENCE.md and API_REFERENCE.pdf from PAL source without importing PAL.
 
-Usage: python Documentation/generate_api_reference.py
-       python Documentation/generate_api_reference.py --check
+Usage: python Documentation/generators/generate_api_reference.py
+       python Documentation/generators/generate_api_reference.py --check
 """
 import argparse
 import ast
 from pathlib import Path
 from generate_pdfs import render as render_pdf
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "NativeCore.py"
-TARGET = ROOT / "Documentation" / "API_REFERENCE.pdf"
+MD_TARGET = ROOT / "Documentation" / "API_REFERENCE.md"
+PDF_TARGET = ROOT / "Documentation" / "API_REFERENCE.pdf"
 FACTORIES = ("FastMode", "NewIList", "MooreHood", "VonNeumannHood", "CircleHood",
              "NewMultinomial", "NewGrid", "NewAgentGrid", "NewPopGrid", "NewPDEgrid")
 PROTOCOLS = ("Multinomial", "IList", "AgentGrid", "Grid", "PopGrid", "PDEgrid")
@@ -32,9 +33,9 @@ def render(source):
     lines = [
         "# PAL API Reference", "",
         "Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. "
-        "Regenerate with `python Documentation/generate_api_reference.py`; "
+        "Regenerate with `python Documentation/generators/generate_api_reference.py`; "
         "use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; "
-        "consult [API Guide](../API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.",
+        "consult [API Guide](API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.",
         "", "## Factories and utilities", "", "```python",
     ]
     for name in FACTORIES:
@@ -67,7 +68,7 @@ def render(source):
         lines.append("")
     pix_tree = ast.parse((ROOT / "PixWindow.py").read_text(encoding="utf-8"))
     pix_class = next(n for n in pix_tree.body if isinstance(n, ast.ClassDef) and n.name == "Pix")
-    lines.extend(["The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](../API_GUIDE.pdf) for which object to use in Python and compiled drawing code.", ""])
+    lines.extend(["The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](API_GUIDE.pdf) for which object to use in Python and compiled drawing code.", ""])
     lines.extend(["## Pix drawing buffer", "", "| Kind | Declaration |", "| --- | --- |"])
     for member in pix_class.body:
         if isinstance(member, ast.FunctionDef) and (not member.name.startswith("_") or
@@ -99,14 +100,18 @@ def main():
     parser.add_argument("--check", action="store_true", help="fail if generated output differs")
     args = parser.parse_args()
     markdown = render(SOURCE.read_text(encoding="utf-8"))
-    result = render_pdf(markdown, "API_REFERENCE")
+    markdown = markdown.rstrip() + "\n"
+    pdf = render_pdf(markdown, "API_REFERENCE")
     if args.check:
-        if not TARGET.exists() or TARGET.read_bytes() != result:
-            parser.exit(1, "API reference PDF is stale; run Documentation/generate_api_reference.py\n")
-        print("API_REFERENCE.pdf is current")
+        stale = (not MD_TARGET.exists() or MD_TARGET.read_text(encoding="utf-8") != markdown or
+                 not PDF_TARGET.exists() or PDF_TARGET.read_bytes() != pdf)
+        if stale:
+            parser.exit(1, "Stale or missing API Reference artifacts; run Documentation/generators/generate_api_reference.py\n")
+        print("API_REFERENCE.md and API_REFERENCE.pdf are current")
     else:
-        TARGET.write_bytes(result)
-        print(f"Wrote {TARGET.relative_to(ROOT)} ({len(result)} bytes)")
+        MD_TARGET.write_text(markdown, encoding="utf-8")
+        PDF_TARGET.write_bytes(pdf)
+        print(f"Wrote {MD_TARGET.relative_to(ROOT)} and {PDF_TARGET.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

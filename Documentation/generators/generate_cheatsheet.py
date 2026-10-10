@@ -1,13 +1,14 @@
-"""Generate PAL CHEATSHEET.pdf from the Python-owned cheatsheet content.
+"""Generate PAL CHEATSHEET.md and CHEATSHEET.pdf from one Python-owned content definition.
 
-Usage: python Documentation/generate_cheatsheet.py [--check]
+Usage: python Documentation/generators/generate_cheatsheet.py [--check]
 """
 import argparse
 from pathlib import Path
 from generate_pdfs import render
 
-ROOT = Path(__file__).resolve().parents[1]
-TARGET = ROOT / "Documentation" / "CHEATSHEET.pdf"
+ROOT = Path(__file__).resolve().parents[2]
+MD_TARGET = ROOT / "Documentation" / "CHEATSHEET.md"
+PDF_TARGET = ROOT / "Documentation" / "CHEATSHEET.pdf"
 
 CHEATSHEET = r'''# PAL Cheatsheet
 
@@ -113,26 +114,30 @@ window.Close()
 
 For 2D/3D geometry use `pal.StartOpenGLWindow(...)` with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`, `Camera`, `Background`, and `Clear`. Headless OpenGL requires a supported rendering backend.
 
-**More detail:** [Manual](../MANUAL.md) · [API Guide](../API_GUIDE.pdf) · [API Reference](../API_REFERENCE.pdf).
+**More detail:** [Manual](MANUAL.md) · [API Guide](API_GUIDE.pdf) · [API Reference](API_REFERENCE.pdf).
 '''
 
 
 def build():
-    return render(CHEATSHEET, "CHEATSHEET")
+    markdown = CHEATSHEET.rstrip() + "\n"
+    return markdown, render(markdown, "CHEATSHEET")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    result = build()
+    markdown, pdf = build()
     if args.check:
-        if not TARGET.exists() or TARGET.read_bytes() != result:
-            parser.exit(1, "Stale or missing Documentation/CHEATSHEET.pdf; run generate_cheatsheet.py\n")
-        print("CHEATSHEET.pdf is current")
+        stale = (not MD_TARGET.exists() or MD_TARGET.read_text(encoding="utf-8") != markdown or
+                 not PDF_TARGET.exists() or PDF_TARGET.read_bytes() != pdf)
+        if stale:
+            parser.exit(1, "Stale or missing Cheatsheet artifacts; run Documentation/generators/generate_cheatsheet.py\n")
+        print("CHEATSHEET.md and CHEATSHEET.pdf are current")
     else:
-        TARGET.write_bytes(result)
-        print(f"Wrote {TARGET.relative_to(ROOT)} ({len(result)} bytes)")
+        MD_TARGET.write_text(markdown, encoding="utf-8")
+        PDF_TARGET.write_bytes(pdf)
+        print(f"Wrote {MD_TARGET.relative_to(ROOT)} and {PDF_TARGET.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

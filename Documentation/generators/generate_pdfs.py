@@ -14,7 +14,7 @@ from reportlab.platypus import (
     SimpleDocTemplate, Spacer, Table, TableStyle,
 )
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "Documentation"
 
 INK = colors.HexColor("#172438")

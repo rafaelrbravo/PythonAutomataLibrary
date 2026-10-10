@@ -1,17 +1,18 @@
 """Generate PAL API_GUIDE.pdf from Python-owned guide content.
 
-Usage: python Documentation/generate_api_guide.py [--check]
+Usage: python Documentation/generators/generate_api_guide.py [--check]
 """
 import argparse
 from pathlib import Path
 from generate_pdfs import render
 
-ROOT = Path(__file__).resolve().parents[1]
-TARGET = ROOT / "Documentation" / "API_GUIDE.pdf"
+ROOT = Path(__file__).resolve().parents[2]
+MD_TARGET = ROOT / "Documentation" / "API_GUIDE.md"
+PDF_TARGET = ROOT / "Documentation" / "API_GUIDE.pdf"
 
 API_GUIDE = r'''# PAL API Guide
 
-This guide is the compact human reference for PAL's public API. It consolidates behavior shared across PAL objects instead of repeating the same geometry, indexing, wrapping, and compilation rules for each class. For current public signatures, use the generated [API Reference](../API_REFERENCE.pdf). For learning PAL from the beginning, use the [Manual](../MANUAL.md). For runnable syntax at a glance, use the [Cheatsheet](../CHEATSHEET.pdf).
+This guide is the compact human reference for PAL's public API. It consolidates behavior shared across PAL objects instead of repeating the same geometry, indexing, wrapping, and compilation rules for each class. For current public signatures, use the generated [API Reference](API_REFERENCE.pdf). For learning PAL from the beginning, use the [Manual](MANUAL.md). For runnable syntax at a glance, use the [Cheatsheet](CHEATSHEET.pdf).
 
 ## Core use
 
@@ -432,21 +433,25 @@ These structures are designed to be composed inside the same compiled model step
 
 
 def build():
-    return render(API_GUIDE, "API_GUIDE")
+    markdown = API_GUIDE.rstrip() + "\n"
+    return markdown, render(markdown, "API_GUIDE")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    result = build()
+    markdown, pdf = build()
     if args.check:
-        if not TARGET.exists() or TARGET.read_bytes() != result:
-            parser.exit(1, "Stale or missing Documentation/API_GUIDE.pdf; run generate_api_guide.py\n")
-        print("API_GUIDE.pdf is current")
+        stale = (not MD_TARGET.exists() or MD_TARGET.read_text(encoding="utf-8") != markdown or
+                 not PDF_TARGET.exists() or PDF_TARGET.read_bytes() != pdf)
+        if stale:
+            parser.exit(1, "Stale or missing API Guide artifacts; run Documentation/generators/generate_api_guide.py\n")
+        print("API_GUIDE.md and API_GUIDE.pdf are current")
     else:
-        TARGET.write_bytes(result)
-        print(f"Wrote {TARGET.relative_to(ROOT)} ({len(result)} bytes)")
+        MD_TARGET.write_text(markdown, encoding="utf-8")
+        PDF_TARGET.write_bytes(pdf)
+        print(f"Wrote {MD_TARGET.relative_to(ROOT)} and {PDF_TARGET.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

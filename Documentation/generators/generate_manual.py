@@ -1,12 +1,12 @@
 """Generate PAL MANUAL.md and MANUAL.pdf from one Python-owned content definition.
 
-Usage: python Documentation/generate_manual.py [--check]
+Usage: python Documentation/generators/generate_manual.py [--check]
 """
 import argparse
 from pathlib import Path
 from generate_pdfs import render
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "Documentation"
 MD_TARGET = DOCS / "MANUAL.md"
 PDF_TARGET = DOCS / "MANUAL.pdf"
@@ -241,7 +241,7 @@ def main():
             stale.append("MANUAL.pdf")
         if stale:
             parser.exit(1, "Stale or missing: " + ", ".join(stale) +
-                        "; run python Documentation/generate_manual.py\n")
+                        "; run python Documentation/generators/generate_manual.py\n")
         print("MANUAL.md and MANUAL.pdf are current")
         return
     MD_TARGET.write_bytes(md)

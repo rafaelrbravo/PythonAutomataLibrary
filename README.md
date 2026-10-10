@@ -21,10 +21,10 @@ PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL 
 
 ## Documentation
 
-- [Manual](Documentation/MANUAL.md) ([PDF](Documentation/MANUAL.pdf)) — first model, numerical update rules, architecture, and workflow. Markdown is retained for GitHub browsing.
-- [API Guide](Documentation/API_GUIDE.pdf) — consolidated API behavior and examples.
-- [API Reference](Documentation/API_REFERENCE.pdf) — source-derived public signatures.
-- [Cheatsheet](Documentation/CHEATSHEET.pdf) — compact two-page lookup for common operations.
+- [Manual](Documentation/MANUAL.md) ([PDF](Documentation/MANUAL.pdf)) — first model, numerical update rules, architecture, and workflow.
+- [API Guide](Documentation/API_GUIDE.md) ([PDF](Documentation/API_GUIDE.pdf)) — consolidated API behavior and examples.
+- [API Reference](Documentation/API_REFERENCE.md) ([PDF](Documentation/API_REFERENCE.pdf)) — source-derived public signatures.
+- [Cheatsheet](Documentation/CHEATSHEET.md) ([PDF](Documentation/CHEATSHEET.pdf)) — compact two-page lookup for common operations.
 - `Examples/` — complete working models.
 - [Testing](Testing/README.md) — correctness, API, integration, and regression tests, with local and CI run instructions.
 

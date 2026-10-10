@@ -22,16 +22,18 @@ jobs:
       - run: python -m pip install -U pip pytest numpy numba pillow moderngl reportlab==5.0.1
       - name: Verify generated documentation
         run: |
-          python Documentation/generate_manual.py --check
-          python Documentation/generate_api_guide.py --check
-          python Documentation/generate_api_reference.py --check
-          python Documentation/generate_cheatsheet.py --check
-      - name: Upload documentation PDFs
+          python Documentation/generators/generate_manual.py --check
+          python Documentation/generators/generate_api_guide.py --check
+          python Documentation/generators/generate_api_reference.py --check
+          python Documentation/generators/generate_cheatsheet.py --check
+      - name: Upload generated documentation
         if: matrix.mode == 'safe'
         uses: actions/upload-artifact@v4
         with:
-          name: pal-documentation-pdfs
-          path: Documentation/*.pdf
+          name: pal-documentation
+          path: |
+            Documentation/*.md
+            Documentation/*.pdf
           if-no-files-found: error
           retention-days: 14
       - name: Install headless OpenGL backend
