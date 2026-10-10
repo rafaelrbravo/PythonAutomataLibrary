@@ -50,7 +50,8 @@ jobs:
       - name: Build native DLL with MSVC
         shell: cmd
         run: |
-          call "%ProgramFiles%\\Microsoft Visual Studio\\2022\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat"
+          for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSINSTALL=%%i"
+          call "%VSINSTALL%\\VC\\Auxiliary\\Build\\vcvars64.bat"
           cl /O2 /LD pal_native.c /Fe:pal_native.dll
       - name: Run Windows real-example regressions
         env:
