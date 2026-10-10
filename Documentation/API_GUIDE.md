@@ -78,7 +78,7 @@ grid.Hood(hood, x, y)
 grid.Hood(hood, x, y, z)
 ```
 
-`Box` iterates coordinates in the half-open rectangular region `[x1, x2)`, `[y1, y2)`, `[z1, z2)` for the dimensions supplied. It yields an integer in 1D, `(x, y)` in 2D, and `(x, y, z)` in 3D. Bounds must be int32 integers, and the number of bound pairs must match grid dimensionality. On wrapped axes, out-of-range coordinates are wrapped; on nonwrapped axes, they are skipped. A box wider than a wrapped axis can therefore yield repeated sites. `Hood` maps a neighborhood's relative offsets around a lattice position, respecting the grid's wrapping behavior.
+`Box` iterates coordinates in the half-open rectangular region `[x1, x2)`, `[y1, y2)`, `[z1, z2)` for the dimensions supplied. It yields an integer in 1D, `(x, y)` in 2D, and `(x, y, z)` in 3D. Bounds must be int32 integers, and the number of bound pairs must match grid dimensionality. On wrapped axes, out-of-range coordinates are wrapped; on nonwrapped axes, they are skipped. A box wider than a wrapped axis can therefore yield repeated sites. `Hood` maps a tuple of relative-offset tuples around a lattice position to **linear site indices**, preserving offset order. Wrapped coordinates are mapped into the grid, nonwrapped out-of-range coordinates are omitted, and duplicate indices are retained. Offset tuple lengths must match the supplied coordinate count; invalid neighborhood shapes raise an error.
 
 Built-in neighborhoods:
 
