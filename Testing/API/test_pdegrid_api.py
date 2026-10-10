@@ -177,3 +177,54 @@ def test_python_njit_pdegrid_add_update_state_parity(api, shape):
 
     assert compiled_work(jit) == pytest.approx(python_work(py))
     np.testing.assert_allclose(jit[:], py[:], rtol=0, atol=1e-6)
+
+
+@pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
+def test_python_njit_pdegrid_reset_pending_delta_parity(api, shape):
+    """Compare reset after both committed and pending floating-field updates."""
+    py = api.NewPDEgrid(shape)
+    jit = api.NewPDEgrid(shape)
+
+    def python_work(g):
+        g.Add(1.25, *([1] * len(shape)))
+        g.Update()
+        before = g[tuple([1] * len(shape)) if len(shape) > 1 else 1]
+        g.Add(3.5, *([1] * len(shape)))
+        g.Reset()
+        g.Update()
+        return before, g[tuple([1] * len(shape)) if len(shape) > 1 else 1]
+
+    if len(shape) == 1:
+        @api.njit
+        def compiled_work(g):
+            g.Add(1.25, 1)
+            g.Update()
+            before = g[1]
+            g.Add(3.5, 1)
+            g.Reset()
+            g.Update()
+            return before, g[1]
+    elif len(shape) == 2:
+        @api.njit
+        def compiled_work(g):
+            g.Add(1.25, 1, 1)
+            g.Update()
+            before = g[1, 1]
+            g.Add(3.5, 1, 1)
+            g.Reset()
+            g.Update()
+            return before, g[1, 1]
+    else:
+        @api.njit
+        def compiled_work(g):
+            g.Add(1.25, 1, 1, 1)
+            g.Update()
+            before = g[1, 1, 1]
+            g.Add(3.5, 1, 1, 1)
+            g.Reset()
+            g.Update()
+            return before, g[1, 1, 1]
+
+    assert compiled_work(jit) == pytest.approx(python_work(py))
+    np.testing.assert_allclose(jit[:], py[:], rtol=0, atol=1e-6)
+    assert not np.any(py[:])
