@@ -26,7 +26,7 @@ if __name__ == "__main__":
     main()
 ```
 
-The example contains 1,600 sites and runs 10 increments per site, so the final total population is 16,000. `Add` accumulates changes; `Update` applies them together. That distinction is useful when one site's update must not affect its neighbors during the same timestep.
+The example contains 1,600 sites and runs 10 increments per site, so the final total population is 16,000. `Add` accumulates changes; `Update` applies them together. That distinction is useful when one site's update must not affect its neighbors during the same timestep. The printed value is `16000`; every site contains `10`.
 
 Begin in PAL's default **safe mode**. Only select `pal.FastMode()` before constructing any PAL object, after the model is validated and when performance measurements justify it.
 
@@ -56,7 +56,9 @@ A `PDEgrid` also provides diffusion and advection. Set the timestep and spatial 
 
 ### Numerical update order
 
-The timestep order is part of the model. Adding a value to a population or field accumulates a pending change; Update applies the pending changes together. Direct assignment changes current state immediately. This lets the model distinguish synchronous updates from sequential ones. For diffusion, test stability and convergence by varying timestep and grid spacing. Safe-mode checks do not replace numerical validation.
+The timestep order is part of the model. For example, queue all births and deaths in a `PopGrid` before calling `Update()` if changes must be simultaneous. Reading current counts while queuing deltas then uses the same starting population throughout the step. By contrast, assigning directly to `pop[x, y]` changes the value that subsequent calculations read. Mixing immediate assignments and queued changes is possible, but their order then changes the model.
+
+For a `PDEgrid`, transport routines accumulate changes that become current at `Update()`. Check timestep stability and convergence by varying the timestep and grid spacing. Safe-mode checks do not replace numerical validation.
 
 ## 6. Compiled model code
 
