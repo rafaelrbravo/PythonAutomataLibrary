@@ -2,6 +2,10 @@
 import numpy as np
 import pytest
 
+# Annotation markers recognized by PAL's source-line diagnostic transformer.
+PopGrid = object
+PDEgrid = object
+
 
 def test_compiled_popgrid_add_update_and_all(api):
     g = api.NewPopGrid((8,), capacity=100)
@@ -77,7 +81,7 @@ def test_compiled_safe_popgrid_error_contains_source_line(api, safe_mode):
     g = api.NewPopGrid((4,), capacity=10)
 
     @api.njit
-    def invalid(grid):
+    def invalid(grid: PopGrid):
         grid.Add(-1, 0)
         grid.Update()
 
@@ -94,7 +98,7 @@ def test_compiled_safe_unstable_diffusion_contains_source_line(api, safe_mode):
     g.SetTimeSpaceStep(1.0, 1.0)
 
     @api.njit
-    def invalid(grid):
+    def invalid(grid: PDEgrid):
         grid.Diffusion(0.6)
 
     with pytest.raises(ValueError) as exc:
