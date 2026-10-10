@@ -106,7 +106,7 @@ grid[:] = 0
 region = grid[2:5, 3:8]
 ```
 
-Slice reads return copies. Scalar and slice access work in Python and compiled PAL model code. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype.
+Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype.
 
 ## AgentGrid
 
@@ -168,7 +168,7 @@ agents.counts[x, y, z]
 
 `LastAgent` returns the most recently stacked agent at a site, or `-1` if the site is empty. `AgentsAt` returns the agents occupying the site. `counts` exposes lattice occupancy counts and supports the same scalar/coordinate/slice indexing conventions used by PAL grids.
 
-By default an `AgentGrid` is not stackable: at most one agent may occupy a lattice site. Set `isStackable=True` when multiple agents per site are required.
+By default an `AgentGrid` is not stackable: at most one agent may occupy a lattice site. Set `isStackable=True` when multiple agents per site are required. Safe mode rejects creation or movement into an occupied site on a nonstackable grid without changing model state.
 
 ### Wrapping
 
@@ -219,7 +219,7 @@ pop.Add(delta, x, y)
 pop.Update()
 ```
 
-`Add` changes the pending delta, not the current value. `Update()` applies all pending changes simultaneously. This is useful when a timestep should not depend on iteration order.
+`Add` changes the pending delta, not the current value: `GetPop()`, indexing, and `All()` continue to report the current population until `Update()`. `Update()` applies all pending changes simultaneously. This is useful when a timestep should not depend on iteration order.
 
 | Operation | Meaning |
 | --- | --- |
@@ -228,7 +228,7 @@ pop.Update()
 | `Reset()` | Clear current populations and pending changes. |
 | `InWrapX/Y/Z(value)` | Wrap a coordinate on the corresponding axis. |
 
-`capacity` optionally limits the total population representable by the grid. Slice reads are detached copies. `All()` reflects the current population only: pending `Add` changes do not appear until `Update()`.
+`capacity` optionally limits the total population representable by the grid. Slice reads return detached NumPy copies. Slice reads are detached copies. `All()` reflects the current population only: pending `Add` changes do not appear until `Update()`.
 
 ## PDEgrid
 
@@ -236,7 +236,7 @@ pop.Update()
 field = pal.NewPDEgrid((xDim, yDim))
 ```
 
-`PDEgrid` stores a continuous scalar field. Direct indexing/assignment changes the current field immediately. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
+`PDEgrid` stores a continuous `float32` scalar field. Direct indexing/assignment changes the current field immediately. Slice reads return detached NumPy copies. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
 
 ### Space and time
 
@@ -248,7 +248,7 @@ field.Dy()
 field.Dz()
 ```
 
-Transport methods use these spacings. `dt`, `dx`, `dy`, and `dz` must be finite and positive in safe mode.
+Transport methods use these spacings. `Dy()` and `Dz()` apply only when those dimensions exist; safe mode rejects missing-dimension access. `dt`, `dx`, `dy`, and `dz` must be finite and positive in safe mode.
 
 ### Diffusion
 
@@ -264,7 +264,7 @@ field.DiffusionRadialSphere(rateConstant, outerBC=None)
 
 `Diffusion` uses one constant diffusion rate. `DiffusionField` uses spatially varying rates. `DiffusionInterfaces` supplies rates on cell interfaces. `DiffusionMask` restricts diffusion with a mask. `DiffusionADI` provides the alternating-direction implicit solver. Radial methods solve the corresponding radially symmetric circle/sphere geometry.
 
-Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxBC`, `zMinBC`, and `zMaxBC` boundary values. Wrapped axes use periodic boundaries.
+Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxBC`, `zMinBC`, and `zMaxBC` boundary values. Wrapped axes use periodic boundaries. Field/interface arrays must match the grid geometry and dimensionality; safe mode validates these preconditions before changing pending state.
 
 ### Advection
 
@@ -274,7 +274,7 @@ field.AdvectionField(xVels, yVels=None, zVels=None, ...)
 field.AdvectionInterfaces(xVels, yVels=None, zVels=None, ...)
 ```
 
-`Advection` uses constant velocity components. `AdvectionField` uses spatial velocity fields. `AdvectionInterfaces` supplies velocities at cell interfaces. The same optional Cartesian boundary arguments used by diffusion are available.
+`Advection` uses constant velocity components. `AdvectionField` uses spatial velocity fields. `AdvectionInterfaces` supplies velocities at cell interfaces. Supply velocity components only for dimensions that exist. The same optional Cartesian boundary arguments used by diffusion are available.
 
 ## IList
 
