@@ -227,3 +227,25 @@ def test_python_njit_grid_scalar_mutation_parity(api, shape):
 
     assert compiled_work(jit) == python_work(py)
     np.testing.assert_array_equal(jit[:], py[:])
+
+
+@pytest.mark.parametrize("bad_index", [-1, 12])
+def test_python_njit_grid_invalid_linear_read_atomic_parity(api, safe_mode, bad_index):
+    """Safe mode should reject invalid reads without changing grid contents."""
+    if not safe_mode:
+        pytest.skip("Fast mode deliberately omits bounds checks")
+    py = api.NewGrid((4, 3), np.int32)
+    jit = api.NewGrid((4, 3), np.int32)
+    py[:, :] = np.arange(12, dtype=np.int32).reshape(4, 3)
+    jit[:, :] = np.arange(12, dtype=np.int32).reshape(4, 3)
+
+    @api.njit
+    def compiled_read(g, index):
+        return g[index]
+
+    with pytest.raises((IndexError, ValueError)) as python_error:
+        _ = py[bad_index]
+    with pytest.raises((IndexError, ValueError)) as compiled_error:
+        compiled_read(jit, bad_index)
+    assert type(python_error.value) is type(compiled_error.value)
+    np.testing.assert_array_equal(jit[:, :], py[:, :])
