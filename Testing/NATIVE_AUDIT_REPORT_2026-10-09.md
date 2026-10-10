@@ -1,3 +1,47 @@
+# PAL correctness and API audit — 2026-10-09
+
+## Current integration baseline
+
+Audit branch: `pal-audit-ci-fix`. Current candidate head: `0a513f66ec599760959589e7599cfb1d1e99ccab`.
+
+GitHub Actions rebuilds the native library from repository source on every run under Python 3.12. Linux uses GCC and runs the complete `Testing/` tree once per safe/fast process. Windows uses MSVC discovered with `vswhere` and runs the real Persian regression plus representative BirthDeath, PopGridExample, ReactionDiffusion2D, and DiffusionAdvection3D smoke tests.
+
+At run `38027661459`, Linux fast completed cleanly: **458 passed, 102 skipped, zero failures/xfails** in 41.88 s. Windows safe and fast both completed successfully on the same head. Linux safe was still running when this report section was refreshed; do not claim its final count until that job completes.
+
+The prior authoritative clean full-suite baseline before adding the five real-example tests was run `38025875438`: safe **553 passed, 2 skipped**; fast **453 passed, 102 skipped**. The +5 fast count on the current head is exactly the added real-source regression layer.
+
+## Accepted PAL implementation corrections
+
+1. **Compiled Grid wrap keyword binding** — `NativeCore.py` overload parameter names now preserve `InWrapX(x=...)`, `InWrapY(y=...)`, and `InWrapZ(z=...)` in compiled code. Source commit `c567c072`; regression promotion `485c5b49`.
+2. **Safe 1D ItoX parity** — AgentGrid, PopGrid, and PDEgrid safe native ItoX implementations now return the linear coordinate in 1D, matching fast/native behavior. Final correction commit `8c785eb4`; focused regression `4b3a7ca`.
+3. **Annotated Grid slice assignment/access** — source-aware transformed Grid helpers now delegate slice-containing keys to normal Grid indexing, fixing real code such as Persian's `types[:] = COOPERATOR`. Source commit `46036a26`; promoted regressions `7ddbbf23`.
+
+All three changes were benchmarked before/after in safe and fast modes using fresh-process cache-disabled cold compilation and repeated hot execution. No reproducible runtime regression was accepted.
+
+## Current coverage
+
+Dedicated API coverage now spans constructors/hoods, Grid, AgentGrid, PopGrid, PDEgrid, IList, Multinomial, random, shared geometry, transformer diagnostics, visualization/headless GIF, ColorScale, cross-API composition, and real repository examples. Tests exercise Python vs `@pal.njit`, safe vs fast, positional/keyword/default calls, dimensions, wrapping/boundaries, invalid inputs, invariants, and composed kernels where applicable.
+
+Windows Python 3.12/MSVC now directly validates the original Persian failure family in both safe and fast modes. Full OpenGL window lifecycle remains backend/display dependent; constructor/headless Pix/GIF/AwaitWindows behavior is covered.
+
+## Contract clarifications, not defects
+
+- IList `Append` keyword is `i`, not `value`.
+- PopGrid singleton scalar tuple indexing `(0,)` is outside the supported contract.
+- `RandInt` is constrained to positive int64 bounds; values beyond int64 are unsupported.
+- Hood constructor coercion has some Python-type oddities (for example bool behaving as integer); these are retained behavior, not demonstrated correctness failures.
+- AgentGrid linear-index `NewAgentSQ(i)` and `MoveSQ(agent, i)` are deliberately supported in all dimensions.
+
+## CI/cache note
+
+PAL's source transformer creates dynamically compiled Numba functions. Running the real-example tests in two separate pytest invocations in the same workspace can leave/reload artifacts referring to synthetic module `<dynamic>`. This was a CI duplication artifact: `pytest Testing/API` followed by `pytest Testing` ran the same API tests twice. The workflow now uses the complete `pytest Testing` invocation as the single authoritative correctness gate; it already contains all API tests. This preserves coverage without cache-cleanup hacks.
+
+---
+
+## Historical audit record
+
+The material below records earlier staged-source, packaging, and exploratory evidence. Where it conflicts with the current integration baseline above, the current baseline supersedes it.
+
 # PAL native correctness audit — 2026-10-09
 
 ## Scope and source integrity
