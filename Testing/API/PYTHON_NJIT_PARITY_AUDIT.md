@@ -38,7 +38,7 @@ Established green checkpoints include run `38068827082` at `7c9c31c7` (Linux saf
 
 No known unresolved Python/`@pal.njit` API discrepancy is currently recorded. Remaining work is verification and opportunistic coverage, not an identified semantic mismatch:
 
-1. Confirm the latest Multinomial and PDE Diffusion/Advection tests in GitHub Actions.
+1. Confirm the current main-derived head, including latest Multinomial, PDE Diffusion/Advection, and authoritative Cheatsheet tests, in GitHub Actions.
 2. If a new paired test exposes a mismatch, record the exact input/output/state difference here before changing semantics.
 3. Visualization parity is limited to methods intended to compile; renderer/window lifecycle is already covered separately by headless integration tests rather than forced into Python/njit equivalence.
 
