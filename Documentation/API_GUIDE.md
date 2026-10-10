@@ -228,7 +228,7 @@ pop.Update()
 | `Reset()` | Clear current populations and pending changes. |
 | `InWrapX/Y/Z(value)` | Wrap a coordinate on the corresponding axis. |
 
-`capacity` optionally limits the total population representable by the grid. Slice reads return detached NumPy copies. Slice reads are detached copies. `All()` reflects the current population only: pending `Add` changes do not appear until `Update()`.
+`capacity` optionally limits the total population representable by the grid. Slice reads return detached NumPy copies. `All()` reflects the current population only: pending `Add` changes do not appear until `Update()`.
 
 ## PDEgrid
 
