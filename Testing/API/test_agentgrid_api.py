@@ -17,25 +17,19 @@ def test_newagent_and_movesq_dimensional_forms(api, dims, sq, pt):
     assert got == target
 
 
-def test_newagentsq_linear_index_form_is_1d_only_in_safe_mode(api, safe_mode):
-    if not safe_mode:
-        pytest.skip("Fast mode intentionally omits dimensional validation")
-    one = api.NewAgentGrid((5,))
-    assert one.I(one.NewAgentSQ(3)) == 3
-    for dims in ((3, 4), (3, 4, 5)):
+def test_newagentsq_linear_index_form_is_supported_for_all_dimensions(api):
+    for dims in ((5,), (3, 4), (3, 4, 5)):
         g = api.NewAgentGrid(dims)
-        with pytest.raises(ValueError):
-            g.NewAgentSQ(3)
+        a = g.NewAgentSQ(3)
+        assert g.I(a) == 3
 
 
-def test_movesq_linear_index_form_is_1d_only_in_safe_mode(api, safe_mode):
-    if not safe_mode:
-        pytest.skip("Fast mode intentionally omits dimensional validation")
-    for dims in ((3, 4), (3, 4, 5)):
+def test_movesq_linear_index_form_is_supported_for_all_dimensions(api):
+    for dims in ((5,), (3, 4), (3, 4, 5)):
         g = api.NewAgentGrid(dims)
-        a = g.NewAgentSQ(*((0,) * len(dims)))
-        with pytest.raises(ValueError):
-            g.MoveSQ(a, 1)
+        a = g.NewAgentSQ(0)
+        g.MoveSQ(a, 1)
+        assert g.I(a) == 1
 
 
 def test_lastagent_empty_and_stack_semantics(api):
