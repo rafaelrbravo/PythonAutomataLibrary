@@ -156,7 +156,7 @@ agents.Z(agent)
 agents.Move(agent, x, y, z)
 ```
 
-`NewAgentSQ(i)` and `MoveSQ(agent, i)` accept a linear lattice index in 1D. In 2D and 3D, supply all spatial coordinates, or convert the index with `ItoX`, `ItoY`, and `ItoZ`.
+`NewAgentSQ(i)` and `MoveSQ(agent, i)` accept a linear lattice index in 1D. In 2D and 3D, supply spatial coordinates; convert a linear index with `ItoX`, `ItoY`, and (in 3D) `ItoZ` when needed. Continuous `NewAgent` and `Move` take spatial positions, not linear indices.
 
 ### Occupancy and queries
 
