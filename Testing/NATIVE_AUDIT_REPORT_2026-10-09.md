@@ -238,3 +238,12 @@ After the user-requested change in `Testing/test_12_compiled_pop_pde.py` (commit
 | Fast | **248** | **0** | 42 | 0 | 3 | 27.73 s | 0 |
 
 The two formerly failing source-line assertions now pass with annotations. Two strict expected failures in `test_23_diagnostic_annotations.py` continue to characterize the unsupported source-line enhancement for **unannotated** grid arguments. Warnings are Python 3.13 multiprocessing `fork()` deprecations in visualization tests. The wheel packaging defect remains a separate, confirmed distribution problem; the green suite does not resolve it.
+
+
+## Post-promotion headless OpenGL closure (2026-10-10)
+
+The permanent Linux gate was extended with ModernGL and Mesa/EGL so the existing display-free OpenGL regressions execute instead of skipping. This exposed a real safe-mode defect: `_OpenGLWindowSafe._Save(block=True)` called a missing `_WaitAck`, and the concrete safe class also lacked `StartGif`, `AddGifFrame`, and `StopGif`. Commit `0e3dc5aa82296432a6c53b1883866e0653a1025a` restores the acknowledgement helper and validated safe GIF API; commit `ef2c9854f08493dd0f857295db15024f3067f029` adds a headless OpenGL GIF lifecycle regression.
+
+Main workflow run `38029920326` is green in all four jobs. Linux results are **561 passed** in safe mode and **461 passed, 100 skipped** in fast mode. Relative to the pre-OpenGL gate (558/2 safe and 458/102 fast), the two formerly skipped parametrized 2D/3D OpenGL primitive/update/blocking-save cases now execute and pass in both modes, and the additional GIF lifecycle regression passes in both modes. Windows safe/fast real-example jobs also pass. The workflow performance benchmark completed successfully in both modes; the correction is confined to visualization process acknowledgement/GIF methods rather than computational kernels.
+
+Headless 2D/3D OpenGL rendering, blocking save, and GIF lifecycle are therefore part of the permanent regression gate. Interactive visible-window placement/input/display lifecycle remains inherently dependent on a real display/backend and is outside the headless CI evidence.
