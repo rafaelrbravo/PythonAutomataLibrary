@@ -32,6 +32,7 @@ Dimensions: 1–3 axes; negative size wraps that axis (`(-nx, ny)`). `pal.NewAge
 
 ```python
 g = pal.NewGrid((40, 40), float)
+x, y = 10, 12
 g[x, y] = 1.0
 value = g[x, y]
 copy = g[2:5, 3:8]    # detached NumPy array
