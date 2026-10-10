@@ -282,7 +282,7 @@ field.AdvectionInterfaces(xVels, yVels=None, zVels=None, ...)
 items = pal.NewIList()
 ```
 
-`IList` is PAL's reusable integer query/list container.
+`IList` is PAL's reusable integer query/list container. Stored values are nonnegative int32 integers in the supported contract.
 
 | Operation | Meaning |
 | --- | --- |
