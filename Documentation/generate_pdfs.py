@@ -4,19 +4,17 @@ Requires: pip install reportlab
 Usage: python Documentation/generate_pdfs.py [--check]
 """
 import argparse
-import hashlib
 import io
 import re
 from html import escape
 from pathlib import Path
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    HRFlowable, KeepTogether, PageBreak, Paragraph, Preformatted,
+    Paragraph, Preformatted,
     SimpleDocTemplate, Spacer, Table, TableStyle,
 )
 
@@ -43,7 +41,7 @@ def normalize(text):
 def inline(text):
     """Escape markup, then support the small Markdown inline subset used here."""
     text = escape(normalize(text))
-    text = re.sub(r"\\[([^]]+)\\]\\(([^)]+)\\)", lambda m: m.group(1), text)
+    text = re.sub(r"\[([^]]+)\]\(([^)]+)\)", lambda m: m.group(1), text)
     text = re.sub(r"\x60([^\x60]+)\x60", r'<font name="Courier" size="8.3">\1</font>', text)
     text = re.sub(r"\\*\\*([^*]+)\\*\\*", r"<b>\1</b>", text)
     text = re.sub(r"(?<!\\*)\\*([^*]+)\\*(?!\\*)", r"<i>\1</i>", text)
@@ -95,11 +93,11 @@ def blocks(markdown, compact=False):
             story.append(Preformatted("\n".join(visual), st["code"], maxLineLength=limit))
             i += 1
             continue
-        if line.startswith("|") and i + 1 < len(lines) and re.match(r"^\\|[\\s:|\\-]+\\|$", lines[i + 1].strip()):
+        if line.startswith("|") and i + 1 < len(lines) and re.match(r"^\|[\s:|\-]+\|$", lines[i + 1].strip()):
             rows = []
             while i < len(lines) and lines[i].strip().startswith("|"):
                 cells = [x.strip() for x in lines[i].strip().strip("|").split("|")]
-                if not all(re.fullmatch(r"[:\\- ]+", c or "-") for c in cells):
+                if not all(re.fullmatch(r"[:\- ]+", c or "-") for c in cells):
                     rows.append(cells)
                 i += 1
             if rows:
