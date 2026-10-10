@@ -241,7 +241,7 @@ def main():
             stale.append("MANUAL.pdf")
         if stale:
             parser.exit(1, "Stale or missing: " + ", ".join(stale) +
-                        "; run python Documentation/generate_manual.py\n")
+                        "; run python Documentation/generators/generate_manual.py\n")
         print("MANUAL.md and MANUAL.pdf are current")
         return
     MD_TARGET.write_bytes(md)
