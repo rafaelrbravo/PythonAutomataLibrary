@@ -89,3 +89,13 @@ def test_manual_radius_snippet():
     snippet = section.split("```python\n", 1)[1].split("\n```", 1)[0]
     ast.parse(snippet)
     exec(compile(snippet, "pal_manual_radius.py", "exec"), {"__name__": "pal_documentation_test"})
+
+
+def test_manual_gradient_snippet():
+    """Execute the finite-difference gradient check exactly as published."""
+    manual = (Path(__file__).resolve().parents[2] / "Documentation" / "MANUAL.md").read_text(encoding="utf-8")
+    section = manual.split("### A hand-checkable field gradient\n", 1)[1].split("\n### Numerical update order", 1)[0]
+    assert section.count("```python\n") == 1
+    snippet = section.split("```python\n", 1)[1].split("\n```", 1)[0]
+    ast.parse(snippet)
+    exec(compile(snippet, "pal_manual_gradient.py", "exec"), {"__name__": "pal_documentation_test"})
