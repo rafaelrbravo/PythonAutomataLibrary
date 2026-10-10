@@ -1,4 +1,5 @@
 name: Refresh documentation
+# PAL API Audit is triggered after this workflow completes successfully.
 on:
   workflow_dispatch:
   push:
