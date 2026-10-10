@@ -13,8 +13,14 @@ on:
     paths-ignore:
       - 'Documentation/generators/**'
       - '.github/workflows/refresh-documentation-pdfs.yml'
+  workflow_run:
+    workflows: ["Refresh documentation"]
+    types: [completed]
+    branches:
+      - main
 jobs:
   api-audit:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -61,6 +67,7 @@ jobs:
           done
 
   windows-examples:
+    if: ${{ github.event_name != 'workflow_run' }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
