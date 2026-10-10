@@ -81,3 +81,37 @@ def test_safe_invalid_geometry_coordinates(api, safe_mode, kind):
     ):
         with pytest.raises((IndexError, ValueError)):
             call()
+
+
+@pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
+@pytest.mark.parametrize("dims", [(5,), (4, 5), (3, 4, 5)])
+def test_python_njit_box_and_hood_coordinate_parity(api, kind, dims):
+    """Compare the exact ordered site sequences, including wrapped duplicates."""
+    g = _new(api, kind, tuple(-d for d in dims))
+    hood = api.MooreHood(len(dims), True)
+    center = tuple(0 for _ in dims)
+    bounds = tuple(v for d in dims for v in (-1, 2))
+    python_box = [g.ToI(*((p,) if len(dims) == 1 else p)) for p in g.Box(*bounds)]
+    python_hood = [g.ToI(*((p,) if len(dims) == 1 else p)) for p in g.Hood(hood, *center)]
+
+    if len(dims) == 1:
+        @api.njit
+        def collect(grid):
+            a = [grid.ToI(x) for x in grid.Box(-1, 2)]
+            b = [grid.ToI(x) for x in grid.Hood(hood, 0)]
+            return a, b
+    elif len(dims) == 2:
+        @api.njit
+        def collect(grid):
+            a = [grid.ToI(x, y) for x, y in grid.Box(-1, 2, -1, 2)]
+            b = [grid.ToI(x, y) for x, y in grid.Hood(hood, 0, 0)]
+            return a, b
+    else:
+        @api.njit
+        def collect(grid):
+            a = [grid.ToI(x, y, z) for x, y, z in grid.Box(-1, 2, -1, 2, -1, 2)]
+            b = [grid.ToI(x, y, z) for x, y, z in grid.Hood(hood, 0, 0, 0)]
+            return a, b
+    compiled_box, compiled_hood = collect(g)
+    assert list(compiled_box) == python_box
+    assert list(compiled_hood) == python_hood
