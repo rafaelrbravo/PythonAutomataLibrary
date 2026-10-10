@@ -55,6 +55,18 @@ Queried GitHub's recursive tree for default-branch commit `da275e53ad9ef93cc5bd2
 
 These are the **repository-root** source paths, not `PythonAutomataLibrary/NativeCore.py` paths. The isolated build places these files inside a package directory for import. All 23 test modules and `conftest.py` had previously been verified against GitHub blob hashes. Consequently, the full-suite results on the isolated rebuild use **byte-exact GitHub core sources and tests**, not unverified source reconstructions. A literal clean `git clone` and end-to-end repository packaging/install procedure have still not been executed, and optional OpenGL behavior remains untested.
 
+## Distribution packaging failure (new finding)
+
+A separate wheel-build probe reproduced the repository-root `pyproject.toml` exactly in a temporary packaging directory, alongside the five byte-verified PAL core source files and the already rebuilt `libpal_native.so`. Ran:
+
+```sh
+python -m pip wheel --no-build-isolation --no-deps --wheel-dir dist .
+```
+
+The build succeeded, producing `pythonautomatalibrary-0.1.0-py3-none-any.whl` (63,566 bytes). **Zip inspection found only `NativeCore.py`, `OpenGLWindow.py`, `PixWindow.py`, `__init__.py` and `.dist-info` metadata. Neither `libpal_native.so` nor `pal_native.c` was packaged.** A wheel installed from this artifact would not carry the required native library. The universal `py3-none-any` tag is also inappropriate for a wheel that distributes compiled platform-specific code. This is an independently observed packaging defect, not a runtime numerical test failure.
+
+Added standalone `Testing/check_wheel_contents.py` (commit `06bff34`) to verify that a given built wheel contains a native shared library and is not mislabeled as universal. This check intentionally fails for the observed wheel; it is not automatically collected by pytest. Packaging fixes would require authorization to edit root-level `pyproject.toml` and possibly the build backend integration, which is outside the present `Testing/`-only scope.
+
 ## Known defects and limitations
 
 1. **Compiled safe-mode diagnostic annotation** (unresolved): `test_12_compiled_pop_pde.py` has two failures: `test_compiled_safe_popgrid_error_contains_source_line` and `test_compiled_safe_unstable_diffusion_contains_source_line`. Both raise the expected `ValueError` but the messages omit the asserted `source line` information. `test_23_diagnostic_annotations.py` documents unannotated parameter cases as strict expected failures; annotated cases pass. The observed issue appears related to AST transformer recognition of annotated versus unannotated grid arguments. Do not treat these as numerical-kernel failures. Any implementation fix requires authorization to modify files outside `Testing/`.
