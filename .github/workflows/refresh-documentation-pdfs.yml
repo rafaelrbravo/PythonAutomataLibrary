@@ -1,16 +1,10 @@
 name: Refresh documentation PDFs
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'Documentation/source/**'
-      - 'Documentation/generate_pdfs.py'
-      - 'Documentation/generate_api_reference.py'
 permissions:
   contents: write
 jobs:
   refresh:
-    if: github.event_name == 'workflow_dispatch' || github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
