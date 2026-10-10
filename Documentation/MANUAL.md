@@ -68,7 +68,9 @@ Keep model state in PAL objects and use `pal.Seed`, `pal.Random`, `pal.RandInt`,
 
 ## 7. Drawing and output
 
-`StartPixWindow` creates a pixel grid and a window for lattice visualization. Assign packed RGB colors such as `0xFF0000` to pixels and call `window.Update()` to publish the frame. `StartOpenGLWindow` provides geometric 2D/3D drawing. Windows can save images and GIFs; `headless=True` supports off-screen workflows when the required rendering backend is installed.
+`StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False)` returns `(pix, window)`. Write packed RGB colors such as `0xFF0000` to `pix[x, y]`, then call `window.Update()` to publish the frame. `window.Save(path, block=True)` waits for the image to be written; use `window.Close()` to release resources. The pixel buffer also supports linear indices, slices, and writes from compiled code. For off-screen images, use `headless=True` (requires the relevant output dependencies). GIF recording uses `window.StartGif(path, delay=100)`, `window.AddGifFrame(block=False)`, and `window.StopGif()`; update the window before capturing each frame.
+
+`StartOpenGLWindow` provides geometric 2D/3D drawing with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`, `Camera`, `Background`, and `Clear`. It also supports image/GIF output and `headless=True`, but needs a working OpenGL backend. Close windows after use.
 
 Rendering and simulation are separate. A model can run without a window, draw every timestep, or draw only selected checkpoints.
 
