@@ -26,6 +26,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 - `test_popgrid_api.py::test_python_njit_popgrid_state_transition_parity`: PopGrid × 1D/2D/3D; pending additions, Update, GetPop, indexing, full arrays.
 - `test_shared_geometry_api.py::test_python_box_named_bounds_rejected_pending_review`: documents current Python Box keyword rejection (G-01), no semantics changed.
 - `test_shared_geometry_api.py::test_python_hood_unroll_keyword_parity_pending_review`: documents current Python rejection without deciding intended behavior.
+- `test_shared_geometry_api.py::test_compiled_hood_unroll_matches_default_sites`: compiled unrolled/default ordered coordinates and Python positional reference (H-02); CI pending.
 - Existing `test_colorscale_api.py::test_colorscale_compiled_matches_python` and RNG shared-stream tests cover additional narrow parity contracts.
 
 ## Execution status
@@ -50,3 +51,5 @@ GitHub Actions workflow `pal-api-audit.yml` executes the full `Testing` suite on
 - `test_shared_geometry_api.py::test_compiled_box_named_bounds_match_positional`: compiled Box keyword versus positional coordinates across Grid/PopGrid/PDEgrid (G-01); unexecuted.
 
 CI execution evidence (2026-10-10): GitHub Actions run 38068395512 on commit 40a10ec4 completed Linux safe 620 passed/5 failed and fast 504 passed/116 skipped/5 failed; both Windows example jobs succeeded. Failures were stale coordinate-vs-index expectations in `Testing/test_20_direct_iteration_geometry.py` (2 parametrizations) and wrong hardcoded VonNeumannHood order in `test_shared_geometry_api.py` (3 parametrizations). Test-only corrections committed as 09e6fbdb and 69e2291a. Await subsequent CI to verify; do not claim green yet.
+
+CI follow-up: run `38068647059` (69e2291a, containing both Hood expectation corrections) has successful Windows safe and fast jobs; Linux safe/fast remained in progress at last check. New H-02 compiled unroll regression committed as `6e8f760d`.
