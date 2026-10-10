@@ -163,7 +163,7 @@ This design favors fast repeated timesteps, but the first compiled call may incl
 
 PAL's native-backed model objects support Python pickling, so a long-running model can save its state and resume without retaining native pointers from the original process. A checkpoint must include **all** state needed for continuation: every grid, relevant parameters, the current timestep, and any additional state managed by the model. Saving only one grid does not preserve a coupled simulation. Keep the code version and parameter configuration alongside the checkpoint so that results can be interpreted later.
 
-For reproducibility, seed the random generator before a run and record the seed. Verify that a restored model continues from the expected state; don't assume that pickling a grid also captures unrelated Python variables or the state of every random-number generator used by external libraries. Compare a short uninterrupted run with a checkpoint-and-resume run as a regression test.
+A PAL object checkpoint does **not** serialize PAL's random stream. If exact stochastic continuation matters, the model must reconstruct the intended random state separately; external RNGs such as NumPy's are independent as well. Verify checkpoint behavior with a short uninterrupted run and a checkpoint-and-resume run rather than assuming object state alone reproduces the same future random draws.
 
 A minimal checkpoint can be saved and resumed without opening a window:
 
