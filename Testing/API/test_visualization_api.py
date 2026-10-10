@@ -101,3 +101,45 @@ def test_awaitwindows_headless_multiple_window_lifecycle(api):
         win_a.Close()
         win_b.Close()
     assert api.AwaitWindows(timeout=0.1) is None
+
+
+def _start_headless_opengl_or_skip(api, *args, **kwargs):
+    pytest.importorskip("moderngl")
+    try:
+        return api.StartOpenGLWindow(*args, headless=True, **kwargs)
+    except RuntimeError as exc:
+        if "could not create a headless OpenGL context" in str(exc):
+            pytest.skip(str(exc))
+        raise
+
+
+def test_opengl_headless_2d_render_save(api, tmp_path):
+    pytest.importorskip("PIL.Image")
+    draw, win = _start_headless_opengl_or_skip(api, 4, 3, width=64, height=48)
+    out = tmp_path / "opengl2d.png"
+    try:
+        draw.BoxSQ(0xFF0000, 1, 1)
+        draw.Circle(0.4, 0x00FF00, 2.5, 1.5)
+        win.Update()
+        assert win.Save(str(out), block=True) is win
+        image = pytest.importorskip("PIL.Image").open(out).convert("RGB")
+        assert image.size == (64, 48)
+        assert np.asarray(image).max() > 0
+    finally:
+        win.Close()
+
+
+def test_opengl_headless_3d_render_save(api, tmp_path):
+    pytest.importorskip("PIL.Image")
+    draw, win = _start_headless_opengl_or_skip(api, 4, 3, 2, width=64, height=48)
+    out = tmp_path / "opengl3d.png"
+    try:
+        draw.Box(1.0, 0x3366FF, 2.0, 1.5, 1.0)
+        draw.Line(0.1, 0xFFFFFF, 0.0, 0.0, 4.0, 3.0, 0.0, 2.0)
+        win.Update()
+        assert win.Save(str(out), block=True) is win
+        image = pytest.importorskip("PIL.Image").open(out).convert("RGB")
+        assert image.size == (64, 48)
+        assert np.asarray(image).max() > 0
+    finally:
+        win.Close()
