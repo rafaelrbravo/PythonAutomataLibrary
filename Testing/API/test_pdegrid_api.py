@@ -256,3 +256,26 @@ def test_python_njit_pdegrid_coordinate_mapping_parity(api, shape):
     expected = tuple(g.ToI(*site) for site in sites)
     assert tuple(compiled(g)) == expected
     assert len(set(expected)) == 3
+
+
+def test_python_njit_pdegrid_slice_read_aliasing_parity(api):
+    """Compare returned-slice mutation and source-field state."""
+    py = api.NewPDEgrid((6,))
+    jit = api.NewPDEgrid((6,))
+    for g in (py, jit):
+        g[1] = 1.25
+        g[2] = 2.5
+
+    def python_work(g):
+        values = g[1:4]
+        values[0] = 99.0
+        return values[0], g[1]
+
+    @api.njit
+    def compiled_work(g):
+        values = g[1:4]
+        values[0] = 99.0
+        return values[0], g[1]
+
+    assert compiled_work(jit) == pytest.approx(python_work(py))
+    np.testing.assert_allclose(jit[:], py[:], rtol=0, atol=1e-6)
