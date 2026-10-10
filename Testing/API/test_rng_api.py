@@ -38,5 +38,11 @@ def test_random_and_randint_share_single_seeded_stream_across_call_boundaries(ap
     last = api.RandInt(101)
 
     api.Seed(2026)
-    expected = (api.Random(), api.Random(), api.RandInt(101), api.RandInt(101))
-    assert (first, mid[0], mid[1], last) == expected
+    expected_first = api.Random()
+    expected_mid_random = api.Random()
+    expected_mid_int = api.RandInt(101)
+    expected_last = api.RandInt(101)
+    assert first == expected_first
+    assert mid[0] == expected_mid_random
+    assert mid[1] == expected_mid_int
+    assert last == expected_last
