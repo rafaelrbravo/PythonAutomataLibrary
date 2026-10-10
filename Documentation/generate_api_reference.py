@@ -13,6 +13,8 @@ TARGET = ROOT / "Documentation" / "API_REFERENCE.md"
 FACTORIES = ("FastMode", "NewIList", "MooreHood", "VonNeumannHood", "CircleHood",
              "NewMultinomial", "NewGrid", "NewAgentGrid", "NewPopGrid", "NewPDEgrid")
 PROTOCOLS = ("Multinomial", "IList", "AgentGrid", "Grid", "PopGrid", "PDEgrid")
+VISUALIZATION = (("PixWindow.py", "PixWindow", "StartPixWindow"),
+                 ("OpenGLWindow.py", "OpenGLWindow", "StartOpenGLWindow"))
 
 
 def signature(node):
@@ -47,6 +49,20 @@ def render(source):
                                      for d in member.decorator_list) else "method"
             sig = signature(member).replace("|", "\\|")
             lines.append(f"| {kind} | `{sig}` |")
+        lines.append("")
+    for filename, protocol, factory in VISUALIZATION:
+        visual_tree = ast.parse((ROOT / filename).read_text(encoding="utf-8"))
+        visual_functions = {n.name: n for n in visual_tree.body if isinstance(n, ast.FunctionDef)}
+        visual_classes = {n.name: n for n in visual_tree.body if isinstance(n, ast.ClassDef)}
+        lines.extend([f"## {protocol} visualization", "", "```python",
+                      signature(visual_functions[factory]), "```", "",
+                      "| Kind | Declaration |", "| --- | --- |"])
+        seen = set()
+        for member in visual_classes[protocol].body:
+            if not isinstance(member, ast.FunctionDef) or member.name.startswith("_") or member.name in seen:
+                continue
+            seen.add(member.name)
+            lines.append(f"| method | `{signature(member).replace('|', chr(92) + '|')}` |")
         lines.append("")
     lines.extend([
         "## Scope and validation", "",
