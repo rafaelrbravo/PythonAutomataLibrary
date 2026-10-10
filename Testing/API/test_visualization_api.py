@@ -84,3 +84,20 @@ def test_safe_opengl_constructor_validation_without_context(api, safe_mode, kwar
         pytest.skip("Fast visualization assumes valid constructor inputs")
     with pytest.raises(Exception):
         api.StartOpenGLWindow(**kwargs)
+
+
+def test_awaitwindows_headless_multiple_window_lifecycle(api):
+    pix_a, win_a = api.StartPixWindow(2, 2, headless=True)
+    pix_b, win_b = api.StartPixWindow(3, 2, headless=True)
+    try:
+        assert api.AwaitWindows(timeout=5) is None
+        assert win_a.IsOpen()
+        assert win_b.IsOpen()
+        pix_a[:] = 0x112233
+        pix_b[:] = 0x445566
+        win_a.Update()
+        win_b.Update()
+    finally:
+        win_a.Close()
+        win_b.Close()
+    assert api.AwaitWindows(timeout=0.1) is None
