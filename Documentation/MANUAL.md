@@ -86,6 +86,12 @@ PAL separates its public Python interface from a native C core. Python construct
 
 This design favors fast repeated timesteps, but the first compiled call may include substantial Numba compilation time. Measure **cold compilation** separately from **steady-state execution**. Safe mode includes additional validation and source-aware diagnostics; fast mode removes some of that overhead. A change that improves one benchmark may regress another, so measure both modes on representative workloads.
 
-## 9. Where to go next
+## 9. Checkpointing and reproducibility
+
+PAL's native-backed model objects support Python pickling, so a long-running model can save its state and resume without retaining native pointers from the original process. A checkpoint must include **all** state needed for continuation: every grid, relevant parameters, the current timestep, and any additional state managed by the model. Saving only one grid does not preserve a coupled simulation. Keep the code version and parameter configuration alongside the checkpoint so that results can be interpreted later.
+
+For reproducibility, seed the random generator before a run and record the seed. Verify that a restored model continues from the expected state; don't assume that pickling a grid also captures unrelated Python variables or the state of every random-number generator used by external libraries. Compare a short uninterrupted run with a checkpoint-and-resume run as a regression test.
+
+## 10. Where to go next
 
 Read the [API Guide](API_GUIDE.md) for the complete public subsystem map. Consult the [API Reference](API_REFERENCE.md) for current declarations and the repository's `Examples/` for larger models. Use `Testing/` for executable contract examples, especially around boundaries, wrapping, pending updates, and invalid operations.
