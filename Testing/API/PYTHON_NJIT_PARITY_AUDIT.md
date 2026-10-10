@@ -11,7 +11,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 | H-03 | `grid.Hood(hood=..., x=..., y=...)` | Python `_PythonHood(self,hood,*coords)` rejects named coordinate arguments | Compiled AST `_bind_args(call,('hood','x','y','z','unroll'),...)` accepts them | Source-confirmed; not executed | Decide whether Python should support named hood coordinates |
 | H-02 | `grid.Hood(hood, x[, y[, z]], unroll=True)` | Keyword rejected by Python fallback `_PythonHood(self,hood,*coords)` | Accepted by AST transformer as compile-time bool literal | Source-confirmed mismatch, not yet executed | Consider accepting `unroll` as a Python no-op; user decision pending |
 
-## Paired test inventory (committed; execution pending)
+## Paired test inventory (committed; CI execution underway)
 
 - `test_shared_geometry_api.py::test_python_njit_box_and_hood_coordinate_parity`: Grid/PopGrid/PDEgrid × 1D/2D/3D; exact ordered wrapped Box/Hood results.
 - `test_agentgrid_api.py::test_python_njit_agentgrid_hood_and_box_order_parity`: AgentGrid × 1D/2D/3D; exact ordered wrapped results.
@@ -30,7 +30,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 
 ## Execution status
 
-Not executed in the current audit environment. The Python runtime has NumPy, Numba, and pytest, but no mounted PAL source package; direct GitHub archive access is unavailable from the execution container. GitHub connector source inspection and commits are available, but do not constitute test execution. A clean checkout in CI or a complete local package is required before any passing claim.
+GitHub Actions workflow `pal-api-audit.yml` executes the full `Testing` suite on Linux (safe and fast) and Windows examples. Run `38068395512` at `40a10ec4` completed: Linux safe 620 passed/5 failed; Linux fast 504 passed/116 skipped/5 failed; both Windows jobs succeeded. All five failures were stale test expectations for the approved Hood coordinate-return contract (two cases) or incorrect expected VonNeumannHood order (three cases). Test-only corrections: `09e6fbdb`, `69e2291a`. Follow-up CI run `38068647059` was still in progress when checked; green status is not yet established. Local container cannot execute PAL because the package is absent and github.com DNS is unavailable.
 
 ## Next systematic sweep
 
