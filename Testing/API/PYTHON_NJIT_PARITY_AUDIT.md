@@ -35,7 +35,7 @@ GitHub Actions workflow `pal-api-audit.yml` executes the full `Testing` suite on
 
 ## Next systematic sweep
 
-1. Execute the committed paired tests in separate safe and fast processes; investigate harness errors before classifying API failures.
+1. Confirm GitHub Actions Linux safe/fast runs on or after `7c9c31c7` and inspect any remaining failures; Windows examples have already passed.
 2. Add paired tests for AgentGrid construction, lifecycle, movement, property access, iteration snapshots and mutation.
 3. Add paired tests for Grid scalar and slice indexing, argument defaults and keywords, and validation exceptions.
 4. Compare IList, RNG and Multinomial operations and return types, distinguishing seeded-stream equivalence from stochastic distribution equivalence.
@@ -57,3 +57,5 @@ CI follow-up: run `38068647059` (69e2291a, containing both Hood expectation corr
 Further CI evidence: run `38068643623` (09e6fbdb) Linux safe/fast each had four failures: three pre-fix VonNeumannHood order expectations plus one 1D Hood expected tuple rather than scalar. Run `38068647059` (69e2291a) Linux fast now has only the 1D scalar-vs-tuple failure; Windows safe/fast successful, Linux safe still running when checked. Corrected 1D expectation in `7c9c31c7`; new CI validation pending.
 
 CI run `38068743749` (6e8f760d) completed with Windows safe/fast success and exactly one Linux failure in each mode: stale 1D Hood test expected `(x,)` instead of `x`. Thus all newly added compiled named-Box, named-Hood, and unroll tests were included without reported failures in that run, although the overall suite failed. The 1D expectation was fixed in `7c9c31c7`; CI run `38068827082` on that fix was in progress at last check.
+
+CI follow-up: run `38068827082` on 1D Hood test fix `7c9c31c7`: Windows safe/fast completed successfully, Linux safe/fast still in progress when checked. No fresh failures established; do not claim green until both Linux jobs finish.
