@@ -158,7 +158,7 @@ agents.Z(agent)
 agents.Move(agent, x, y, z)
 ```
 
-`NewAgentSQ(i)` and `MoveSQ(agent, i)` accept a linear lattice index in 1D, 2D, and 3D; the coordinate forms `NewAgentSQ(x, y[, z])` and `MoveSQ(agent, x, y[, z])` are also supported. SQ placement uses the center of the selected lattice cell: after `NewAgentSQ(x, y)`, for example, `XSQ(agent)==x` and `YSQ(agent)==y`, while `X(agent)==x+0.5` and `Y(agent)==y+0.5`. Continuous `NewAgent` and `Move` instead keep the supplied spatial coordinates, with `XSQ`/`YSQ`/`ZSQ` identifying the containing cell. The linear-index and coordinate forms are supported across all spatial dimensions.
+`NewAgentSQ` and `MoveSQ` accept either a linear lattice index or lattice coordinates in every spatial dimension. SQ placement uses the center of the selected cell: after `NewAgentSQ(x, y)`, for example, `XSQ(agent)==x` and `YSQ(agent)==y`, while `X(agent)==x+0.5` and `Y(agent)==y+0.5`. Continuous `NewAgent` and `Move` instead keep the supplied spatial coordinates, with `XSQ`/`YSQ`/`ZSQ` identifying the containing cell.
 
 ### Occupancy and queries
 
