@@ -1,6 +1,7 @@
 """Grid API dtype, slicing, compiled, and diagnostic contracts."""
 import numpy as np
 import pytest
+import PythonAutomataLibrary as pal
 
 
 @pytest.mark.parametrize("dtype,value", [
@@ -91,7 +92,7 @@ def test_annotated_safe_scalar_set_error_reports_source_line(api, safe_mode):
     g = api.NewGrid((4,), np.uint8)
 
     @api.njit
-    def invalid(grid: api.Grid):
+    def invalid(grid: pal.Grid):
         grid[0] = -1
 
     with pytest.raises(ValueError, match="source line"):
