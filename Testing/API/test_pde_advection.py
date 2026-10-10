@@ -79,7 +79,9 @@ def test_advection_field_and_interfaces_use_distinct_velocity_locations():
 
 
 @pytest.mark.parametrize("method", ["Advection", "AdvectionField", "AdvectionInterfaces"])
-def test_advection_cfl_validation_is_transactional(method):
+def test_advection_cfl_validation_is_transactional(method, safe_mode):
+    if not safe_mode:
+        pytest.skip("CFL validation is a safe-mode contract")
     field = pal.NewPDEgrid((-8,))
     field.SetTimeSpaceStep(1.0, 1.0)
     values = np.arange(8, dtype=np.float32)
