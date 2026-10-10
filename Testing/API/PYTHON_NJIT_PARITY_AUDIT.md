@@ -6,7 +6,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 
 | ID | API | Python | @pal.njit | Status | Proposed decision |
 | --- | --- | --- | --- | --- | --- |
-| H-01 | `grid.Hood(...)` yielded sites | Formerly linear indices | Coordinate scalar/tuples | Resolved with explicit user approval; source and existing tests updated; runtime verification pending | Coordinates in both modes |
+| H-01 | `grid.Hood(...)` yielded sites | Formerly linear indices | Coordinate scalar/tuples | Resolved with explicit user approval; CI confirms Python coordinate behavior; full clean suite pending after legacy 1D test correction | Coordinates in both modes |
 | G-01 | `grid.Box(x1=..., x2=..., y1=..., y2=...)` | Python fallback `_PythonBox(self,*bounds)` rejects keywords | Compiled `_HoodExpander._expand_box` accepts keyword bounds; existing `test_compiled_box_keyword_and_positional_forms_match` checks this | Source-confirmed mismatch, not executed | Decide whether Python should accept named bounds for input parity |
 | H-03 | `grid.Hood(hood=..., x=..., y=...)` | Python `_PythonHood(self,hood,*coords)` rejects named coordinate arguments | Compiled AST `_bind_args(call,('hood','x','y','z','unroll'),...)` accepts them | Source-confirmed; not executed | Decide whether Python should support named hood coordinates |
 | H-02 | `grid.Hood(hood, x[, y[, z]], unroll=True)` | Keyword rejected by Python fallback `_PythonHood(self,hood,*coords)` | Accepted by AST transformer as compile-time bool literal | Source-confirmed mismatch, not yet executed | Consider accepting `unroll` as a Python no-op; user decision pending |
@@ -55,3 +55,5 @@ CI execution evidence (2026-10-10): GitHub Actions run 38068395512 on commit 40a
 CI follow-up: run `38068647059` (69e2291a, containing both Hood expectation corrections) has successful Windows safe and fast jobs; Linux safe/fast remained in progress at last check. New H-02 compiled unroll regression committed as `6e8f760d`.
 
 Further CI evidence: run `38068643623` (09e6fbdb) Linux safe/fast each had four failures: three pre-fix VonNeumannHood order expectations plus one 1D Hood expected tuple rather than scalar. Run `38068647059` (69e2291a) Linux fast now has only the 1D scalar-vs-tuple failure; Windows safe/fast successful, Linux safe still running when checked. Corrected 1D expectation in `7c9c31c7`; new CI validation pending.
+
+CI run `38068743749` (6e8f760d) completed with Windows safe/fast success and exactly one Linux failure in each mode: stale 1D Hood test expected `(x,)` instead of `x`. Thus all newly added compiled named-Box, named-Hood, and unroll tests were included without reported failures in that run, although the overall suite failed. The 1D expectation was fixed in `7c9c31c7`; CI run `38068827082` on that fix was in progress at last check.
