@@ -11,7 +11,10 @@ def test_manual_quickstart():
     snippet = manual[start:end]
     ast.parse(snippet)
     namespace = {"__name__": "pal_documentation_test"}
-    exec(compile(snippet, "Documentation/MANUAL.md", "exec"), namespace)
+    import linecache
+    source_name = str(Path(__file__).resolve().parents[2] / "Documentation" / "_manual_quickstart.py")
+    linecache.cache[source_name] = (len(snippet), None, [line + "\n" for line in snippet.splitlines()], source_name)
+    exec(compile(snippet, source_name, "exec"), namespace)
     pop = namespace["pal"].NewPopGrid((40, 40))
     for _ in range(10):
         namespace["Step"](pop)
