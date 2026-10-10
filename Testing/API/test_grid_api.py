@@ -89,11 +89,11 @@ def test_compiled_safe_invalid_coordinate_getitem_rejected(api, safe_mode):
 def test_annotated_safe_scalar_set_error_reports_source_line(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode omits validation diagnostics")
-    g = api.NewGrid((4,), np.uint8)
+    g = api.NewGrid((4,), np.int32)
 
     @api.njit
     def invalid(grid: pal.Grid):
-        grid[0] = -1
+        grid[4] = 1
 
     with pytest.raises(ValueError, match="source line"):
         invalid(g)
