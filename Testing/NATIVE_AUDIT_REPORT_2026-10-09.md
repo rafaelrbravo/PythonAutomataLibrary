@@ -6,7 +6,7 @@ Audit branch: `pal-audit-ci-fix`. Current candidate head: `0a513f66ec59976095958
 
 GitHub Actions rebuilds the native library from repository source on every run under Python 3.12. Linux uses GCC and runs the complete `Testing/` tree once per safe/fast process. Windows uses MSVC discovered with `vswhere` and runs the real Persian regression plus representative BirthDeath, PopGridExample, ReactionDiffusion2D, and DiffusionAdvection3D smoke tests.
 
-At run `38027661459`, Linux fast completed cleanly: **458 passed, 102 skipped, zero failures/xfails** in 41.88 s. Windows safe and fast both completed successfully on the same head. Linux safe was still running when this report section was refreshed; do not claim its final count until that job completes.
+At run `38027661459`, the exact-head integration gate completed cleanly with zero failures and zero xfails. Linux safe: **558 passed, 2 skipped** in 97.08 s. Linux fast: **458 passed, 102 skipped** in 41.88 s. Windows safe and fast both built the native DLL with MSVC and passed the five real-source regressions. Both Linux performance jobs also completed successfully.
 
 The prior authoritative clean full-suite baseline before adding the five real-example tests was run `38025875438`: safe **553 passed, 2 skipped**; fast **453 passed, 102 skipped**. The +5 fast count on the current head is exactly the added real-source regression layer.
 
