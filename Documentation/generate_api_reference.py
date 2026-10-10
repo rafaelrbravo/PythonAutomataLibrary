@@ -68,8 +68,8 @@ def render(source):
         "## Scope and validation", "",
         "This reference lists public Protocol signatures, not internal safe/fast jitclass methods. "
         "A signature does not capture every runtime overload, indexing form, or validation rule. "
-        "See the API Guide and executable tests. Visualization APIs are not yet included "
-        "in the Protocol surface and must be documented separately.", "",
+        "See the API Guide and executable tests. Visualization constructors and window Protocol methods are included; "
+        "pixel buffer and OpenGL draw-object internals are documented in the API Guide.", "",
     ])
     return "\n".join(lines)
 
