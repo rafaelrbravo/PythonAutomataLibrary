@@ -1,144 +1,122 @@
-"""Generate PAL CHEATSHEET.md and CHEATSHEET.pdf from one Python-owned content definition.
+"""Generate PAL CHEATSHEET.md and CHEATSHEET.pdf from one compact definition.
+
+The PDF follows the BET cheat-sheet approach: content is readable in this source,
+and the renderer chooses the largest body font that fits on one US Letter page.
 
 Usage: python Documentation/generators/generate_cheatsheet.py [--check]
 """
-import argparse
+import argparse, html, re
+from io import BytesIO
 from pathlib import Path
-from generate_pdfs import render
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.units import inch
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.platypus import BaseDocTemplate, Frame, FrameBreak, KeepTogether, PageTemplate, Paragraph
 
 ROOT = Path(__file__).resolve().parents[2]
 MD_TARGET = ROOT / "Documentation" / "CHEATSHEET.md"
 PDF_TARGET = ROOT / "Documentation" / "CHEATSHEET.pdf"
+TITLE = "Python Automata Library (PAL) Cheat Sheet"
+INTRO = "`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`."
 
-CHEATSHEET = r'''# PAL Cheatsheet
+SECTIONS = [
+("Create state", [
+("`pal.NewGrid(dims, dtype)`", "typed lattice"), ("`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`", "individual agents; `dims=()` is nonspatial"),
+("`pal.NewPopGrid(dims, capacity=None)`", "integer population counts"), ("`pal.NewPDEgrid(dims)`", "continuous field"),
+("`pal.NewIList()` · `pal.NewMultinomial()`", "integer query list · random-count sampler"),
+("Dimensions", "1–3 axes; a negative dimension wraps that axis, e.g. `(-nx, ny)`."),]),
+("Shared lattice geometry", [
+("Properties", "`xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`"),
+("Index conversion", "`ToI(x[,y,z])`; `ItoX/Y/Z(i)`"),
+("Regions", "`Box(lo..., hi...)` uses half-open bounds; `Hood(hood, x[,y,z])` maps relative offsets to coordinates."),
+("Neighborhoods", "`pal.MooreHood(dim, includeOrigin)` · `pal.VonNeumannHood(dim)` · `pal.CircleHood(dim, rad)`"),]),
+("Grid / common indexing", [
+("Read/write", "`g[x,y]`, `g[x,y]=v`; slices return detached NumPy copies."),
+("Pattern", "`g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`"),]),
+("AgentGrid", [
+("Create / move", "`NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` for lattice positions; `NewAgent(x,y)` / `Move(a,x,y)` for continuous positions."),
+("Agent state", "`grid[a,p]` property; `I(a)`, `XSQ/YSQ/ ZSQ(a)` lattice; `X/Y/Z(a)` continuous; `Alive(a)`, `Dispose(a)`."),
+("Queries", "`GetPop()`, `AgentsAt(...)`, `LastAgent(...)`, `AgentsInRadius(...)`, `counts[...]`."),
+("Iteration", "`for a in agents.All(): ...` is a snapshot and is safe for structural mutation such as `Dispose`."),
+("Wrapping", "`DispWrapX/Y/Z(p1,p2)` gives wrapped displacement."),]),
+("PopGrid + PDEgrid", [
+("Transactional update", "`Add(v, ...)` changes pending state; `Update()` applies it simultaneously; `Reset()` clears current + pending. Direct `grid[...] = v` changes current state immediately."),
+("Population", "`pop.GetPop()` total; `pop.All()` nonzero site indices. `capacity` limits total population."),
+("PDE setup", "`field.SetTimeSpaceStep(dt, dx[,dy,dz])`"),
+("Diffusion", "`Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`; radial 1D: `DiffusionRadialCircle/Sphere`."),
+("Advection", "`Advection`, `AdvectionField`, `AdvectionInterfaces`."),]),
+("Lists + randomness", [
+("IList", "`Append(i)`, `Clear()`, `Random()`, `Shuffle()`, indexing/`len`; `All()` detached copy; `Iter()` no-copy iteration."),
+("RNG", "`pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → `0..n-1`; use PAL RNG for shared-stream reproducibility."),
+("Multinomial", "`m.Binomial(n,p)`; `Setup(...)` then `Sample(...)` for repeated multinomial draws."),]),
+("Draw / output", [
+("Pixels", "`pix, win = pal.StartPixWindow(xDim,yDim,scale=1,title='PAL',headless=False)`; set `pix[x,y]=RGB`; `win.Update()`; `win.Save(path, block=True)`; `win.Close()`."),
+("GIF", "`StartGif(path,delay=100)` · `AddGifFrame(block=False)` · `StopGif()`; call `Update()` before capture."),
+("OpenGL", "`pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`."),]),
+]
 
-`import PythonAutomataLibrary as pal`
-
-**Default:** safe mode. Call `pal.FastMode()` **before** constructing any PAL object to opt into fast mode. Compile model functions with `@pal.njit`.
-
-## Create state
-
-| Need | Constructor |
-| --- | --- |
-| Typed lattice | `pal.NewGrid((nx, ny), dtype)` |
-| Individual agents | `pal.NewAgentGrid((nx, ny), numAgentProps=0, isStackable=False)` |
-| Population counts | `pal.NewPopGrid((nx, ny), capacity=None)` |
-| Continuous field | `pal.NewPDEgrid((nx, ny))` |
-| Integer list | `pal.NewIList()` |
-| Random count sampler | `pal.NewMultinomial()` |
-
-Dimensions: 1–3 axes; negative size wraps that axis (`(-nx, ny)`). `pal.NewAgentGrid(())` supports nonspatial populations.
-
-## Shared geometry
-
-| Task | Syntax |
-| --- | --- |
-| Size / wrap | `grid.xDim`, `grid.yDim`, `grid.nDims`, `grid.wrapX` |
-| Coordinates → index | `grid.ToI(x, y)` |
-| Index → coordinates | `grid.ItoX(i)`, `grid.ItoY(i)` |
-| Rectangular region | `grid.Box(x1, x2, y1, y2)` (half-open) |
-| Neighbor coordinates | `grid.Hood(hood, x, y)` |
-| Neighborhood offsets | `pal.MooreHood(2, True)`, `pal.VonNeumannHood(2)`, `pal.CircleHood(2, 3)` |
-
-## Grid
-
-```python
-g = pal.NewGrid((40, 40), float)
-x, y = 10, 12
-g[x, y] = 1.0
-value = g[x, y]
-copy = g[2:5, 3:8]    # detached NumPy array
-```
-
-## AgentGrid
-
-```python
-agents = pal.NewAgentGrid((40, 40), numAgentProps=2)
-a = agents.NewAgentSQ(10, 12) # lattice site (10,12); continuous center (10.5,12.5)
-agents[a, 0] = 1.5            # property
-agents.MoveSQ(a, 11, 12)
-for a in agents.All():        # snapshot; safe to Dispose during loop
-    agents.Dispose(a)
-```
-
-`agents.GetPop()`, `agents.Alive(a)`, `agents.AgentsAt(x, y)`, `agents.LastAgent(x, y)`, `agents.counts[x, y]`. Lattice position: `I(a)`, `XSQ(a)`, `YSQ(a)`. Continuous position: `NewAgent(x, y)`, `Move(a, x, y)`, `X(a)`, `Y(a)`. Wrapped displacement: `DispWrapX(x1, x2)`, `DispWrapY(y1, y2)`.
-
-## PopGrid and PDEgrid
-
-```python
-pop = pal.NewPopGrid((40, 40))
-x, y = 10, 12
-pop.Add(1, x, y)  # pending
-pop.Update()      # apply simultaneously
-pop.GetPop()      # total
-pop.Reset()       # clear current + pending
-
-field = pal.NewPDEgrid((40, 40))
-dt, dx, dy = 0.01, 1.0, 1.0
-field.SetTimeSpaceStep(dt, dx, dy)
-field.Diffusion(0.1)
-field.Update()
-```
-
-Direct `pop[x, y] = n` / `field[x, y] = value` changes current state immediately. `Add` changes only pending state until `Update`. `PopGrid(..., capacity=n)` caps each site at `n`, not the total population.
-
-PDE methods: `Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`, `Advection`, `AdvectionField`, `AdvectionInterfaces`. Radial 1D grids: `DiffusionRadialCircle`, `DiffusionRadialSphere`.
-
-## Lists and randomness
-
-```python
-items = pal.NewIList()
-items.Append(4).Append(8)
-for i in items.Iter(): pass  # live/no copy
-snapshot = items.All()       # detached copy
-items.Shuffle()
-pal.Seed(123)
-u = pal.Random()
-i = pal.RandInt(10)          # 0..9
-m = pal.NewMultinomial()
-count = m.Binomial(20, 0.3)
-```
-
-## Draw
-
-```python
-pix, window = pal.StartPixWindow(40, 40, scale=4)
-x, y = 10, 12
-pix[x, y] = 0xFF0000
-window.Update()
-window.Save("frame.png", block=True)
-window.Close()
-```
-
-`pal.StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False)` returns `(pix, window)`. Use `window.Save(path, block=True)` to wait for an image file. For unattended output pass `headless=True`; the image example above can then run without a display. Use `window.StartGif(path, delay=100)`, `window.AddGifFrame(block=False)`, and `window.StopGif()` for animation; call `Update()` before capturing a frame. Always call `Close()` when finished.
-
-For 2D/3D geometry use `pal.StartOpenGLWindow(...)` with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`, `Camera`, `Background`, and `Clear`. Headless OpenGL requires a supported rendering backend.
-
-**More detail:** [Manual](MANUAL.md) · [API Guide](API_GUIDE.pdf) · [API Reference](API_REFERENCE.pdf).
-'''
+FOOTER = "More detail: Manual · API Guide · API Reference (Documentation/)."
 
 
-def build():
-    markdown = CHEATSHEET.rstrip() + "\n"
-    return markdown, render(markdown, "CHEATSHEET")
+def _md():
+    out=["# PAL Cheatsheet", "", INTRO, ""]
+    for title, entries in SECTIONS:
+        out += [f"## {title}", ""]
+        for key, desc in entries: out.append(f"- **{key}** — {desc}")
+        out.append("")
+    out.append(f"**{FOOTER}**")
+    return "\n".join(out).rstrip()+"\n"
 
+
+def _markup(s):
+    s=html.escape(s, quote=False).replace("-&gt;", "→")
+    s=re.sub(r"`([^`]+)`", r"<font name='Courier'>\1</font>", s)
+    return s
+
+
+def _build_pdf(body_font):
+    buf=BytesIO(); pw,ph=letter; margin=.32*inch; header=.34*inch; gap=.12*inch
+    colw=(pw-2*margin-gap)/2; usable=ph-2*margin-header
+    frames=[Frame(margin,margin,colw,usable,leftPadding=3,rightPadding=3,topPadding=1,bottomPadding=1),
+            Frame(margin+colw+gap,margin,colw,usable,leftPadding=3,rightPadding=3,topPadding=1,bottomPadding=1)]
+    def header_fn(canvas,doc):
+        canvas.saveState(); canvas.setFont("Helvetica-Bold",15); canvas.drawString(margin,ph-margin-9,TITLE)
+        canvas.setStrokeColor(colors.HexColor("#888888")); canvas.setLineWidth(.5); canvas.line(margin,ph-margin-14,pw-margin,ph-margin-14); canvas.restoreState()
+    intro=ParagraphStyle("intro",fontName="Helvetica",fontSize=body_font+.25,leading=(body_font+.25)*1.12,spaceAfter=3)
+    heading=ParagraphStyle("heading",fontName="Helvetica-Bold",fontSize=body_font+1.8,leading=(body_font+1.8)*1.05,spaceBefore=2.2,spaceAfter=1.4)
+    entry=ParagraphStyle("entry",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=.9,leftIndent=7,firstLineIndent=-7)
+    box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
+    story=[Paragraph(_markup(INTRO),box)]
+    for section_i,(title,entries) in enumerate(SECTIONS):
+        if section_i == 3: story.append(FrameBreak())
+        items=[Paragraph(f"<b>{_markup(k)}</b> — {_markup(d)}",entry) for k,d in entries]
+        story.append(KeepTogether([Paragraph(title,heading)]+items))
+    story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
+    doc=BaseDocTemplate(buf,pagesize=letter,leftMargin=margin,rightMargin=margin,topMargin=margin,bottomMargin=margin)
+    doc.addPageTemplates(PageTemplate(id="main",frames=frames,onPage=header_fn)); doc.build(story)
+    return buf.getvalue(), doc.page
+
+
+def _pdf():
+    for i in range(51):
+        size=round(11.5-i*.1,1)
+        if size < 5.0: break
+        data,pages=_build_pdf(size)
+        if pages==1:
+            print(f"PAL cheatsheet fits one page at {size:.1f} pt body font.")
+            return data
+    raise RuntimeError("PAL cheatsheet does not fit one page at 5.0 pt; consolidate content further.")
+
+
+def build(): return _md(), _pdf()
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true")
-    args = parser.parse_args()
-    markdown, pdf = build()
-    if args.check:
-        stale = (not MD_TARGET.exists() or MD_TARGET.read_text(encoding="utf-8") != markdown or
-                 not PDF_TARGET.exists() or PDF_TARGET.read_bytes() != pdf)
-        if stale:
-            parser.exit(1, "Stale or missing Cheatsheet artifacts; run Documentation/generators/generate_cheatsheet.py\n")
+    p=argparse.ArgumentParser(description=__doc__); p.add_argument("--check",action="store_true"); a=p.parse_args(); md,pdf=build()
+    if a.check:
+        stale=(not MD_TARGET.exists() or MD_TARGET.read_text(encoding="utf-8")!=md or not PDF_TARGET.exists() or PDF_TARGET.read_bytes()!=pdf)
+        if stale: p.exit(1,"Stale or missing Cheatsheet artifacts; run Documentation/generators/generate_cheatsheet.py\n")
         print("CHEATSHEET.md and CHEATSHEET.pdf are current")
     else:
-        MD_TARGET.write_text(markdown, encoding="utf-8")
-        PDF_TARGET.write_bytes(pdf)
-        print(f"Wrote {MD_TARGET.relative_to(ROOT)} and {PDF_TARGET.relative_to(ROOT)}")
-
-
-if __name__ == "__main__":
-    main()
+        MD_TARGET.write_text(md,encoding="utf-8"); PDF_TARGET.write_bytes(pdf); print(f"Wrote {MD_TARGET.relative_to(ROOT)} and {PDF_TARGET.relative_to(ROOT)}")
+if __name__=="__main__": main()
