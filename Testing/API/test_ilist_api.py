@@ -104,3 +104,27 @@ def test_python_njit_ilist_mutation_and_copy_parity(api):
 
     assert compiled_work(jit) == python_work(py)
     np.testing.assert_array_equal(jit.All(), py.All())
+
+
+@pytest.mark.parametrize("value", [-1, 2**31, 1.5, np.nan, np.inf])
+def test_python_njit_ilist_invalid_append_atomic_parity(api, safe_mode, value):
+    """Compare safe-mode failure classes and unchanged contents after Append."""
+    if not safe_mode:
+        pytest.skip("Fast mode intentionally omits IList value validation")
+    py = api.NewIList()
+    jit = api.NewIList()
+    for q in (py, jit):
+        q.Append(3)
+        q.Append(7)
+
+    @api.njit
+    def compiled_append(q, x):
+        q.Append(x)
+
+    with pytest.raises(ValueError) as python_error:
+        py.Append(value)
+    with pytest.raises(ValueError) as compiled_error:
+        compiled_append(jit, value)
+    assert type(python_error.value) is type(compiled_error.value)
+    np.testing.assert_array_equal(py.All(), np.array([3, 7]))
+    np.testing.assert_array_equal(jit.All(), np.array([3, 7]))
