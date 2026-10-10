@@ -41,6 +41,20 @@ The isolated rebuild was then exercised with **all 23 test modules**, copied int
 
 The **only** safe failures remain the two known source-line diagnostic assertions in test12; no new failures appeared. The newly compiled `libpal_native.so` SHA-256 `5a444c11149100e694ba307301b4df004e780331553b18be84b897cdefa25968` matched the earlier staged binary. This establishes full-suite behavior on a reproducibly rebuilt binary with import-path isolation, **not** independent retrieval of all implementation sources from a fresh GitHub checkout.
 
+## GitHub core-source provenance verified (2026-10-09)
+
+Queried GitHub's recursive tree for default-branch commit `da275e53ad9ef93cc5bd28cb7c74a33ef27d754b` using `GET /repos/rafaelrbravo/PythonAutomataLibrary/git/trees/main?recursive=1` (`truncated=false`). Computed canonical Git blob SHA-1 locally for each file in the isolated rebuild (`sha1(b"blob " + len(bytes) + b"\\0" + bytes)`). **All five PAL core implementation source files matched GitHub byte-for-byte:**
+
+| Root-level source | GitHub tree Git blob SHA-1 | Local isolated build |
+| --- | --- | --- |
+| `NativeCore.py` | `f116e2dc9014ca5693d6a27eca4d1052745886ca` | match |
+| `pal_native.c` | `df8a9cba08f47bd7735431e52f5ae0afb143e4a3` | match |
+| `OpenGLWindow.py` | `580fbc9c7c6996dbd09507639f9c675a63347e27` | match |
+| `PixWindow.py` | `38889ea0bb50c8f4510142885a4ba29fea99dcc6` | match |
+| `__init__.py` | `2399e5d02ec075d36dee86d0e5dd28f2f7363b6a` | match |
+
+These are the **repository-root** source paths, not `PythonAutomataLibrary/NativeCore.py` paths. The isolated build places these files inside a package directory for import. All 23 test modules and `conftest.py` had previously been verified against GitHub blob hashes. Consequently, the full-suite results on the isolated rebuild use **byte-exact GitHub core sources and tests**, not unverified source reconstructions. A literal clean `git clone` and end-to-end repository packaging/install procedure have still not been executed, and optional OpenGL behavior remains untested.
+
 ## Known defects and limitations
 
 1. **Compiled safe-mode diagnostic annotation** (unresolved): `test_12_compiled_pop_pde.py` has two failures: `test_compiled_safe_popgrid_error_contains_source_line` and `test_compiled_safe_unstable_diffusion_contains_source_line`. Both raise the expected `ValueError` but the messages omit the asserted `source line` information. `test_23_diagnostic_annotations.py` documents unannotated parameter cases as strict expected failures; annotated cases pass. The observed issue appears related to AST transformer recognition of annotated versus unannotated grid arguments. Do not treat these as numerical-kernel failures. Any implementation fix requires authorization to modify files outside `Testing/`.
