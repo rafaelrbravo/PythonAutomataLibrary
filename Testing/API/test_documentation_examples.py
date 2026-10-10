@@ -74,8 +74,8 @@ def test_cheatsheet_draw_headless(tmp_path):
 def test_manual_checkpoint_snippet():
     """Execute the checkpoint example as published in the Manual."""
     manual = (Path(__file__).resolve().parents[2] / "Documentation" / "MANUAL.md").read_text(encoding="utf-8")
-    blocks = manual.split("```python\n")[1:]
-    assert len(blocks) == 2, "Expected quickstart and checkpoint examples"
-    snippet = blocks[1].split("\n```", 1)[0]
+    checkpoint_section = manual.split("## 9. Checkpointing and reproducibility\n", 1)[1].split("\n## 10.", 1)[0]
+    assert checkpoint_section.count("```python\n") == 1, "Expected one checkpoint example in section 9"
+    snippet = checkpoint_section.split("```python\n", 1)[1].split("\n```", 1)[0]
     ast.parse(snippet)
     exec(compile(snippet, "pal_manual_checkpoint.py", "exec"), {"__name__": "pal_documentation_test"})
