@@ -1,6 +1,6 @@
 # PAL public API coverage inventory — 2026-10-09
 
-This inventory maps the intended public surface to dedicated `Testing/API` coverage and the older algorithmic suite. Dedicated API execution is now verified in GitHub Actions from repository source: safe **267 passed**; fast **205 passed, 62 intentional skips**; zero failures and zero xfails at commit `3be0b19742fdc4189fdb5629309093ad4ead7813`.
+This inventory maps the intended public surface to dedicated `Testing/API` coverage and the older algorithmic suite. The authoritative integration gate is now the complete `Testing/` tree, which includes all dedicated API tests. GitHub Actions run `38027661459` completed from repository source with zero failures/xfails: safe **558 passed, 2 skipped**; fast **458 passed, 102 skipped**. Windows Python 3.12/MSVC also passed Persian plus four representative real-example regressions in both modes.
 
 | Surface | Dedicated API coverage | Verified status / remaining limitation |
 |---|---|---|
@@ -21,9 +21,6 @@ This inventory maps the intended public surface to dedicated `Testing/API` cover
 | AwaitWindows | `test_visualization_api.py` | Verified deterministic headless multi-window lifecycle |
 | ColorScale | `test_colorscale_api.py` | Verified endpoints/clamping/interpolation/compiled parity |
 
-## Remaining completeness work
+## Remaining limitation
 
-1. Complete the current exact-head full `Testing/` safe/fast integration run and record totals separately from the dedicated API counts.
-2. Run representative examples/workloads against the corrected source, including Persian.py where feasible; Windows-specific behavior still requires Windows evidence.
-3. Full OpenGL rendering/save/GIF lifecycle remains dependent on an available graphics backend and should be documented rather than simulated as proof.
-4. Keep permanent regressions for accepted source fixes and update the native audit report with current CI evidence.
+Full OpenGL rendering/save/GIF lifecycle still depends on an available graphics backend. Constructor validation plus headless Pix/save/GIF/AwaitWindows behavior is covered. No other known correctness gap remains in the audited public API surface.
