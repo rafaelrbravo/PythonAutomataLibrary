@@ -66,11 +66,21 @@ SECTIONS = [
 ("Iteration", "`for a in agents.All(): ...` iterates a detached snapshot and is safe for structural mutation such as `Dispose`. `AgentsInRadius(...)` returns nearby agents; wrapped displacements account for periodic boundaries."),
 ("`DispWrapX/Y/Z(p1,p2)`", "Compute the shortest displacement along a periodic axis."),]),
 ("PopGrid + PDEgrid", [
-("Transactional update", "`Add(v, ...)` accumulates pending changes; `Update()` applies them together. `Reset()` clears both current and pending state. Direct `grid[...] = v` changes current state immediately, outside the transaction."),
-("Population", "`pop.GetPop()` total; `pop.All()` nonzero site indices. `capacity` limits total population."),
+("`Add(v,...)`", "Accumulate pending changes without immediately changing current values."),
+("`Update()`", "Apply accumulated changes together as a synchronous update."),
+("`Reset()`", "Clear both current values and pending changes; direct indexed assignment changes current state immediately."),
+("`pop.GetPop()`", "Return total population across all sites."),
+("`pop.All()`", "Return indices of sites with nonzero population, not the population values."),
 ("PDE setup", "`field.SetTimeSpaceStep(dt, dx[,dy,dz])` sets time and spatial steps before updates. Use spacing values that satisfy the selected scheme’s stability requirements."),
-("Diffusion", "`Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`; radial 1D: `DiffusionRadialCircle/Sphere`."),
-("Advection", "`Advection`, `AdvectionField`, `AdvectionInterfaces`."),]),
+("`Diffusion(...)`", "Diffuse the field using the standard lattice scheme."),
+("`DiffusionMask(...)`", "Diffuse subject to a mask of permitted sites or interfaces."),
+("`DiffusionField(...)`", "Use another field to vary diffusion across space."),
+("`DiffusionInterfaces(...)`", "Specify diffusion behavior at interfaces."),
+("`DiffusionADI(...)`", "Use an alternating-direction implicit diffusion scheme."),
+("`DiffusionRadialCircle/Sphere(...)`", "Use radial diffusion for circular or spherical geometry."),
+("`Advection(...)`", "Move field values with a specified velocity."),
+("`AdvectionField(...)`", "Use a field to define spatially varying advection."),
+("`AdvectionInterfaces(...)`", "Specify advection behavior at interfaces."),]),
 
 ]
 
