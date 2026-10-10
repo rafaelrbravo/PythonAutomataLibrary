@@ -19,6 +19,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 - `test_grid_api.py::test_python_njit_grid_invalid_linear_read_atomic_parity`: safe-mode negative/out-of-range reads; compare exception classes and unchanged state.
 - `test_grid_api.py::test_python_njit_grid_scalar_mutation_parity`: Grid × 1D/2D/3D; coordinate assignment, linear indexing, full-array equality.
 - `test_pdegrid_api.py::test_python_njit_pdegrid_add_update_state_parity`: PDEgrid × 1D/2D/3D; pending floating additions, Update, indexing, final fields.
+- `test_ilist_api.py::test_python_njit_ilist_invalid_append_atomic_parity`: safe-mode invalid values; compare exception class and unchanged list contents.
 - `test_ilist_api.py::test_python_njit_ilist_mutation_and_copy_parity`: IList Append/Iter/All detached-copy/Clear and final-state parity.
 - `test_popgrid_api.py::test_python_njit_popgrid_state_transition_parity`: PopGrid × 1D/2D/3D; pending additions, Update, GetPop, indexing, full arrays.
 - `test_shared_geometry_api.py::test_python_box_named_bounds_rejected_pending_review`: documents current Python Box keyword rejection (G-01), no semantics changed.
