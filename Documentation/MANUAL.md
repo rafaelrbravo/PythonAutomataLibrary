@@ -135,9 +135,9 @@ Keep model state in PAL objects and use `pal.Seed`, `pal.Random`, `pal.RandInt`,
 
 ### Testing a timestep
 
-Test a model's update function on a grid small enough to inspect by hand before running a large simulation. For population transport, check that an internal move subtracts and adds the same integer count, that all counts remain nonnegative, and that total population changes only through explicit birth/death terms. For a diffusion-only field with closed boundaries, compare total mass before and after an update within floating-point tolerance. For agents, check that every live handle remains valid and that moves respect occupancy and wrapping rules. Repeat the same test near an edge, not just in the interior.
+Test a model's update function on a grid small enough to inspect by hand, including an edge or wrapped boundary rather than only interior sites. Use invariants appropriate to the object: closed diffusion conserves mass within floating-point tolerance; agent moves preserve valid live handles and occupancy rules; population updates satisfy the conservation and nonnegativity checks from §5.
 
-Test both the Python orchestration path and compiled `@pal.njit` updates when a model uses both; passing in Python does not establish compiled behavior. Include safe and fast runs in regression testing, but use safe-mode exceptions to diagnose invalid operations rather than expecting fast mode to detect them.
+When a model uses both Python orchestration and compiled `@pal.njit` updates, test both paths; passing in Python does not establish compiled behavior. Include safe and fast runs in regression testing, but use safe-mode exceptions to diagnose invalid operations rather than expecting fast mode to detect them.
 
 ### Random streams and repeatability
 
