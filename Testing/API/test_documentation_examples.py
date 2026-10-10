@@ -1,20 +1,19 @@
 """Execute the Manual quickstart as published, including its population assertion."""
 
 import ast
+import runpy
 from pathlib import Path
 
 
-def test_manual_quickstart():
+def test_manual_quickstart(tmp_path):
     manual = (Path(__file__).resolve().parents[2] / "Documentation" / "MANUAL.md").read_text(encoding="utf-8")
     start = manual.index("```python\n") + len("```python\n")
     end = manual.index("\n```", start)
     snippet = manual[start:end]
     ast.parse(snippet)
-    namespace = {"__name__": "pal_documentation_test"}
-    import linecache
-    source_name = str(Path(__file__).resolve().parents[2] / "Documentation" / "_manual_quickstart.py")
-    linecache.cache[source_name] = (len(snippet), None, [line + "\n" for line in snippet.splitlines()], source_name)
-    exec(compile(snippet, source_name, "exec"), namespace)
+    source_path = tmp_path / "manual_quickstart.py"
+    source_path.write_text(snippet, encoding="utf-8")
+    namespace = runpy.run_path(str(source_path), run_name="pal_documentation_test")
     pop = namespace["pal"].NewPopGrid((40, 40))
     for _ in range(10):
         namespace["Step"](pop)
@@ -74,8 +73,8 @@ def test_cheatsheet_draw_headless(tmp_path):
 def test_manual_checkpoint_snippet():
     """Execute the checkpoint example as published in the Manual."""
     manual = (Path(__file__).resolve().parents[2] / "Documentation" / "MANUAL.md").read_text(encoding="utf-8")
-    checkpoint_section = manual.split("## 9. Checkpointing and reproducibility\n", 1)[1].split("\n## 10.", 1)[0]
-    assert checkpoint_section.count("```python\n") == 1, "Expected one checkpoint example in section 9"
+    checkpoint_section = manual.split("## 8. Checkpointing and reproducibility\n", 1)[1].split("\n## 9.", 1)[0]
+    assert checkpoint_section.count("```python\n") == 1, "Expected one checkpoint example in the checkpointing section"
     snippet = checkpoint_section.split("```python\n", 1)[1].split("\n```", 1)[0]
     ast.parse(snippet)
     exec(compile(snippet, "pal_manual_checkpoint.py", "exec"), {"__name__": "pal_documentation_test"})
