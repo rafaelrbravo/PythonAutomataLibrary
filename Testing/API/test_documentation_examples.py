@@ -16,3 +16,14 @@ def test_manual_quickstart():
     for _ in range(10):
         namespace["Step"](pop)
     assert pop.GetPop() == 16000
+
+
+def test_cheatsheet_nonvisual_snippets():
+    """Check the published Grid, AgentGrid, PopGrid/PDEgrid, and list examples."""
+    sheet = (Path(__file__).resolve().parents[2] / "Documentation" / "CHEATSHEET.md").read_text(encoding="utf-8")
+    blocks = sheet.split("```python\n")[1:]
+    for block in blocks[:4]:
+        snippet = block.split("\n```", 1)[0]
+        ast.parse(snippet)
+        namespace = {"__name__": "pal_cheatsheet_test"}
+        exec("import PythonAutomataLibrary as pal\n" + snippet, namespace)
