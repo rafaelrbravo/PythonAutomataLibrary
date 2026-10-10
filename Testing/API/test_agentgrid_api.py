@@ -72,3 +72,71 @@ def test_all_snapshot_survives_disposal(api):
         g.Dispose(a)
     assert set(map(int, snapshot)) == set(agents)
     assert len(g.All()) == 0
+
+
+def test_alive_dispose_and_property_roundtrip(api):
+    g = api.NewAgentGrid((6,), numAgentProps=2)
+    a = g.NewAgentSQ(2)
+    assert g.Alive(a)
+    g[a, 0] = 1.25
+    g[a, 1] = -3.5
+    assert (g[a, 0], g[a, 1]) == pytest.approx((1.25, -3.5))
+    g.Dispose(a)
+    assert not g.Alive(a)
+
+
+def test_agentsat_and_counts_agree_for_stack(api):
+    g = api.NewAgentGrid((5, 5), isStackable=True)
+    made = [g.NewAgentSQ(2, 3) for _ in range(4)]
+    assert g.counts[2, 3] == 4
+    assert set(map(int, g.AgentsAt(2, 3))) == set(made)
+
+
+def test_all_shuffle_preserves_membership(api):
+    g = api.NewAgentGrid((16,))
+    made = [g.NewAgentSQ(i) for i in range(8)]
+    api.Seed(42)
+    shuffled = g.All(shuffle=True)
+    assert set(map(int, shuffled)) == set(made)
+    assert len(shuffled) == len(made)
+
+
+def test_discrete_wrap_and_displacement_all_axes(api):
+    g = api.NewAgentGrid((-4, -5, -6))
+    assert (g.InWrapSQX(-1), g.InWrapSQY(5), g.InWrapSQZ(7)) == (3, 0, 1)
+    assert g.DispWrapX(3.5, 0.5) == pytest.approx(1.0)
+    assert g.DispWrapY(4.5, 0.5) == pytest.approx(1.0)
+    assert g.DispWrapZ(5.5, 0.5) == pytest.approx(1.0)
+
+
+def test_safe_dead_agent_operations_rejected(api, safe_mode):
+    if not safe_mode:
+        pytest.skip("Fast mode intentionally omits agent validity checks")
+    g = api.NewAgentGrid((5,), numAgentProps=1)
+    a = g.NewAgentSQ(1)
+    g.Dispose(a)
+    for call in (
+        lambda: g.I(a),
+        lambda: g.XSQ(a),
+        lambda: g.X(a),
+        lambda: g.__getitem__((a, 0)),
+        lambda: g.__setitem__((a, 0), 1.0),
+        lambda: g.MoveSQ(a, 2),
+        lambda: g.Dispose(a),
+    ):
+        with pytest.raises(ValueError):
+            call()
+
+
+def test_safe_unstackable_occupancy_rejected_without_state_change(api, safe_mode):
+    if not safe_mode:
+        pytest.skip("Fast mode intentionally omits occupancy checks")
+    g = api.NewAgentGrid((5,))
+    a = g.NewAgentSQ(2)
+    with pytest.raises(ValueError):
+        g.NewAgentSQ(2)
+    assert g.GetPop() == 1 and g.LastAgent(2) == a
+    b = g.NewAgentSQ(3)
+    with pytest.raises(ValueError):
+        g.MoveSQ(b, 2)
+    assert g.I(b) == 3
