@@ -4,6 +4,9 @@ on:
     branches:
       - main
       - pal-audit-ci-fix
+  pull_request:
+    branches:
+      - main
 jobs:
   api-audit:
     runs-on: ubuntu-latest
