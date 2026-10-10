@@ -76,3 +76,20 @@ def test_advection_field_and_interfaces_use_distinct_velocity_locations():
     expected_interfaces = np.array([0.98, 0.02, 0.0, 0.0], dtype=np.float32)
     np.testing.assert_allclose(centered[:], expected_centered, rtol=0, atol=2e-6)
     np.testing.assert_allclose(interfaces[:], expected_interfaces, rtol=0, atol=2e-6)
+
+
+@pytest.mark.parametrize("method", ["Advection", "AdvectionField", "AdvectionInterfaces"])
+def test_advection_cfl_validation_is_transactional(method):
+    field = pal.NewPDEgrid((-8,))
+    field.SetTimeSpaceStep(1.0, 1.0)
+    values = np.arange(8, dtype=np.float32)
+    field[:] = values
+
+    with pytest.raises(ValueError):
+        if method == "Advection":
+            field.Advection(1.5)
+        else:
+            getattr(field, method)(np.full(8, 1.5, dtype=np.float32))
+    field.Update()
+
+    np.testing.assert_array_equal(field[:], values)
