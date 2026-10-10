@@ -4,6 +4,8 @@ import ast
 import runpy
 from pathlib import Path
 
+from Documentation.generate_cheatsheet import CHEATSHEET
+
 
 def test_manual_quickstart(tmp_path):
     manual = (Path(__file__).resolve().parents[2] / "Documentation" / "MANUAL.md").read_text(encoding="utf-8")
@@ -24,7 +26,7 @@ def test_manual_quickstart(tmp_path):
 
 def test_cheatsheet_nonvisual_snippets():
     """Check the published Grid, AgentGrid, PopGrid/PDEgrid, and list examples."""
-    sheet = (Path(__file__).resolve().parents[2] / "Documentation" / "CHEATSHEET.md").read_text(encoding="utf-8")
+    sheet = CHEATSHEET
     blocks = sheet.split("```python\n")[1:]
     assert len(blocks) == 5, "Expected four nonvisual examples and one drawing example"
     for index, block in enumerate(blocks[:4]):
@@ -49,7 +51,7 @@ def test_cheatsheet_draw_headless(tmp_path):
     import pytest
     Image = pytest.importorskip("PIL.Image")
 
-    sheet = (Path(__file__).resolve().parents[2] / "Documentation" / "CHEATSHEET.md").read_text(encoding="utf-8")
+    sheet = CHEATSHEET
     blocks = sheet.split("```python\n")[1:]
     assert len(blocks) == 5
     snippet = blocks[4].split("\n```", 1)[0]
