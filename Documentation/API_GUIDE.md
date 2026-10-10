@@ -229,7 +229,7 @@ pop[x, y] = 10
 pop[:] = 0
 ```
 
-Slice reads are detached copies. Population changes can instead be accumulated and applied together:
+Slice reads are detached NumPy arrays (`int64`); assigning to a slice writes directly to the native population, while modifying a previously read array does not. Both linear slices (`pop[:]`) and spatial slices (`pop[:, :]`) are supported. Population changes can instead be accumulated and applied together:
 
 ```python
 pop.Add(delta, x, y)
@@ -253,7 +253,7 @@ pop.Update()
 field = pal.NewPDEgrid((xDim, yDim))
 ```
 
-`PDEgrid` stores a continuous `float32` scalar field. Direct indexing/assignment changes the current field immediately. Slice reads return detached NumPy copies. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
+`PDEgrid` stores a continuous `float32` scalar field. Direct indexing/assignment changes the current field immediately. Slice reads return detached `float32` NumPy arrays; array slice assignment writes to the native field, but editing a previously read slice does not. Linear (`field[:]`) and spatial (`field[:, :]`) slices are supported. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
 
 ### Space and time
 
