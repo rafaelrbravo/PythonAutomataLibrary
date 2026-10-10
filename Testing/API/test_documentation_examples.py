@@ -47,7 +47,8 @@ def test_cheatsheet_nonvisual_snippets():
 def test_cheatsheet_draw_headless(tmp_path):
     """Run the published drawing example off-screen and inspect its saved pixel."""
     import numpy as np
-    from PIL import Image
+    import pytest
+    Image = pytest.importorskip("PIL.Image")
 
     sheet = (Path(__file__).resolve().parents[2] / "Documentation" / "CHEATSHEET.md").read_text(encoding="utf-8")
     blocks = sheet.split("```python\n")[1:]
