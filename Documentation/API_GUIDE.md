@@ -319,7 +319,7 @@ pal.Random()       # uniform float
 pal.RandInt(max)  # integer in [0, max)
 ```
 
-`Seed` accepts the uint64 domain. `RandInt(max)` uses the positive int64 domain and returns an integer in `[0, max)`. PAL random functions share one seeded stream across Python and compiled PAL calls, so reseeding reproduces the same call sequence across that boundary.
+`Seed` accepts integral seeds in the uint64 domain (`0` through `2**64 - 1`); invalid or nonfinite inputs raise `ValueError`. `RandInt(max)` requires a positive integer in the int64 domain and returns an integer in `[0, max)`; zero, negative, fractional, nonfinite, or out-of-range bounds raise `ValueError`. `Random()` returns a uniform floating-point draw. PAL random functions share one seeded stream across Python and compiled PAL calls, so reseeding reproduces the same call sequence across that boundary. The stream is call-order dependent: adding or removing a random draw changes later results. This does not seed NumPy's separate RNG.
 
 For binomial/multinomial sampling:
 
