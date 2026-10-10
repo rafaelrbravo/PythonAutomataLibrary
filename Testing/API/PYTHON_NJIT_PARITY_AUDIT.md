@@ -15,6 +15,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 - `test_shared_geometry_api.py::test_python_njit_box_and_hood_coordinate_parity`: Grid/PopGrid/PDEgrid × 1D/2D/3D; exact ordered wrapped Box/Hood results.
 - `test_agentgrid_api.py::test_python_njit_agentgrid_hood_and_box_order_parity`: AgentGrid × 1D/2D/3D; exact ordered wrapped results.
 - `test_agentgrid_api.py::test_python_njit_agent_lifecycle_state_parity`: AgentGrid × 1D/2D/3D; stacked creation, properties, movement, disposal, population, surviving agents.
+- `test_grid_api.py::test_python_njit_grid_invalid_linear_read_atomic_parity`: safe-mode negative/out-of-range reads; compare exception classes and unchanged state.
 - `test_grid_api.py::test_python_njit_grid_scalar_mutation_parity`: Grid × 1D/2D/3D; coordinate assignment, linear indexing, full-array equality.
 - `test_pdegrid_api.py::test_python_njit_pdegrid_add_update_state_parity`: PDEgrid × 1D/2D/3D; pending floating additions, Update, indexing, final fields.
 - `test_ilist_api.py::test_python_njit_ilist_mutation_and_copy_parity`: IList Append/Iter/All detached-copy/Clear and final-state parity.
