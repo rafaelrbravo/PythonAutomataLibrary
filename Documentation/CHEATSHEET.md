@@ -49,7 +49,7 @@ for a in agents.All():        # snapshot; safe to Dispose during loop
     agents.Dispose(a)
 ```
 
-`agents.GetPop()`, `agents.Alive(a)`, `agents.AgentsAt(x, y)`, `agents.LastAgent(x, y)`, `agents.counts[x, y]`. Lattice position: `I(a)`, `XSQ(a)`, `YSQ(a)`. Continuous position: `NewAgent(x, y)`, `Move(a, x, y)`, `X(a)`, `Y(a)`.
+`agents.GetPop()`, `agents.Alive(a)`, `agents.AgentsAt(x, y)`, `agents.LastAgent(x, y)`, `agents.counts[x, y]`. Lattice position: `I(a)`, `XSQ(a)`, `YSQ(a)`. Continuous position: `NewAgent(x, y)`, `Move(a, x, y)`, `X(a)`, `Y(a)`. Wrapped displacement: `DispWrapX(x1, x2)`, `DispWrapY(y1, y2)`.
 
 ## PopGrid and PDEgrid
 
