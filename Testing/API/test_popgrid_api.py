@@ -95,3 +95,58 @@ def test_safe_missing_dimension_wrap_methods_rejected(api, safe_mode, method):
     g = api.NewPopGrid((5,))
     with pytest.raises(ValueError):
         getattr(g, method)(0)
+
+
+@pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
+def test_python_njit_popgrid_state_transition_parity(api, shape):
+    """Run identical deterministic mutations in separate Python and compiled grids."""
+    py = api.NewPopGrid(shape, capacity=100)
+    jit = api.NewPopGrid(shape, capacity=100)
+    site = tuple(1 for _ in shape)
+
+    def python_work(g):
+        g.Add(7, *site)
+        g.Add(3, *site)
+        before = g.GetPop()
+        g.Update()
+        after = g.GetPop()
+        g.Add(-2, *site)
+        g.Update()
+        return before, after, g.GetPop(), g[site if len(shape) > 1 else site[0]]
+
+    if len(shape) == 1:
+        @api.njit
+        def compiled_work(g):
+            g.Add(7, 1)
+            g.Add(3, 1)
+            before = g.GetPop()
+            g.Update()
+            after = g.GetPop()
+            g.Add(-2, 1)
+            g.Update()
+            return before, after, g.GetPop(), g[1]
+    elif len(shape) == 2:
+        @api.njit
+        def compiled_work(g):
+            g.Add(7, 1, 1)
+            g.Add(3, 1, 1)
+            before = g.GetPop()
+            g.Update()
+            after = g.GetPop()
+            g.Add(-2, 1, 1)
+            g.Update()
+            return before, after, g.GetPop(), g[1, 1]
+    else:
+        @api.njit
+        def compiled_work(g):
+            g.Add(7, 1, 1, 1)
+            g.Add(3, 1, 1, 1)
+            before = g.GetPop()
+            g.Update()
+            after = g.GetPop()
+            g.Add(-2, 1, 1, 1)
+            g.Update()
+            return before, after, g.GetPop(), g[1, 1, 1]
+
+    assert tuple(compiled_work(jit)) == tuple(python_work(py))
+    np.testing.assert_array_equal(jit[:], py[:])
