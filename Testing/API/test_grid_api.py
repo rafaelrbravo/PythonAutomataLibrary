@@ -52,7 +52,7 @@ def test_compiled_keyword_toi_and_wrap(api):
 
     @api.njit
     def work(grid):
-        return grid.ToI(x=2, y=3, z=4), grid.InWrapX(x=-1), grid.InWrapY(y=5), grid.InWrapZ(z=7)
+        return grid.ToI(x=2, y=3, z=4), grid.InWrapX(-1), grid.InWrapY(5), grid.InWrapZ(7)
 
     assert work(g) == (g.ToI(2, 3, 4), 3, 0, 1)
 
