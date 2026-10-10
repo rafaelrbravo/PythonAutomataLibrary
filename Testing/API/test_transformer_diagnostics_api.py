@@ -54,13 +54,12 @@ def test_annotated_agent_property_augassign(api):
     assert work(g, a) == pytest.approx(6.5)
 
 
-@pytest.mark.xfail(strict=True, reason="IList.Append compiled signature names its value parameter i, so value= cannot bind")
-def test_annotated_ilist_append_keyword_falls_through_with_python_signature(api):
+def test_annotated_ilist_append_i_keyword_matches_public_signature(api):
     q = api.NewIList()
 
     @api.njit
     def work(out: pal.IList):
-        out.Append(value=3)
+        out.Append(i=3)
         return out[0]
 
     assert work(q) == 3
