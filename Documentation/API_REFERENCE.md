@@ -219,6 +219,28 @@ StartOpenGLWindow(xDim, yDim, zDim=None, width=800, height=800, title='PAL', hea
 | method | `Save(self, path: str, block=False)` |
 | method | `Close(self)` |
 
+## Pix drawing buffer
+
+| Kind | Declaration |
+| --- | --- |
+| method | `__setitem__(self, key, color)` |
+| method | `Xdim(self)` |
+| method | `Ydim(self)` |
+| method | `ToI(self, x, y)` |
+| method | `ItoX(self, i)` |
+| method | `ItoY(self, i)` |
+| method | `__len__(self)` |
+
+## OpenGLDraw primitive collector
+
+| Kind | Declaration |
+| --- | --- |
+| method | `Clear(self)` |
+| method | `Circle(self, rad, color, x, y, z=0.0)` |
+| method | `Box(self, xLen, color, x, y, z=0.0, yLen=-1.0, zLen=-1.0)` |
+| method | `BoxSQ(self, color, x, y, z=0.0)` |
+| method | `Line(self, width, color, x1, y1, x2, y2, z1=0.0, z2=0.0)` |
+
 ## Scope and validation
 
-This reference lists public Protocol signatures, not internal safe/fast jitclass methods. A signature does not capture every runtime overload, indexing form, or validation rule. See the API Guide and executable tests. Visualization constructors and window Protocol methods are included; pixel buffer and OpenGL draw-object internals are documented in the API Guide.
+This reference lists public Protocol signatures, not internal safe/fast jitclass methods. A signature does not capture every runtime overload, indexing form, or validation rule. See the API Guide and executable tests. Visualization constructors and window Protocol methods are included; Pix buffer and OpenGLDraw method signatures are also included; consult the API Guide for behavior.
