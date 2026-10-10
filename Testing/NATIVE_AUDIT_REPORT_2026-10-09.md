@@ -174,3 +174,14 @@ The runner is a convenience wrapper, **not a test-result artifact**. Its GitHub 
 For independent reproduction, clone the GitHub PAL repository, build the native C library using the project's supported instructions, install its dependencies, and run `Testing/` in fresh safe/fast processes. The paths above refer to this audit's staging directory, not a portable checkout. Compare the new results with the counts above. Investigate the source-line diagnostic issue with both annotated and unannotated `@njit` grid arguments; preserve exception safety and existing validation semantics. Fixing PAL implementation code requires separate authorization. An OpenGL-capable runner is needed to exercise the skipped graphical backend tests.
 
 **Conclusion:** All 23 test modules were executed with verified test-source identity. Fast-mode suite passes on the staged native runtime; safe-mode suite has exactly two known diagnostic-annotation failures. Numerical and state-machine tests did not uncover additional failures in this run. This is substantial regression evidence, not a formal guarantee of correctness.
+
+## Final complete rerun after diagnostic test annotations (2026-10-09)
+
+After the user-requested change in `Testing/test_12_compiled_pop_pde.py` (commit `6df2c02ad7adad4779a4b6b7e315dc9f320a7279`), updated the corresponding two test functions in the isolated build's test tree with `grid: PopGrid` and `grid: PDEgrid` marker annotations. No PAL implementation files were modified. Executed the **entire 23-module suite** in separate fresh Python processes from `/mnt/data/pal_fresh_build`, against the previously GitHub-blob-verified source files and rebuilt native library:
+
+| Mode | Passed | Failed | Skipped | Xfailed | Warnings | Time | Exit |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Safe | **286** | **0** | 2 | 2 | 4 | 57.08 s | 0 |
+| Fast | **248** | **0** | 42 | 0 | 3 | 27.73 s | 0 |
+
+The two formerly failing source-line assertions now pass with annotations. Two strict expected failures in `test_23_diagnostic_annotations.py` continue to characterize the unsupported source-line enhancement for **unannotated** grid arguments. Warnings are Python 3.13 multiprocessing `fork()` deprecations in visualization tests. The wheel packaging defect remains a separate, confirmed distribution problem; the green suite does not resolve it.
