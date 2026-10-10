@@ -16,7 +16,7 @@ PROTOCOLS = ("Multinomial", "IList", "AgentGrid", "Grid", "PopGrid", "PDEgrid")
 
 
 def signature(node):
-    """Preserve Python's source spelling, including defaults and annotations."""
+    """Render a function signature without its decorators or body."""
     args = ast.unparse(node.args)
     returns = f" -> {ast.unparse(node.returns)}" if node.returns else ""
     return f"{node.name}({args}){returns}"
