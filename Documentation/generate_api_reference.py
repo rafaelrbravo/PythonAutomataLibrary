@@ -1,4 +1,4 @@
-"""Regenerate Documentation/source/API_REFERENCE.md from NativeCore.py without importing PAL.
+"""Generate Documentation/API_REFERENCE.pdf from PAL source without importing PAL.
 
 Usage: python Documentation/generate_api_reference.py
        python Documentation/generate_api_reference.py --check
@@ -6,10 +6,11 @@ Usage: python Documentation/generate_api_reference.py
 import argparse
 import ast
 from pathlib import Path
+from generate_pdfs import render as render_pdf
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "NativeCore.py"
-TARGET = ROOT / "Documentation" / "source" / "API_REFERENCE.md"
+TARGET = ROOT / "Documentation" / "API_REFERENCE.pdf"
 FACTORIES = ("FastMode", "NewIList", "MooreHood", "VonNeumannHood", "CircleHood",
              "NewMultinomial", "NewGrid", "NewAgentGrid", "NewPopGrid", "NewPDEgrid")
 PROTOCOLS = ("Multinomial", "IList", "AgentGrid", "Grid", "PopGrid", "PDEgrid")
@@ -97,18 +98,15 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="fail if generated output differs")
     args = parser.parse_args()
-    result = render(SOURCE.read_text(encoding="utf-8"))
+    markdown = render(SOURCE.read_text(encoding="utf-8"))
+    result = render_pdf(markdown, "API_REFERENCE")
     if args.check:
-        if not TARGET.exists() or TARGET.read_text(encoding="utf-8") != result:
-            import difflib
-            current = TARGET.read_text(encoding="utf-8") if TARGET.exists() else ""
-            diff = difflib.unified_diff(current.splitlines(True), result.splitlines(True), fromfile="committed", tofile="generated")
-            print("".join(diff))
-            parser.exit(1, "API reference is stale; run Documentation/generate_api_reference.py\n")
-        print("API reference is current")
+        if not TARGET.exists() or TARGET.read_bytes() != result:
+            parser.exit(1, "API reference PDF is stale; run Documentation/generate_api_reference.py\n")
+        print("API_REFERENCE.pdf is current")
     else:
-        TARGET.write_text(result, encoding="utf-8")
-        print(f"Wrote {TARGET}")
+        TARGET.write_bytes(result)
+        print(f"Wrote {TARGET.relative_to(ROOT)} ({len(result)} bytes)")
 
 
 if __name__ == "__main__":
