@@ -279,3 +279,66 @@ def test_python_njit_pdegrid_slice_read_aliasing_parity(api):
 
     assert compiled_work(jit) == pytest.approx(python_work(py))
     np.testing.assert_allclose(jit[:], py[:], rtol=0, atol=1e-6)
+
+@pytest.mark.parametrize("shape", [(9,), (6, 7), (4, 5, 6)])
+def test_python_njit_pdegrid_diffusion_parity(api, shape):
+    """Compare one constant-rate diffusion step on an identical impulse field."""
+    py = api.NewPDEgrid(shape)
+    jit = api.NewPDEgrid(shape)
+    center = tuple(d // 2 for d in shape)
+    key = center[0] if len(shape) == 1 else center
+    py[key] = 1.0
+    jit[key] = 1.0
+
+    def python_work(g):
+        g.Diffusion(0.1)
+        g.Update()
+
+    @api.njit
+    def compiled_work(g):
+        g.Diffusion(0.1)
+        g.Update()
+
+    python_work(py)
+    compiled_work(jit)
+    np.testing.assert_allclose(jit[:], py[:], rtol=0, atol=1e-7)
+
+
+@pytest.mark.parametrize("shape,velocities", [
+    ((9,), (0.1,)),
+    ((6, 7), (0.1, -0.05)),
+    ((4, 5, 6), (0.1, -0.05, 0.025)),
+])
+def test_python_njit_pdegrid_advection_parity(api, shape, velocities):
+    """Compare one constant-velocity advection step on an identical smooth field."""
+    py = api.NewPDEgrid(shape)
+    jit = api.NewPDEgrid(shape)
+    values = np.arange(np.prod(shape), dtype=np.float32).reshape(shape) / float(np.prod(shape))
+    key = slice(None) if len(shape) == 1 else tuple(slice(None) for _ in shape)
+    py[key] = values
+    jit[key] = values
+
+    def python_work(g):
+        g.Advection(*velocities)
+        g.Update()
+
+    if len(shape) == 1:
+        @api.njit
+        def compiled_work(g):
+            g.Advection(0.1)
+            g.Update()
+    elif len(shape) == 2:
+        @api.njit
+        def compiled_work(g):
+            g.Advection(0.1, -0.05)
+            g.Update()
+    else:
+        @api.njit
+        def compiled_work(g):
+            g.Advection(0.1, -0.05, 0.025)
+            g.Update()
+
+    python_work(py)
+    compiled_work(jit)
+    np.testing.assert_allclose(jit[:], py[:], rtol=0, atol=1e-7)
+
