@@ -66,3 +66,41 @@ def test_compiled_safe_append_validation(api, safe_mode, value):
 
     with pytest.raises(ValueError):
         append(q, value)
+
+
+def test_python_njit_ilist_mutation_and_copy_parity(api):
+    """Compare outputs and final list contents after identical mutations."""
+    py = api.NewIList()
+    jit = api.NewIList()
+
+    def python_work(q):
+        q.Append(4)
+        q.Append(9)
+        before = q[1]
+        total = 0
+        for value in q.Iter():
+            total += value
+        detached = q.All()
+        detached[0] = 77
+        still_original = q[0]
+        q.Clear()
+        q.Append(total)
+        return before, still_original, len(q), q[0]
+
+    @api.njit
+    def compiled_work(q):
+        q.Append(4)
+        q.Append(9)
+        before = q[1]
+        total = 0
+        for value in q.Iter():
+            total += value
+        detached = q.All()
+        detached[0] = 77
+        still_original = q[0]
+        q.Clear()
+        q.Append(total)
+        return before, still_original, len(q), q[0]
+
+    assert compiled_work(jit) == python_work(py)
+    np.testing.assert_array_equal(jit.All(), py.All())
