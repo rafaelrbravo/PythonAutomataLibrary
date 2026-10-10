@@ -19,11 +19,11 @@ MD_TARGET = ROOT / "Documentation" / "CHEATSHEET.md"
 PDF_TARGET = ROOT / "Documentation" / "CHEATSHEET.pdf"
 TITLE = "Python Automata Library (PAL) Cheat Sheet"
 INTRO = "`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`."
-CONVENTIONS = "`dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D; `dims=()` is nonspatial. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D. `Box(x1,x2,...)` alternates lower and exclusive upper bounds per axis. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes."
+CONVENTIONS = "`dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D. `Box(x1,x2,...)` alternates lower and exclusive upper bounds per axis. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes."
 
 SECTIONS = [
 ("Create state", [
-("`pal.NewGrid(dims, dtype)`", "Create a typed lattice storing one value per site."), ("`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`", "Create agents with optional properties; `dims=()` makes a nonspatial grid."),
+("`pal.NewGrid(dims, dtype)`", "Create a typed lattice storing one value per site."), ("`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`", "Create agents with optional properties; use `dims=()` for nonspatial agents."),
 ("`pal.NewPopGrid(dims, capacity=None)`", "Create integer counts per site; capacity limits total population."), ("`pal.NewPDEgrid(dims)`", "Create a continuous field for PDE updates."),
 ("`pal.NewIList()`", "Create a mutable integer list for collecting/reusing query results."), ("`pal.NewMultinomial()`", "Create a sampler for binomial/multinomial population draws."),
 ("Dimensions", "1–3 axes; a negative dimension wraps that axis, e.g. `(-nx, ny)`."),]),
