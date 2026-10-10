@@ -42,14 +42,14 @@ copy = g[2:5, 3:8]    # detached NumPy array
 
 ```python
 agents = pal.NewAgentGrid((40, 40), numAgentProps=2)
-a = agents.NewAgentSQ(10, 12)
+a = agents.NewAgentSQ(10, 12) # lattice site (10,12); continuous center (10.5,12.5)
 agents[a, 0] = 1.5            # property
 agents.MoveSQ(a, 11, 12)
 for a in agents.All():        # snapshot; safe to Dispose during loop
     agents.Dispose(a)
 ```
 
-`agents.GetPop()`, `agents.Alive(a)`, `agents.AgentsAt(x, y)`, `agents.LastAgent(x, y)`, `agents.counts[x, y]`. Continuous positions: `NewAgent(x, y)`, `Move(a, x, y)`, `X(a)`, `Y(a)`.
+`agents.GetPop()`, `agents.Alive(a)`, `agents.AgentsAt(x, y)`, `agents.LastAgent(x, y)`, `agents.counts[x, y]`. Lattice position: `I(a)`, `XSQ(a)`, `YSQ(a)`. Continuous position: `NewAgent(x, y)`, `Move(a, x, y)`, `X(a)`, `Y(a)`.
 
 ## PopGrid and PDEgrid
 
