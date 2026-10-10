@@ -335,7 +335,7 @@ b = multi.Sample(pB)
 # remaining count/probability mass stays in the sampler
 ```
 
-`Setup(n)` initializes the remaining count for a multinomial sequence and is chainable. Each `Sample(p)` consumes count and probability mass; in safe mode cumulative requested probability cannot exceed the remaining mass. `Binomial(n, p)` performs an independent binomial draw. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
+`Setup(n)` initializes a multinomial sequence with `n` trials and probability mass 1 and is chainable. Each `Sample(p)` takes that category's probability in the original multinomial distribution, draws from the remaining trials using the corresponding conditional probability, then removes the sampled count and `p` from the remaining state. Thus successive calls such as `Sample(0.2)` and `Sample(0.3)` represent categories with probabilities 0.2 and 0.3, not 0.2 followed by 0.3 of the remainder; any unrequested probability mass remains unsampled. In safe mode cumulative requested probability cannot exceed 1. `Binomial(n, p)` performs an independent binomial draw and does not consume the current multinomial sequence. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
 
 ## Visualization
 
