@@ -228,3 +228,31 @@ def test_python_njit_pdegrid_reset_pending_delta_parity(api, shape):
     assert compiled_work(jit) == pytest.approx(python_work(py))
     np.testing.assert_allclose(jit[:], py[:], rtol=0, atol=1e-6)
     assert not np.any(py[:])
+
+
+@pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
+def test_python_njit_pdegrid_coordinate_mapping_parity(api, shape):
+    """Compare ToI mapping at boundary and interior sites."""
+    g = api.NewPDEgrid(shape)
+    if len(shape) == 1:
+        sites = ((0,), (2,), (6,))
+
+        @api.njit
+        def compiled(g):
+            return g.ToI(0), g.ToI(2), g.ToI(6)
+    elif len(shape) == 2:
+        sites = ((0, 0), (2, 3), (3, 4))
+
+        @api.njit
+        def compiled(g):
+            return g.ToI(0, 0), g.ToI(2, 3), g.ToI(3, 4)
+    else:
+        sites = ((0, 0, 0), (1, 2, 3), (2, 3, 4))
+
+        @api.njit
+        def compiled(g):
+            return g.ToI(0, 0, 0), g.ToI(1, 2, 3), g.ToI(2, 3, 4)
+
+    expected = tuple(g.ToI(*site) for site in sites)
+    assert tuple(compiled(g)) == expected
+    assert len(set(expected)) == 3
