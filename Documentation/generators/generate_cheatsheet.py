@@ -89,7 +89,7 @@ def _build_pdf(body_font):
     box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
     story=[Paragraph(_markup(INTRO),box)]
     for section_i,(title,entries) in enumerate(SECTIONS):
-        if section_i == 3: story.append(FrameBreak())
+        if section_i == 4: story.append(FrameBreak())
         items=[Paragraph(f"<b>{_markup(k)}</b> — {_markup(d)}",entry) for k,d in entries]
         story.append(KeepTogether([Paragraph(title,heading)]+items))
     story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
