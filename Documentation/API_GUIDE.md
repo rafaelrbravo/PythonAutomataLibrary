@@ -335,7 +335,7 @@ b = multi.Sample(pB)
 # remaining count/probability mass stays in the sampler
 ```
 
-`Setup(n)` initializes the remaining count for a multinomial sequence and is chainable. Each `Sample(p)` consumes count and probability mass; in safe mode cumulative requested probability cannot exceed the remaining mass. `Binomial(n, p)` performs an independent binomial draw. `NewMultinomial(other)` reuses the other sampler's underlying solver configuration but starts with fresh multinomial sampling state.
+`Setup(n)` initializes the remaining count for a multinomial sequence and is chainable. Each `Sample(p)` consumes count and probability mass; in safe mode cumulative requested probability cannot exceed the remaining mass. `Binomial(n, p)` performs an independent binomial draw. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
 
 ## Visualization
 
@@ -391,7 +391,7 @@ Window controls include `Borders(width, color)`, `Camera(x, y, z, yaw=None, pitc
 
 Colors are packed integer RGB values such as `0xFF0000`. `pal.ColorScale(colors, value)` interpolates RGB channels across a sequence of colors for normalized `value`; values outside `[0, 1]` clamp to the endpoint colors.
 
-Set `headless=True` for off-screen rendering. This is useful for automated image/GIF generation and testing; OpenGL headless rendering requires a supported standalone backend such as EGL.
+Set `headless=True` for off-screen image/GIF generation. OpenGL headless rendering requires a supported standalone backend such as EGL.
 
 Use `pal.AwaitWindows()` when model execution should wait for PAL windows to finish their lifecycle.
 
@@ -403,7 +403,7 @@ Use safe mode until the model is correct, then benchmark fast mode. Do not rely 
 
 ## Saving PAL objects
 
-PAL native-backed model objects support standard Python pickling. The serialized form stores model state, not process-local native pointers. This allows model state to be saved and restored with Python's `pickle` module.
+PAL model objects support standard Python pickling. The serialized form stores model state rather than process-local resources, allowing it to be restored with Python's `pickle` module.
 
 ## Choosing the right structure
 
