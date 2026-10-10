@@ -146,3 +146,14 @@ def test_python_box_named_bounds_rejected_pending_review(api, kind):
     assert list(g.Box(1, 3, 1, 3)) == [(1, 1), (1, 2), (2, 1), (2, 2)]
     with pytest.raises(TypeError):
         list(g.Box(x1=1, x2=3, y1=1, y2=3))
+
+
+@pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
+def test_python_hood_named_coordinates_rejected_pending_review(api, kind):
+    """Document named-coordinate input mismatch without changing the API."""
+    g = _new(api, kind, (4, 5))
+    hood = api.VonNeumannHood(2, True)
+    expected = list(g.Hood(hood, 1, 2))
+    assert len(expected) == 4
+    with pytest.raises(TypeError):
+        list(g.Hood(hood=hood, x=1, y=2))
