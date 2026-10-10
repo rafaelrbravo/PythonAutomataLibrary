@@ -27,30 +27,30 @@ SECTIONS = [
 ("`pal.NewIList()` · `pal.NewMultinomial()`", "integer query list · random-count sampler"),
 ("Dimensions", "1–3 axes; a negative dimension wraps that axis, e.g. `(-nx, ny)`."),]),
 ("Shared lattice geometry", [
-("Properties", "`xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`"),
+("Properties", "`xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis."),
 ("Index conversion", "`ToI(x[,y,z])`; `ItoX/Y/Z(i)`"),
-("Regions", "`Box(lo..., hi...)` uses half-open bounds; `Hood(hood, x[,y,z])` maps relative offsets to coordinates."),
-("Neighborhoods", "`pal.MooreHood(dim, includeOrigin)` · `pal.VonNeumannHood(dim)` · `pal.CircleHood(dim, rad)`"),]),
+("Regions", "`Box(x1,x2)` in 1D; `Box(x1,x2,y1,y2)` in 2D; add `(z1,z2)` in 3D. Each upper bound is exclusive: `[x1,x2)`, so `Box(0,4)` visits 0,1,2,3. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped."),
+("Neighborhoods", "`pal.MooreHood(dim, excludeCenter=False)` · `pal.VonNeumannHood(dim, excludeCenter=False)` · `pal.CircleHood(dim, rad, excludeCenter=False)`. These return relative offsets, not indices; pass them to `grid.Hood(hood, x[,y,z])`. Set `excludeCenter=True` to omit the center."),]),
 ("Grid / common indexing", [
-("Read/write", "`g[x,y]`, `g[x,y]=v`; slices return detached NumPy copies."),
-("Pattern", "`g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`"),]),
+("Read/write", "`g[i]` linear index; `g[x,y]` / `g[x,y,z]` coordinates; assign with `g[x,y]=v`. Slices return detached NumPy copies, so editing a slice does not update the grid."),
+("Pattern", "`g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`; supported dtypes include bool, fixed-width integers, and float32/float64."),]),
 ("Draw / output", [
 ("Pixels", "`pix, win = pal.StartPixWindow(xDim,yDim,scale=1,title='PAL',headless=False)`; set `pix[x,y]=RGB`; `win.Update()`; `win.Save(path, block=True)`; `win.Close()`."),
 ("GIF", "`StartGif(path,delay=100)` · `AddGifFrame(block=False)` · `StopGif()`; call `Update()` before capture."),
 ("OpenGL", "`pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`."),]),("Lists + randomness", [
 ("IList", "`Append(i)`, `Clear()`, `Random()`, `Shuffle()`, indexing/`len`; `All()` detached copy; `Iter()` no-copy iteration."),
-("RNG", "`pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → `0..n-1`; use PAL RNG for shared-stream reproducibility."),
+("RNG", "`pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → integer `0..n-1`; seed once for repeatable runs. PAL calls share a call-order-dependent random stream distinct from NumPy’s RNG."),
 ("Multinomial", "`m.Binomial(n,p)`; `Setup(...)` then `Sample(...)` for repeated multinomial draws."),]),
 ("AgentGrid", [
-("Create / move", "`NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` for lattice positions; `NewAgent(x,y)` / `Move(a,x,y)` for continuous positions."),
-("Agent state", "`grid[a,p]` property; `I(a)`, `XSQ/YSQ/ ZSQ(a)` lattice; `X/Y/Z(a)` continuous; `Alive(a)`, `Dispose(a)`."),
+("Create / move", "`NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` use lattice coordinates; `NewAgent(x,y)` / `Move(a,x,y)` use continuous positions. In 2D/3D, SQ forms take coordinates (or a linear index where supported); do not mix the two position systems."),
+("Agent state", "`grid[a,p]` reads/writes property `p`; `I(a)` is linear site index; `XSQ/YSQ/ZSQ(a)` are lattice coordinates; `X/Y/Z(a)` are continuous coordinates. Check `Alive(a)` before use when agents may be disposed; `Dispose(a)` removes an agent."),
 ("Queries", "`GetPop()`, `AgentsAt(...)`, `LastAgent(...)`, `AgentsInRadius(...)`, `counts[...]`."),
-("Iteration", "`for a in agents.All(): ...` is a snapshot and is safe for structural mutation such as `Dispose`."),
+("Iteration", "`for a in agents.All(): ...` iterates a detached snapshot and is safe for structural mutation such as `Dispose`. `AgentsInRadius(...)` returns nearby agents; wrapped displacements account for periodic boundaries."),
 ("Wrapping", "`DispWrapX/Y/Z(p1,p2)` gives wrapped displacement."),]),
 ("PopGrid + PDEgrid", [
-("Transactional update", "`Add(v, ...)` changes pending state; `Update()` applies it simultaneously; `Reset()` clears current + pending. Direct `grid[...] = v` changes current state immediately."),
+("Transactional update", "`Add(v, ...)` accumulates pending changes; `Update()` applies them together. `Reset()` clears both current and pending state. Direct `grid[...] = v` changes current state immediately, outside the transaction."),
 ("Population", "`pop.GetPop()` total; `pop.All()` nonzero site indices. `capacity` limits total population."),
-("PDE setup", "`field.SetTimeSpaceStep(dt, dx[,dy,dz])`"),
+("PDE setup", "`field.SetTimeSpaceStep(dt, dx[,dy,dz])` sets time and spatial steps before updates. Use spacing values that satisfy the selected scheme’s stability requirements."),
 ("Diffusion", "`Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`; radial 1D: `DiffusionRadialCircle/Sphere`."),
 ("Advection", "`Advection`, `AdvectionField`, `AdvectionInterfaces`."),]),
 
@@ -83,7 +83,7 @@ def _build_pdf(body_font):
         canvas.saveState(); canvas.setFont("Helvetica-Bold",16); canvas.drawString(margin,ph-margin-9,TITLE)
         canvas.setStrokeColor(colors.HexColor("#888888")); canvas.setLineWidth(.5); canvas.line(margin,ph-margin-14,pw-margin,ph-margin-14); canvas.restoreState()
     intro=ParagraphStyle("intro",fontName="Helvetica",fontSize=body_font+.25,leading=(body_font+.25)*1.12,spaceAfter=3)
-    heading=ParagraphStyle("heading",fontName="Helvetica-Bold",fontSize=body_font+1.8,leading=(body_font+1.8)*1.05,spaceBefore=2.2,spaceAfter=1.4)
+    heading=ParagraphStyle("heading",fontName="Helvetica-Bold",fontSize=body_font+1.4,leading=(body_font+1.4)*1.15,spaceBefore=3.0,spaceAfter=3.0,borderColor=colors.HexColor("#888888"),borderWidth=.55,borderPadding=3,backColor=colors.HexColor("#F7F7F7"),leftIndent=0)
     entry=ParagraphStyle("entry",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=.9,leftIndent=7,firstLineIndent=-7)
     box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
     story=[Paragraph(_markup(INTRO),box)]
