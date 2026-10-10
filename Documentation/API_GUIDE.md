@@ -1,0 +1,349 @@
+# PAL API Guide
+
+This guide is the compact human reference for PAL's public API. It consolidates behavior shared across PAL objects instead of repeating the same geometry, indexing, wrapping, and compilation rules for each class. For exact signatures and validation details, use the generated API reference once available. For learning PAL from the beginning, use the manual.
+
+## Core use
+
+```python
+import PythonAutomataLibrary as pal
+```
+
+PAL starts in **safe mode**. Safe mode checks public operations and provides useful errors. To select fast mode:
+
+```python
+pal.FastMode()
+```
+
+Call `FastMode()` before constructing any PAL model or window object. The first such construction locks the process-wide mode. Fast mode removes safety checks from performance-sensitive paths; it is intended for models already validated in safe mode.
+
+Use `@pal.njit` for model computation:
+
+```python
+@pal.njit
+def Step(grid: pal.AgentGrid):
+    ...
+```
+
+`pal.njit` wraps Numba `njit` and additionally transforms PAL model code. Among other PAL-specific compilation behavior, annotated PAL arguments allow safe-mode errors in compiled model code to report the model source line.
+
+## Construction
+
+| Function | Purpose |
+| --- | --- |
+| `NewGrid(dimensions, dtype)` | Typed lattice values. |
+| `NewAgentGrid(dimensions, numAgentProps=0, isStackable=False)` | Discrete or continuous agents with optional per-agent properties. |
+| `NewPopGrid(dimensions, capacity=None)` | Integer population counts on a lattice. |
+| `NewPDEgrid(dimensions)` | Continuous scalar field with diffusion/advection operations. |
+| `NewIList()` | Reusable integer query/list container. |
+| `NewMultinomial(other=None)` | Binomial/multinomial sampler. |
+
+Spatial grids use one to three dimensions. A **negative dimension enables wrapping on that axis** while its absolute value gives the size:
+
+```python
+grid = pal.NewAgentGrid((100, 100))    # 100 x 100, no wrapping
+grid = pal.NewAgentGrid((-100, 100))   # x wraps, y does not
+grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
+```
+
+`AgentGrid` additionally supports a zero-dimensional form for nonspatial agent populations.
+
+## Shared spatial API
+
+`Grid`, `AgentGrid`, `PopGrid`, and `PDEgrid` deliberately share spatial conventions.
+
+### Geometry
+
+| Member | Meaning |
+| --- | --- |
+| `len(grid)` | Number of lattice sites. |
+| `xDim`, `yDim`, `zDim` | Axis sizes. Missing axes are invalid in safe mode. |
+| `nDims` | Number of spatial dimensions. |
+| `wrapX`, `wrapY`, `wrapZ` | Whether each axis wraps. |
+| `ToI(x, y=-1, z=-1)` | Convert coordinates to a linear lattice index. |
+| `ItoX(i)`, `ItoY(i)`, `ItoZ(i)` | Recover coordinates from a linear index. |
+
+The same method names are used in 1D, 2D, and 3D. Supply only the coordinates that exist for the grid.
+
+### Regions and neighborhoods
+
+```python
+grid.Box(x1, x2)
+grid.Box(x1, x2, y1, y2)
+grid.Box(x1, x2, y1, y2, z1, z2)
+
+grid.Hood(hood, x)
+grid.Hood(hood, x, y)
+grid.Hood(hood, x, y, z)
+```
+
+`Box` returns lattice indices in the requested rectangular region. `Hood` maps a neighborhood's relative offsets around a lattice position, respecting the grid's wrapping behavior.
+
+Built-in neighborhoods:
+
+```python
+pal.MooreHood(dim, excludeCenter=False)
+pal.VonNeumannHood(dim, excludeCenter=False)
+pal.CircleHood(dim, rad, excludeCenter=False)
+```
+
+`MooreHood` contains offsets with each coordinate in `[-1, 1]`. `VonNeumannHood` contains the center and axis-adjacent offsets. `CircleHood` contains integer offsets whose Euclidean distance from the center is at most `rad`. Set `excludeCenter=True` to omit the zero offset.
+
+## Grid
+
+```python
+grid = pal.NewGrid((xDim, yDim), dtype)
+```
+
+Supported dtypes are `bool`, signed/unsigned 8/16/32/64-bit integers, and 32/64-bit floats.
+
+`Grid` supports linear indexing, coordinate indexing, and NumPy-like slices:
+
+```python
+grid[i]
+grid[x, y]
+grid[x, y, z]
+grid[:] = 0
+region = grid[2:5, 3:8]
+```
+
+Slice reads return copies. Scalar and slice access work in Python and compiled PAL model code.
+
+## AgentGrid
+
+```python
+agents = pal.NewAgentGrid((xDim, yDim), numAgentProps=2)
+```
+
+PAL represents an agent by an integer handle. Agent properties are stored on the grid and accessed with `agents[agent, property]`.
+
+### Population and lifecycle
+
+| Operation | Meaning |
+| --- | --- |
+| `GetPop()` | Number of living agents. |
+| `Alive(agent)` | Whether an agent handle is alive. |
+| `NewAgentSQ(...)` | Create an agent at a lattice site. |
+| `NewAgent(...)` | Create an agent at a continuous position. |
+| `Dispose(agent)` | Remove an agent. |
+| `All(shuffle=False)` | Snapshot of all living agents; optionally shuffled. |
+
+`All()` has **snapshot semantics**. The returned collection can be iterated while agents are created or disposed without changing the current iteration.
+
+```python
+for agent in agents.All():
+    if ShouldDie(agent):
+        agents.Dispose(agent)
+```
+
+### Position
+
+Discrete/lattice position:
+
+```python
+agents.I(agent)
+agents.XSQ(agent)
+agents.YSQ(agent)
+agents.ZSQ(agent)
+agents.MoveSQ(agent, x, y, z)
+```
+
+Continuous position:
+
+```python
+agents.X(agent)
+agents.Y(agent)
+agents.Z(agent)
+agents.Move(agent, x, y, z)
+```
+
+`NewAgentSQ(i)` and `MoveSQ(agent, i)` also accept a linear lattice index in every dimension.
+
+### Occupancy and queries
+
+```python
+agents.LastAgent(x, y, z)
+agents.AgentsAt(x, y, z)
+agents.counts[x, y, z]
+```
+
+`LastAgent` returns the most recently stacked agent at a site. `AgentsAt` returns the agents occupying the site. `counts` exposes lattice occupancy counts.
+
+By default an `AgentGrid` is not stackable: at most one agent may occupy a lattice site. Set `isStackable=True` when multiple agents per site are required.
+
+### Wrapping
+
+Discrete coordinates:
+
+```python
+InWrapSQX(value)
+InWrapSQY(value)
+InWrapSQZ(value)
+```
+
+Continuous coordinates:
+
+```python
+InWrapX(value)
+InWrapY(value)
+InWrapZ(value)
+```
+
+Wrapped displacement:
+
+```python
+DispWrapX(x1, x2)
+DispWrapY(y1, y2)
+DispWrapZ(z1, z2)
+```
+
+The displacement methods return the shortest signed displacement accounting for periodic boundaries.
+
+## PopGrid
+
+```python
+pop = pal.NewPopGrid((xDim, yDim), capacity=None)
+```
+
+`PopGrid` stores integer population counts. Indexing and direct assignment modify the current population immediately.
+
+```python
+pop[x, y]
+pop[x, y] = 10
+pop[:] = 0
+```
+
+Population changes can instead be accumulated and applied together:
+
+```python
+pop.Add(delta, x, y)
+pop.Update()
+```
+
+`Add` changes the pending delta, not the current value. `Update()` applies all pending changes simultaneously. This is useful when a timestep should not depend on iteration order.
+
+| Operation | Meaning |
+| --- | --- |
+| `GetPop()` | Total population over all sites. |
+| `All()` | Copy of all site populations. |
+| `Reset()` | Clear pending changes. |
+| `InWrapX/Y/Z(value)` | Wrap a coordinate on the corresponding axis. |
+
+`capacity` optionally limits the total population representable by the grid.
+
+## PDEgrid
+
+```python
+field = pal.NewPDEgrid((xDim, yDim))
+```
+
+`PDEgrid` stores a continuous scalar field. Direct indexing/assignment changes the current field immediately. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously, and `Reset()` clears them.
+
+### Space and time
+
+```python
+field.SetTimeSpaceStep(dt, dx, dy=1.0, dz=1.0)
+field.Dt()
+field.Dx()
+field.Dy()
+field.Dz()
+```
+
+Transport methods use these spacings.
+
+### Diffusion
+
+```python
+field.Diffusion(rateConstant, ...)
+field.DiffusionMask(rateConstant, mask)
+field.DiffusionField(rateConstants, ...)
+field.DiffusionInterfaces(rateConstantsX, rateConstantsY=None, rateConstantsZ=None, ...)
+field.DiffusionADI(rateConstant, ...)
+field.DiffusionRadialCircle(rateConstant, outerBC=None)
+field.DiffusionRadialSphere(rateConstant, outerBC=None)
+```
+
+`Diffusion` uses one constant diffusion rate. `DiffusionField` uses spatially varying rates. `DiffusionInterfaces` supplies rates on cell interfaces. `DiffusionMask` restricts diffusion with a mask. `DiffusionADI` provides the alternating-direction implicit solver. Radial methods solve the corresponding radially symmetric circle/sphere geometry.
+
+Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxBC`, `zMinBC`, and `zMaxBC` boundary values. Wrapped axes use periodic boundaries.
+
+### Advection
+
+```python
+field.Advection(vx, vy=0.0, vz=0.0, ...)
+field.AdvectionField(xVels, yVels=None, zVels=None, ...)
+field.AdvectionInterfaces(xVels, yVels=None, zVels=None, ...)
+```
+
+`Advection` uses constant velocity components. `AdvectionField` uses spatial velocity fields. `AdvectionInterfaces` supplies velocities at cell interfaces. The same optional Cartesian boundary arguments used by diffusion are available.
+
+## IList
+
+```python
+items = pal.NewIList()
+```
+
+`IList` is PAL's reusable integer query/list container.
+
+| Operation | Meaning |
+| --- | --- |
+| `Append(i)` | Append an integer. |
+| `Clear()` | Remove all entries. |
+| `Random()` | Return a random entry. |
+| `Shuffle()` | Shuffle entries in place. |
+| `All()` | Return a detached copy. |
+| `Iter()` | Return a no-copy/live iterable view. |
+| `len(items)`, `items[i]` | Length/index access. |
+
+Use `Iter()` for one-pass iteration when a copy is unnecessary. Use `All()` when the returned values must remain independent of subsequent IList changes.
+
+## Random numbers and Multinomial
+
+```python
+pal.Seed(seed)
+pal.Random()       # uniform float
+pal.RandInt(max)  # integer in [0, max)
+```
+
+PAL random functions share one seeded stream across PAL calls.
+
+For binomial/multinomial sampling:
+
+```python
+multi = pal.NewMultinomial()
+x = multi.Binomial(n, p)
+
+multi.Setup(n)
+a = multi.Sample(pA)
+b = multi.Sample(pB)
+# remaining count/probability mass stays in the sampler
+```
+
+`NewMultinomial(other)` creates another sampler sharing the underlying solver configuration while starting fresh sampling state.
+
+## Visualization
+
+PAL provides two visualization systems:
+
+- `StartPixWindow(...)`: fast 2D pixel rendering.
+- `StartOpenGLWindow(...)`: 2D/3D OpenGL rendering.
+
+Both run rendering separately from model computation. Use `pal.AwaitWindows()` after starting windows when model execution should wait for their initialization.
+
+Visualization drawing and lifecycle APIs are covered separately in the detailed reference because their operations differ substantially from the computational grids.
+
+## Saving PAL objects
+
+PAL native-backed model objects support standard Python pickling. The serialized form stores model state, not process-local native pointers. This allows model state to be saved and restored with Python's `pickle` module.
+
+## Choosing the right structure
+
+| Need | PAL structure |
+| --- | --- |
+| One typed value per lattice site | `Grid` |
+| Individual agents with identity/properties | `AgentGrid` |
+| Integer counts without individual identity | `PopGrid` |
+| Continuous diffusing/advecting field | `PDEgrid` |
+| Reusable integer query result | `IList` |
+| Binomial/multinomial draws | `Multinomial` |
+
+These structures are designed to be composed inside the same compiled model step. A model can, for example, query agents, accumulate population counts, update a PDE field, and feed the resulting field back into agent behavior without leaving `@pal.njit`.
