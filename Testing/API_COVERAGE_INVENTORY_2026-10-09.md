@@ -1,6 +1,6 @@
 # PAL public API coverage inventory — 2026-10-09
 
-This inventory maps the intended public surface to dedicated `Testing/API` coverage and the older algorithmic suite. The authoritative integration gate is the complete `Testing/` tree, which includes all dedicated API tests. The audited implementation was promoted to `main`; the permanent `PAL API Audit` workflow now runs on pushes to `main` and pull requests targeting `main` (and retains the historical audit-branch trigger). Main run `38028359559` completed from repository source with zero failures/xfails: safe **558 passed, 2 skipped**; fast **458 passed, 102 skipped**. Windows Python 3.12/MSVC also passed Persian plus four representative real-example regressions in both modes.
+This inventory maps the intended public surface to dedicated `Testing/API` coverage and the older algorithmic suite. The authoritative integration gate is the complete `Testing/` tree, which includes all dedicated API tests. The audited implementation was promoted to `main`; the permanent `PAL API Audit` workflow now runs on pushes to `main` and pull requests targeting `main` (and retains the historical audit-branch trigger). Current main run `38029920326` completed from repository source with zero failures/xfails: safe **561 passed**; fast **461 passed, 100 skipped**. The two formerly backend-skipped 2D/3D headless OpenGL rendering/save cases now execute and pass under Mesa/EGL in both modes, and the new OpenGL GIF lifecycle regression passes. Windows Python 3.12/MSVC also passed Persian plus four representative real-example regressions in both modes.
 
 | Surface | Dedicated API coverage | Verified status / remaining limitation |
 |---|---|---|
@@ -17,10 +17,10 @@ This inventory maps the intended public surface to dedicated `Testing/API` cover
 | AST transformer / diagnostics | `test_transformer_diagnostics_api.py` | Verified; annotated Grid slice parity now ordinary passing coverage |
 | Cross-API composition | `test_cross_api_composition.py` | Verified compiled composed kernels |
 | Pix / PixWindow | `test_visualization_api.py` | Verified headless Pix/save/GIF/lifecycle cases |
-| OpenGLDraw / OpenGLWindow | constructor validation in `test_visualization_api.py` | Validation verified; full rendering/lifecycle/GIF remains backend-dependent |
+| OpenGLDraw / OpenGLWindow | `Testing/test_14_visualization.py`, constructor validation in `test_visualization_api.py` | Verified safe/fast headless 2D/3D primitives, update, blocking save, GIF lifecycle, and constructor validation under Mesa/EGL; interactive visible-window behavior remains display/backend dependent |
 | AwaitWindows | `test_visualization_api.py` | Verified deterministic headless multi-window lifecycle |
 | ColorScale | `test_colorscale_api.py` | Verified endpoints/clamping/interpolation/compiled parity |
 
 ## Remaining limitation
 
-Full OpenGL rendering/save/GIF lifecycle still depends on an available graphics backend. Constructor validation plus headless Pix/save/GIF/AwaitWindows behavior is covered. No other known correctness gap remains in the audited public API surface.
+Headless OpenGL 2D/3D rendering, blocking save, and GIF lifecycle are now exercised under Mesa/EGL in the permanent Linux gate. Interactive visible-window placement/input/display lifecycle remains inherently display/backend dependent and is not exercised by headless CI. No other known correctness gap remains in the audited public API surface.
