@@ -23,6 +23,7 @@ jobs:
         run: python -m pytest -q Testing/API
       - name: Keyword-fix pre-change benchmark
         if: always()
+        working-directory: ..
         env:
           PAL_BENCH_MODE: ${{ matrix.mode }}
           NUMBA_DISABLE_CACHE: '1'
