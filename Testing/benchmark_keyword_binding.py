@@ -17,7 +17,7 @@ if mode == "fast":
     pal.FastMode()
 
 grid = pal.NewGrid((-32, -32, -32), int)
-items = pal.NewIList()
+items = pal.NewIList()\npop1 = pal.NewPopGrid((-64,))\npde1 = pal.NewPDEgrid((-64,))\nag1 = pal.NewAgentGrid((-64,))
 
 @pal.njit(cache=False)
 def grid_wrap_positional(g, n):
@@ -49,5 +49,5 @@ def measure(fn, *args):
 print(json.dumps({
     "mode": mode,
     "grid_wrap": measure(grid_wrap_positional, grid, 200000),
-    "ilist_append": measure(ilist_append_positional, items, 200000),
+    "ilist_append": measure(ilist_append_positional, items, 200000),\n    "itox_1d": measure(itox_1d_positional, pop1, pde1, ag1, 200000),
 }, sort_keys=True))
