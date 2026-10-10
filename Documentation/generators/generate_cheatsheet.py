@@ -50,11 +50,15 @@ SECTIONS = [
 ("`m.Binomial(n,p)`", "Draw a binomial count with n trials and probability p."),
 ("`m.Setup(...)` / `m.Sample(...)`", "Configure a multinomial sampler, then draw counts from it."),]),
 ("AgentGrid", [
-("Create / move", "`NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` use lattice coordinates; `NewAgent(x,y)` / `Move(a,x,y)` use continuous positions. In 2D/3D, SQ forms take coordinates (or a linear index where supported); do not mix the two position systems."),
+("`NewAgentSQ(x...)` / `MoveSQ(a,x...)`", "Create or move an agent using lattice-site coordinates; documented linear-site forms are also supported."),
+("`NewAgent(x...)` / `Move(a,x...)`", "Create or move an agent using continuous coordinates rather than lattice sites."),
 ("Agent state", "`grid[a,p]` reads/writes property `p`; `I(a)` is linear site index; `XSQ/YSQ/ZSQ(a)` are lattice coordinates; `X/Y/Z(a)` are continuous coordinates. Check `Alive(a)` before use when agents may be disposed; `Dispose(a)` removes an agent."),
-("Queries", "`GetPop()`, `AgentsAt(...)`, `LastAgent(...)`, `AgentsInRadius(...)`, `counts[...]`."),
+("`GetPop()`", "Count agents currently in the grid."),
+("`AgentsAt(x...)` / `LastAgent(x...)`", "Find agents at a site or retrieve the last agent there."),
+("`AgentsInRadius(...)`", "Find agents near a position; wrapped displacement respects periodic boundaries."),
+("`counts[x...]`", "Read site occupancy counts without modifying them."),
 ("Iteration", "`for a in agents.All(): ...` iterates a detached snapshot and is safe for structural mutation such as `Dispose`. `AgentsInRadius(...)` returns nearby agents; wrapped displacements account for periodic boundaries."),
-("Wrapping", "`DispWrapX/Y/Z(p1,p2)` gives wrapped displacement."),]),
+("`DispWrapX/Y/Z(p1,p2)`", "Compute the shortest displacement along a periodic axis."),]),
 ("PopGrid + PDEgrid", [
 ("Transactional update", "`Add(v, ...)` accumulates pending changes; `Update()` applies them together. `Reset()` clears both current and pending state. Direct `grid[...] = v` changes current state immediately, outside the transaction."),
 ("Population", "`pop.GetPop()` total; `pop.All()` nonzero site indices. `capacity` limits total population."),
