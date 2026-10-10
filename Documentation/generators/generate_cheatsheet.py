@@ -19,10 +19,9 @@ MD_TARGET = ROOT / "Documentation" / "CHEATSHEET.md"
 PDF_TARGET = ROOT / "Documentation" / "CHEATSHEET.pdf"
 TITLE = "Python Automata Library (PAL) Cheat Sheet"
 INTRO = "`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`."
+CONVENTIONS = "`x...` means `x,y` in 2D and `x,y,z` in 3D. `Box(x1,x2,...)` lists lower/upper bounds for each axis; upper bounds are exclusive. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped."
 
 SECTIONS = [
-("Conventions", [
-("Coordinate notation", "`x...` means `x,y` in 2D and `x,y,z` in 3D. `Box(x1,x2,...)` lists lower/upper bounds for each axis; upper bounds are exclusive. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped."),]),
 ("Create state", [
 ("`pal.NewGrid(dims, dtype)`", "typed lattice"), ("`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`", "individual agents; `dims=()` is nonspatial"),
 ("`pal.NewPopGrid(dims, capacity=None)`", "integer population counts"), ("`pal.NewPDEgrid(dims)`", "continuous field"),
@@ -62,7 +61,7 @@ FOOTER = "More detail: Manual · API Guide · API Reference (Documentation/)."
 
 
 def _md():
-    out=["# PAL Cheatsheet", "", INTRO, ""]
+    out=["# PAL Cheatsheet", "", "## Conventions", "", INTRO + " " + CONVENTIONS, ""]
     for title, entries in SECTIONS:
         out += [f"## {title}", ""]
         for key, desc in entries: out.append(f"- **{key}** — {desc}")
@@ -88,7 +87,7 @@ def _build_pdf(body_font):
     heading=ParagraphStyle("heading",fontName="Helvetica-Bold",fontSize=body_font+1.4,leading=(body_font+1.4)*1.15,spaceBefore=3.0,spaceAfter=3.0,borderColor=colors.HexColor("#888888"),borderWidth=.55,borderPadding=3,backColor=colors.HexColor("#F7F7F7"),leftIndent=0)
     entry=ParagraphStyle("entry",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=.9,leftIndent=7,firstLineIndent=-7)
     box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
-    story=[Paragraph(_markup(INTRO),box)]
+    story=[Paragraph("<b>Conventions</b><br/>" + _markup(INTRO + " " + CONVENTIONS),box)]
     for section_i,(title,entries) in enumerate(SECTIONS):
         items=[Paragraph(f"<b>{_markup(k)}</b> — {_markup(d)}",entry) for k,d in entries]
         story.append(KeepTogether([Paragraph(title,heading)]+items))
