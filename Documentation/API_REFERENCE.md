@@ -50,12 +50,12 @@ NewPDEgrid(dimensions)
 | property | `wrapX(self) -> bool` |
 | property | `wrapY(self) -> bool` |
 | property | `wrapZ(self) -> bool` |
-| method | `Box(self, x1: int, x2: int, y1: int = None, y2: int = None, z1: int = None, z2: int = None)` |
-| method | `Hood(self, hood, x: int, y: int = None, z: int = None, *, unroll: bool = False)` |
+| method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` |
+| method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` |
 | method | `GetPop(self) -> int` |
 | method | `Alive(self, agent: int) -> bool` |
-| method | `NewAgentSQ(self, x: int, y: int = -1, z: int = -1) -> int` |
-| method | `NewAgent(self, x: float, y: float = -1.0, z: float = -1.0) -> int` |
+| method | `NewAgentSQ(self, x: int, y: int=-1, z: int=-1) -> int` |
+| method | `NewAgent(self, x: float, y: float=-1.0, z: float=-1.0) -> int` |
 | method | `Dispose(self, agent: int)` |
 | method | `I(self, agent: int) -> int` |
 | method | `XSQ(self, agent: int) -> int` |
@@ -66,7 +66,7 @@ NewPDEgrid(dimensions)
 | method | `Z(self, agent: int) -> float` |
 | method | `__getitem__(self, key) -> float` |
 | method | `__setitem__(self, key, value: float)` |
-| method | `ToI(self, x: int, y: int = -1, z: int = -1) -> int` |
+| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` |
 | method | `ItoX(self, i: int) -> int` |
 | method | `ItoY(self, i: int) -> int` |
 | method | `ItoZ(self, i: int) -> int` |
@@ -80,11 +80,11 @@ NewPDEgrid(dimensions)
 | method | `DispWrapY(self, y1: float, y2: float) -> float` |
 | method | `DispWrapZ(self, z1: float, z2: float) -> float` |
 | property | `counts(self) -> object` |
-| method | `LastAgent(self, x: int, y: int = -1, z: int = -1) -> int` |
-| method | `MoveSQ(self, agent: int, x: int, y: int = -1, z: int = -1)` |
-| method | `Move(self, agent: int, x: float, y: float = -1.0, z: float = -1.0)` |
-| method | `AgentsAt(self, x: int, y: int = -1, z: int = -1)` |
-| method | `All(self, shuffle: bool = False) -> np.ndarray` |
+| method | `LastAgent(self, x: int, y: int=-1, z: int=-1) -> int` |
+| method | `MoveSQ(self, agent: int, x: int, y: int=-1, z: int=-1)` |
+| method | `Move(self, agent: int, x: float, y: float=-1.0, z: float=-1.0)` |
+| method | `AgentsAt(self, x: int, y: int=-1, z: int=-1)` |
+| method | `All(self, shuffle: bool=False) -> np.ndarray` |
 
 ## Grid
 
@@ -100,9 +100,9 @@ NewPDEgrid(dimensions)
 | property | `wrapX(self) -> bool` |
 | property | `wrapY(self) -> bool` |
 | property | `wrapZ(self) -> bool` |
-| method | `Box(self, x1: int, x2: int, y1: int = None, y2: int = None, z1: int = None, z2: int = None)` |
-| method | `Hood(self, hood, x: int, y: int = None, z: int = None, *, unroll: bool = False)` |
-| method | `ToI(self, x: int, y: int = -1, z: int = -1) -> int` |
+| method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` |
+| method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` |
+| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` |
 | method | `ItoX(self, i: int) -> int` |
 | method | `ItoY(self, i: int) -> int` |
 | method | `ItoZ(self, i: int) -> int` |
@@ -119,9 +119,9 @@ NewPDEgrid(dimensions)
 | property | `wrapX(self) -> bool` |
 | property | `wrapY(self) -> bool` |
 | property | `wrapZ(self) -> bool` |
-| method | `Box(self, x1: int, x2: int, y1: int = None, y2: int = None, z1: int = None, z2: int = None)` |
-| method | `Hood(self, hood, x: int, y: int = None, z: int = None, *, unroll: bool = False)` |
-| method | `ToI(self, x: int, y: int = -1, z: int = -1) -> int` |
+| method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` |
+| method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` |
+| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` |
 | method | `ItoX(self, i: int) -> int` |
 | method | `ItoY(self, i: int) -> int` |
 | method | `ItoZ(self, i: int) -> int` |
@@ -130,7 +130,7 @@ NewPDEgrid(dimensions)
 | method | `InWrapZ(self, value: int) -> int` |
 | method | `__getitem__(self, key) -> int` |
 | method | `__setitem__(self, key, value: int)` |
-| method | `Add(self, value: int, x: int, y: int = -1, z: int = -1)` |
+| method | `Add(self, value: int, x: int, y: int=-1, z: int=-1)` |
 | method | `Update(self)` |
 | method | `Reset(self)` |
 | method | `GetPop(self) -> int` |
@@ -148,9 +148,9 @@ NewPDEgrid(dimensions)
 | property | `wrapX(self) -> bool` |
 | property | `wrapY(self) -> bool` |
 | property | `wrapZ(self) -> bool` |
-| method | `Box(self, x1: int, x2: int, y1: int = None, y2: int = None, z1: int = None, z2: int = None)` |
-| method | `Hood(self, hood, x: int, y: int = None, z: int = None, *, unroll: bool = False)` |
-| method | `ToI(self, x: int, y: int = -1, z: int = -1) -> int` |
+| method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` |
+| method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` |
+| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` |
 | method | `ItoX(self, i: int) -> int` |
 | method | `ItoY(self, i: int) -> int` |
 | method | `ItoZ(self, i: int) -> int` |
@@ -159,10 +159,10 @@ NewPDEgrid(dimensions)
 | method | `InWrapZ(self, value: int) -> int` |
 | method | `__getitem__(self, key) -> float` |
 | method | `__setitem__(self, key, value: float)` |
-| method | `Add(self, value: float, x: int, y: int = -1, z: int = -1)` |
+| method | `Add(self, value: float, x: int, y: int=-1, z: int=-1)` |
 | method | `Update(self)` |
 | method | `Reset(self)` |
-| method | `SetTimeSpaceStep(self, dt: float, dx: float, dy: float = 1.0, dz: float = 1.0)` |
+| method | `SetTimeSpaceStep(self, dt: float, dx: float, dy: float=1.0, dz: float=1.0)` |
 | method | `Dx(self) -> float` |
 | method | `Dy(self) -> float` |
 | method | `Dz(self) -> float` |
@@ -174,7 +174,7 @@ NewPDEgrid(dimensions)
 | method | `DiffusionADI(self, rateConstant: float, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` |
 | method | `DiffusionRadialCircle(self, rateConstant: float, outerBC=None)` |
 | method | `DiffusionRadialSphere(self, rateConstant: float, outerBC=None)` |
-| method | `Advection(self, vx: float, vy: float = 0.0, vz: float = 0.0, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` |
+| method | `Advection(self, vx: float, vy: float=0.0, vz: float=0.0, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` |
 | method | `AdvectionField(self, xVels, yVels=None, zVels=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` |
 | method | `AdvectionInterfaces(self, xVels, yVels=None, zVels=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` |
 
