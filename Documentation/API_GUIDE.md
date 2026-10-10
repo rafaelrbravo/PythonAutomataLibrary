@@ -1,6 +1,6 @@
 # PAL API Guide
 
-This guide is the compact human reference for PAL's public API. It consolidates behavior shared across PAL objects instead of repeating the same geometry, indexing, wrapping, and compilation rules for each class. For current public signatures, use the generated [API Reference](API_REFERENCE.md). For learning PAL from the beginning, use the manual.
+This guide is the compact human reference for PAL's public API. It consolidates behavior shared across PAL objects instead of repeating the same geometry, indexing, wrapping, and compilation rules for each class. For current public signatures, use the generated [API Reference](API_REFERENCE.md). For learning PAL from the beginning, use the [Manual](MANUAL.md). For runnable syntax at a glance, use the [Cheatsheet](CHEATSHEET.md).
 
 ## Core use
 
