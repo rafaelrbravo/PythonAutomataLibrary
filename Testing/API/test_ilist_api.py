@@ -158,3 +158,33 @@ def test_python_njit_ilist_iter_live_and_all_copy_parity(api):
 
     assert compiled_work(jit) == python_work(py) == (2, 19, 88, 3)
     np.testing.assert_array_equal(jit.All(), py.All())
+
+
+def test_python_njit_ilist_clear_and_reuse_parity(api):
+    """Clear must reset logical length and permit subsequent appends."""
+    py = api.NewIList()
+    jit = api.NewIList()
+
+    def python_work(q):
+        q.Append(3)
+        q.Append(5)
+        before = len(q)
+        q.Clear()
+        empty = len(q)
+        q.Append(11)
+        q.Append(13)
+        return before, empty, len(q), q[0], q[1]
+
+    @api.njit
+    def compiled_work(q):
+        q.Append(3)
+        q.Append(5)
+        before = len(q)
+        q.Clear()
+        empty = len(q)
+        q.Append(11)
+        q.Append(13)
+        return before, empty, len(q), q[0], q[1]
+
+    assert compiled_work(jit) == python_work(py) == (2, 0, 2, 11, 13)
+    np.testing.assert_array_equal(jit.All(), py.All())
