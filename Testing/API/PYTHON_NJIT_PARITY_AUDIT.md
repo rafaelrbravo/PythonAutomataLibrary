@@ -8,6 +8,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 | --- | --- | --- | --- | --- | --- |
 | H-01 | `grid.Hood(...)` yielded sites | Formerly linear indices | Coordinate scalar/tuples | Resolved with explicit user approval; source and existing tests updated; runtime verification pending | Coordinates in both modes |
 | G-01 | `grid.Box(x1=..., x2=..., y1=..., y2=...)` | Python fallback `_PythonBox(self,*bounds)` rejects keywords | Compiled `_HoodExpander._expand_box` accepts keyword bounds; existing `test_compiled_box_keyword_and_positional_forms_match` checks this | Source-confirmed mismatch, not executed | Decide whether Python should accept named bounds for input parity |
+| H-03 | `grid.Hood(hood=..., x=..., y=...)` | Python `_PythonHood(self,hood,*coords)` rejects named coordinate arguments | Compiled AST `_bind_args(call,('hood','x','y','z','unroll'),...)` accepts them | Source-confirmed; not executed | Decide whether Python should support named hood coordinates |
 | H-02 | `grid.Hood(hood, x[, y[, z]], unroll=True)` | Keyword rejected by Python fallback `_PythonHood(self,hood,*coords)` | Accepted by AST transformer as compile-time bool literal | Source-confirmed mismatch, not yet executed | Consider accepting `unroll` as a Python no-op; user decision pending |
 
 ## Paired test inventory (committed; execution pending)
@@ -41,3 +42,5 @@ Not executed in the current audit environment. The Python runtime has NumPy, Num
 6. Consolidate verified mismatches into this report for user decisions; leave implementation untouched except explicitly approved fixes.
 
 - `test_grid_api.py::test_safe_grid_failed_write_python_compiled_state_parity`: safe-mode invalid coordinate write, exception-class and unchanged state comparison; unexecuted.
+
+- `test_shared_geometry_api.py::test_python_hood_named_coordinates_rejected_pending_review`: documents current Python keyword rejection across three grid families (H-03).
