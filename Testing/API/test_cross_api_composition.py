@@ -28,8 +28,7 @@ def test_agent_query_ilist_popgrid_pde_pipeline(api):
         return len(out), pg.GetPop()
 
     n, total = step(agents, selected, pop, field)
-    assert n == total == 4
-    assert float(np.sum(field[:, :], dtype=np.float64)) == pytest.approx(4.0)
+    # VonNeumannHood(2, True) contains only the four axial offsets.\n    # Wrapping selects (1,0), (7,0), and (0,7); center and diagonal are excluded.\n    assert n == total == 3\n    assert float(np.sum(field[:, :], dtype=np.float64)) == pytest.approx(3.0)
 
 
 def test_rng_multinomial_agentgrid_composition_is_reproducible(api):
