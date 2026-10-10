@@ -178,3 +178,23 @@ def test_compiled_hood_named_coordinate_forms_match_positional(api, kind):
     positional, named = collect(g)
     assert list(named) == list(positional)
     assert list(named) == [g.ToI(*xy) for xy in g.Hood(hood, 1, 2)]
+
+
+@pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
+def test_compiled_box_named_bounds_match_positional(api, kind):
+    """Verify the compiled side of the pending Box keyword discrepancy."""
+    g = _new(api, kind, (4, 5))
+
+    @api.njit
+    def collect(grid):
+        positional = []
+        named = []
+        for x, y in grid.Box(1, 3, 1, 3):
+            positional.append(grid.ToI(x, y))
+        for x, y in grid.Box(x1=1, x2=3, y1=1, y2=3):
+            named.append(grid.ToI(x, y))
+        return positional, named
+
+    positional, named = collect(g)
+    assert list(named) == list(positional)
+    assert list(named) == [g.ToI(*xy) for xy in g.Box(1, 3, 1, 3)]
