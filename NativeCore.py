@@ -5009,8 +5009,10 @@ def _PythonHoodIndices(grid,hood,*coords):
         if valid:
             yield vals[0] if dim==1 else tuple(vals)
 
-def _PythonBox(self,*bounds):
-    if len(bounds) not in (2,4,6): raise TypeError("Box expects x1,x2[,y1,y2[,z1,z2]]")
+def _PythonBox(self,x1,x2,y1=None,y2=None,z1=None,z2=None):
+    if (y1 is None)!=(y2 is None) or (z1 is None)!=(z2 is None) or (z1 is not None and y1 is None):
+        raise TypeError("Box expects x1,x2[,y1,y2[,z1,z2]]")
+    bounds=(x1,x2) if y1 is None else (x1,x2,y1,y2) if z1 is None else (x1,x2,y1,y2,z1,z2)
     dim=len(bounds)//2
     if dim!=int(self._dimension): raise ValueError("Box dimensionality must match grid dimensionality")
     for v in bounds:
@@ -5038,7 +5040,10 @@ def _PythonBox(self,*bounds):
                     z=_BoxWrapZ(self,zr)
                     if z!=-1: yield int(x),int(y),int(z)
 
-def _PythonHood(self,hood,*coords):
+def _PythonHood(self,hood,x,y=None,z=None,*,unroll=False):
+    if not isinstance(unroll,(bool,np.bool_)): raise TypeError("Hood unroll must be bool")
+    if z is not None and y is None: raise TypeError("Hood z requires y")
+    coords=(x,) if y is None else (x,y) if z is None else (x,y,z)
     return _PythonHoodIndices(self,hood,*coords)
 
 def _PythonAgentGeneration(grid):
