@@ -1,6 +1,7 @@
 """Cross-API compiled composition contracts representative of model kernels."""
 import numpy as np
 import pytest
+import PythonAutomataLibrary as pal
 
 
 def test_agent_query_ilist_popgrid_pde_pipeline(api):
@@ -14,7 +15,7 @@ def test_agent_query_ilist_popgrid_pde_pipeline(api):
         agents[a, 0] = 1.0
 
     @api.njit
-    def step(ag: api.AgentGrid, out: api.IList, pg: api.PopGrid, pde: api.PDEgrid):
+    def step(ag: pal.AgentGrid, out: pal.IList, pg: pal.PopGrid, pde: pal.PDEgrid):
         out.Clear()
         for x, y in ag.Hood(hood, 0, 0):
             for a in ag.AgentsAt(x, y):
@@ -36,7 +37,7 @@ def test_rng_multinomial_agentgrid_composition_is_reproducible(api):
         return api.NewAgentGrid((32,), isStackable=True), api.NewMultinomial()
 
     @api.njit
-    def seed_population(grid: api.AgentGrid, multi: api.Multinomial):
+    def seed_population(grid: pal.AgentGrid, multi: pal.Multinomial):
         multi.Setup(20)
         left = multi.Sample(0.25)
         middle = multi.Sample(0.5)
@@ -68,7 +69,7 @@ def test_popgrid_to_pdegrid_to_agentgrid_feedback(api):
     pop[2] = 3; pop[7] = 2
 
     @api.njit
-    def step(pg: api.PopGrid, pde: api.PDEgrid, ag: api.AgentGrid):
+    def step(pg: pal.PopGrid, pde: pal.PDEgrid, ag: pal.AgentGrid):
         for x in pg.All():
             pde.Add(0.5 * pg[x], x)
         pde.Update()
@@ -90,7 +91,7 @@ def test_snapshot_query_allows_disposal_and_popgrid_accumulation(api):
         agents.NewAgentSQ(x)
 
     @api.njit
-    def cull(ag: api.AgentGrid, pg: api.PopGrid):
+    def cull(ag: pal.AgentGrid, pg: pal.PopGrid):
         snapshot = ag.All()
         for a in snapshot:
             x = ag.XSQ(a)
