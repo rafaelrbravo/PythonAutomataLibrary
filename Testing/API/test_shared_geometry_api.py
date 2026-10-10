@@ -26,6 +26,15 @@ def test_geometry_metadata_and_coordinate_roundtrip(api, kind, dims):
         assert g.ToI(*coords) == i
 
 
+@pytest.mark.parametrize("kind", ["AgentGrid", "PopGrid", "PDEgrid"])
+def test_safe_1d_itox_matches_linear_index(api, safe_mode, kind):
+    if not safe_mode:
+        pytest.skip("Fast mode already has direct 1D ItoX behavior")
+    g = getattr(api, "New" + kind)((5,))
+    for i in range(5):
+        assert g.ItoX(i) == i
+
+
 @pytest.mark.parametrize("kind", ["Grid", "PopGrid", "PDEgrid"])
 def test_box_positional_python_contract(api, kind):
     g = _new(api, kind, (5, 6))
