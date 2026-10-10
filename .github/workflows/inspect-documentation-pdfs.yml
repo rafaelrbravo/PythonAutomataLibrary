@@ -1,0 +1,22 @@
+name: Inspect documentation PDFs
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'Documentation/*.pdf'
+      - '.github/workflows/inspect-documentation-pdfs.yml'
+jobs:
+  inspect:
+    if: github.actor != 'github-actions[bot]' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect PDFs
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils
+          for f in Documentation/*.pdf; do
+            echo "=== $f ==="
+            pdfinfo "$f" | grep -E 'Pages:|Page size:|File size:'
+            pdftotext "$f" - | awk 'NF {print; n++; if (n==12) exit}'
+          done
