@@ -97,20 +97,32 @@ def test_python_njit_box_and_hood_coordinate_parity(api, kind, dims):
     if len(dims) == 1:
         @api.njit
         def collect(grid):
-            a = [grid.ToI(x) for x in grid.Box(-1, 2)]
-            b = [grid.ToI(x) for x in grid.Hood(hood, 0)]
+            a = []
+            for x in grid.Box(-1, 2):
+                a.append(grid.ToI(x))
+            b = []
+            for x in grid.Hood(hood, 0):
+                b.append(grid.ToI(x))
             return a, b
     elif len(dims) == 2:
         @api.njit
         def collect(grid):
-            a = [grid.ToI(x, y) for x, y in grid.Box(-1, 2, -1, 2)]
-            b = [grid.ToI(x, y) for x, y in grid.Hood(hood, 0, 0)]
+            a = []
+            for x, y in grid.Box(-1, 2, -1, 2):
+                a.append(grid.ToI(x, y))
+            b = []
+            for x, y in grid.Hood(hood, 0, 0):
+                b.append(grid.ToI(x, y))
             return a, b
     else:
         @api.njit
         def collect(grid):
-            a = [grid.ToI(x, y, z) for x, y, z in grid.Box(-1, 2, -1, 2, -1, 2)]
-            b = [grid.ToI(x, y, z) for x, y, z in grid.Hood(hood, 0, 0, 0)]
+            a = []
+            for x, y, z in grid.Box(-1, 2, -1, 2, -1, 2):
+                a.append(grid.ToI(x, y, z))
+            b = []
+            for x, y, z in grid.Hood(hood, 0, 0, 0):
+                b.append(grid.ToI(x, y, z))
             return a, b
     compiled_box, compiled_hood = collect(g)
     assert list(compiled_box) == python_box
