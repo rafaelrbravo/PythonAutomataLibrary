@@ -12,7 +12,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import BaseDocTemplate, Frame, FrameBreak, KeepTogether, PageTemplate, Paragraph
+from reportlab.platypus import BaseDocTemplate, Frame, KeepTogether, PageTemplate, Paragraph
 
 ROOT = Path(__file__).resolve().parents[2]
 MD_TARGET = ROOT / "Documentation" / "CHEATSHEET.md"
@@ -76,10 +76,9 @@ def _markup(s):
 
 
 def _build_pdf(body_font):
-    buf=BytesIO(); pw,ph=letter; margin=.32*inch; header=.34*inch; gap=.12*inch
-    colw=(pw-2*margin-gap)/2; usable=ph-2*margin-header
-    frames=[Frame(margin,margin,colw,usable,leftPadding=3,rightPadding=3,topPadding=1,bottomPadding=1),
-            Frame(margin+colw+gap,margin,colw,usable,leftPadding=3,rightPadding=3,topPadding=1,bottomPadding=1)]
+    buf=BytesIO(); pw,ph=letter; margin=.38*inch; header=.34*inch
+    usable=ph-2*margin-header
+    frames=[Frame(margin,margin,pw-2*margin,usable,leftPadding=5,rightPadding=5,topPadding=2,bottomPadding=2)]
     def header_fn(canvas,doc):
         canvas.saveState(); canvas.setFont("Helvetica-Bold",16); canvas.drawString(margin,ph-margin-9,TITLE)
         canvas.setStrokeColor(colors.HexColor("#888888")); canvas.setLineWidth(.5); canvas.line(margin,ph-margin-14,pw-margin,ph-margin-14); canvas.restoreState()
@@ -89,7 +88,6 @@ def _build_pdf(body_font):
     box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
     story=[Paragraph(_markup(INTRO),box)]
     for section_i,(title,entries) in enumerate(SECTIONS):
-        if section_i == 4: story.append(FrameBreak())
         items=[Paragraph(f"<b>{_markup(k)}</b> — {_markup(d)}",entry) for k,d in entries]
         story.append(KeepTogether([Paragraph(title,heading)]+items))
     story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
