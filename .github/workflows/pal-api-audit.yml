@@ -23,7 +23,9 @@ jobs:
       - name: Verify generated API reference
         run: python Documentation/generate_api_reference.py --check
       - name: Verify generated documentation PDFs
-        run: python Documentation/generate_pdfs.py --check
+        run: |
+          python Documentation/generate_pdfs.py --check
+          python Documentation/generate_cheatsheet.py --check
       - name: Install headless OpenGL backend
         run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1-mesa-dri
       - run: gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
