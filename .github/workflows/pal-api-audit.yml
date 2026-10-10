@@ -31,7 +31,7 @@ jobs:
           NUMBA_DISABLE_CACHE: '1'
         run: python -m pytest -q Testing
       - name: API performance benchmark
-        if: always()
+        if: success()
         env:
           PAL_BENCH_MODE: ${{ matrix.mode }}
           NUMBA_DISABLE_CACHE: '1'
