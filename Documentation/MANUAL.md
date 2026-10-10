@@ -155,7 +155,7 @@ Rendering and simulation are separate. A model can run without a window, draw ev
 
 ## 8. How PAL works
 
-PAL separates its public Python interface from a native C core. Python constructors create native-backed model state. Thin Numba-compatible wrappers allow compiled model code to access that state without repeatedly returning to Python. The public Protocol classes describe the annotation/autocomplete surface while safe and fast concrete implementations provide runtime behavior.
+PAL separates its public Python interface from a native C core. Python constructors create native-backed model state, and thin Numba-compatible wrappers let compiled model code operate on that state without repeatedly returning to Python. Before Numba compilation, `pal.njit` transforms PAL-specific constructs such as `Hood` and `Box` iteration and adds source-aware diagnostics where annotations provide enough type information. The public Protocol classes describe the annotation/autocomplete surface while safe and fast concrete implementations provide runtime behavior.
 
 This design favors fast repeated timesteps, but the first compiled call may include substantial Numba compilation time. Measure **cold compilation** separately from **steady-state execution**. Safe mode includes additional validation and source-aware diagnostics; fast mode removes some of that overhead. A change that improves one benchmark may regress another, so measure both modes on representative workloads.
 
