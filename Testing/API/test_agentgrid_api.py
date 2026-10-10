@@ -182,3 +182,10 @@ def test_nonspatial_counts_length_is_undefined(api):
     g = api.NewAgentGrid(())
     with pytest.raises(ValueError, match="spatial"):
         len(g.counts)
+
+
+def test_agentgrid_python_hood_returns_linear_sites(api):
+    grid = api.NewAgentGrid((-3, 4))
+    offsets = ((-1, 0), (0, 0), (0, -1), (0, 1))
+    assert list(grid.Hood(offsets, 0, 0)) == [grid.ToI(2, 0), grid.ToI(0, 0), grid.ToI(0, 1)]
+    assert list(grid.Hood(((0, 0), (3, 0)), 1, 2)) == [grid.ToI(1, 2)] * 2
