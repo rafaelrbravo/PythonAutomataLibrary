@@ -93,7 +93,7 @@ def _build_pdf(body_font):
         items=[Paragraph(f"<b>{_markup(k)}</b> — {_markup(d)}",entry) for k,d in entries]
         story.append(KeepTogether([Paragraph(title,heading)]+items))
     story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
-    doc=BaseDocTemplate(buf,pagesize=letter,leftMargin=margin,rightMargin=margin,topMargin=margin,bottomMargin=margin)
+    doc=BaseDocTemplate(buf,pagesize=letter,leftMargin=margin,rightMargin=margin,topMargin=margin,bottomMargin=margin,invariant=1)
     doc.addPageTemplates(PageTemplate(id="main",frames=frames,onPage=header_fn)); doc.build(story)
     return buf.getvalue(), doc.page
 
