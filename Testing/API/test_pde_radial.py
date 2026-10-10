@@ -50,3 +50,31 @@ def test_radial_diffusion_matching_outer_bc_preserves_constant_field(method):
     field.Update()
 
     np.testing.assert_allclose(field[:], 3.25, rtol=0, atol=2e-6)
+
+
+@pytest.mark.parametrize("method", ["DiffusionRadialCircle", "DiffusionRadialSphere"])
+def test_radial_diffusion_validation_is_transactional(method):
+    field = pal.NewPDEgrid((8,))
+    field.SetTimeSpaceStep(1.0, 1.0)
+    values = np.arange(8, dtype=np.float32)
+    field[:] = values
+
+    with pytest.raises(ValueError):
+        getattr(field, method)(1.0)
+    field.Update()
+
+    np.testing.assert_array_equal(field[:], values)
+
+
+@pytest.mark.parametrize("method", ["DiffusionRadialCircle", "DiffusionRadialSphere"])
+def test_radial_diffusion_rejects_wrapped_geometry_without_pending_change(method):
+    field = pal.NewPDEgrid((8,), wrapX=True)
+    field.SetTimeSpaceStep(0.1, 1.0)
+    values = np.arange(8, dtype=np.float32)
+    field[:] = values
+
+    with pytest.raises(ValueError):
+        getattr(field, method)(0.2)
+    field.Update()
+
+    np.testing.assert_array_equal(field[:], values)
