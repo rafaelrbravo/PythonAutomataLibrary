@@ -229,7 +229,7 @@ pop[x, y] = 10
 pop[:] = 0
 ```
 
-Slice reads are detached NumPy arrays (`int64`); assigning to a slice writes to the population, while modifying a previously read array does not. Both linear slices (`pop[:]`) and spatial slices (`pop[:, :]`) are supported. Population changes can instead be accumulated and applied together:
+Linear (`pop[:]`) and spatial (`pop[:, :]`) slice reads return detached `int64` NumPy arrays; slice assignment writes to the population. Population changes can instead be accumulated and applied together:
 
 ```python
 pop.Add(delta, x, y)
@@ -245,7 +245,7 @@ pop.Update()
 | `Reset()` | Clear current populations and pending changes. |
 | `InWrapX/Y/Z(value)` | Wrap a coordinate on the corresponding axis. |
 
-`capacity=None` uses the int64 maximum as the population cap. An explicit `capacity` must be a nonnegative int64 integer; invalid, fractional, nonfinite, or out-of-range values raise `ValueError` during construction. Capacity constrains the **total population**, not an independent limit per site. Slice reads return detached NumPy copies. `All()` reflects the current population only: pending `Add` changes do not appear until `Update()`. In safe mode, test births and transfers against capacity and nonnegative-count constraints before switching to fast mode.
+`capacity=None` uses the int64 maximum as the population cap. An explicit `capacity` must be a nonnegative int64 integer; invalid, fractional, nonfinite, or out-of-range values raise `ValueError` during construction. Capacity constrains the **total population**, not an independent limit per site. In safe mode, test births and transfers against capacity and nonnegative-count constraints before switching to fast mode.
 
 ## PDEgrid
 
