@@ -219,6 +219,8 @@ StartOpenGLWindow(xDim, yDim, zDim=None, width=800, height=800, title='PAL', hea
 | method | `Save(self, path: str, block=False)` |
 | method | `Close(self)` |
 
+The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](API_GUIDE.md) for which object to use in Python and compiled drawing code.
+
 ## Pix drawing buffer
 
 | Kind | Declaration |
