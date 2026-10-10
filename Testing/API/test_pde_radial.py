@@ -68,7 +68,7 @@ def test_radial_diffusion_validation_is_transactional(method):
 
 @pytest.mark.parametrize("method", ["DiffusionRadialCircle", "DiffusionRadialSphere"])
 def test_radial_diffusion_rejects_wrapped_geometry_without_pending_change(method):
-    field = pal.NewPDEgrid((8,), wrapX=True)
+    field = pal.NewPDEgrid((-8,))
     field.SetTimeSpaceStep(0.1, 1.0)
     values = np.arange(8, dtype=np.float32)
     field[:] = values
