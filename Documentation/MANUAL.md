@@ -111,11 +111,11 @@ for x in range(10):
 
 dx = (field[6, 5] - field[4, 5]) / 2
 dy = (field[5, 6] - field[5, 4]) / 2
-assert abs(dx) < 1e-12
-assert abs(dy - 0.1) < 1e-12
+assert abs(dx) < 1e-6
+assert abs(dy - 0.1) < 1e-6
 ```
 
-The field is constant in x and linear in y, so its exact discrete gradients are 0 and 0.1. This verifies indexing and a finite-difference calculation without introducing boundary conditions or timestep integration. The repository example performs the same calculation inside `@pal.njit`; the snippet above keeps the arithmetic visible in Python.
+The field is constant in x and linear in y, so its expected discrete gradients are 0 and 0.1. The assertions allow floating-point storage and arithmetic error. This verifies indexing and a finite-difference calculation without introducing boundary conditions or timestep integration. The repository example performs the same calculation inside `@pal.njit`; the snippet above keeps the arithmetic visible in Python.
 
 ### Numerical update order
 
