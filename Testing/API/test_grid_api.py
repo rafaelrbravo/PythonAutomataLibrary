@@ -95,7 +95,7 @@ def test_annotated_safe_scalar_set_error_reports_source_line(api, safe_mode):
     def invalid(grid: pal.Grid):
         grid[4] = 1
 
-    with pytest.raises(ValueError, match="source line"):
+    with pytest.raises(IndexError, match="source line"):
         invalid(g)
 
 
