@@ -4711,6 +4711,12 @@ _FAST_MODE=False
 _MODE_LOCKED=False
 
 def FastMode():
+    """Select unchecked fast mode before constructing any PAL model or window object.
+
+    PAL starts in safe mode. The first model/window construction locks the
+    process-wide selection. Calling FastMode afterward raises RuntimeError.
+    Validate a model in safe mode before benchmarking fast mode.
+    """
     global _FAST_MODE
     if _MODE_LOCKED:
         raise RuntimeError("pal.FastMode() must be called before constructing PAL model or window objects")
