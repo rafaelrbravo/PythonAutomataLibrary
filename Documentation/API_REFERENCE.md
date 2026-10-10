@@ -189,8 +189,8 @@ StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False) -> tuple[Pix, P
 | --- | --- |
 | method | `IsOpen(self) -> bool` |
 | method | `Update(self)` |
-| method | `Save(self, path:str, block=False)` |
-| method | `StartGif(self, path:str, delay=100)` |
+| method | `Save(self, path: str, block=False)` |
+| method | `StartGif(self, path: str, delay=100)` |
 | method | `AddGifFrame(self, block=False)` |
 | method | `StopGif(self)` |
 | method | `Close(self)` |
@@ -216,7 +216,7 @@ StartOpenGLWindow(xDim, yDim, zDim=None, width=800, height=800, title='PAL', hea
 | method | `Camera(self, x, y, z, yaw=None, pitch=None)` |
 | method | `Clear(self)` |
 | method | `Background(self, color)` |
-| method | `Save(self, path:str, block=False)` |
+| method | `Save(self, path: str, block=False)` |
 | method | `Close(self)` |
 
 ## Scope and validation
