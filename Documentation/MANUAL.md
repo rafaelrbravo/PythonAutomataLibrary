@@ -54,7 +54,7 @@ Both `PopGrid` and `PDEgrid` distinguish current state from pending changes. Dir
 
 A `PDEgrid` also provides diffusion and advection. Set the timestep and spatial spacings with `SetTimeSpaceStep(dt, dx, dy, dz)` before transport operations. Cartesian, interface-based, masked, ADI, and radial diffusion variants are available; choose the method that matches the model's geometry and numerical assumptions. Validate timestep stability and boundary behavior in safe mode before optimizing.
 
-## Numerical update order
+### Numerical update order
 
 The timestep order is part of the model. Adding a value to a population or field accumulates a pending change; Update applies the pending changes together. Direct assignment changes current state immediately. This lets the model distinguish synchronous updates from sequential ones. For diffusion, test stability and convergence by varying timestep and grid spacing. Safe-mode checks do not replace numerical validation.
 
