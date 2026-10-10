@@ -94,6 +94,14 @@ Built using `python -m pip wheel --no-build-isolation --no-deps --wheel-dir dist
 
 This is a working **Linux/Python 3.13 proof of concept**, not a committed packaging fix or a verified cross-platform build process. A robust production solution should integrate compilation with the wheel build (rather than requiring a prebuilt `.so`), choose appropriate wheel compatibility tags, and test Windows/macOS packaging. The workaround intentionally remains outside the permitted `Testing/` modifications.
 
+### Build-time native compilation proof of concept (Linux)
+
+Extended the temporary packaging experiment to start **without** a prebuilt `libpal_native.so`: copied the source-only packaging probe to `/mnt/data/pal_packaging_build_probe`, removed `libpal_native.so`, `build/`, `dist/`, and egg-info, then defined a temporary `setuptools.command.build_py.build_py` subclass. Its `run()` calls `super().run()` and then compiles the repository's `pal_native.c` into `Path(self.build_lib)/"PythonAutomataLibrary"/"libpal_native.so"` with `cc -O3 -shared -fPIC -std=c11 ... -lm`. Kept the `Distribution.has_ext_modules() -> True` override and native package-data declaration from the previous experiment.
+
+The clean `python -m pip wheel --no-build-isolation --no-deps -w dist .` completed successfully, generating `pythonautomatalibrary-0.1.0-cp313-cp313-linux_x86_64.whl` (136,102 bytes; SHA256 `e435902ade06092c8794814fc28f9f416837dba57686cb81dc1c7af56e0c4281`). ZIP inspection verified `PythonAutomataLibrary/libpal_native.so` is present. Running `Testing/smoke_wheel_install.py` against this wheel succeeded, with the isolated subprocess importing PAL from its temporary installation.
+
+**Caveats:** this is a Linux/Python 3.13 prototype, not an authorized change to root packaging. The source-root `setup.py` was also copied into the wheel due to the current root-level package-directory mapping; production packaging should exclude it. Windows/MSVC, macOS, clean build isolation, source distribution, and CI testing remain open. This experiment confirms a feasible native compilation integration, not complete release readiness.
+
 ## Known defects and limitations
 
 1. **Compiled safe-mode diagnostic annotation** (unresolved): `test_12_compiled_pop_pde.py` has two failures: `test_compiled_safe_popgrid_error_contains_source_line` and `test_compiled_safe_unstable_diffusion_contains_source_line`. Both raise the expected `ValueError` but the messages omit the asserted `source line` information. `test_23_diagnostic_annotations.py` documents unannotated parameter cases as strict expected failures; annotated cases pass. The observed issue appears related to AST transformer recognition of annotated versus unannotated grid arguments. Do not treat these as numerical-kernel failures. Any implementation fix requires authorization to modify files outside `Testing/`.
