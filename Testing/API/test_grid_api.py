@@ -124,3 +124,18 @@ def test_python_safe_grid_rejects_unrepresentable_assignments(api, safe_mode, dt
         with pytest.raises(ValueError, match="not representable"):
             g[1] = value
         assert g[1] == 1
+
+
+@pytest.mark.parametrize("factory,dtype", [("NewPopGrid", np.int64), ("NewPDEgrid", np.float32)])
+def test_population_and_pde_python_slices_return_detached_arrays(api, factory, dtype):
+    grid = getattr(api, factory)((4, 5))
+    grid[2, 3] = 7
+    region = grid[:, :]
+    assert region.shape == (4, 5)
+    assert region.dtype == dtype
+    assert region[2, 3] == 7
+    region[2, 3] = 99
+    assert grid[2, 3] == 7
+    linear = grid[0:len(grid)]
+    assert linear.shape == (20,)
+    assert linear[grid.ToI(2, 3)] == 7
