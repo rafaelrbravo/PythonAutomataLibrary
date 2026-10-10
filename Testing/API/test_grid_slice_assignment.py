@@ -1,7 +1,7 @@
 """Grid assignment parity tests; run safe and fast in separate processes.
 
-The Persian.py compiled whole-grid slice defect is kept as a strict expected
-failure until corrected; the scalar-index loop is a supported workaround.
+Includes the Persian.py annotated whole-grid slice regression alongside ordinary
+and mixed slice read/write/augassign parity checks.
 """
 import numpy as np
 import pytest
