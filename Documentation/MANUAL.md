@@ -60,6 +60,21 @@ Use `AgentsAt(x, y)` to visit the agents occupying one lattice site. For a conti
 
 Both iterators work in Python and inside `@pal.njit` loops. Python iteration materializes matching handles first; this does not permit structural modification of the grid during iteration. Safe mode checks for structural changes while iterating, whereas fast mode omits the check. For a loop that creates or disposes agents, iterate a snapshot from `agents.All()` instead.
 
+For example, this Python-side search finds the agent across a periodic x boundary:
+
+```python
+import PythonAutomataLibrary as pal
+
+agents = pal.NewAgentGrid((-10, 10))
+agent = agents.NewAgent(9.0, 2.0)
+nearby = list(agents.AgentsInRadius(1.5, 0.0, 2.0))
+assert len(nearby) == 1
+found, dx, dy, distSq = nearby[0]
+assert found == agent
+assert dx == -1.0 and dy == 0.0 and distSq == 1.0
+assert list(agents.AgentsInRadius(1.5, 0.0, 2.0, exclude=agent)) == []
+```
+
 ## 5. Simultaneous population and field updates
 
 Both `PopGrid` and `PDEgrid` distinguish current state from pending changes. Direct indexing changes current state immediately; `Add` queues a delta, and `Update` applies queued changes. `Reset` clears both current state and pending changes.
