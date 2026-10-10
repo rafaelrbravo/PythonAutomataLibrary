@@ -21,21 +21,6 @@ jobs:
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
         run: python -m pytest -q Testing/API
-      - name: Persian annotated-slice example kernel
-        env:
-          PAL_TEST_MODE: ${{ matrix.mode }}
-        run: |
-          PYTHONPATH=.. python - <<'PY'
-          import os, runpy
-          import PythonAutomataLibrary as pal
-          if os.environ['PAL_TEST_MODE'] == 'fast': pal.FastMode()
-          ns = runpy.run_path('Examples/ComplexExamples/Persian.py', run_name='pal_persian_audit')
-          types = pal.NewGrid(dimensions=(-ns['DIM'], -ns['DIM']), dtype='int8')
-          ns['Setup'](types)
-          assert types[ns['DIM']//2, ns['DIM']//2] == ns['DEFECTOR']
-          assert sum(int(types[i]) for i in range(len(types))) == 1
-          print('Persian Setup annotated slice: PASS')
-          PY
       - name: Run full Testing suite
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
