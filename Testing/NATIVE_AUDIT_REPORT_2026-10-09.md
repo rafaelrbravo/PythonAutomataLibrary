@@ -73,6 +73,18 @@ Inspection of the staged `NativeCore.py` AST transformer identifies a concrete e
 
 This explains the observed instrumentation gap; it does **not** establish the safest implementation fix. Possible remedies should be evaluated for their effect on ordinary objects with methods sharing PAL names, Numba typing, nested functions, and diagnostics. No library implementation change was made.
 
+### Portable audit runner
+
+The repository now includes `Testing/run_native_audit.py` (commit `559d5cd`) to launch safe and fast suites in independent subprocesses with a per-mode timeout and propagate any nonzero exit status. From a checkout with PAL and pytest installed:
+
+```sh
+python Testing/run_native_audit.py
+python Testing/run_native_audit.py --mode safe
+python Testing/run_native_audit.py --mode fast -- -k diffusion
+```
+
+The runner is a convenience wrapper, **not a test-result artifact**. Its GitHub version has not yet been executed from a fresh checkout; the full-suite results above came from direct pytest commands on the staged runtime. It deliberately returns failure for the currently known two safe-mode diagnostic tests.
+
 ## Reproduction and next decisions
 
 For independent reproduction, clone the GitHub PAL repository, build the native C library using the project's supported instructions, install its dependencies, and run `Testing/` in fresh safe/fast processes. The paths above refer to this audit's staging directory, not a portable checkout. Compare the new results with the counts above. Investigate the source-line diagnostic issue with both annotated and unannotated `@njit` grid arguments; preserve exception safety and existing validation semantics. Fixing PAL implementation code requires separate authorization. An OpenGL-capable runner is needed to exercise the skipped graphical backend tests.
