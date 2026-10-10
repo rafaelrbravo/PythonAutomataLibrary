@@ -56,3 +56,23 @@ def test_advection_uses_upwind_boundary_as_inflow(method, velocity, low_bc, high
     expected = np.zeros(6, dtype=np.float32)
     expected[edge] = 0.4
     np.testing.assert_allclose(field[:], expected, rtol=0, atol=2e-6)
+
+
+def test_advection_field_and_interfaces_use_distinct_velocity_locations():
+    centered = pal.NewPDEgrid((-4,))
+    interfaces = pal.NewPDEgrid((-4,))
+    values = np.array([1.0, 0.0, 0.0, 0.0], dtype=np.float32)
+    velocities = np.array([0.2, 0.6, 0.2, 0.2], dtype=np.float32)
+    for field in (centered, interfaces):
+        field.SetTimeSpaceStep(0.1, 1.0)
+        field[:] = values
+
+    centered.AdvectionField(velocities)
+    interfaces.AdvectionInterfaces(velocities)
+    centered.Update()
+    interfaces.Update()
+
+    expected_centered = np.array([0.96, 0.04, 0.0, 0.0], dtype=np.float32)
+    expected_interfaces = np.array([0.98, 0.06, 0.0, -0.02], dtype=np.float32)
+    np.testing.assert_allclose(centered[:], expected_centered, rtol=0, atol=2e-6)
+    np.testing.assert_allclose(interfaces[:], expected_interfaces, rtol=0, atol=2e-6)
