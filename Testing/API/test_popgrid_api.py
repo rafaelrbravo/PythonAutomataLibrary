@@ -23,7 +23,7 @@ def test_slice_assignment_and_copy_semantics(api, shape):
     got = g[tuple(slice(None) for _ in shape)]
     np.testing.assert_array_equal(got, values)
     got.flat[0] = 99
-    assert g[tuple(0 for _ in shape)] == 0
+    scalar_key = 0 if len(shape) == 1 else tuple(0 for _ in shape)\n    assert g[scalar_key] == 0
 
 
 def test_pending_add_does_not_change_all_until_update(api):
