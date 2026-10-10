@@ -403,7 +403,7 @@ Use safe mode until the model is correct, then benchmark fast mode. Do not rely 
 
 ## Saving PAL objects
 
-PAL model objects support standard Python pickling. The serialized form stores model state rather than process-local resources, allowing it to be restored with Python's `pickle` module.
+PAL native-backed model objects support standard Python pickling. Checkpoints preserve the state needed to resume the object rather than process-local pointers: AgentGrid geometry, occupancy, agents and properties; PopGrid geometry, capacity, current counts and pending deltas; PDEgrid geometry, time/space steps, current field and pending deltas; IList contents; and a Multinomial's current `Setup`/`Sample` remainder. Safe/fast identity is also restored. This means a PopGrid or PDEgrid may be pickled before `Update()` without losing its queued changes.
 
 ## Choosing the right structure
 
