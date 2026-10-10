@@ -51,4 +51,5 @@ jobs:
       - name: Run Windows real-example regressions
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
+          PATH: C:\\mingw64\\bin;${{ env.PATH }}
         run: python -m pytest -q Testing/API/test_persian_example_regression.py Testing/API/test_real_examples_smoke.py
