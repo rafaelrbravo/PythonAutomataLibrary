@@ -100,6 +100,8 @@ window.Save("frame.png", block=True)
 window.Close()
 ```
 
-For 2D/3D geometry use `pal.StartOpenGLWindow(...)`; for unattended output pass `headless=True` with a supported backend. Use `window.StartGif(path)`, `AddGifFrame()`, and `StopGif()` for animation.
+`pal.StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False)` returns `(pix, window)`. Use `window.Save(path, block=True)` to wait for an image file. For unattended output pass `headless=True`; the image example above can then run without a display. Use `window.StartGif(path, delay=100)`, `window.AddGifFrame(block=False)`, and `window.StopGif()` for animation; call `Update()` before capturing a frame. Always call `Close()` when finished.
+
+For 2D/3D geometry use `pal.StartOpenGLWindow(...)` with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`, `Camera`, `Background`, and `Clear`. Headless OpenGL requires a supported rendering backend.
 
 **More detail:** [Manual](MANUAL.md) · [API Guide](API_GUIDE.md) · [API Reference](API_REFERENCE.md).
