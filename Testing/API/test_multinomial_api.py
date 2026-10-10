@@ -76,3 +76,57 @@ def test_compiled_safe_sample_rejects_probability_over_remaining_mass(api, safe_
 
     with pytest.raises(ValueError):
         invalid(m)
+
+def test_python_njit_multinomial_seeded_sequence_parity(api):
+    """Identical seeded solver operations must consume the same PAL RNG stream."""
+    py = api.NewMultinomial()
+    jit = api.NewMultinomial()
+
+    def python_work(m):
+        m.Setup(40)
+        first = m.Sample(0.2)
+        second = m.Sample(0.35)
+        binomial = m.Binomial(25, 0.4)
+        return first, second, binomial
+
+    @api.njit
+    def compiled_work(m):
+        m.Setup(40)
+        first = m.Sample(0.2)
+        second = m.Sample(0.35)
+        binomial = m.Binomial(25, 0.4)
+        return first, second, binomial
+
+    api.Seed(20261010)
+    expected = python_work(py)
+    api.Seed(20261010)
+    actual = compiled_work(jit)
+    assert tuple(actual) == tuple(expected)
+
+
+def test_python_njit_multinomial_setup_reuse_parity(api):
+    """Setup after prior sampling must reset remaining-count state identically."""
+    py = api.NewMultinomial()
+    jit = api.NewMultinomial()
+
+    def python_work(m):
+        m.Setup(12)
+        first = m.Sample(0.5)
+        m.Setup(12)
+        second = m.Sample(0.5)
+        return first, second
+
+    @api.njit
+    def compiled_work(m):
+        m.Setup(12)
+        first = m.Sample(0.5)
+        m.Setup(12)
+        second = m.Sample(0.5)
+        return first, second
+
+    api.Seed(314159)
+    expected = python_work(py)
+    api.Seed(314159)
+    actual = compiled_work(jit)
+    assert tuple(actual) == tuple(expected)
+
