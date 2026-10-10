@@ -286,10 +286,10 @@ items = pal.NewIList()
 
 | Operation | Meaning |
 | --- | --- |
-| `Append(i)` | Append an integer. |
-| `Clear()` | Remove all entries. |
+| `Append(i)` | Append a nonnegative int32 value; returns the IList for chaining. |
+| `Clear()` | Remove all entries; returns the IList for chaining. |
 | `Random()` | Return a random entry. |
-| `Shuffle()` | Shuffle entries in place. |
+| `Shuffle()` | Shuffle entries in place; returns the IList for chaining. |
 | `All()` | Return a detached copy. |
 | `Iter()` | Return a no-copy/live iterable view. |
 | `len(items)`, `items[i]` | Length/index access. |
@@ -304,7 +304,7 @@ pal.Random()       # uniform float
 pal.RandInt(max)  # integer in [0, max)
 ```
 
-PAL random functions share one seeded stream across PAL calls.
+`Seed` accepts the uint64 domain. `RandInt(max)` uses the positive int64 domain and returns an integer in `[0, max)`. PAL random functions share one seeded stream across Python and compiled PAL calls, so reseeding reproduces the same call sequence across that boundary.
 
 For binomial/multinomial sampling:
 
@@ -318,7 +318,7 @@ b = multi.Sample(pB)
 # remaining count/probability mass stays in the sampler
 ```
 
-`NewMultinomial(other)` creates another sampler sharing the underlying solver configuration while starting fresh sampling state.
+`Setup(n)` initializes the remaining count for a multinomial sequence and is chainable. Each `Sample(p)` consumes count and probability mass; in safe mode cumulative requested probability cannot exceed the remaining mass. `Binomial(n, p)` performs an independent binomial draw. `NewMultinomial(other)` reuses the other sampler's underlying solver configuration but starts with fresh multinomial sampling state.
 
 ## Visualization
 
@@ -372,7 +372,7 @@ draw.Line(width, color, x1, y1, x2, y2, z1=0.0, z2=0.0)
 
 Window controls include `Borders(width, color)`, `Camera(x, y, z, yaw=None, pitch=None)`, `Background(color)`, `Clear()`, `Update()`, `IsOpen()`, `Save(path, block=False)`, `StartGif(path, delay=100)`, `AddGifFrame(block=False, timeout=30)`, `StopGif(timeout=30)`, and `Close()`.
 
-Colors are packed integer RGB values such as `0xFF0000`. Use `pal.ColorScale(colors, value)` to interpolate across a sequence of colors for a normalized value.
+Colors are packed integer RGB values such as `0xFF0000`. `pal.ColorScale(colors, value)` interpolates RGB channels across a sequence of colors for normalized `value`; values outside `[0, 1]` clamp to the endpoint colors.
 
 Set `headless=True` for off-screen rendering. This is useful for automated image/GIF generation and testing; OpenGL headless rendering requires a supported standalone backend such as EGL.
 
