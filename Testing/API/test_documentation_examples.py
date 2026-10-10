@@ -24,7 +24,7 @@ def test_manual_quickstart(tmp_path):
 
 
 def _cheatsheet_source():
-    path = Path(__file__).resolve().parents[2] / "Documentation" / "generate_cheatsheet.py"
+    path = Path(__file__).resolve().parents[2] / "Documentation" / "generators" / "generate_cheatsheet.py"
     tree = ast.parse(path.read_text(encoding="utf-8"))
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(isinstance(target, ast.Name) and target.id == "CHEATSHEET" for target in node.targets):
