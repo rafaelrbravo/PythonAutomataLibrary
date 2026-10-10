@@ -158,7 +158,7 @@ agents.Z(agent)
 agents.Move(agent, x, y, z)
 ```
 
-`NewAgentSQ(i)` and `MoveSQ(agent, i)` accept a linear lattice index in 1D, 2D, and 3D; the coordinate forms `NewAgentSQ(x, y[, z])` and `MoveSQ(agent, x, y[, z])` are also supported. The current regression suite explicitly tests both linear-index forms across all dimensions. A previously proposed 1D-only restriction has not been implemented. Continuous `NewAgent` and `Move` take spatial positions, not linear indices.
+`NewAgentSQ(i)` and `MoveSQ(agent, i)` accept a linear lattice index in 1D, 2D, and 3D; the coordinate forms `NewAgentSQ(x, y[, z])` and `MoveSQ(agent, x, y[, z])` are also supported. SQ placement uses the center of the selected lattice cell: after `NewAgentSQ(x, y)`, for example, `XSQ(agent)==x` and `YSQ(agent)==y`, while `X(agent)==x+0.5` and `Y(agent)==y+0.5`. Continuous `NewAgent` and `Move` instead keep the supplied spatial coordinates, with `XSQ`/`YSQ`/`ZSQ` identifying the containing cell. The current regression suite explicitly tests both linear-index forms across all dimensions. A previously proposed 1D-only restriction has not been implemented.
 
 ### Occupancy and queries
 
