@@ -345,7 +345,7 @@ PAL provides a pixel renderer for lattice models and an OpenGL renderer for 2D/3
 pix, window = pal.StartPixWindow(xDim, yDim, scale=1, title="PAL", headless=False)
 ```
 
-`pix` is the drawable pixel grid. Assign integer RGB colors by coordinate or linear index:
+`pix` is a write-oriented pixel buffer, not a general-purpose numeric `Grid`: it supports assignment but does not expose a public pixel-read API. Assign integer RGB colors by coordinate or linear index:
 
 ```python
 pix[x, y] = 0xFF0000
