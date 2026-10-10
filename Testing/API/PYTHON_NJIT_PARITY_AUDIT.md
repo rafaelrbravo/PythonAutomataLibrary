@@ -46,3 +46,5 @@ Not executed in the current audit environment. The Python runtime has NumPy, Num
 - `test_shared_geometry_api.py::test_python_hood_named_coordinates_rejected_pending_review`: documents current Python keyword rejection across three grid families (H-03).
 
 - `test_shared_geometry_api.py::test_compiled_hood_named_coordinate_forms_match_positional`: compiled named versus positional Hood coordinates and Python positional reference (H-03); unexecuted.
+
+- `test_shared_geometry_api.py::test_compiled_box_named_bounds_match_positional`: compiled Box keyword versus positional coordinates across Grid/PopGrid/PDEgrid (G-01); unexecuted.
