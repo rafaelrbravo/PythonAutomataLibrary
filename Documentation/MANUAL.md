@@ -64,6 +64,8 @@ Consider two sites with populations 10 and 0. Suppose each site sends half its s
 
 For a transfer that depends on the initial state, compute both changes before applying either one. `PopGrid.Add(delta, i)` records each site's signed change, and `Update()` commits all recorded changes together. This preserves the intended conservation law: the sum of the two deltas is zero, so the total population remains 10. Conservation is a useful test for transport or movement routines; it catches accidental creation or loss even when individual site values look plausible.
 
+When debugging a population model, test these properties separately: site counts remain nonnegative when the model requires it; the total changes only through explicit births, deaths, or boundary flux; and results do not depend on the order in which sites are visited when an update is meant to be simultaneous. Compare one small hand-calculated step against the implementation before running a large simulation.
+
 ## 6. Compiled model code
 
 Decorate computational functions with `@pal.njit`. PAL expands some model constructs before passing the function to Numba, including neighborhood iteration and source-aware safe-mode diagnostics. Annotate PAL arguments with their public types, such as `pal.AgentGrid` or `pal.PDEgrid`, for clarity and compiler support.
