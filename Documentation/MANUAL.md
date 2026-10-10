@@ -92,6 +92,8 @@ PAL's native-backed model objects support Python pickling, so a long-running mod
 
 For reproducibility, seed the random generator before a run and record the seed. Verify that a restored model continues from the expected state; don't assume that pickling a grid also captures unrelated Python variables or the state of every random-number generator used by external libraries. Compare a short uninterrupted run with a checkpoint-and-resume run as a regression test.
 
+The repository includes a working example at `Examples/Agents/SaveLoadModel.py`. It serializes a dictionary containing an `AgentGrid`, an `IList`, and the timestep, then restores all three before continuing. The regression suite `Testing/test_13_pickle_state.py` also verifies that `PopGrid` and `PDEgrid` retain pending deltas across a pickle round-trip and that restored agent grids preserve living handles and properties. These tests establish PAL object-state restoration, not restoration of external RNG streams.
+
 ## 10. Where to go next
 
 Read the [API Guide](API_GUIDE.md) for the complete public subsystem map. Consult the [API Reference](API_REFERENCE.md) for current declarations and the repository's `Examples/` for larger models. Use `Testing/` for executable contract examples, especially around boundaries, wrapping, pending updates, and invalid operations.
