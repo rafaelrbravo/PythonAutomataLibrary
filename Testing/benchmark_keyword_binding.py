@@ -1,10 +1,4 @@
-"""Fresh-process cold/hot baseline for tiny API keyword-name corrections.
-
-Run from the repository parent with NUMBA_DISABLE_CACHE=1 and PAL_BENCH_MODE
-set to safe or fast. Each process reports one cold compile+first-call time and
-a repeated hot-call median. The workflow repeats fresh processes so the report
-can use medians across independent interpreter/compiler starts.
-"""
+"""Fresh-process cold/hot baselines for small PAL API corrections."""
 import json
 import os
 import statistics
@@ -17,7 +11,10 @@ if mode == "fast":
     pal.FastMode()
 
 grid = pal.NewGrid((-32, -32, -32), int)
-items = pal.NewIList()\npop1 = pal.NewPopGrid((-64,))\npde1 = pal.NewPDEgrid((-64,))\nag1 = pal.NewAgentGrid((-64,))
+items = pal.NewIList()
+pop1 = pal.NewPopGrid((-64,))
+pde1 = pal.NewPDEgrid((-64,))
+ag1 = pal.NewAgentGrid((-64,))
 
 @pal.njit(cache=False)
 def grid_wrap_positional(g, n):
@@ -35,6 +32,16 @@ def ilist_append_positional(out, n):
         out.Append(i)
     return len(out)
 
+@pal.njit(cache=False)
+def itox_1d_positional(pop, pde, ag, n):
+    total = 0
+    for i in range(n):
+        j = i & 63
+        total += pop.ItoX(j)
+        total += pde.ItoX(j)
+        total += ag.ItoX(j)
+    return total
+
 def measure(fn, *args):
     t0 = time.perf_counter()
     result = fn(*args)
@@ -49,5 +56,6 @@ def measure(fn, *args):
 print(json.dumps({
     "mode": mode,
     "grid_wrap": measure(grid_wrap_positional, grid, 200000),
-    "ilist_append": measure(ilist_append_positional, items, 200000),\n    "itox_1d": measure(itox_1d_positional, pop1, pde1, ag1, 200000),
+    "ilist_append": measure(ilist_append_positional, items, 200000),
+    "itox_1d": measure(itox_1d_positional, pop1, pde1, ag1, 200000),
 }, sort_keys=True))
