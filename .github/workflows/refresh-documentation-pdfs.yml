@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - documentation-paired-formats
     paths:
       - 'Documentation/generators/*.py'
       - '.github/workflows/refresh-documentation-pdfs.yml'
