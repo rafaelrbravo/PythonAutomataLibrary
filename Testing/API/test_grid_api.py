@@ -249,3 +249,27 @@ def test_python_njit_grid_invalid_linear_read_atomic_parity(api, safe_mode, bad_
         compiled_read(jit, bad_index)
     assert type(python_error.value) is type(compiled_error.value)
     np.testing.assert_array_equal(jit[:, :], py[:, :])
+
+
+@pytest.mark.parametrize("coordinates", [(4, 0), (0, -1), (0, 3)])
+def test_python_njit_grid_invalid_coordinate_read_atomic_parity(api, safe_mode, coordinates):
+    """Compare safe-mode coordinate-read exception types and state preservation."""
+    if not safe_mode:
+        pytest.skip("Fast mode deliberately omits bounds checks")
+    py = api.NewGrid((4, 3), np.int32)
+    jit = api.NewGrid((4, 3), np.int32)
+    initial = np.arange(12, dtype=np.int32).reshape(4, 3)
+    py[:, :] = initial
+    jit[:, :] = initial
+
+    @api.njit
+    def compiled_read(g, x, y):
+        return g[x, y]
+
+    with pytest.raises((IndexError, ValueError)) as python_error:
+        _ = py[coordinates]
+    with pytest.raises((IndexError, ValueError)) as compiled_error:
+        compiled_read(jit, *coordinates)
+    assert type(python_error.value) is type(compiled_error.value)
+    np.testing.assert_array_equal(py[:, :], initial)
+    np.testing.assert_array_equal(jit[:, :], initial)
