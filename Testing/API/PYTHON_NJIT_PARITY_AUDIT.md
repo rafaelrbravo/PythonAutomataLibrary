@@ -15,6 +15,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 - `test_shared_geometry_api.py::test_python_njit_box_and_hood_coordinate_parity`: Grid/PopGrid/PDEgrid × 1D/2D/3D; exact ordered wrapped Box/Hood results.
 - `test_agentgrid_api.py::test_python_njit_agentgrid_hood_and_box_order_parity`: AgentGrid × 1D/2D/3D; exact ordered wrapped results.
 - `test_agentgrid_api.py::test_python_njit_agent_lifecycle_state_parity`: AgentGrid × 1D/2D/3D; stacked creation, properties, movement, disposal, population, surviving agents.
+- `test_pdegrid_api.py::test_python_njit_pdegrid_add_update_state_parity`: PDEgrid × 1D/2D/3D; pending floating additions, Update, indexing, final fields.
 - `test_ilist_api.py::test_python_njit_ilist_mutation_and_copy_parity`: IList Append/Iter/All detached-copy/Clear and final-state parity.
 - `test_popgrid_api.py::test_python_njit_popgrid_state_transition_parity`: PopGrid × 1D/2D/3D; pending additions, Update, GetPop, indexing, full arrays.
 - `test_shared_geometry_api.py::test_python_box_named_bounds_rejected_pending_review`: documents current Python Box keyword rejection (G-01), no semantics changed.
