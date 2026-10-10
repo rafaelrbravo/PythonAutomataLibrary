@@ -30,6 +30,17 @@ gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
 
 **Import-path correction:** The shared `Testing/conftest.py` inserts its own parent directory into `sys.path`; therefore `PYTHONPATH` alone does not guarantee that a staged test run imports the isolated rebuild. The earlier 15.83 s / 10.46 s runs cannot independently establish which native library was imported. To eliminate this ambiguity, copied `conftest.py` and exact tests 18 (long-horizon PDE) and 21 (state-machine stress) into `/mnt/data/pal_fresh_build/Testing/`, adjacent to the newly rebuilt package, and ran pytest with current working directory `/mnt/data/pal_fresh_build`. **Safe 11/11 passed in 16.35 s; fast 11/11 passed in 9.71 s.** A separate import probe confirmed `PythonAutomataLibrary.__file__` resolves to `/mnt/data/pal_fresh_build/PythonAutomataLibrary/__init__.py`. This confirms the tested behavior with a newly compiled native binary. **It is still not a fresh GitHub checkout:** the Python and C source inputs came from the staged reconstruction, so repository-source provenance and the full fresh-build suite remain unverified.
 
+### Full-suite validation against isolated rebuild
+
+The isolated rebuild was then exercised with **all 23 test modules**, copied into the adjacent `/mnt/data/pal_fresh_build/Testing/` directory together with `conftest.py`. Local byte comparison confirmed all 23 test modules and `conftest.py` matched their previously verified staged counterparts. Running from `/mnt/data/pal_fresh_build` ensures the fixture's `sys.path` insertion selects the rebuilt PAL package.
+
+| Isolated rebuilt binary | Passed | Failed | Skipped | Xfailed | Warnings | Elapsed | Exit |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Safe | 284 | 2 | 2 | 2 | 4 | 56.36 s | 1 |
+| Fast | 248 | 0 | 42 | 0 | 3 | 28.70 s | 0 |
+
+The **only** safe failures remain the two known source-line diagnostic assertions in test12; no new failures appeared. The newly compiled `libpal_native.so` SHA-256 `5a444c11149100e694ba307301b4df004e780331553b18be84b897cdefa25968` matched the earlier staged binary. This establishes full-suite behavior on a reproducibly rebuilt binary with import-path isolation, **not** independent retrieval of all implementation sources from a fresh GitHub checkout.
+
 ## Known defects and limitations
 
 1. **Compiled safe-mode diagnostic annotation** (unresolved): `test_12_compiled_pop_pde.py` has two failures: `test_compiled_safe_popgrid_error_contains_source_line` and `test_compiled_safe_unstable_diffusion_contains_source_line`. Both raise the expected `ValueError` but the messages omit the asserted `source line` information. `test_23_diagnostic_annotations.py` documents unannotated parameter cases as strict expected failures; annotated cases pass. The observed issue appears related to AST transformer recognition of annotated versus unannotated grid arguments. Do not treat these as numerical-kernel failures. Any implementation fix requires authorization to modify files outside `Testing/`.
