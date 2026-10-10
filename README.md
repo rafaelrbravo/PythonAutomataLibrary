@@ -21,11 +21,14 @@ PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL 
 
 ## Documentation
 
-- [API Guide](Documentation/API_GUIDE.md) — consolidated human-readable API reference.
+- [Manual](Documentation/MANUAL.md) — first model, numerical update rules, architecture, and workflow.
+- [API Guide](Documentation/API_GUIDE.md) — consolidated API behavior and examples.
+- [API Reference](Documentation/API_REFERENCE.md) — source-derived public signatures; regenerate with `python Documentation/generate_api_reference.py`.
+- [Cheatsheet](Documentation/CHEATSHEET.md) — compact lookup for common operations.
 - `Examples/` — complete working models.
 - `Testing/` — correctness, API, integration, and regression tests.
 
-The beginner manual, generated detailed API reference, and printable cheatsheet are under development.
+The documentation is being validated and expanded; examples and generated signatures may change as that work proceeds.
 
 ## Build from source
 
