@@ -50,7 +50,7 @@ PAL provides `MooreHood`, `VonNeumannHood`, and `CircleHood`. They return relati
 
 ## 4. Individual agents
 
-An agent is an integer handle owned by an `AgentGrid`, distinct from both its lattice site index and its continuous position. Create it with `NewAgentSQ` for a lattice site or `NewAgent` for a continuous position. The `SQ` operations use site indices; the unsuffixed operations use coordinates. An agent can move within a site without changing its site index. Move it with `MoveSQ` or `Move`, and remove it with `Dispose`.
+An agent is an integer handle owned by an `AgentGrid`, distinct from both its lattice site and its continuous position. Create it with `NewAgentSQ` for a lattice site or `NewAgent` for a continuous position. `NewAgentSQ` and `MoveSQ` accept either a linear site index or lattice coordinates; `NewAgent` and `Move` use continuous coordinates. An agent can move within a site without changing its lattice site. Remove it with `Dispose`.
 
 `agents.All()` returns a snapshot of living handles. That allows creation and disposal during an iteration without changing the iteration's current membership. On a nonstackable grid, safe mode rejects attempts to place two agents at the same site. Use `isStackable=True` only when multiple occupancy is part of the model.
 
