@@ -235,3 +235,72 @@ def test_python_njit_agentgrid_hood_and_box_order_parity(api, dims):
     compiled_box, compiled_hood = collect(g)
     assert list(compiled_box) == python_box
     assert list(compiled_hood) == python_hood
+
+
+@pytest.mark.parametrize("dims", [(7,), (5, 6), (4, 5, 6)])
+def test_python_njit_agent_lifecycle_state_parity(api, dims):
+    """Compare deterministic creation, movement, properties, and disposal."""
+    py = api.NewAgentGrid(dims, numAgentProps=2, isStackable=True)
+    jit = api.NewAgentGrid(dims, numAgentProps=2, isStackable=True)
+
+    def python_work(g):
+        start = tuple(1 for _ in dims)
+        target = tuple(2 for _ in dims)
+        a = g.NewAgentSQ(*start)
+        b = g.NewAgentSQ(*start)
+        g[a, 0] = 1.5
+        g[b, 1] = -2.5
+        before = (g.GetPop(), g.I(a), g.I(b), g.Alive(a), g.Alive(b))
+        g.MoveSQ(a, *target)
+        after_move = (g.GetPop(), g.I(a), g.I(b), g[a, 0], g[b, 1])
+        g.Dispose(b)
+        after_dispose = (g.GetPop(), g.Alive(a), g.Alive(b), g.I(a))
+        return before, after_move, after_dispose
+
+    if len(dims) == 1:
+        @api.njit
+        def compiled_work(g):
+            a = g.NewAgentSQ(1)
+            b = g.NewAgentSQ(1)
+            g[a, 0] = 1.5
+            g[b, 1] = -2.5
+            before = (g.GetPop(), g.I(a), g.I(b), g.Alive(a), g.Alive(b))
+            g.MoveSQ(a, 2)
+            after_move = (g.GetPop(), g.I(a), g.I(b), g[a, 0], g[b, 1])
+            g.Dispose(b)
+            after_dispose = (g.GetPop(), g.Alive(a), g.Alive(b), g.I(a))
+            return before, after_move, after_dispose
+    elif len(dims) == 2:
+        @api.njit
+        def compiled_work(g):
+            a = g.NewAgentSQ(1, 1)
+            b = g.NewAgentSQ(1, 1)
+            g[a, 0] = 1.5
+            g[b, 1] = -2.5
+            before = (g.GetPop(), g.I(a), g.I(b), g.Alive(a), g.Alive(b))
+            g.MoveSQ(a, 2, 2)
+            after_move = (g.GetPop(), g.I(a), g.I(b), g[a, 0], g[b, 1])
+            g.Dispose(b)
+            after_dispose = (g.GetPop(), g.Alive(a), g.Alive(b), g.I(a))
+            return before, after_move, after_dispose
+    else:
+        @api.njit
+        def compiled_work(g):
+            a = g.NewAgentSQ(1, 1, 1)
+            b = g.NewAgentSQ(1, 1, 1)
+            g[a, 0] = 1.5
+            g[b, 1] = -2.5
+            before = (g.GetPop(), g.I(a), g.I(b), g.Alive(a), g.Alive(b))
+            g.MoveSQ(a, 2, 2, 2)
+            after_move = (g.GetPop(), g.I(a), g.I(b), g[a, 0], g[b, 1])
+            g.Dispose(b)
+            after_dispose = (g.GetPop(), g.Alive(a), g.Alive(b), g.I(a))
+            return before, after_move, after_dispose
+
+    expected = python_work(py)
+    actual = compiled_work(jit)
+    assert actual[0] == expected[0]
+    assert actual[1] == pytest.approx(expected[1])
+    assert actual[2] == expected[2]
+    assert list(py.All()) == list(jit.All())
+    assert py.GetPop() == jit.GetPop()
