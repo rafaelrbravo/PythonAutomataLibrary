@@ -26,6 +26,14 @@ jobs:
           python Documentation/generate_api_guide.py --check
           python Documentation/generate_api_reference.py --check
           python Documentation/generate_cheatsheet.py --check
+      - name: Upload documentation PDFs
+        if: matrix.mode == 'safe'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pal-documentation-pdfs
+          path: Documentation/*.pdf
+          if-no-files-found: error
+          retention-days: 14
       - name: Install headless OpenGL backend
         run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1-mesa-dri
       - run: gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
