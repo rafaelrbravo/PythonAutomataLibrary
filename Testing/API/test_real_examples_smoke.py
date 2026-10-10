@@ -18,7 +18,8 @@ def _load(relative):
     return module
 
 
-def test_birthdeath_real_example_kernels():
+def test_birthdeath_real_example_kernels(monkeypatch):
+    monkeypatch.setenv("NUMBA_DISABLE_CACHE", "1")
     ns = _load("Examples/Agents/BirthDeath.py")
     grid = pal.NewAgentGrid((ns.X, ns.Y), numAgentProps=0, isStackable=False)
     empty = pal.NewIList()
@@ -31,7 +32,8 @@ def test_birthdeath_real_example_kernels():
     assert 0 <= after <= grid.xDim * grid.yDim
 
 
-def test_popgrid_multinomial_real_example_kernel():
+def test_popgrid_multinomial_real_example_kernel(monkeypatch):
+    monkeypatch.setenv("NUMBA_DISABLE_CACHE", "1")
     ns = _load("Examples/Agents/PopGridExample.py")
     cells = pal.NewPopGrid((ns.X, ns.Y))
     mn = pal.NewMultinomial()
@@ -44,7 +46,8 @@ def test_popgrid_multinomial_real_example_kernel():
     assert all(cells[i] >= 0 for i in range(len(cells)))
 
 
-def test_reaction_diffusion_2d_real_example_kernel():
+def test_reaction_diffusion_2d_real_example_kernel(monkeypatch):
+    monkeypatch.setenv("NUMBA_DISABLE_CACHE", "1")
     ns = _load("Examples/Diffusibles/ReactionDiffusion2D.py")
     g1 = pal.NewPDEgrid((ns.X, ns.Y))
     g2 = pal.NewPDEgrid((ns.X, ns.Y))
@@ -55,7 +58,8 @@ def test_reaction_diffusion_2d_real_example_kernel():
     assert a.max() > 0 and b.max() > 0
 
 
-def test_diffusion_advection_3d_real_example_kernel():
+def test_diffusion_advection_3d_real_example_kernel(monkeypatch):
+    monkeypatch.setenv("NUMBA_DISABLE_CACHE", "1")
     ns = _load("Examples/Diffusibles/DiffusionAdvection3D.py")
     grid = pal.NewPDEgrid((-ns.X, -ns.Y, -ns.Z))
     grid[ns.X // 2, ns.Y // 2, ns.Z // 2] = 1.0
