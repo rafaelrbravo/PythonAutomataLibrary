@@ -21,7 +21,11 @@ jobs:
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
         run: python -m pytest -q Testing/API
-      - name: Keyword-fix pre-change benchmark
+      - name: Run full Testing suite
+        env:
+          PAL_TEST_MODE: ${{ matrix.mode }}
+        run: python -m pytest -q Testing
+      - name: API performance benchmark
         if: always()
         env:
           PAL_BENCH_MODE: ${{ matrix.mode }}
