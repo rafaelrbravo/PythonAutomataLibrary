@@ -257,3 +257,28 @@ def test_python_njit_ilist_all_empty_detached_parity(api):
 
     assert compiled_work(jit) == python_work(py) == (0, 1, 9)
     np.testing.assert_array_equal(jit.All(), py.All())
+
+
+def test_python_njit_ilist_all_snapshot_before_clear_parity(api):
+    py = api.NewIList()
+    jit = api.NewIList()
+
+    def python_work(q):
+        q.Append(4)
+        q.Append(8)
+        snapshot = q.All()
+        q.Clear()
+        q.Append(12)
+        return snapshot[0], snapshot[1], len(snapshot), len(q), q[0]
+
+    @api.njit
+    def compiled_work(q):
+        q.Append(4)
+        q.Append(8)
+        snapshot = q.All()
+        q.Clear()
+        q.Append(12)
+        return snapshot[0], snapshot[1], len(snapshot), len(q), q[0]
+
+    assert compiled_work(jit) == python_work(py) == (4, 8, 2, 1, 12)
+    np.testing.assert_array_equal(jit.All(), py.All())
