@@ -99,6 +99,24 @@ def test_opengl_headless_primitives_update_and_save(api, tmp_path, dims):
         win.Close()
 
 
+def test_opengl_headless_gif_lifecycle(api, tmp_path):
+    pytest.importorskip("moderngl")
+    draw, win = _start_gl_or_skip(api, 6, 5)
+    path = tmp_path / "opengl.gif"
+    try:
+        win.StartGif(str(path), delay=25)
+        draw.BoxSQ(0xFF0000, 1, 1)
+        win.Update()
+        win.AddGifFrame(block=True)
+        draw.BoxSQ(0x00FF00, 3, 2)
+        win.Update()
+        win.AddGifFrame(block=True)
+        win.StopGif()
+        assert path.exists() and path.stat().st_size > 0
+    finally:
+        win.Close()
+
+
 def test_safe_visual_constructor_validation(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast visualization assumes valid constructor inputs")
