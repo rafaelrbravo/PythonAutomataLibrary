@@ -7,9 +7,9 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 | ID | API | Python | @pal.njit | Status | Proposed decision |
 | --- | --- | --- | --- | --- | --- |
 | H-01 | `grid.Hood(...)` yielded sites | Formerly linear indices | Coordinate scalar/tuples | Resolved with explicit user approval; CI confirms Python coordinate behavior; full clean suite pending after legacy 1D test correction | Coordinates in both modes |
-| G-01 | `grid.Box(x1=..., x2=..., y1=..., y2=...)` | Python fallback `_PythonBox(self,*bounds)` rejects keywords | Compiled `_HoodExpander._expand_box` accepts keyword bounds; existing `test_compiled_box_keyword_and_positional_forms_match` checks this | Source-confirmed; regression tests exercised in green CI | Decide whether Python should accept named bounds for input parity |
-| H-03 | `grid.Hood(hood=..., x=..., y=...)` | Python `_PythonHood(self,hood,*coords)` rejects named coordinate arguments | Compiled AST `_bind_args(call,('hood','x','y','z','unroll'),...)` accepts them | Source-confirmed; regression tests exercised in green CI | Decide whether Python should support named hood coordinates |
-| H-02 | `grid.Hood(hood, x[, y[, z]], unroll=True)` | Keyword rejected by Python fallback `_PythonHood(self,hood,*coords)` | Accepted by AST transformer as compile-time bool literal | Source-confirmed; regression tests exercised in green CI | Consider accepting `unroll` as a Python no-op; user decision pending |
+| G-01 | `grid.Box(x1=..., x2=..., y1=..., y2=...)` | Formerly rejected by Python fallback | Accepted by Python and compiled paths | Resolved with explicit user approval; Python fallback now mirrors public named bounds | Named bounds in both modes |
+| H-03 | `grid.Hood(hood=..., x=..., y=...)` | Formerly rejected by Python fallback | Accepted by Python and compiled paths | Resolved with explicit user approval; Python fallback now exposes named hood coordinates | Named coordinates in both modes |
+| H-02 | `grid.Hood(hood, x[, y[, z]], unroll=True)` | Formerly rejected by Python fallback | Compiled path unrolls; Python accepts the keyword as a semantic no-op | Resolved with explicit user approval; both paths yield the same sites | Accept `unroll` in both modes |
 
 ## Paired test inventory (committed; CI verified)
 
