@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install -U pip pytest numpy numba pillow moderngl reportlab
+      - run: python -m pip install -U pip pytest numpy numba pillow moderngl reportlab==5.0.1
       - name: Verify generated API reference
         run: python Documentation/generate_api_reference.py --check
       - name: Verify generated documentation PDFs
