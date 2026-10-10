@@ -150,3 +150,24 @@ def test_population_and_pde_python_array_slice_assignment(api, factory, dtype):
     replacement = np.full(20, 3, dtype=dtype)
     grid[0:len(grid)] = replacement
     np.testing.assert_array_equal(grid[:, :], replacement.reshape(4, 5))
+
+
+def test_python_box_half_open_bounds_and_wrapping(api):
+    grid = api.NewGrid((-3, 4), np.int32)
+    assert list(grid.Box(2, 5, -1, 2)) == [
+        (2, 0), (2, 1), (0, 0), (0, 1), (1, 0), (1, 1)
+    ]
+    # A wrapped box larger than its axis can visit the same site more than once.
+    assert list(grid.Box(0, 5, 1, 2)) == [(0, 1), (1, 1), (2, 1), (0, 1), (1, 1)]
+    assert list(api.NewGrid((3,), np.int32).Box(-2, 5)) == [0, 1, 2]
+
+
+def test_python_box_rejects_invalid_bounds(api):
+    grid = api.NewGrid((3, 4), np.int32)
+    with pytest.raises(ValueError, match="dimensionality"):
+        list(grid.Box(0, 2))
+    with pytest.raises(TypeError, match="Box expects"):
+        list(grid.Box(0, 2, 0))
+    for bad in (1.5, True, 2**40):
+        with pytest.raises(ValueError, match="int32"):
+            list(grid.Box(0, bad, 0, 2))
