@@ -224,8 +224,8 @@ pop.Update()
 | Operation | Meaning |
 | --- | --- |
 | `GetPop()` | Total population over all sites. |
-| `All()` | Copy of all site populations. |
-| `Reset()` | Clear pending changes. |
+| `All()` | Copy of the linear indices of currently nonzero sites. |
+| `Reset()` | Clear current populations and pending changes. |
 | `InWrapX/Y/Z(value)` | Wrap a coordinate on the corresponding axis. |
 
 `capacity` optionally limits the total population representable by the grid.
@@ -236,7 +236,7 @@ pop.Update()
 field = pal.NewPDEgrid((xDim, yDim))
 ```
 
-`PDEgrid` stores a continuous scalar field. Direct indexing/assignment changes the current field immediately. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously, and `Reset()` clears them.
+`PDEgrid` stores a continuous scalar field. Direct indexing/assignment changes the current field immediately. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
 
 ### Space and time
 
