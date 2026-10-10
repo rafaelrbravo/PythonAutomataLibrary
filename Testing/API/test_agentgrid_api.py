@@ -361,3 +361,32 @@ def test_python_njit_agent_dead_access_failure_atomic_parity(api, safe_mode):
     assert type(python_error.value) is type(compiled_error.value)
     assert py.GetPop() == jit.GetPop() == 0
     assert list(py.All()) == list(jit.All()) == []
+
+
+def test_python_njit_agent_all_snapshot_survives_disposal_parity(api):
+    """All() must snapshot IDs independently of later agent disposal."""
+    py = api.NewAgentGrid((8,))
+    jit = api.NewAgentGrid((8,))
+
+    def python_work(g):
+        a = g.NewAgentSQ(1)
+        b = g.NewAgentSQ(2)
+        snapshot = g.All()
+        g.Dispose(a)
+        g.Dispose(b)
+        return snapshot, g.GetPop()
+
+    @api.njit
+    def compiled_work(g):
+        a = g.NewAgentSQ(1)
+        b = g.NewAgentSQ(2)
+        snapshot = g.All()
+        g.Dispose(a)
+        g.Dispose(b)
+        return snapshot, g.GetPop()
+
+    python_snapshot, python_pop = python_work(py)
+    compiled_snapshot, compiled_pop = compiled_work(jit)
+    assert list(compiled_snapshot) == list(python_snapshot)
+    assert compiled_pop == python_pop == 0
+    assert list(py.All()) == list(jit.All()) == []
