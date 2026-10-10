@@ -1,6 +1,6 @@
 # PAL API Reference
 
-Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. Regenerate with `python Documentation/generate_api_reference.py`; use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; consult [API Guide](API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.
+Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. Regenerate with `python Documentation/generate_api_reference.py`; use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; consult [API Guide](../API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.
 
 ## Factories and utilities
 
@@ -222,7 +222,7 @@ StartOpenGLWindow(xDim, yDim, zDim=None, width=800, height=800, title='PAL', hea
 | method | `Save(self, path: str, block=False)` |
 | method | `Close(self)` |
 
-The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](API_GUIDE.pdf) for which object to use in Python and compiled drawing code.
+The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](../API_GUIDE.pdf) for which object to use in Python and compiled drawing code.
 
 ## Pix drawing buffer
 
