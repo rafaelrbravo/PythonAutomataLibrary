@@ -64,4 +64,8 @@ def test_cheatsheet_draw_headless(tmp_path):
     image = np.asarray(Image.open(output).convert("RGB"))
     red = np.all(image == [255, 0, 0], axis=2)
     assert red.sum() == 16, "Expected one 4x4 scaled red pixel"
+    # Headless output transposes x/y and reverses the y axis before scaling.
+    expected_y = (40 - 1 - 12) * 4
+    expected_x = 10 * 4
+    assert red[expected_y:expected_y + 4, expected_x:expected_x + 4].all()
     assert np.all(image[~red] == 0), "Expected all other pixels to remain black"
