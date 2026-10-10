@@ -139,3 +139,14 @@ def test_population_and_pde_python_slices_return_detached_arrays(api, factory, d
     linear = grid[0:len(grid)]
     assert linear.shape == (20,)
     assert linear[grid.ToI(2, 3)] == 7
+
+
+@pytest.mark.parametrize("factory,dtype", [("NewPopGrid", np.int64), ("NewPDEgrid", np.float32)])
+def test_population_and_pde_python_array_slice_assignment(api, factory, dtype):
+    grid = getattr(api, factory)((4, 5))
+    values = np.arange(20, dtype=dtype).reshape(4, 5)
+    grid[:, :] = values
+    np.testing.assert_array_equal(grid[:, :], values)
+    replacement = np.full(20, 3, dtype=dtype)
+    grid[0:len(grid)] = replacement
+    np.testing.assert_array_equal(grid[:, :], replacement.reshape(4, 5))
