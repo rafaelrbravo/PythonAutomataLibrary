@@ -189,3 +189,49 @@ def test_agentgrid_python_hood_returns_coordinates(api):
     offsets = ((-1, 0), (0, 0), (0, -1), (0, 1))
     assert list(grid.Hood(offsets, 0, 0)) == [(2, 0), (0, 0), (0, 1)]
     assert list(grid.Hood(((0, 0), (3, 0)), 1, 2)) == [(1, 2)] * 2
+
+
+@pytest.mark.parametrize("dims", [(7,), (5, 6), (4, 5, 6)])
+def test_python_njit_agentgrid_hood_and_box_order_parity(api, dims):
+    """Compare spatial iteration outputs, including wrapping, across execution modes."""
+    g = api.NewAgentGrid(tuple(-d for d in dims))
+    hood = api.MooreHood(len(dims), True)
+    origin = tuple(0 for _ in dims)
+    bounds = tuple(v for _ in dims for v in (-1, 2))
+    python_box = list(g.Box(*bounds))
+    python_hood = list(g.Hood(hood, *origin))
+
+    if len(dims) == 1:
+        @api.njit
+        def collect(grid):
+            box = []
+            hood_sites = []
+            for x in grid.Box(-1, 2):
+                box.append(x)
+            for x in grid.Hood(hood, 0):
+                hood_sites.append(x)
+            return box, hood_sites
+    elif len(dims) == 2:
+        @api.njit
+        def collect(grid):
+            box = []
+            hood_sites = []
+            for x, y in grid.Box(-1, 2, -1, 2):
+                box.append((x, y))
+            for x, y in grid.Hood(hood, 0, 0):
+                hood_sites.append((x, y))
+            return box, hood_sites
+    else:
+        @api.njit
+        def collect(grid):
+            box = []
+            hood_sites = []
+            for x, y, z in grid.Box(-1, 2, -1, 2, -1, 2):
+                box.append((x, y, z))
+            for x, y, z in grid.Hood(hood, 0, 0, 0):
+                hood_sites.append((x, y, z))
+            return box, hood_sites
+
+    compiled_box, compiled_hood = collect(g)
+    assert list(compiled_box) == python_box
+    assert list(compiled_hood) == python_hood
