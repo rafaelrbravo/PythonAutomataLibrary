@@ -15,6 +15,7 @@ items = pal.NewIList()
 pop1 = pal.NewPopGrid((-64, -2))
 pde1 = pal.NewPDEgrid((-64, -2))
 ag1 = pal.NewAgentGrid((-64, -2))
+slice_grid = pal.NewGrid((64, 64), int)
 
 @pal.njit(cache=False)
 def grid_wrap_positional(g, n):
@@ -31,6 +32,23 @@ def ilist_append_positional(out, n):
     for i in range(n):
         out.Append(i)
     return len(out)
+
+@pal.njit(cache=False)
+def grid_slice_unannotated(g, n):
+    total = 0
+    for _ in range(n):
+        g[:, :] = 3
+        total += g[0, 0]
+    return total
+
+@pal.njit(cache=False)
+def grid_scalar_annotated(g: pal.Grid, n):
+    total = 0
+    for i in range(n):
+        j = i & 63
+        g[j, j] = i
+        total += g[j, j]
+    return total
 
 @pal.njit(cache=False)
 def itox_positional(pop, pde, ag, n):
@@ -58,4 +76,6 @@ print(json.dumps({
     "grid_wrap": measure(grid_wrap_positional, grid, 200000),
     "ilist_append": measure(ilist_append_positional, items, 200000),
     "itox": measure(itox_positional, pop1, pde1, ag1, 200000),
+    "grid_slice": measure(grid_slice_unannotated, slice_grid, 2000),
+    "grid_annotated_scalar": measure(grid_scalar_annotated, slice_grid, 200000),
 }, sort_keys=True))
