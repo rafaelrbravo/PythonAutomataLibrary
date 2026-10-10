@@ -7,7 +7,7 @@ import pytest
 @pytest.mark.parametrize("dim", [1.0, np.int64(2), True, "2"])
 def test_discrete_hood_dimension_contract(api, fn, dim):
     call = getattr(api, fn)
-    if dim == 1.0 or isinstance(dim, np.integer):
+    if isinstance(dim, np.integer) or dim == 1.0 and not isinstance(dim, (bool, np.bool_)):
         # Current API accepts numerically equal integral dimensions through
         # membership comparison; preserve that behavior explicitly.
         hood = call(dim)
