@@ -102,4 +102,4 @@ window.Close()
 
 For 2D/3D geometry use `pal.StartOpenGLWindow(...)` with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`, `Camera`, `Background`, and `Clear`. Headless OpenGL requires a supported rendering backend.
 
-**More detail:** [Manual](MANUAL.md) · [API Guide](API_GUIDE.md) · [API Reference](API_REFERENCE.md).
+**More detail:** [Manual](../MANUAL.md) · [API Guide](../API_GUIDE.pdf) · [API Reference](../API_REFERENCE.pdf).
