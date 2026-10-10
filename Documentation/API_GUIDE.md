@@ -243,7 +243,7 @@ pop.Update()
 | `Reset()` | Clear current populations and pending changes. |
 | `InWrapX/Y/Z(value)` | Wrap a coordinate on the corresponding axis. |
 
-`capacity` optionally limits the total population representable by the grid. Slice reads return detached NumPy copies. `All()` reflects the current population only: pending `Add` changes do not appear until `Update()`.
+`capacity=None` uses the int64 maximum as the population cap. An explicit `capacity` must be a nonnegative int64 integer; invalid, fractional, nonfinite, or out-of-range values raise `ValueError` during construction. Capacity constrains the **total population**, not an independent limit per site. Slice reads return detached NumPy copies. `All()` reflects the current population only: pending `Add` changes do not appear until `Update()`. In safe mode, test births and transfers against capacity and nonnegative-count constraints before switching to fast mode.
 
 ## PDEgrid
 
