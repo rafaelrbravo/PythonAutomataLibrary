@@ -39,7 +39,6 @@ def test_python_hood_matches_independent_modulo_reference(api, shape, center):
     offsets = list(itertools.product((-1, 0, 1), repeat=dim))
     offsets.remove((0,) * dim)
     expected = [tuple((center[d] + off[d]) % abs(shape[d]) for d in range(dim)) for off in offsets]
-    expected = [g.ToI(*xy) for xy in expected]
     assert got == expected
 
 
