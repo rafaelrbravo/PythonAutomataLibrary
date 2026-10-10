@@ -20,6 +20,16 @@ PYTHONPATH=/mnt/data/pal_audit_runtime PAL_TEST_MODE=fast python -m pytest /mnt/
 
 These are **observed results** on the staged native runtime, not CI results. The safe-mode run has a nonzero exit status due to the two known failures; fast mode exited successfully. No additional full-suite failures were observed.
 
+## Independently rebuilt native library (additional evidence)
+
+A separate local directory was populated with the staged `NativeCore.py`, `OpenGLWindow.py`, `PixWindow.py`, `__init__.py`, and `pal_native.c` source files. The preexisting shared library was **not** copied. The C core was rebuilt using:
+
+```sh
+gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
+```
+
+With `PYTHONPATH` pointing to this isolated build and `PAL_TEST_MODE` set in separate processes, exact tests 18 (long-horizon PDE) and 21 (state-machine stress) passed **11/11 safe** in 15.83 s and **11/11 fast** in 10.46 s. This confirms the tested behavior with a newly compiled native binary. **It is still not a fresh GitHub checkout:** the Python and C source inputs came from the staged reconstruction, so repository-source provenance and the full fresh-build suite remain unverified.
+
 ## Known defects and limitations
 
 1. **Compiled safe-mode diagnostic annotation** (unresolved): `test_12_compiled_pop_pde.py` has two failures: `test_compiled_safe_popgrid_error_contains_source_line` and `test_compiled_safe_unstable_diffusion_contains_source_line`. Both raise the expected `ValueError` but the messages omit the asserted `source line` information. `test_23_diagnostic_annotations.py` documents unannotated parameter cases as strict expected failures; annotated cases pass. The observed issue appears related to AST transformer recognition of annotated versus unannotated grid arguments. Do not treat these as numerical-kernel failures. Any implementation fix requires authorization to modify files outside `Testing/`.
