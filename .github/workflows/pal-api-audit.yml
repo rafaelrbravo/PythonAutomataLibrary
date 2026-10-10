@@ -25,7 +25,7 @@ jobs:
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
         run: |
-          PYTHONPATH=. python - <<'PY'
+          PYTHONPATH=.. python - <<'PY'
           import os, runpy
           import PythonAutomataLibrary as pal
           if os.environ['PAL_TEST_MODE'] == 'fast': pal.FastMode()
