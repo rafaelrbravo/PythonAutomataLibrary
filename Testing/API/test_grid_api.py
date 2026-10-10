@@ -273,3 +273,19 @@ def test_python_njit_grid_invalid_coordinate_read_atomic_parity(api, safe_mode, 
     assert type(python_error.value) is type(compiled_error.value)
     np.testing.assert_array_equal(py[:, :], initial)
     np.testing.assert_array_equal(jit[:, :], initial)
+
+
+def test_safe_grid_failed_write_python_compiled_state_parity(api, safe_mode):
+    if not safe_mode:
+        pytest.skip("Fast mode omits bounds checks")
+    a = api.NewGrid((4, 3), np.int32)
+    b = api.NewGrid((4, 3), np.int32)
+    @api.njit
+    def write(g):
+        g[4, 0] = 99
+    with pytest.raises((IndexError, ValueError)) as first:
+        a[4, 0] = 99
+    with pytest.raises((IndexError, ValueError)) as second:
+        write(b)
+    assert type(first.value) is type(second.value)
+    np.testing.assert_array_equal(a[:, :], b[:, :])
