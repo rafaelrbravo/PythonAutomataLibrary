@@ -5,6 +5,7 @@ failure until corrected; the scalar-index loop is a supported workaround.
 """
 import numpy as np
 import pytest
+import PythonAutomataLibrary as pal
 
 
 @pytest.mark.parametrize("shape", [(7,), (3, 5), (2, 3, 4)])
@@ -44,7 +45,7 @@ def test_compiled_whole_grid_slice_scalar_assignment_persian_regression(api):
     grid = api.NewGrid((3, 5), np.int8)
 
     @api.njit
-    def fill(g: api.Grid):
+    def fill(g: pal.Grid):
         g[:] = 2
 
     fill(grid)
@@ -68,7 +69,7 @@ def test_compiled_whole_grid_slice_read_annotated_regression(api):
     grid[:] = np.arange(15, dtype=np.int32)
 
     @api.njit
-    def read(g: api.Grid):
+    def read(g: pal.Grid):
         return g[:]
 
     np.testing.assert_array_equal(read(grid), np.arange(15, dtype=np.int32))
@@ -92,7 +93,7 @@ def test_compiled_whole_grid_slice_augassign_annotated_regression(api):
     grid[:] = 2
 
     @api.njit
-    def increment(g: api.Grid):
+    def increment(g: pal.Grid):
         g[:] += 3
 
     increment(grid)
@@ -118,7 +119,7 @@ def test_compiled_partial_tuple_slice_annotated_regression(api):
     grid[:, :] = np.arange(20, dtype=np.int32).reshape(4, 5)
 
     @api.njit
-    def work(g: api.Grid):
+    def work(g: pal.Grid):
         before = g[1:4, 2]
         g[0:2, 1:4] = 9
         return before
