@@ -2,9 +2,9 @@
 
 ## Current integration baseline
 
-Audit branch: `pal-audit-ci-fix`. Current candidate head: `0a513f66ec599760959589e7599cfb1d1e99ccab`.
+The audited implementation was promoted to `main` by non-forced fast-forward. Final audited implementation/report head: `9e43a36c106eba45b2c8a728aa9dc28c87be1be5`. Post-promotion commit `1fd5f629cac3fb64596b6cabbb64d29f3b4118ec` additionally enables this audit workflow on future `main` pushes, preserving the suite as a permanent regression gate.
 
-GitHub Actions rebuilds the native library from repository source on every run under Python 3.12. Linux uses GCC and runs the complete `Testing/` tree once per safe/fast process. Windows uses MSVC discovered with `vswhere` and runs the real Persian regression plus representative BirthDeath, PopGridExample, ReactionDiffusion2D, and DiffusionAdvection3D smoke tests.
+GitHub Actions rebuilds the native library from repository source on every run under Python 3.12. The workflow triggers on both `main` and the historical `pal-audit-ci-fix` branch. Linux uses GCC and runs the complete `Testing/` tree once per safe/fast process. Windows uses MSVC discovered with `vswhere` and runs the real Persian regression plus representative BirthDeath, PopGridExample, ReactionDiffusion2D, and DiffusionAdvection3D smoke tests.
 
 At run `38027661459`, the exact-head integration gate completed cleanly with zero failures and zero xfails. Linux safe: **558 passed, 2 skipped** in 97.08 s. Linux fast: **458 passed, 102 skipped** in 41.88 s. Windows safe and fast both built the native DLL with MSVC and passed the five real-source regressions. Both Linux performance jobs also completed successfully.
 
