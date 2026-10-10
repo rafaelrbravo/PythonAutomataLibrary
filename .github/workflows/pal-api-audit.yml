@@ -29,7 +29,5 @@ jobs:
           NUMBA_DISABLE_CACHE: '1'
         run: |
           for i in 1 2 3 4 5; do
-            cd ..
             python PythonAutomataLibrary/Testing/benchmark_keyword_binding.py
-            cd PythonAutomataLibrary
           done
