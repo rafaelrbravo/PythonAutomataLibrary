@@ -141,7 +141,6 @@ NewPDEgrid(dimensions)
 | Kind | Declaration |
 | --- | --- |
 | method | `__len__(self) -> int` |
-| method | `__getitem__(self, i: int) -> float` |
 | property | `xDim(self) -> int` |
 | property | `yDim(self) -> int` |
 | property | `zDim(self) -> int` |
