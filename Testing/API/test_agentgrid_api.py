@@ -184,7 +184,7 @@ def test_nonspatial_counts_length_is_undefined(api):
         len(g.counts)
 
 
-def test_agentgrid_python_hood_returns_linear_sites(api):
+def test_agentgrid_python_hood_returns_coordinates(api):
     grid = api.NewAgentGrid((-3, 4))
     offsets = ((-1, 0), (0, 0), (0, -1), (0, 1))
     assert list(grid.Hood(offsets, 0, 0)) == [(2, 0), (0, 0), (0, 1)]
