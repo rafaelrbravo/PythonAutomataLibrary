@@ -3904,36 +3904,36 @@ def _olGridItoZ(g,i):
         def impl(g,i): return i%g._zDim
     return impl
 @overload_method(_GridNumbaType,"InWrapX",inline="always")
-def _olGridWX(g,v):
+def _olGridWX(g,x):
     n=g.dims[0];wrap=g.wrap[0]
     if g.safe:
-        def impl(g,v):
-            if not np.isfinite(v) or v!=int(v) or v<np.iinfo(np.int32).min or v>np.iinfo(np.int32).max: raise ValueError("coordinate must be an int32 integer")
-            return v if 0<=v<n else v%n if wrap else -1
+        def impl(g,x):
+            if not np.isfinite(x) or x!=int(x) or x<np.iinfo(np.int32).min or x>np.iinfo(np.int32).max: raise ValueError("coordinate must be an int32 integer")
+            return x if 0<=x<n else x%n if wrap else -1
     else:
-        def impl(g,v):return v if 0<=v<n else v%n if wrap else -1
+        def impl(g,x):return x if 0<=x<n else x%n if wrap else -1
     return impl
 @overload_method(_GridNumbaType,"InWrapY",inline="always")
-def _olGridWY(g,v):
+def _olGridWY(g,y):
     dim=g.dimension;n=g.dims[1] if dim>1 else 1;wrap=g.wrap[1] if dim>1 else False
     if g.safe:
-        def impl(g,v):
+        def impl(g,y):
             if dim<2: raise ValueError("InWrapY requires a 2D or 3D Grid")
-            if not np.isfinite(v) or v!=int(v) or v<np.iinfo(np.int32).min or v>np.iinfo(np.int32).max: raise ValueError("coordinate must be an int32 integer")
-            return v if 0<=v<n else v%n if wrap else -1
+            if not np.isfinite(y) or y!=int(y) or y<np.iinfo(np.int32).min or y>np.iinfo(np.int32).max: raise ValueError("coordinate must be an int32 integer")
+            return y if 0<=y<n else y%n if wrap else -1
     else:
-        def impl(g,v):return v if 0<=v<n else v%n if wrap else -1
+        def impl(g,y):return y if 0<=y<n else y%n if wrap else -1
     return impl
 @overload_method(_GridNumbaType,"InWrapZ",inline="always")
-def _olGridWZ(g,v):
+def _olGridWZ(g,z):
     dim=g.dimension;n=g.dims[2] if dim>2 else 1;wrap=g.wrap[2] if dim>2 else False
     if g.safe:
-        def impl(g,v):
+        def impl(g,z):
             if dim<3: raise ValueError("InWrapZ requires a 3D Grid")
-            if not np.isfinite(v) or v!=int(v) or v<np.iinfo(np.int32).min or v>np.iinfo(np.int32).max: raise ValueError("coordinate must be an int32 integer")
-            return v if 0<=v<n else v%n if wrap else -1
+            if not np.isfinite(z) or z!=int(z) or z<np.iinfo(np.int32).min or z>np.iinfo(np.int32).max: raise ValueError("coordinate must be an int32 integer")
+            return z if 0<=z<n else z%n if wrap else -1
     else:
-        def impl(g,v):return v if 0<=v<n else v%n if wrap else -1
+        def impl(g,z):return z if 0<=z<n else z%n if wrap else -1
     return impl
 @overload_method(_GridNumbaType,"DispWrapX",inline="always")
 def _olGridDX(g,a,b):
