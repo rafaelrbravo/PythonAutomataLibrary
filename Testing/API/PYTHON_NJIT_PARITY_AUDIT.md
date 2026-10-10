@@ -16,6 +16,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 - `test_agentgrid_api.py::test_python_njit_agentgrid_hood_and_box_order_parity`: AgentGrid × 1D/2D/3D; exact ordered wrapped results.
 - `test_agentgrid_api.py::test_python_njit_agent_lifecycle_state_parity`: AgentGrid × 1D/2D/3D; stacked creation, properties, movement, disposal, population, surviving agents.
 - `test_popgrid_api.py::test_python_njit_popgrid_state_transition_parity`: PopGrid × 1D/2D/3D; pending additions, Update, GetPop, indexing, full arrays.
+- `test_shared_geometry_api.py::test_python_box_named_bounds_rejected_pending_review`: documents current Python Box keyword rejection (G-01), no semantics changed.
 - `test_shared_geometry_api.py::test_python_hood_unroll_keyword_parity_pending_review`: documents current Python rejection without deciding intended behavior.
 - Existing `test_colorscale_api.py::test_colorscale_compiled_matches_python` and RNG shared-stream tests cover additional narrow parity contracts.
 
