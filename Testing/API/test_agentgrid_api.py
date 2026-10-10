@@ -421,8 +421,8 @@ def test_python_njit_agentgrid_coordinate_mapping_parity(api, shape):
 
 
 def test_python_njit_agentgrid_last_agent_after_dispose_parity(api):
-    py = api.NewAgentGrid((6,), stacking=True)
-    jit = api.NewAgentGrid((6,), stacking=True)
+    py = api.NewAgentGrid((6,), isStackable=True)
+    jit = api.NewAgentGrid((6,), isStackable=True)
 
     def python_work(g):
         a = g.NewAgentSQ(2)
@@ -446,8 +446,8 @@ def test_python_njit_agentgrid_last_agent_after_dispose_parity(api):
 
 
 def test_python_njit_agentgrid_last_agent_after_move_parity(api):
-    py = api.NewAgentGrid((6,), stacking=True)
-    jit = api.NewAgentGrid((6,), stacking=True)
+    py = api.NewAgentGrid((6,), isStackable=True)
+    jit = api.NewAgentGrid((6,), isStackable=True)
 
     def python_work(g):
         a = g.NewAgentSQ(2)
