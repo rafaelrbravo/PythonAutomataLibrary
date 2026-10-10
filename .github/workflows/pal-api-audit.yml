@@ -2,6 +2,7 @@ name: PAL API Audit
 on:
   push:
     branches:
+      - main
       - pal-audit-ci-fix
 jobs:
   api-audit:
