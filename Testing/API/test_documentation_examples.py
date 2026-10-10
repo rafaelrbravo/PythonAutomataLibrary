@@ -19,6 +19,8 @@ def test_manual_quickstart():
     for _ in range(10):
         namespace["Step"](pop)
     assert pop.GetPop() == 16000
+    assert pop[0] == 10
+    assert pop[39, 39] == 10
 
 
 def test_cheatsheet_nonvisual_snippets():
