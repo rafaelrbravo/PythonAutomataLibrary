@@ -107,6 +107,9 @@ NewPDEgrid(dimensions)
 | method | `ItoX(self, i: int) -> int` |
 | method | `ItoY(self, i: int) -> int` |
 | method | `ItoZ(self, i: int) -> int` |
+| method | `InWrapX(self, value: int) -> int` |
+| method | `InWrapY(self, value: int) -> int` |
+| method | `InWrapZ(self, value: int) -> int` |
 
 ## PopGrid
 
