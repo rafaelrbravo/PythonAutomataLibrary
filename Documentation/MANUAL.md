@@ -149,7 +149,7 @@ For comparisons between two algorithms, seed each run separately and record the 
 
 `StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False)` returns `(pix, window)`. Write packed RGB colors such as `0xFF0000` to `pix[x, y]`, then call `window.Update()` to publish the frame. `window.Save(path, block=True)` waits for the image to be written; use `window.Close()` to release resources. The pixel buffer also supports linear indices, slices, and writes from compiled code. For off-screen images, use `headless=True` (requires the relevant output dependencies). GIF recording uses `window.StartGif(path, delay=100)`, `window.AddGifFrame(block=False)`, and `window.StopGif()`; update the window before capturing each frame.
 
-`StartOpenGLWindow` provides geometric 2D/3D drawing with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`, `Camera`, `Background`, and `Clear`. It also supports image/GIF output and `headless=True`, but needs a working OpenGL backend. Close windows after use.
+`StartOpenGLWindow` provides geometric 2D/3D drawing rather than a writable pixel lattice. Use its drawing object for shapes and scene controls; its window uses the same update, image/GIF output, and close lifecycle described above. `headless=True` is available for off-screen rendering but still requires a working OpenGL backend. See the API Guide or Reference for the drawing-method inventory.
 
 Rendering and simulation are separate. A model can run without a window, draw every timestep, or draw only selected checkpoints.
 
