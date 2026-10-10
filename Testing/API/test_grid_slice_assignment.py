@@ -28,7 +28,18 @@ def test_compiled_scalar_integer_assignment_control(api, shape):
     np.testing.assert_array_equal(np.asarray(grid[:]), np.full(np.prod(shape), 2, dtype=np.int8))
 
 
-@pytest.mark.xfail(strict=True, reason="Persian.py: compiled Grid whole-slice assignment unsupported")
+def test_compiled_whole_grid_slice_scalar_assignment_unannotated(api):
+    grid = api.NewGrid((3, 5), np.int8)
+
+    @api.njit
+    def fill(g: api.Grid):
+        g[:] = 2
+
+    fill(grid)
+    np.testing.assert_array_equal(np.asarray(grid[:]), np.full(15, 2, dtype=np.int8))
+
+
+@pytest.mark.xfail(strict=True, reason="Persian.py: annotated Grid assignment is routed through _GridSetAt, which lacks slice handling")
 def test_compiled_whole_grid_slice_scalar_assignment_persian_regression(api):
     grid = api.NewGrid((3, 5), np.int8)
 
