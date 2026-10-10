@@ -107,3 +107,20 @@ def test_compiled_grid_inwrap_keywords_regression(api):
         return grid.InWrapX(x=-1), grid.InWrapY(y=5), grid.InWrapZ(z=7)
 
     assert work(g) == (3, 0, 1)
+
+
+@pytest.mark.parametrize("dtype,bad_values", [
+    (np.bool_, (2, -1)),
+    (np.int8, (1.5, 128, -129, np.inf)),
+    (np.uint8, (-1, 256, np.nan)),
+    (np.float32, (np.inf, -np.inf, np.nan, 1e100)),
+])
+def test_python_safe_grid_rejects_unrepresentable_assignments(api, safe_mode, dtype, bad_values):
+    if not safe_mode:
+        pytest.skip("Fast mode intentionally omits dtype validation")
+    g = api.NewGrid((3,), dtype)
+    g[1] = 1
+    for value in bad_values:
+        with pytest.raises(ValueError, match="not representable"):
+            g[1] = value
+        assert g[1] == 1
