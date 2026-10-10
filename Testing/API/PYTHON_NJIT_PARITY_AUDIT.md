@@ -7,6 +7,7 @@ Scope: Compare public input forms, returned values and types, ordered iteration,
 | ID | API | Python | @pal.njit | Status | Proposed decision |
 | --- | --- | --- | --- | --- | --- |
 | H-01 | `grid.Hood(...)` yielded sites | Formerly linear indices | Coordinate scalar/tuples | Resolved with explicit user approval; source and existing tests updated; runtime verification pending | Coordinates in both modes |
+| G-01 | `grid.Box(x1=..., x2=..., y1=..., y2=...)` | Python fallback `_PythonBox(self,*bounds)` rejects keywords | Compiled `_HoodExpander._expand_box` accepts keyword bounds; existing `test_compiled_box_keyword_and_positional_forms_match` checks this | Source-confirmed mismatch, not executed | Decide whether Python should accept named bounds for input parity |
 | H-02 | `grid.Hood(hood, x[, y[, z]], unroll=True)` | Keyword rejected by Python fallback `_PythonHood(self,hood,*coords)` | Accepted by AST transformer as compile-time bool literal | Source-confirmed mismatch, not yet executed | Consider accepting `unroll` as a Python no-op; user decision pending |
 
 ## Paired test inventory (committed; execution pending)
