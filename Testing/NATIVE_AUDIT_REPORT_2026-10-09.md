@@ -4,6 +4,15 @@
 
 The 23 `Testing/test_01_*.py` through `test_23_*.py` modules were fetched from the GitHub repository and individually verified against their Git blob SHA-1 before local native execution. The sole test-only correction was committed to `Testing/test_17_pdegrid_boundaries.py` as `93aeb71a1ad2a489fa23099b0670c6c7a08c1425`. `Testing/conftest.py` was also verified byte-for-byte. The PAL implementation was **not** modified. Native execution used a locally staged reconstruction of PAL Python and C sources plus `libpal_native.so`; this is not proof of a reproducible checkout/build from GitHub.
 
+
+## Current GitHub Actions integration evidence
+
+The audit branch now rebuilds `libpal_native.so` directly from repository `pal_native.c` under Python 3.12 and runs both the dedicated API suite and the complete `Testing/` tree in separate safe/fast jobs.
+
+At commit `019a138698e4769273f942c97f85b74e2626c31e`, the **fast** job completed successfully: dedicated API **205 passed, 62 skipped**; complete `Testing/` **453 passed, 102 skipped**, with zero failures and zero xfails. The safe job's dedicated API step also completed successfully and its full-suite step was still running when this report section was written; do not infer a safe full-suite result until that job completes.
+
+This supersedes the earlier provenance limitation for fast-mode integration: the current CI evidence comes from a GitHub checkout plus a native library freshly compiled in the job, rather than a locally reconstructed source tree.
+
 ## Consolidated results
 
 Commands, run in **separate fresh processes**:
