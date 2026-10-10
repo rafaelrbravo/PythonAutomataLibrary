@@ -37,7 +37,7 @@ def Step(grid: pal.AgentGrid):
 | `NewIList()` | Reusable integer query/list container. |
 | `NewMultinomial(other=None)` | Binomial/multinomial sampler. |
 
-Spatial grids use one to three nonzero integer dimensions. A **negative dimension enables wrapping on that axis** while its absolute value gives the size. `AgentGrid` alone also accepts `()` for a zero-dimensional nonspatial population:
+Spatial grids use one to three nonzero integer dimensions. Each signed dimension must fit the int32 range (excluding its minimum value), and the product of absolute axis lengths must not exceed the int32 maximum. Fractional, nonfinite, zero, oversized, or malformed dimension inputs raise `ValueError` during construction. A **negative dimension enables wrapping on that axis** while its absolute value gives the size. `AgentGrid` alone also accepts `()` for a zero-dimensional nonspatial population:
 
 ```python
 grid = pal.NewAgentGrid((100, 100))    # 100 x 100, no wrapping
