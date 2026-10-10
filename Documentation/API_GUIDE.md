@@ -56,9 +56,9 @@ grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
 | Member | Meaning |
 | --- | --- |
 | `len(grid)` | Number of lattice sites. |
-| `xDim`, `yDim`, `zDim` | Axis sizes. Missing axes are invalid in safe mode. |
-| `nDims` | Number of spatial dimensions. |
-| `wrapX`, `wrapY`, `wrapZ` | Whether each axis wraps. |
+| `xDim()`, `yDim()`, `zDim()` | Axis sizes. Missing axes are invalid in safe mode. |
+| `nDims()` | Number of spatial dimensions. |
+| `wrapX()`, `wrapY()`, `wrapZ()` | Whether each axis wraps. |
 | `ToI(x, y=-1, z=-1)` | Convert coordinates to a linear lattice index. |
 | `ItoX(i)`, `ItoY(i)`, `ItoZ(i)` | Recover coordinates from a linear index. |
 
@@ -322,14 +322,61 @@ b = multi.Sample(pB)
 
 ## Visualization
 
-PAL provides two visualization systems:
+PAL provides a pixel renderer for lattice models and an OpenGL renderer for 2D/3D geometry. Rendering runs separately from model computation.
 
-- `StartPixWindow(...)`: fast 2D pixel rendering.
-- `StartOpenGLWindow(...)`: 2D/3D OpenGL rendering.
+### PixWindow
 
-Both run rendering separately from model computation. Use `pal.AwaitWindows()` after starting windows when model execution should wait for their initialization.
+```python
+pix, window = pal.StartPixWindow(xDim, yDim, scale=1, title="PAL", headless=False)
+```
 
-Visualization drawing and lifecycle APIs are covered separately in the detailed reference because their operations differ substantially from the computational grids.
+`pix` is the drawable pixel grid. Assign integer RGB colors by coordinate or linear index:
+
+```python
+pix[x, y] = 0xFF0000
+pix[i] = 0x00FF00
+```
+
+It also provides `Xdim()`, `Ydim()`, `ToI(x, y)`, `ItoX(i)`, `ItoY(i)`, and `len(pix)`.
+
+The window lifecycle is:
+
+```python
+window.Update()
+window.Save(path, block=False)
+window.StartGif(path, delay=100)
+window.AddGifFrame(block=False)
+window.StopGif()
+window.IsOpen()
+window.Close()
+```
+
+`Update()` publishes the current pixel buffer to the renderer. `block=True` on output operations waits for the requested output to complete before returning.
+
+### OpenGLWindow
+
+```python
+draw, window = pal.StartOpenGLWindow(xDim, yDim, zDim=None,
+                                     width=800, height=800,
+                                     title="PAL", headless=False)
+```
+
+Draw geometry with:
+
+```python
+draw.Circle(rad, color, x, y, z=0.0)
+draw.Box(xLen, color, x, y, z=0.0, yLen=None, zLen=None)
+draw.BoxSQ(color, x, y, z=0.0)
+draw.Line(width, color, x1, y1, x2, y2, z1=0.0, z2=0.0)
+```
+
+Window controls include `Borders(width, color)`, `Camera(x, y, z, yaw=None, pitch=None)`, `Background(color)`, `Clear()`, `Update()`, `IsOpen()`, `Save(path, block=False)`, `StartGif(path, delay=100)`, `AddGifFrame(block=False, timeout=30)`, `StopGif(timeout=30)`, and `Close()`.
+
+Colors are packed integer RGB values such as `0xFF0000`. Use `pal.ColorScale(colors, value)` to interpolate across a sequence of colors for a normalized value.
+
+Set `headless=True` for off-screen rendering. This is useful for automated image/GIF generation and testing; OpenGL headless rendering requires a supported standalone backend such as EGL.
+
+Use `pal.AwaitWindows()` when model execution should wait for PAL windows to finish their lifecycle.
 
 ## Saving PAL objects
 
