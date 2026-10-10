@@ -159,7 +159,22 @@ PAL separates its public Python interface from a native C core. Python construct
 
 This design favors fast repeated timesteps, but the first compiled call may include substantial Numba compilation time. Measure **cold compilation** separately from **steady-state execution**. Safe mode includes additional validation and source-aware diagnostics; fast mode removes some of that overhead. A change that improves one benchmark may regress another, so measure both modes on representative workloads.
 
-## 9. Checkpointing and reproducibility
+## 9. Testing PAL
+
+PAL's `Testing/` suite exercises public behavior across geometry and wrapping, Grid/IList/Multinomial/RNG operations, AgentGrid and PopGrid state changes, PDE transport and boundaries, compiled Python/Numba parity, visualization, integrated models, and historical regressions. Many tests use independent invariants or small reference calculations rather than reproducing PAL's implementation.
+
+Run the full suite from the repository root in separate safe and fast processes:
+
+```bash
+PAL_TEST_MODE=safe python -m pytest -q Testing
+PAL_TEST_MODE=fast python -m pytest -q Testing
+```
+
+PAL locks its process-wide mode at first construction, so safe and fast should not be combined in one Python process. Fast mode intentionally skips some validation tests. The CI workflow runs both modes on Linux, verifies that the generated API Reference is current, runs the API benchmark after successful tests, and separately runs representative examples in safe and fast modes on Windows. Headless OpenGL tests require the relevant graphics backend.
+
+When adding or changing model code, start with the smallest test that expresses the intended public behavior, then run the affected test file before the full suite. Prefer conservation laws, coordinate identities, exact small examples, and Python/compiled agreement over tests that duplicate PAL's internal formulas.
+
+## 10. Checkpointing and reproducibility
 
 PAL's native-backed model objects support Python pickling, so a long-running model can save its state and resume without retaining native pointers from the original process. A checkpoint must include **all** state needed for continuation: every grid, relevant parameters, the current timestep, and any additional state managed by the model. Saving only one grid does not preserve a coupled simulation. Keep the code version and parameter configuration alongside the checkpoint so that results can be interpreted later.
 
@@ -185,6 +200,6 @@ assert restored["pop"][1] == 17
 
 `Examples/Agents/SaveLoadModel.py` serializes a dictionary containing an `AgentGrid`, an `IList`, and the timestep, then restores all three before continuing. PAL object checkpoints do not include unrelated Python state or external RNG streams.
 
-## 10. Where to go next
+## 11. Where to go next
 
 Use the [Cheatsheet](CHEATSHEET.md) for short code patterns, the [API Guide](API_GUIDE.md) for behavioral contracts, and the generated [API Reference](API_REFERENCE.md) for current signatures. `Examples/` contains complete models; `Testing/` contains executable contract checks for boundaries, wrapping, pending updates, and invalid operations.
