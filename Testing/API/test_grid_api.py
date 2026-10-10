@@ -289,3 +289,51 @@ def test_safe_grid_failed_write_python_compiled_state_parity(api, safe_mode):
         write(b)
     assert type(first.value) is type(second.value)
     np.testing.assert_array_equal(a[:, :], b[:, :])
+
+
+@pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
+def test_python_njit_grid_slice_read_write_state_parity(api, shape):
+    """Compare slice results and final grid state after mixed slice/scalar writes."""
+    dtype = np.int32
+    original = np.arange(np.prod(shape), dtype=dtype).reshape(shape)
+    py = api.NewGrid(shape, dtype)
+    jit = api.NewGrid(shape, dtype)
+    py[tuple(slice(None) for _ in shape)] = original
+    jit[tuple(slice(None) for _ in shape)] = original
+
+    if len(shape) == 1:
+        def python_work(g):
+            before = g[1:6:2]
+            g[2:5] = -7
+            return before
+
+        @api.njit
+        def compiled_work(g):
+            before = g[1:6:2]
+            g[2:5] = -7
+            return before
+    elif len(shape) == 2:
+        def python_work(g):
+            before = g[1:4:2, 1:5:2]
+            g[1:3, 2:5] = -7
+            return before
+
+        @api.njit
+        def compiled_work(g):
+            before = g[1:4:2, 1:5:2]
+            g[1:3, 2:5] = -7
+            return before
+    else:
+        def python_work(g):
+            before = g[1:3, 0:4:2, 1:5:2]
+            g[1:3, 1:3, 2:5] = -7
+            return before
+
+        @api.njit
+        def compiled_work(g):
+            before = g[1:3, 0:4:2, 1:5:2]
+            g[1:3, 1:3, 2:5] = -7
+            return before
+
+    np.testing.assert_array_equal(compiled_work(jit), python_work(py))
+    np.testing.assert_array_equal(jit[:], py[:])
