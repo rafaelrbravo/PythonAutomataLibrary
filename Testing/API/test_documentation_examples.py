@@ -42,3 +42,23 @@ def test_cheatsheet_nonvisual_snippets():
             assert namespace["pop"].GetPop() == 0
         elif index == 3:
             assert list(namespace["snapshot"]) == [4, 8]
+
+
+def test_cheatsheet_draw_headless(tmp_path):
+    """Run the published drawing example off-screen and inspect its saved pixel."""
+    import numpy as np
+    from PIL import Image
+
+    sheet = (Path(__file__).resolve().parents[2] / "Documentation" / "CHEATSHEET.md").read_text(encoding="utf-8")
+    blocks = sheet.split("```python\n")[1:]
+    assert len(blocks) == 5
+    snippet = blocks[4].split("\n```", 1)[0]
+    ast.parse(snippet)
+    snippet = snippet.replace("pal.StartPixWindow(40, 40, scale=4)", "pal.StartPixWindow(40, 40, scale=4, headless=True)")
+    snippet = snippet.replace('"frame.png"', "str(output)")
+    output = tmp_path / "frame.png"
+    namespace = {"output": output}
+    exec("import PythonAutomataLibrary as pal\n" + snippet, namespace)
+    assert output.exists()
+    image = np.asarray(Image.open(output).convert("RGB"))
+    np.testing.assert_array_equal(image[12 * 4, 10 * 4], [255, 0, 0])
