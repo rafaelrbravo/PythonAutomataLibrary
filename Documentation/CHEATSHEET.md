@@ -15,7 +15,7 @@
 | Integer list | `pal.NewIList()` |
 | Random count sampler | `pal.NewMultinomial()` |
 
-Dimensions: 1–3 axes; negative size wraps that axis (`(-nx, ny)`). `AgentGrid(())` supports nonspatial populations.
+Dimensions: 1–3 axes; negative size wraps that axis (`(-nx, ny)`). `pal.NewAgentGrid(())` supports nonspatial populations.
 
 ## Shared geometry
 
