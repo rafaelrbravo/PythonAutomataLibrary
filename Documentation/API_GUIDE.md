@@ -49,16 +49,16 @@ grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
 
 ## Shared spatial API
 
-`Grid`, `AgentGrid`, `PopGrid`, and `PDEgrid` deliberately share spatial conventions.
+`Grid`, `AgentGrid`, `PopGrid`, and `PDEgrid` deliberately share spatial conventions. Geometry metadata (`xDim`, `yDim`, `zDim`, `nDims`, `wrapX`, `wrapY`, `wrapZ`) is read as attributes; geometry operations such as `ToI(...)` and `Box(...)` are methods.
 
 ### Geometry
 
 | Member | Meaning |
 | --- | --- |
 | `len(grid)` | Number of lattice sites. |
-| `xDim()`, `yDim()`, `zDim()` | Axis sizes. Missing axes are invalid in safe mode. |
-| `nDims()` | Number of spatial dimensions. |
-| `wrapX()`, `wrapY()`, `wrapZ()` | Whether each axis wraps. |
+| `xDim`, `yDim`, `zDim` | Axis sizes. Missing axes are invalid in safe mode. |
+| `nDims` | Number of spatial dimensions. |
+| `wrapX`, `wrapY`, `wrapZ` | Whether each axis wraps. |
 | `ToI(x, y=-1, z=-1)` | Convert coordinates to a linear lattice index. |
 | `ItoX(i)`, `ItoY(i)`, `ItoZ(i)` | Recover coordinates from a linear index. |
 
@@ -106,7 +106,7 @@ grid[:] = 0
 region = grid[2:5, 3:8]
 ```
 
-Slice reads return copies. Scalar and slice access work in Python and compiled PAL model code.
+Slice reads return copies. Scalar and slice access work in Python and compiled PAL model code. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype.
 
 ## AgentGrid
 
@@ -166,7 +166,7 @@ agents.AgentsAt(x, y, z)
 agents.counts[x, y, z]
 ```
 
-`LastAgent` returns the most recently stacked agent at a site. `AgentsAt` returns the agents occupying the site. `counts` exposes lattice occupancy counts.
+`LastAgent` returns the most recently stacked agent at a site, or `-1` if the site is empty. `AgentsAt` returns the agents occupying the site. `counts` exposes lattice occupancy counts and supports the same scalar/coordinate/slice indexing conventions used by PAL grids.
 
 By default an `AgentGrid` is not stackable: at most one agent may occupy a lattice site. Set `isStackable=True` when multiple agents per site are required.
 
@@ -228,7 +228,7 @@ pop.Update()
 | `Reset()` | Clear current populations and pending changes. |
 | `InWrapX/Y/Z(value)` | Wrap a coordinate on the corresponding axis. |
 
-`capacity` optionally limits the total population representable by the grid.
+`capacity` optionally limits the total population representable by the grid. Slice reads are detached copies. `All()` reflects the current population only: pending `Add` changes do not appear until `Update()`.
 
 ## PDEgrid
 
@@ -248,7 +248,7 @@ field.Dy()
 field.Dz()
 ```
 
-Transport methods use these spacings.
+Transport methods use these spacings. `dt`, `dx`, `dy`, and `dz` must be finite and positive in safe mode.
 
 ### Diffusion
 
