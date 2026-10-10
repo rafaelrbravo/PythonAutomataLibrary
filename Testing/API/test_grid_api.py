@@ -365,3 +365,26 @@ def test_python_njit_grid_to_i_coordinate_parity(api, shape):
     expected = tuple(g.ToI(*site) for site in sites)
     assert tuple(compiled_indices(g)) == expected
     assert len(set(expected)) == len(sites)
+
+
+def test_python_njit_grid_slice_read_is_detached_parity(api):
+    """Changing a returned slice must not silently mutate the source grid."""
+    py = api.NewGrid((6,), np.int32)
+    jit = api.NewGrid((6,), np.int32)
+    initial = np.arange(6, dtype=np.int32)
+    py[:] = initial
+    jit[:] = initial
+
+    def python_work(g):
+        values = g[1:5]
+        values[0] = 99
+        return values[0], g[1]
+
+    @api.njit
+    def compiled_work(g):
+        values = g[1:5]
+        values[0] = 99
+        return values[0], g[1]
+
+    assert compiled_work(jit) == python_work(py)
+    np.testing.assert_array_equal(jit[:], py[:])
