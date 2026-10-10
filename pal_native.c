@@ -1058,7 +1058,7 @@ PAL_API int32_t pal_pg_itox(uintptr_t h,int32_t i){PopGrid*g=(PopGrid*)h;return 
 PAL_API int32_t pal_pg_itoy(uintptr_t h,int32_t i){PopGrid*g=(PopGrid*)h;return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_pg_itoz(uintptr_t h,int32_t i){PopGrid*g=(PopGrid*)h;return i%g->dimensions[2];}
 PAL_API int32_t pal_pg_toi_safe(uintptr_t h,int32_t x,int32_t y,int32_t z){PopGrid*g=(PopGrid*)h;if(x<0||x>=g->dimensions[0])return PAL_BAD_I;if(g->dimension==1){if(y!=-1||z!=-1)return PAL_BAD_I;}else if(y<0||y>=g->dimensions[1])return PAL_BAD_I;if(g->dimension==2){if(z!=-1)return PAL_BAD_I;}else if(g->dimension==3&&(z<0||z>=g->dimensions[2]))return PAL_BAD_I;return PopGrid_ToI(g,x,y,z);}
-PAL_API int32_t pal_pg_itox_safe(uintptr_t h,int32_t i){PopGrid*g=(PopGrid*)h;if(g->dimension<2||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==2?i/g->dimensions[1]:i/(g->dimensions[1]*g->dimensions[2]);}
+PAL_API int32_t pal_pg_itox_safe(uintptr_t h,int32_t i){PopGrid*g=(PopGrid*)h;if(g->dimension<1||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==1?i:g->dimension==2?i/g->dimensions[1]:i/(g->dimensions[1]*g->dimensions[2]);}
 PAL_API int32_t pal_pg_itoy_safe(uintptr_t h,int32_t i){PopGrid*g=(PopGrid*)h;if(g->dimension<2||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_pg_itoz_safe(uintptr_t h,int32_t i){PopGrid*g=(PopGrid*)h;if(g->dimension<3||i<0||i>=g->length)return PAL_BAD_I;return i%g->dimensions[2];}
 PAL_API int32_t pal_pg_toi(uintptr_t h,int32_t x,int32_t y,int32_t z){return PopGrid_ToI((PopGrid*)h,x,y,z);}
@@ -1185,7 +1185,7 @@ PAL_API int32_t pal_pd_itox(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;return 
 PAL_API int32_t pal_pd_itoy(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_pd_itoz(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;return i%g->dimensions[2];}
 PAL_API int32_t pal_pd_toi_safe(uintptr_t h,int32_t x,int32_t y,int32_t z){PDEGrid*g=(PDEGrid*)h;if(x<0||x>=g->dimensions[0])return PAL_BAD_I;if(g->dimension==1){if(y!=-1||z!=-1)return PAL_BAD_I;}else if(y<0||y>=g->dimensions[1])return PAL_BAD_I;if(g->dimension==2){if(z!=-1)return PAL_BAD_I;}else if(g->dimension==3&&(z<0||z>=g->dimensions[2]))return PAL_BAD_I;return PDEGrid_ToI(g,x,y,z);}
-PAL_API int32_t pal_pd_itox_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<2||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==2?i/g->dimensions[1]:i/(g->dimensions[1]*g->dimensions[2]);}
+PAL_API int32_t pal_pd_itox_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<1||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==1?i:g->dimension==2?i/g->dimensions[1]:i/(g->dimensions[1]*g->dimensions[2]);}
 PAL_API int32_t pal_pd_itoy_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<2||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_pd_itoz_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<3||i<0||i>=g->length)return PAL_BAD_I;return i%g->dimensions[2];}
 PAL_API int32_t pal_pd_toi(uintptr_t handle, int32_t x, int32_t y, int32_t z) { return PDEGrid_ToI((PDEGrid *)handle, x, y, z); }
