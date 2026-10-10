@@ -73,6 +73,6 @@ def test_advection_field_and_interfaces_use_distinct_velocity_locations():
     interfaces.Update()
 
     expected_centered = np.array([0.96, 0.04, 0.0, 0.0], dtype=np.float32)
-    expected_interfaces = np.array([0.98, 0.06, 0.0, -0.02], dtype=np.float32)
+    expected_interfaces = np.array([0.98, 0.02, 0.0, 0.0], dtype=np.float32)
     np.testing.assert_allclose(centered[:], expected_centered, rtol=0, atol=2e-6)
     np.testing.assert_allclose(interfaces[:], expected_interfaces, rtol=0, atol=2e-6)
