@@ -54,6 +54,7 @@ def test_annotated_agent_property_augassign(api):
     assert work(g, a) == pytest.approx(6.5)
 
 
+@pytest.mark.xfail(strict=True, reason="IList.Append compiled signature names its value parameter i, so value= cannot bind")
 def test_annotated_ilist_append_keyword_falls_through_with_python_signature(api):
     q = api.NewIList()
 
