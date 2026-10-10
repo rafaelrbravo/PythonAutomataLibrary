@@ -48,7 +48,11 @@ SECTIONS = [
 ("`StartGif(path,delay=100)`", "Begin recording an animated GIF with the requested frame delay."),
 ("`AddGifFrame(block=False)`", "Append the current rendered frame to the GIF."),
 ("`StopGif()`", "Finish the GIF; update the window before capturing frames."),
-("OpenGL", "`pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`."),]),("Lists + randomness", [
+("`pal.StartOpenGLWindow(...)`", "Create an OpenGL window for drawing 2D or 3D scenes."),
+("`Circle(...)` / `Box(...)` / `Line(...)`", "Draw circular, box-shaped, or line primitives in the scene."),
+("`BoxSQ(...)` / `Borders(...)`", "Draw lattice-aligned boxes or grid boundaries."),
+("`Camera(...)`", "Set the viewpoint for a 3D scene."),
+("`Background(...)` / `Clear()`", "Set the scene background or clear the current frame."),]),("Lists + randomness", [
 ("IList methods", "`Append(i)` adds an integer; `Clear()` empties the list; `Random()` picks an entry; `Shuffle()` reorders entries; `All()` copies the list; `Iter()` traverses without copying."),
 ("`pal.Seed(seed)`", "Seed PAL’s shared random stream for reproducible call sequences."),
 ("`pal.Random()`", "Draw a uniform random number from PAL’s random stream."),
@@ -58,7 +62,10 @@ SECTIONS = [
 ("AgentGrid", [
 ("`NewAgentSQ(x...)` / `MoveSQ(a,x...)`", "Create or move an agent using lattice-site coordinates; documented linear-site forms are also supported."),
 ("`NewAgent(x...)` / `Move(a,x...)`", "Create or move an agent using continuous coordinates rather than lattice sites."),
-("Agent state", "`grid[a,p]` reads/writes property `p`; `I(a)` is linear site index; `XSQ/YSQ/ZSQ(a)` are lattice coordinates; `X/Y/Z(a)` are continuous coordinates. Check `Alive(a)` before use when agents may be disposed; `Dispose(a)` removes an agent."),
+("`grid[a,p]`", "Read or write property p for agent a."),
+("`I(a)`", "Get an agent’s linear lattice-site index."),
+("`XSQ/YSQ/ZSQ(a)`", "Get integer lattice coordinates; `X/Y/Z(a)` return continuous positions."),
+("`Alive(a)` / `Dispose(a)`", "Check whether an agent is still valid, or remove it from the grid."),
 ("`GetPop()`", "Count agents currently in the grid."),
 ("`AgentsAt(x...)` / `LastAgent(x...)`", "Find agents at a site or retrieve the last agent there."),
 ("`AgentsInRadius(...)`", "Find agents near a position; wrapped displacement respects periodic boundaries."),
