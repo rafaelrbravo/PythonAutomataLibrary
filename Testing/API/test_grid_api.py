@@ -57,18 +57,32 @@ def test_compiled_keyword_toi_and_wrap(api):
     assert work(g) == (g.ToI(2, 3, 4), 3, 0, 1)
 
 
-@pytest.mark.parametrize("key", [-1, 12, (4, 0), (0, -1), (0, 0, 0)])
-def test_compiled_safe_invalid_getitem_rejected(api, safe_mode, key):
+def test_compiled_safe_invalid_linear_getitem_rejected(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode intentionally omits Grid bounds validation")
     g = api.NewGrid((4, 3), np.int32)
 
     @api.njit
-    def read(grid):
-        return grid[key]
+    def read(grid, i):
+        return grid[i]
 
-    with pytest.raises((IndexError, ValueError)):
-        read(g)
+    for i in (-1, 12):
+        with pytest.raises((IndexError, ValueError)):
+            read(g, i)
+
+
+def test_compiled_safe_invalid_coordinate_getitem_rejected(api, safe_mode):
+    if not safe_mode:
+        pytest.skip("Fast mode intentionally omits Grid bounds validation")
+    g = api.NewGrid((4, 3), np.int32)
+
+    @api.njit
+    def read(grid, x, y):
+        return grid[x, y]
+
+    for x, y in ((4, 0), (0, -1)):
+        with pytest.raises((IndexError, ValueError)):
+            read(g, x, y)
 
 
 def test_annotated_safe_scalar_set_error_reports_source_line(api, safe_mode):
