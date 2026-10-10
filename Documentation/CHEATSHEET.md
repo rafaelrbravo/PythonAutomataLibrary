@@ -2,7 +2,7 @@
 
 ## Conventions
 
-`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`. `x...` means `x,y` in 2D and `x,y,z` in 3D. `Box(x1,x2,...)` lists lower/upper bounds for each axis; upper bounds are exclusive. Wrapped out-of-range coordinates wrap; nonwrapped ones are skipped.
+`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`. `dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D; `dims=()` is nonspatial. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D. `Box(x1,x2,...)` alternates lower and exclusive upper bounds per axis. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes.
 
 ## Create state
 
@@ -20,7 +20,10 @@
 - **`ToI(x...)`** — Convert 1D/2D/3D coordinates into one linear site index.
 - **`ItoX/Y/Z(i)`** — Convert a linear site index back to its axis coordinate.
 - **Regions** — `Box(x1,x2,...)` selects a rectangular region; each axis has a lower bound and exclusive upper bound.
-- **Neighborhoods** — `pal.MooreHood(dim, excludeCenter=False)` · `pal.VonNeumannHood(dim, excludeCenter=False)` · `pal.CircleHood(dim, rad, excludeCenter=False)`. These return relative offsets, not indices; pass them to `grid.Hood(hood, x[,y,z])`. Set `excludeCenter=True` to omit the center.
+- **`pal.MooreHood(dim, excludeCenter=False)`** — Build offsets for all neighboring sites, including diagonals.
+- **`pal.VonNeumannHood(dim, excludeCenter=False)`** — Build axis-aligned offsets, excluding diagonal neighbors.
+- **`pal.CircleHood(dim, rad, excludeCenter=False)`** — Build offsets within a radius; hood constructors return relative offsets, not absolute indices.
+- **`grid.Hood(hood, x...)`** — Apply relative offsets at a coordinate; `excludeCenter=True` omits the center when constructing the hood.
 
 ## Grid / common indexing
 
@@ -31,23 +34,36 @@
 
 ## Draw / output
 
-- **Pixels** — `pix, win = pal.StartPixWindow(xDim,yDim,scale=1,title='PAL',headless=False)`; set `pix[x,y]=RGB`; `win.Update()`; `win.Save(path, block=True)`; `win.Close()`.
-- **GIF** — `StartGif(path,delay=100)` · `AddGifFrame(block=False)` · `StopGif()`; call `Update()` before capture.
+- **`pal.StartPixWindow(...)`** — Create a pixel buffer and display window; `headless=True` supports noninteractive rendering.
+- **`pix[x,y] = RGB`** — Set a pixel color in the shared pixel buffer.
+- **`win.Update()`** — Refresh the displayed window after drawing.
+- **`win.Save(path, block=True)`** — Save the current image; blocking waits for completion.
+- **`win.Close()`** — Close the window and release display resources.
+- **`StartGif(path,delay=100)`** — Begin recording an animated GIF with the requested frame delay.
+- **`AddGifFrame(block=False)`** — Append the current rendered frame to the GIF.
+- **`StopGif()`** — Finish the GIF; update the window before capturing frames.
 - **OpenGL** — `pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`.
 
 ## Lists + randomness
 
 - **IList methods** — `Append(i)` adds an integer; `Clear()` empties the list; `Random()` picks an entry; `Shuffle()` reorders entries; `All()` copies the list; `Iter()` traverses without copying.
-- **RNG** — `pal.Seed(seed)` · `pal.Random()` · `pal.RandInt(n)` → integer `0..n-1`; seed once for repeatable runs. PAL calls share a call-order-dependent random stream distinct from NumPy’s RNG.
-- **Multinomial** — `m.Binomial(n,p)`; `Setup(...)` then `Sample(...)` for repeated multinomial draws.
+- **`pal.Seed(seed)`** — Seed PAL’s shared random stream for reproducible call sequences.
+- **`pal.Random()`** — Draw a uniform random number from PAL’s random stream.
+- **`pal.RandInt(n)`** — Draw an integer from 0 through n−1; n must be positive. PAL’s stream is separate from NumPy’s RNG.
+- **`m.Binomial(n,p)`** — Draw a binomial count with n trials and probability p.
+- **`m.Setup(...)` / `m.Sample(...)`** — Configure a multinomial sampler, then draw counts from it.
 
 ## AgentGrid
 
-- **Create / move** — `NewAgentSQ(x,y)` / `MoveSQ(a,x,y)` use lattice coordinates; `NewAgent(x,y)` / `Move(a,x,y)` use continuous positions. In 2D/3D, SQ forms take coordinates (or a linear index where supported); do not mix the two position systems.
+- **`NewAgentSQ(x...)` / `MoveSQ(a,x...)`** — Create or move an agent using lattice-site coordinates; documented linear-site forms are also supported.
+- **`NewAgent(x...)` / `Move(a,x...)`** — Create or move an agent using continuous coordinates rather than lattice sites.
 - **Agent state** — `grid[a,p]` reads/writes property `p`; `I(a)` is linear site index; `XSQ/YSQ/ZSQ(a)` are lattice coordinates; `X/Y/Z(a)` are continuous coordinates. Check `Alive(a)` before use when agents may be disposed; `Dispose(a)` removes an agent.
-- **Queries** — `GetPop()`, `AgentsAt(...)`, `LastAgent(...)`, `AgentsInRadius(...)`, `counts[...]`.
+- **`GetPop()`** — Count agents currently in the grid.
+- **`AgentsAt(x...)` / `LastAgent(x...)`** — Find agents at a site or retrieve the last agent there.
+- **`AgentsInRadius(...)`** — Find agents near a position; wrapped displacement respects periodic boundaries.
+- **`counts[x...]`** — Read site occupancy counts without modifying them.
 - **Iteration** — `for a in agents.All(): ...` iterates a detached snapshot and is safe for structural mutation such as `Dispose`. `AgentsInRadius(...)` returns nearby agents; wrapped displacements account for periodic boundaries.
-- **Wrapping** — `DispWrapX/Y/Z(p1,p2)` gives wrapped displacement.
+- **`DispWrapX/Y/Z(p1,p2)`** — Compute the shortest displacement along a periodic axis.
 
 ## PopGrid + PDEgrid
 
