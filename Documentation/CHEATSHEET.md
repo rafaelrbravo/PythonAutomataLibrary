@@ -6,18 +6,20 @@
 
 ## Create state
 
-- **`pal.NewGrid(dims, dtype)`** — typed lattice
-- **`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`** — individual agents; `dims=()` is nonspatial
-- **`pal.NewPopGrid(dims, capacity=None)`** — integer population counts
-- **`pal.NewPDEgrid(dims)`** — continuous field
-- **`pal.NewIList()` · `pal.NewMultinomial()`** — integer query list · random-count sampler
+- **`pal.NewGrid(dims, dtype)`** — Create a typed lattice storing one value per site.
+- **`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`** — Create agents with optional properties; `dims=()` makes a nonspatial grid.
+- **`pal.NewPopGrid(dims, capacity=None)`** — Create integer counts per site; capacity limits total population.
+- **`pal.NewPDEgrid(dims)`** — Create a continuous field for PDE updates.
+- **`pal.NewIList()`** — Create a mutable integer list for collecting/reusing query results.
+- **`pal.NewMultinomial()`** — Create a sampler for binomial/multinomial population draws.
 - **Dimensions** — 1–3 axes; a negative dimension wraps that axis, e.g. `(-nx, ny)`.
 
 ## Shared lattice geometry
 
 - **Properties** — `xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis.
-- **Index conversion** — `ToI(x[,y,z])`; `ItoX/Y/Z(i)`
-- **Regions** — `Box(x1,x2,...)` selects a rectangular region.
+- **`ToI(x...)`** — Convert 1D/2D/3D coordinates into one linear site index.
+- **`ItoX/Y/Z(i)`** — Convert a linear site index back to its axis coordinate.
+- **Regions** — `Box(x1,x2,...)` selects a rectangular region; each axis has a lower bound and exclusive upper bound.
 - **Neighborhoods** — `pal.MooreHood(dim, excludeCenter=False)` · `pal.VonNeumannHood(dim, excludeCenter=False)` · `pal.CircleHood(dim, rad, excludeCenter=False)`. These return relative offsets, not indices; pass them to `grid.Hood(hood, x[,y,z])`. Set `excludeCenter=True` to omit the center.
 
 ## Grid / common indexing
