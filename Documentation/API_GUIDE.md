@@ -63,8 +63,9 @@ grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
 | `wrapX`, `wrapY`, `wrapZ` | Whether each axis wraps. |
 | `ToI(x, y=-1, z=-1)` | Convert coordinates to a linear lattice index. |
 | `ItoX(i)`, `ItoY(i)`, `ItoZ(i)` | Recover coordinates from a linear index. |
+| `InWrapX/Y/Z(value)` | Wrap an integer lattice coordinate on that axis, or return `-1` when outside a nonwrapped axis. |
 
-The same method names are used in 1D, 2D, and 3D. Supply only the coordinates that exist for the grid.
+The same geometry names are used in 1D, 2D, and 3D. Supply only coordinates/axes that exist for the grid. `Grid`, `PopGrid`, and `PDEgrid` use `InWrapX/Y/Z` for lattice coordinates; `AgentGrid` distinguishes lattice `InWrapSQX/Y/Z` from continuous `InWrapX/Y/Z`.
 
 ### Regions and neighborhoods
 
