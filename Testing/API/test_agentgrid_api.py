@@ -464,3 +464,24 @@ def test_python_njit_agentgrid_last_agent_after_move_parity(api):
 
     assert compiled_work(jit) == python_work(py)
     assert jit.GetPop() == py.GetPop() == 2
+
+
+def test_python_njit_agentgrid_stacked_dispose_older_agent_parity(api):
+    py = api.NewAgentGrid((6,), isStackable=True)
+    jit = api.NewAgentGrid((6,), isStackable=True)
+
+    def python_work(g):
+        a = g.NewAgentSQ(2)
+        b = g.NewAgentSQ(2)
+        g.Dispose(a)
+        return b, g.LastAgent(2), g.Alive(b), g.GetPop()
+
+    @api.njit
+    def compiled_work(g):
+        a = g.NewAgentSQ(2)
+        b = g.NewAgentSQ(2)
+        g.Dispose(a)
+        return b, g.LastAgent(2), g.Alive(b), g.GetPop()
+
+    assert compiled_work(jit) == python_work(py)
+    assert jit.GetPop() == py.GetPop() == 1
