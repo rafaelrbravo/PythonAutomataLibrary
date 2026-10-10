@@ -55,12 +55,14 @@ for a in agents.All():        # snapshot; safe to Dispose during loop
 
 ```python
 pop = pal.NewPopGrid((40, 40))
+x, y = 10, 12
 pop.Add(1, x, y)  # pending
 pop.Update()      # apply simultaneously
 pop.GetPop()      # total
 pop.Reset()       # clear current + pending
 
 field = pal.NewPDEgrid((40, 40))
+dt, dx, dy = 0.01, 1.0, 1.0
 field.SetTimeSpaceStep(dt, dx, dy)
 field.Diffusion(rateConstant)
 field.Update()
@@ -89,6 +91,7 @@ count = m.Binomial(20, 0.3)
 
 ```python
 pix, window = pal.StartPixWindow(40, 40, scale=4)
+x, y = 10, 12
 pix[x, y] = 0xFF0000
 window.Update()
 window.Save("frame.png", block=True)
