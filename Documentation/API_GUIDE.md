@@ -214,7 +214,7 @@ DispWrapY(y1, y2)
 DispWrapZ(z1, z2)
 ```
 
-The displacement methods return the shortest signed displacement accounting for periodic boundaries.
+`InWrapSQ*` maps integer lattice coordinates into the corresponding axis; `InWrap*` does the same for continuous coordinates. On a nonwrapped axis, an out-of-range coordinate returns `-1`. `DispWrap*(x1, x2)` returns the shortest signed displacement from `x1` to `x2`, accounting for periodic boundaries.
 
 ## PopGrid
 
