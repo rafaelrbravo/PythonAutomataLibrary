@@ -99,7 +99,6 @@ def test_annotated_safe_scalar_set_error_reports_source_line(api, safe_mode):
         invalid(g)
 
 
-@pytest.mark.xfail(strict=True, reason="Compiled Grid InWrap overload parameter is named v, so public x/y/z keywords fail Numba lowering")
 def test_compiled_grid_inwrap_keywords_regression(api):
     g = api.NewGrid((-4, -5, -6), np.int32)
 
