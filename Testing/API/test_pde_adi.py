@@ -48,3 +48,25 @@ def test_diffusion_adi_matching_fixed_boundaries_preserve_equilibrium(dimensions
     field.Update()
 
     np.testing.assert_allclose(field[:], 2.75, rtol=0, atol=3e-6)
+
+
+@pytest.mark.parametrize(("dimensions", "axis", "face_size"), [
+    ((5, 6), "x", 6),
+    ((5, 6), "y", 5),
+    ((4, 5, 6), "x", 30),
+    ((4, 5, 6), "y", 24),
+    ((4, 5, 6), "z", 20),
+])
+def test_diffusion_adi_face_array_boundary_matches_scalar(dimensions, axis, face_size):
+    scalar = pal.NewPDEgrid(dimensions)
+    array = pal.NewPDEgrid(dimensions)
+    for field in (scalar, array):
+        field.SetTimeSpaceStep(0.3, 1.0, 1.0, 1.0)
+        field[:] = np.arange(len(field), dtype=np.float32) % 7
+
+    scalar.DiffusionADI(0.4, **{f"{axis}MaxBC": 1.25})
+    array.DiffusionADI(0.4, **{f"{axis}MaxBC": np.full(face_size, 1.25, dtype=np.float32)})
+    scalar.Update()
+    array.Update()
+
+    np.testing.assert_allclose(array[:], scalar[:], rtol=2e-6, atol=2e-6)
