@@ -156,7 +156,7 @@ agents.Z(agent)
 agents.Move(agent, x, y, z)
 ```
 
-Prefer `NewAgentSQ(x, y[, z])` and `MoveSQ(agent, x, y[, z])` on 2D/3D grids. The current implementation also accepts a single linear lattice index in these dimensions, although the intended public API restricts that shorthand to 1D; this compatibility discrepancy is pending correction. Continuous `NewAgent` and `Move` take spatial positions, not linear indices.
+`NewAgentSQ(i)` and `MoveSQ(agent, i)` accept a linear lattice index in 1D, 2D, and 3D; the coordinate forms `NewAgentSQ(x, y[, z])` and `MoveSQ(agent, x, y[, z])` are also supported. The current regression suite explicitly tests both linear-index forms across all dimensions. A previously proposed 1D-only restriction has not been implemented. Continuous `NewAgent` and `Move` take spatial positions, not linear indices.
 
 ### Occupancy and queries
 
