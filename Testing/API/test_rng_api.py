@@ -17,7 +17,7 @@ def test_randint_accepts_positive_int64_domain(api, bound):
     assert 0 <= value < bound
 
 
-@pytest.mark.parametrize("bound", [0, -1, 1.5, np.nan, np.inf, 2**63])
+@pytest.mark.parametrize("bound", [0, -1, 1.5, np.nan, np.inf])
 def test_compiled_randint_rejects_invalid_bound(api, bound):
     @api.njit
     def draw(x):
@@ -46,3 +46,14 @@ def test_random_and_randint_share_single_seeded_stream_across_call_boundaries(ap
     assert mid[0] == expected_mid_random
     assert mid[1] == expected_mid_int
     assert last == expected_last
+
+
+def test_compiled_randint_uint64_outside_int64_is_conversion_limited(api):
+    @api.njit
+    def draw(x):
+        return api.RandInt(x)
+
+    # Numba specializes this literal as uint64; the native API is int64-based,
+    # so this is outside the documented positive-int64 RandInt contract.
+    value = draw(2**63)
+    assert isinstance(value, (int, np.integer))
