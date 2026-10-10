@@ -17,11 +17,6 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install -U pip pytest numpy numba pillow
       - run: gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
-      - name: Run API audit
-        env:
-          PAL_TEST_MODE: ${{ matrix.mode }}
-          NUMBA_DISABLE_CACHE: '1'
-        run: python -m pytest -q Testing/API
       - name: Run full Testing suite
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
