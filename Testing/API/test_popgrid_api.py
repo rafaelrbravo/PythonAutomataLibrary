@@ -19,12 +19,13 @@ def test_scalar_index_and_coordinate_assignment_roundtrip(api, shape, key, value
 def test_slice_assignment_and_copy_semantics(api, shape):
     g = api.NewPopGrid(shape, capacity=100)
     values = np.arange(len(g), dtype=np.int64).reshape(shape)
-    g[tuple(slice(None) for _ in shape)] = values
-    got = g[tuple(slice(None) for _ in shape)]
+    key = slice(None) if len(shape) == 1 else tuple(slice(None) for _ in shape)
+    g[key] = values
+    got = g[key]
     np.testing.assert_array_equal(got, values)
     got.flat[0] = 99
-    scalar_key = 0 if len(shape) == 1 else tuple(0 for _ in shape)\n    assert g[scalar_key] == 0
-
+    scalar_key = 0 if len(shape) == 1 else tuple(0 for _ in shape)
+    assert g[scalar_key] == 0
 
 def test_pending_add_does_not_change_all_until_update(api):
     g = api.NewPopGrid((5,), capacity=100)
