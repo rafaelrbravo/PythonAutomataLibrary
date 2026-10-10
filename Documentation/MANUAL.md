@@ -123,11 +123,9 @@ The timestep order is part of the model. For example, queue all births and death
 
 For a `PDEgrid`, transport routines accumulate changes that become current at `Update()`. Check timestep stability and convergence by varying the timestep and grid spacing. Safe-mode checks do not replace numerical validation.
 
-Consider two sites with populations 10 and 0. Suppose each site sends half its starting population to the other site in one timestep. With queued deltas, site 0 queues -5 and site 1 queues +5, then a single `Update()` gives (5, 5). If the first transfer were assigned immediately and the second site were subsequently processed using its new count, the second calculation would see 5 rather than the original 0. This is an algorithmic difference, not a rounding issue. The same distinction applies when several agents consume a shared resource or when births and deaths are calculated from local densities.
+Consider two sites with populations 10 and 0. If a transfer moves 5 from site 0 to site 1, queue -5 and +5 before a single `Update()`; the result is (5, 5) and total population remains 10. Applying one change immediately would alter what later calculations read and can make an intended simultaneous update order-dependent.
 
-For a transfer that depends on the initial state, compute both changes before applying either one. `PopGrid.Add(delta, i)` records each site's signed change, and `Update()` commits all recorded changes together. This preserves the intended conservation law: the sum of the two deltas is zero, so the total population remains 10. Conservation is a useful test for transport or movement routines; it catches accidental creation or loss even when individual site values look plausible.
-
-When debugging a population model, test these properties separately: site counts remain nonnegative when the model requires it; the total changes only through explicit births, deaths, or boundary flux; and results do not depend on the order in which sites are visited when an update is meant to be simultaneous. Compare one small hand-calculated step against the implementation before running a large simulation.
+For a small hand-calculated timestep, check the properties the model requires: counts stay nonnegative, internal transfers conserve total population, totals change only through explicit births, deaths, or boundary flux, and results are independent of site visitation order when the update is meant to be simultaneous.
 
 ## 6. Compiled model code
 
