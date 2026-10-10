@@ -69,3 +69,13 @@ def test_cheatsheet_draw_headless(tmp_path):
     expected_x = 10 * 4
     assert red[expected_y:expected_y + 4, expected_x:expected_x + 4].all()
     assert np.all(image[~red] == 0), "Expected all other pixels to remain black"
+
+
+def test_manual_checkpoint_snippet():
+    """Execute the checkpoint example as published in the Manual."""
+    manual = (Path(__file__).resolve().parents[2] / "Documentation" / "MANUAL.md").read_text(encoding="utf-8")
+    blocks = manual.split("```python\n")[1:]
+    assert len(blocks) == 2, "Expected quickstart and checkpoint examples"
+    snippet = blocks[1].split("\n```", 1)[0]
+    ast.parse(snippet)
+    exec(compile(snippet, "pal_manual_checkpoint.py", "exec"), {"__name__": "pal_documentation_test"})
