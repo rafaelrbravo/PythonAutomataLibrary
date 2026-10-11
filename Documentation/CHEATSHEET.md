@@ -30,6 +30,7 @@
 
 - `**pal.StartPixWindow**(...)`: Create a pixel buffer and display window; `headless=True` supports noninteractive rendering.
 - `**pix[x,y] = RGB**`: Set a pixel color in the shared pixel buffer.
+- Color utilities: `**pal.RGB**(r,g,b)` packs red, green, and blue channels into a color; `**pal.GetR**(color)`, `**pal.GetG**(color)`, and `**pal.GetB**(color)` extract channels; `**pal.ColorScale**(...)` maps values to colors.
 - PixWindow controls: `**win.Update**()` refreshes the display; `**win.Save**(path,block=True)` saves an image; `**win.Close**()` releases the window.
 - PixWindow GIF: `**win.StartGif**(path,delay=100)` starts recording; `**win.AddGifFrame**(block=False)` appends a frame; `**win.StopGif**()` finishes.
 - `**pal.StartOpenGLWindow**(xDim,yDim,zDim=None,width=800,height=800,...)`: Create the renderer and return `(draw, win)`: `draw` collects primitives; `win` handles display, updates, and output. Omit `zDim` for 2D; set it for 3D. `headless=True` supports noninteractive rendering.
