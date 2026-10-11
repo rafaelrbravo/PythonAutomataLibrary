@@ -52,11 +52,8 @@ SECTIONS = [
 ("OpenGL output", "`win.IsOpen()` checks the window; `win.Save(path,block=False)` saves an image; `win.Close()` releases resources."),
 ("OpenGL GIF", "`win.StartGif(...)` begins recording; `win.AddGifFrame(...)` adds a frame; `win.StopGif(...)` finishes."),]),("Lists + randomness", [
 ("IList methods", "`Append(i)` adds an integer; `Clear()` empties the list; `Random()` picks an entry; `Shuffle()` reorders entries; `All()` copies the list; `Iter()` traverses without copying."),
-("`pal.Seed(seed)`", "Seed PAL’s shared random stream for reproducible call sequences."),
-("`pal.Random()`", "Draw a uniform random number from PAL’s random stream."),
-("`pal.RandInt(n)`", "Draw an integer from 0 through n−1; n must be positive. PAL’s stream is separate from NumPy’s RNG."),
-("`m.Binomial(n,p)`", "Draw a binomial count with n trials and probability p."),
-("`m.Setup(...)` / `m.Sample(...)`", "Configure a multinomial sampler, then draw counts from it."),]),
+("RNG methods", "`pal.Seed(seed)` seeds PAL’s RNG; `pal.Random()` draws uniform [0,1); `pal.RandInt(n)` draws an integer in [0,n). PAL’s RNG is separate from NumPy’s."),
+("Multinomial methods", "`m.Binomial(n,p)` draws a binomial count; `m.Setup(...)` configures multinomial probabilities; `m.Sample(...)` draws counts."),]),
 ("AgentGrid", [
 ("`NewAgentSQ(x...)` / `MoveSQ(a,x...)`", "Create or move an agent using lattice-site coordinates; documented linear-site forms are also supported."),
 ("`NewAgent(x...)` / `Move(a,x...)`", "Create or move an agent using continuous coordinates rather than lattice sites."),
