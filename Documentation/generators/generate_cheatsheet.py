@@ -33,7 +33,7 @@ SECTIONS = [
 
 ("`grid.Hood(hood, x...)`", "Apply relative offsets at `x...`. Create `hood` with `pal.MooreHood(dim, ...)` (diagonals), `pal.VonNeumannHood(dim, ...)` (axis-aligned), or `pal.CircleHood(dim, rad, ...)` (radius). All accept `excludeCenter=False`."),]),
 ("Grid / common indexing", [
-("Indexing", "`g[i]` reads/writes by linear index; `g[x...]` uses dimensional coordinates."), ("Slices", "Return detached NumPy copies, not live views; editing a slice does not update the grid."),
+("Indexing", "`grid[i]` reads/writes by linear index; `grid[x...]` uses dimensional coordinates."), ("Slices", "Return detached NumPy copies, not live views; editing a slice does not update the grid."),
 ("`Box(x1,x2,...)`", "Select a rectangular region with lower and exclusive upper bounds for each axis, in axis order."),
 ]),
 ("Draw / output", [
@@ -83,7 +83,7 @@ def _md():
     out=["# PAL Cheatsheet", "", "## Conventions", "", INTRO + " " + CONVENTIONS, ""]
     for title, entries in SECTIONS:
         out += [f"## {title}", ""]
-        for key, desc in entries: out.append(f"- {_md_markup(key, heading=True)}: {_md_markup(desc, heading=(key == 'Properties'))}")
+        for key, desc in entries: out.append(f"- {_md_markup(key, heading=True)}: {_md_markup(desc, heading=(key in ('Properties', 'Indexing')))}")
         out.append("")
     out.append(f"**{FOOTER}**")
     return "\n".join(out).rstrip()+"\n"
@@ -120,7 +120,7 @@ def _build_pdf(body_font):
     box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
     story=[Paragraph("<b>Conventions</b><br/>" + _markup(INTRO + " " + CONVENTIONS),box)]
     for section_i,(title,entries) in enumerate(SECTIONS):
-        items=[Paragraph(f"{_markup(k, heading=True)}: {_markup(d, heading=(k == 'Properties'))}",entry) for k,d in entries]
+        items=[Paragraph(f"{_markup(k, heading=True)}: {_markup(d, heading=(k in ('Properties', 'Indexing')))}",entry) for k,d in entries]
         story.append(Paragraph(title,heading))
         story.extend(items)
     story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
