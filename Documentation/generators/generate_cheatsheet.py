@@ -107,7 +107,7 @@ def _md():
     out=["# PAL Cheatsheet", "", "## Conventions", "", INTRO + " " + CONVENTIONS, ""]
     for title, entries in SECTIONS:
         out += [f"## {title}", ""]
-        for key, desc in entries: out.append(f"- **{key}** — {desc}")
+        for key, desc in entries: out.append(f"- **{key}**: {desc}")
         out.append("")
     out.append(f"**{FOOTER}**")
     return "\n".join(out).rstrip()+"\n"
@@ -133,7 +133,7 @@ def _build_pdf(body_font):
     box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
     story=[Paragraph("<b>Conventions</b><br/>" + _markup(INTRO + " " + CONVENTIONS),box)]
     for section_i,(title,entries) in enumerate(SECTIONS):
-        items=[Paragraph(f"<b>{_markup(k)}</b> — {_markup(d)}",entry) for k,d in entries]
+        items=[Paragraph(f"<b>{_markup(k)}</b>: {_markup(d)}",entry) for k,d in entries]
         story.append(Paragraph(title,heading))
         story.extend(items)
     story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
