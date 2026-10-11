@@ -2,12 +2,12 @@
 
 ## Conventions
 
-`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`. `dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D; `dims=()` is nonspatial. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D. `Box(x1,x2,...)` alternates lower and exclusive upper bounds per axis. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes.
+`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`. `dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes.
 
 ## Create state
 
 - **`pal.NewGrid(dims, dtype)`** — Create a typed lattice storing one value per site.
-- **`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`** — Create agents with optional properties; `dims=()` makes a nonspatial grid.
+- **`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`** — Create agents with optional properties; use `dims=()` for nonspatial agents.
 - **`pal.NewPopGrid(dims, capacity=None)`** — Create integer counts per site; capacity limits total population.
 - **`pal.NewPDEgrid(dims)`** — Create a continuous field for PDE updates.
 - **`pal.NewIList()`** — Create a mutable integer list for collecting/reusing query results.
@@ -19,7 +19,6 @@
 - **Properties** — `xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis.
 - **`ToI(x...)`** — Convert 1D/2D/3D coordinates into one linear site index.
 - **`ItoX/Y/Z(i)`** — Convert a linear site index back to its axis coordinate.
-- **Regions** — `Box(x1,x2,...)` selects a rectangular region; each axis has a lower bound and exclusive upper bound.
 - **`pal.MooreHood(dim, excludeCenter=False)`** — Build offsets for all neighboring sites, including diagonals.
 - **`pal.VonNeumannHood(dim, excludeCenter=False)`** — Build axis-aligned offsets, excluding diagonal neighbors.
 - **`pal.CircleHood(dim, rad, excludeCenter=False)`** — Build offsets within a radius; hood constructors return relative offsets, not absolute indices.
@@ -30,6 +29,7 @@
 - **`g[i]`** — Read or write a site by linear index.
 - **`g[x...]`** — Read or write a site using dimensional coordinates.
 - **Slices** — Return detached NumPy copies, not live views; editing a slice does not update the grid.
+- **`Box(x1,x2,...)`** — Select a rectangular region with lower and exclusive upper bounds for each axis, in axis order.
 - **Pattern** — `g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`; supported dtypes include bool, fixed-width integers, and float32/float64.
 
 ## Draw / output
@@ -42,7 +42,19 @@
 - **`StartGif(path,delay=100)`** — Begin recording an animated GIF with the requested frame delay.
 - **`AddGifFrame(block=False)`** — Append the current rendered frame to the GIF.
 - **`StopGif()`** — Finish the GIF; update the window before capturing frames.
-- **OpenGL** — `pal.StartOpenGLWindow(...)`; draw with `Circle`, `Box`, `BoxSQ`, `Line`, `Borders`; scene controls include `Camera`, `Background`, `Clear`.
+- **`pal.StartOpenGLWindow(xDim,yDim,zDim=None,width=800,height=800,...)`** — Create the renderer and return `(draw, win)`: `draw` collects primitives; `win` handles display, updates, and output. Omit `zDim` for 2D; set it for 3D. `headless=True` supports noninteractive rendering.
+- **`draw.Circle(rad,color,x,y,z=None)`** — Add a circle or sphere-like primitive with the given radius and color.
+- **`draw.Box(xLen,color,x,y,z=None,yLen=None,zLen=None)`** — Add a box centered at a position; specify axis lengths to control its size.
+- **`draw.BoxSQ(color,x,y,z=None)`** — Add a box aligned to a lattice site.
+- **`draw.Line(width,color,x1,y1,x2,y2,z1=None,z2=None)`** — Add a line segment between two 2D/3D points.
+- **`draw.Borders(width,color)`** — Draw grid borders with the requested line width and color.
+- **`win.Camera(x,y,z,yaw=None,pitch=None)`** — Set the camera position and optional yaw/pitch angles for a 3D scene.
+- **`win.Background(color)`** — Set the scene background color.
+- **`draw.Clear()` / `win.Clear()`** — Clear collected primitives or clear the rendered scene, depending on which object is called.
+- **`win.Update()` / `win.IsOpen()`** — Render pending drawing commands or check whether the window remains open.
+- **`win.Save(path,block=False)`** — Save the rendered image; `block=True` waits for completion.
+- **`win.StartGif(...)` / `win.AddGifFrame(...)` / `win.StopGif(...)`** — Start, append frames to, and finish a GIF recording.
+- **`win.Close()`** — Close the OpenGL window and release its resources.
 
 ## Lists + randomness
 
@@ -57,7 +69,10 @@
 
 - **`NewAgentSQ(x...)` / `MoveSQ(a,x...)`** — Create or move an agent using lattice-site coordinates; documented linear-site forms are also supported.
 - **`NewAgent(x...)` / `Move(a,x...)`** — Create or move an agent using continuous coordinates rather than lattice sites.
-- **Agent state** — `grid[a,p]` reads/writes property `p`; `I(a)` is linear site index; `XSQ/YSQ/ZSQ(a)` are lattice coordinates; `X/Y/Z(a)` are continuous coordinates. Check `Alive(a)` before use when agents may be disposed; `Dispose(a)` removes an agent.
+- **`grid[a,p]`** — Read or write property p for agent a.
+- **`I(a)`** — Get an agent’s linear lattice-site index.
+- **`XSQ/YSQ/ZSQ(a)`** — Get integer lattice coordinates; `X/Y/Z(a)` return continuous positions.
+- **`Alive(a)` / `Dispose(a)`** — Check whether an agent is still valid, or remove it from the grid.
 - **`GetPop()`** — Count agents currently in the grid.
 - **`AgentsAt(x...)` / `LastAgent(x...)`** — Find agents at a site or retrieve the last agent there.
 - **`AgentsInRadius(...)`** — Find agents near a position; wrapped displacement respects periodic boundaries.
@@ -67,10 +82,20 @@
 
 ## PopGrid + PDEgrid
 
-- **Transactional update** — `Add(v, ...)` accumulates pending changes; `Update()` applies them together. `Reset()` clears both current and pending state. Direct `grid[...] = v` changes current state immediately, outside the transaction.
-- **Population** — `pop.GetPop()` total; `pop.All()` nonzero site indices. `capacity` limits total population.
+- **`Add(v,...)`** — Accumulate pending changes without immediately changing current values.
+- **`Update()`** — Apply accumulated changes together as a synchronous update.
+- **`Reset()`** — Clear both current values and pending changes; direct indexed assignment changes current state immediately.
+- **`pop.GetPop()`** — Return total population across all sites.
+- **`pop.All()`** — Return indices of sites with nonzero population, not the population values.
 - **PDE setup** — `field.SetTimeSpaceStep(dt, dx[,dy,dz])` sets time and spatial steps before updates. Use spacing values that satisfy the selected scheme’s stability requirements.
-- **Diffusion** — `Diffusion`, `DiffusionMask`, `DiffusionField`, `DiffusionInterfaces`, `DiffusionADI`; radial 1D: `DiffusionRadialCircle/Sphere`.
-- **Advection** — `Advection`, `AdvectionField`, `AdvectionInterfaces`.
+- **`Diffusion(...)`** — Diffuse the field using the standard lattice scheme.
+- **`DiffusionMask(...)`** — Diffuse subject to a mask of permitted sites or interfaces.
+- **`DiffusionField(...)`** — Use another field to vary diffusion across space.
+- **`DiffusionInterfaces(...)`** — Specify diffusion behavior at interfaces.
+- **`DiffusionADI(...)`** — Use an alternating-direction implicit diffusion scheme.
+- **`DiffusionRadialCircle/Sphere(...)`** — Use radial diffusion for circular or spherical geometry.
+- **`Advection(...)`** — Move field values with a specified velocity.
+- **`AdvectionField(...)`** — Use a field to define spatially varying advection.
+- **`AdvectionInterfaces(...)`** — Specify advection behavior at interfaces.
 
 **More detail: Manual · API Guide · API Reference (Documentation/).**
