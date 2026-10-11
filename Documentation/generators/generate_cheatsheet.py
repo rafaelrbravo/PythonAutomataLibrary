@@ -86,7 +86,7 @@ def _md():
     out=["# PAL Cheatsheet", "", "## Conventions", "", INTRO + " " + CONVENTIONS, ""]
     for title, entries in SECTIONS:
         out += [f"## {title}", ""]
-        for key, desc in entries: out.append(f"- {_md_markup(key, heading=True)}: {_md_markup(desc, heading=(key == \"Properties\"))}")
+        for key, desc in entries: out.append(f"- {_md_markup(key, heading=True)}: {_md_markup(desc, heading=(key == 'Properties'))}")
         out.append("")
     out.append(f"**{FOOTER}**")
     return "\n".join(out).rstrip()+"\n"
