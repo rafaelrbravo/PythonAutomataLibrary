@@ -31,7 +31,7 @@ SECTIONS = [
 ("Properties", "`xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis."),
 ("`ToI(x...)`", "Convert 1D/2D/3D coordinates into one linear site index."),
 ("`ItoX/Y/Z(i)`", "Convert a linear site index back to its axis coordinate."),
-("Regions", "`Box(x1,x2,...)` selects a rectangular region; each axis has a lower bound and exclusive upper bound."),
+
 ("`pal.MooreHood(dim, excludeCenter=False)`", "Build offsets for all neighboring sites, including diagonals."),
 ("`pal.VonNeumannHood(dim, excludeCenter=False)`", "Build axis-aligned offsets, excluding diagonal neighbors."),
 ("`pal.CircleHood(dim, rad, excludeCenter=False)`", "Build offsets within a radius; hood constructors return relative offsets, not absolute indices."),
