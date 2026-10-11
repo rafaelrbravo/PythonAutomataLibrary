@@ -25,8 +25,7 @@ SECTIONS = [
 ("Create state", [
 ("`pal.NewGrid(dims, dtype)`", "Create a typed lattice storing one value per site."), ("`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`", "Create agents with optional properties; use `dims=()` for nonspatial agents."),
 ("`pal.NewPopGrid(dims, capacity=None)`", "Create integer counts per site; capacity limits total population."), ("`pal.NewPDEgrid(dims)`", "Create a continuous field for PDE updates."),
-("`pal.NewIList()`", "Create a mutable integer list for collecting/reusing query results."), ("`pal.NewMultinomial()`", "Create a sampler for binomial/multinomial population draws."),
-("Dimensions", "1–3 axes; a negative dimension wraps that axis, e.g. `(-nx, ny)`."),]),
+("`pal.NewIList()`", "Create a mutable integer list for collecting/reusing query results."), ("`pal.NewMultinomial()`", "Create a sampler for binomial/multinomial population draws."),]),
 ("Shared lattice geometry", [
 ("Properties", "`xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis."),
 ("`ToI(x...)`", "Convert 1D/2D/3D coordinates into one linear site index."),
