@@ -27,7 +27,7 @@ SECTIONS = [
 ("`pal.NewPopGrid(dims, capacity=None)`", "Create integer counts per site; capacity limits total population."), ("`pal.NewPDEgrid(dims)`", "Create a continuous field for PDE updates."),
 ("`pal.NewIList()`", "Create a mutable integer list for collecting/reusing query results."), ("`pal.NewMultinomial()`", "Create a sampler for binomial/multinomial population draws."),]),
 ("Shared lattice geometry", [
-("Properties", "`xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis."),
+("Properties", "`xDim` / `yDim` / `zDim`: axis sizes; `nDims`: number of axes; `wrapX` / `wrapY` / `wrapZ`: wrapping flags."),
 ("`ToI(x...)`", "Convert 1D/2D/3D coordinates into one linear site index."),
 ("`ItoX/Y/Z(i)`", "Convert a linear site index back to its axis coordinate."),
 
@@ -86,7 +86,7 @@ def _md():
     out=["# PAL Cheatsheet", "", "## Conventions", "", INTRO + " " + CONVENTIONS, ""]
     for title, entries in SECTIONS:
         out += [f"## {title}", ""]
-        for key, desc in entries: out.append(f"- {_md_markup(key, heading=True)}: {_md_markup(desc)}")
+        for key, desc in entries: out.append(f"- {_md_markup(key, heading=True)}: {_md_markup(desc, heading=(key == \"Properties\"))}")
         out.append("")
     out.append(f"**{FOOTER}**")
     return "\n".join(out).rstrip()+"\n"
@@ -123,7 +123,7 @@ def _build_pdf(body_font):
     box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
     story=[Paragraph("<b>Conventions</b><br/>" + _markup(INTRO + " " + CONVENTIONS),box)]
     for section_i,(title,entries) in enumerate(SECTIONS):
-        items=[Paragraph(f"{_markup(k, heading=True)}: {_markup(d)}",entry) for k,d in entries]
+        items=[Paragraph(f"{_markup(k, heading=True)}: {_markup(d, heading=(k == 'Properties'))}",entry) for k,d in entries]
         story.append(Paragraph(title,heading))
         story.extend(items)
     story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
