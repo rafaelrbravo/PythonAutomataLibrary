@@ -19,7 +19,7 @@ MD_TARGET = ROOT / "Documentation" / "CHEATSHEET.md"
 PDF_TARGET = ROOT / "Documentation" / "CHEATSHEET.pdf"
 TITLE = "Python Automata Library (PAL) Cheat Sheet"
 INTRO = "`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under `@pal.njit(cache=True)`."
-CONVENTIONS = "`dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D. `Box(x1,x2,...)` alternates lower and exclusive upper bounds per axis. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes."
+CONVENTIONS = "`dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes."
 
 SECTIONS = [
 ("Create state", [
@@ -38,6 +38,7 @@ SECTIONS = [
 ("`grid.Hood(hood, x...)`", "Apply relative offsets at a coordinate; `excludeCenter=True` omits the center when constructing the hood."),]),
 ("Grid / common indexing", [
 ("`g[i]`", "Read or write a site by linear index."), ("`g[x...]`", "Read or write a site using dimensional coordinates."), ("Slices", "Return detached NumPy copies, not live views; editing a slice does not update the grid."),
+("`Box(x1,x2,...)`", "Select a rectangular region with lower and exclusive upper bounds for each axis, in axis order."),
 ("Pattern", "`g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`; supported dtypes include bool, fixed-width integers, and float32/float64."),]),
 ("Draw / output", [
 ("`pal.StartPixWindow(...)`", "Create a pixel buffer and display window; `headless=True` supports noninteractive rendering."),
