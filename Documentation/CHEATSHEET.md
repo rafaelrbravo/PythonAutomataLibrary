@@ -12,7 +12,6 @@
 - **`pal.NewPDEgrid(dims)`**: Create a continuous field for PDE updates.
 - **`pal.NewIList()`**: Create a mutable integer list for collecting/reusing query results.
 - **`pal.NewMultinomial()`**: Create a sampler for binomial/multinomial population draws.
-- **Dimensions**: 1–3 axes; a negative dimension wraps that axis, e.g. `(-nx, ny)`.
 
 ## Shared lattice geometry
 
