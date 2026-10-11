@@ -31,7 +31,7 @@ SECTIONS = [
 ("`ToI(x...)`", "Convert 1D/2D/3D coordinates into one linear site index."),
 ("`ItoX/Y/Z(i)`", "Convert a linear site index back to its axis coordinate."),
 
-("`grid.Hood(hood, x...)`", "Apply relative coordinate offsets, e.g. `((x1,y1),(x2,y2),...)`, at `x...`. Special-case hoods: **`pal.MooreHood`**, **`pal.VonNeumannHood`**, **`pal.CircleHood`**. All accept `dim` (number of dimensions) and `excludeCenter=False` (whether to omit the center)."),]),
+("`grid.Hood(hood, x...)`", "Apply relative coordinate offsets, e.g. `((x1,y1),(x2,y2),...)`, at `x...`. Special-case hoods: **`pal.MooreHood`**`(*)`, **`pal.VonNeumannHood`**`(*)`, **`pal.CircleHood`**`(*,rad,*)`. `*` represents shared arguments: `dim` (number of dimensions) and `excludeCenter=False` (omit the center when true)."),]),
 ("Grid / common indexing", [
 ("Indexing", "`grid[i]` reads/writes by linear index; `grid[x...]` uses dimensional coordinates."), ("Slices", "Return detached NumPy copies, not live views; editing a slice does not update the grid."),
 ("`Box(x1,x2,...)`", "Select a rectangular region with lower and exclusive upper bounds for each axis, in axis order."),
