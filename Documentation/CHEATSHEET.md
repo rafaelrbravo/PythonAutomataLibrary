@@ -18,7 +18,7 @@
 - Properties: `**xDim**` / `**yDim**` / `**zDim**`: axis sizes; `**nDims**`: number of axes; `**wrapX**` / `**wrapY**` / `**wrapZ**`: wrapping flags.
 - `**ToI**(x...)`: Convert 1D/2D/3D coordinates into one linear site index.
 - `**ItoX/Y/Z(i)**`: Convert a linear site index back to its axis coordinate.
-- `**grid.Hood**(hood, x...)`: Apply relative coordinate offsets, e.g. `((x1,y1),(x2,y2),...)`, at `x...`. Special-case hoods: `pal.MooreHood` (diagonals), `pal.VonNeumannHood` (axis-aligned), `pal.CircleHood` (radius; requires `rad`). All accept `dim` (number of dimensions) and `excludeCenter=False` (whether to omit the center).
+- `**grid.Hood**(hood, x...)`: Apply relative coordinate offsets, e.g. `((x1,y1),(x2,y2),...)`, at `x...`. Special-case hoods: `pal.MooreHood`, `pal.VonNeumannHood`, `pal.CircleHood`. All accept `dim` (number of dimensions) and `excludeCenter=False` (whether to omit the center).
 
 ## Grid / common indexing
 
