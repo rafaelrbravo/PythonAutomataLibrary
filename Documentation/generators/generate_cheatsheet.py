@@ -86,20 +86,26 @@ def _md():
     out=["# PAL Cheatsheet", "", "## Conventions", "", INTRO + " " + CONVENTIONS, ""]
     for title, entries in SECTIONS:
         out += [f"## {title}", ""]
-        for key, desc in entries: out.append(f"- {_md_markup(key)}: {_md_markup(desc)}")
+        for key, desc in entries: out.append(f"- {_md_markup(key, heading=True)}: {_md_markup(desc)}")
         out.append("")
     out.append(f"**{FOOTER}**")
     return "\n".join(out).rstrip()+"\n"
 
 
-def _md_markup(s):
-    return re.sub(r"`([A-Za-z_][A-Za-z_0-9.]*)\(([^`]*)\)`", r"`**\1**(\2)`", s)
+def _md_markup(s, heading=False):
+    s=re.sub(r"`([A-Za-z_][A-Za-z_0-9.]*)\(([^`]*)\)`", r"`**\1**(\2)`", s)
+    if heading:
+        s=re.sub(r"`([^`]+)`", lambda m: m.group(0) if "**" in m.group(1) else "`**" + m.group(1) + "**`", s)
+    return s
 
 
-def _markup(s):
+def _markup(s, heading=False):
     s=html.escape(s, quote=False).replace("-&gt;", "→")
     s=re.sub(r"`([A-Za-z_][A-Za-z_0-9.]*)\(([^`]*)\)`", r"<b>\1</b>(\2)", s)
-    s=re.sub(r"`([^`]+)`", r"\1", s)
+    if heading:
+        s=re.sub(r"`([^`]+)`", r"<b>\1</b>", s)
+    else:
+        s=re.sub(r"`([^`]+)`", r"\1", s)
     return s
 
 
@@ -117,7 +123,7 @@ def _build_pdf(body_font):
     box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
     story=[Paragraph("<b>Conventions</b><br/>" + _markup(INTRO + " " + CONVENTIONS),box)]
     for section_i,(title,entries) in enumerate(SECTIONS):
-        items=[Paragraph(f"{_markup(k)}: {_markup(d)}",entry) for k,d in entries]
+        items=[Paragraph(f"{_markup(k, heading=True)}: {_markup(d)}",entry) for k,d in entries]
         story.append(Paragraph(title,heading))
         story.extend(items)
     story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
