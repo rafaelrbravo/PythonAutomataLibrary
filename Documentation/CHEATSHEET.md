@@ -18,7 +18,7 @@
 - **Properties**: `xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis.
 - **`ToI(x...)`**: Convert 1D/2D/3D coordinates into one linear site index.
 - **`ItoX/Y/Z(i)`**: Convert a linear site index back to its axis coordinate.
-- **`grid.Hood(hood, x...)`**: Apply a neighborhood of relative offsets at `x...`. Construct `hood` with `pal.MooreHood(dim, excludeCenter=False)` for adjacent sites including diagonals; `pal.VonNeumannHood(dim, excludeCenter=False)` for axis-aligned neighbors; or `pal.CircleHood(dim, rad, excludeCenter=False)` for sites within a radius. `excludeCenter=True` omits the center.
+- **`grid.Hood(hood, x...)`**: Apply relative offsets at `x...`. Create `hood` with `pal.MooreHood(dim, ...)` (diagonals), `pal.VonNeumannHood(dim, ...)` (axis-aligned), or `pal.CircleHood(dim, rad, ...)` (radius). All accept `excludeCenter=False`.
 
 ## Grid / common indexing
 
