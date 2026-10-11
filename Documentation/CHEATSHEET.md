@@ -17,7 +17,7 @@
 
 - Properties: `xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis.
 - `**ToI**(x...)`: Convert 1D/2D/3D coordinates into one linear site index.
-- `ItoX/Y/Z(i)`: Convert a linear site index back to its axis coordinate.
+- `**ItoX/Y/Z(i)**`: Convert a linear site index back to its axis coordinate.
 - `**grid.Hood**(hood, x...)`: Apply relative offsets at `x...`. Create `hood` with `**pal.MooreHood**(dim, ...)` (diagonals), `**pal.VonNeumannHood**(dim, ...)` (axis-aligned), or `**pal.CircleHood**(dim, rad, ...)` (radius). All accept `excludeCenter=False`.
 
 ## Grid / common indexing
@@ -29,7 +29,7 @@
 ## Draw / output
 
 - `**pal.StartPixWindow**(...)`: Create a pixel buffer and display window; `headless=True` supports noninteractive rendering.
-- `pix[x,y] = RGB`: Set a pixel color in the shared pixel buffer.
+- `**pix[x,y] = RGB**`: Set a pixel color in the shared pixel buffer.
 - PixWindow controls: `**win.Update**()` refreshes the display; `**win.Save**(path,block=True)` saves an image; `**win.Close**()` releases the window.
 - PixWindow GIF: `**win.StartGif**(path,delay=100)` starts recording; `**win.AddGifFrame**(block=False)` appends a frame; `**win.StopGif**()` finishes.
 - `**pal.StartOpenGLWindow**(xDim,yDim,zDim=None,width=800,height=800,...)`: Create the renderer and return `(draw, win)`: `draw` collects primitives; `win` handles display, updates, and output. Omit `zDim` for 2D; set it for 3D. `headless=True` supports noninteractive rendering.
@@ -56,15 +56,15 @@
 
 - `**NewAgentSQ**(x...)` / `**MoveSQ**(a,x...)`: Create or move an agent using lattice-site coordinates; documented linear-site forms are also supported.
 - `**NewAgent**(x...)` / `**Move**(a,x...)`: Create or move an agent using continuous coordinates rather than lattice sites.
-- `grid[a,p]`: Read or write property p for agent a.
+- `**grid[a,p]**`: Read or write property p for agent a.
 - Agent position: `**I**(a)` gives the linear site index; `XSQ/YSQ/ZSQ(a)` give lattice coordinates; `X/Y/Z(a)` give continuous coordinates.
 - `**Alive**(a)` / `**Dispose**(a)`: Check whether an agent is still valid, or remove it from the grid.
 - `**GetPop**()`: Count agents currently in the grid.
 - `**AgentsAt**(x...)` / `**LastAgent**(x...)`: Find agents at a site or retrieve the last agent there.
 - `**AgentsInRadius**(...)`: Find nearby agents, respecting periodic boundaries.
-- `counts[x...]`: Read site occupancy counts without modifying them.
+- `**counts[x...]**`: Read site occupancy counts without modifying them.
 - Iteration: `**agents.All**()` returns a detached snapshot, safe for iteration while adding or disposing agents.
-- `DispWrapX/Y/Z(p1,p2)`: Compute the shortest displacement along a periodic axis.
+- `**DispWrapX/Y/Z(p1,p2)**`: Compute the shortest displacement along a periodic axis.
 
 ## PopGrid + PDEgrid
 
