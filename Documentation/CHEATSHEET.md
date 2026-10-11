@@ -15,7 +15,7 @@
 
 ## Shared lattice geometry
 
-- Properties: `xDim/yDim/zDim`, `nDims`, `wrapX/Y/Z`; a negative dimension enables wrapping on that axis.
+- Properties: `**xDim**` / `**yDim**` / `**zDim**`: axis sizes; `**nDims**`: number of axes; `**wrapX**` / `**wrapY**` / `**wrapZ**`: wrapping flags.
 - `**ToI**(x...)`: Convert 1D/2D/3D coordinates into one linear site index.
 - `**ItoX/Y/Z(i)**`: Convert a linear site index back to its axis coordinate.
 - `**grid.Hood**(hood, x...)`: Apply relative offsets at `x...`. Create `hood` with `**pal.MooreHood**(dim, ...)` (diagonals), `**pal.VonNeumannHood**(dim, ...)` (axis-aligned), or `**pal.CircleHood**(dim, rad, ...)` (radius). All accept `excludeCenter=False`.
