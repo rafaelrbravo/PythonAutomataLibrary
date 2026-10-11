@@ -31,10 +31,7 @@ SECTIONS = [
 ("`ToI(x...)`", "Convert 1D/2D/3D coordinates into one linear site index."),
 ("`ItoX/Y/Z(i)`", "Convert a linear site index back to its axis coordinate."),
 
-("`pal.MooreHood(dim, excludeCenter=False)`", "Build offsets for all neighboring sites, including diagonals."),
-("`pal.VonNeumannHood(dim, excludeCenter=False)`", "Build axis-aligned offsets, excluding diagonal neighbors."),
-("`pal.CircleHood(dim, rad, excludeCenter=False)`", "Build offsets within a radius; hood constructors return relative offsets, not absolute indices."),
-("`grid.Hood(hood, x...)`", "Apply relative offsets at a coordinate; `excludeCenter=True` omits the center when constructing the hood."),]),
+("`grid.Hood(hood, x...)`", "Apply a neighborhood of relative offsets at `x...`. Construct `hood` with `pal.MooreHood(dim, excludeCenter=False)` for adjacent sites including diagonals; `pal.VonNeumannHood(dim, excludeCenter=False)` for axis-aligned neighbors; or `pal.CircleHood(dim, rad, excludeCenter=False)` for sites within a radius. `excludeCenter=True` omits the center."),]),
 ("Grid / common indexing", [
 ("Indexing", "`g[i]` reads/writes by linear index; `g[x...]` uses dimensional coordinates."), ("Slices", "Return detached NumPy copies, not live views; editing a slice does not update the grid."),
 ("`Box(x1,x2,...)`", "Select a rectangular region with lower and exclusive upper bounds for each axis, in axis order."),
