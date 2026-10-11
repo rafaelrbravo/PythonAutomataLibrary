@@ -22,7 +22,7 @@
 
 ## Grid / common indexing
 
-- Indexing: `g[i]` reads/writes by linear index; `g[x...]` uses dimensional coordinates.
+- Indexing: `**grid[i]**` reads/writes by linear index; `**grid[x...]**` uses dimensional coordinates.
 - Slices: Return detached NumPy copies, not live views; editing a slice does not update the grid.
 - `**Box**(x1,x2,...)`: Select a rectangular region with lower and exclusive upper bounds for each axis, in axis order.
 
