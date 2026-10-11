@@ -1,7 +1,7 @@
 """Generate PAL CHEATSHEET.md and CHEATSHEET.pdf from one compact definition.
 
-The PDF follows the BET cheat-sheet approach: content is readable in this source,
-and the renderer chooses the largest body font that fits on one US Letter page.
+The PDF uses a readable two-column, multi-page layout generated from the same
+structured content as the Markdown cheatsheet.
 
 Usage: python Documentation/generators/generate_cheatsheet.py [--check]
 """
@@ -12,7 +12,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import BaseDocTemplate, Frame, KeepTogether, PageTemplate, Paragraph
+from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph
 
 ROOT = Path(__file__).resolve().parents[2]
 MD_TARGET = ROOT / "Documentation" / "CHEATSHEET.md"
@@ -134,7 +134,8 @@ def _build_pdf(body_font):
     story=[Paragraph("<b>Conventions</b><br/>" + _markup(INTRO + " " + CONVENTIONS),box)]
     for section_i,(title,entries) in enumerate(SECTIONS):
         items=[Paragraph(f"<b>{_markup(k)}</b> — {_markup(d)}",entry) for k,d in entries]
-        story.append(KeepTogether([Paragraph(title,heading)]+items))
+        story.append(Paragraph(title,heading))
+        story.extend(items)
     story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
     doc=BaseDocTemplate(buf,pagesize=letter,leftMargin=margin,rightMargin=margin,topMargin=margin,bottomMargin=margin,invariant=1)
     doc.addPageTemplates(PageTemplate(id="main",frames=frames,onPage=header_fn)); doc.build(story)
@@ -142,14 +143,10 @@ def _build_pdf(body_font):
 
 
 def _pdf():
-    for i in range(51):
-        size=round(13.5-i*.1,1)
-        if size < 5.0: break
-        data,pages=_build_pdf(size)
-        if pages==1:
-            print(f"PAL cheatsheet fits one page at {size:.1f} pt body font.")
-            return data
-    raise RuntimeError("PAL cheatsheet does not fit one page at 5.0 pt; consolidate content further.")
+    # Keep body text comfortably readable rather than shrinking to one page.
+    data,pages=_build_pdf(9.2)
+    print(f"PAL cheatsheet generated {pages} pages at 9.2 pt body font.")
+    return data
 
 
 def build(): return _md(), _pdf()
