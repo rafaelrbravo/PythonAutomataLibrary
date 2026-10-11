@@ -30,7 +30,6 @@
 - **`g[x...]`** — Read or write a site using dimensional coordinates.
 - **Slices** — Return detached NumPy copies, not live views; editing a slice does not update the grid.
 - **`Box(x1,x2,...)`** — Select a rectangular region with lower and exclusive upper bounds for each axis, in axis order.
-- **Pattern** — `g = pal.NewGrid((40,40), float)` · `g[10,12] = 1.0` · `v = g[10,12]`; supported dtypes include bool, fixed-width integers, and float32/float64.
 
 ## Draw / output
 
