@@ -1,186 +1,181 @@
 # PAL API Reference
 
-Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. Regenerate with `python Documentation/generators/generate_api_reference.py`; use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; consult [API Guide](API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.
+Generated from public `Protocol` declarations and source docstrings. Each description is maintained beside its source signature. Regenerate with `python Documentation/generators/generate_api_reference.py`; use `--check` to detect drift. Consult the API Guide for worked usage and Architecture and Design for implementation rationale.
 
 ## Factories and utilities
 
-```python
-FastMode()
-# Select PAL fast mode before constructing any PAL object or window; the process-wide mode cannot be changed after construction.
-NewIList()
-# Create an empty PAL integer list usable from Python and supported compiled functions.
-MooreHood(dim, excludeCenter=False)
-# Build relative integer offsets for a Moore neighborhood in `dim` dimensions; optionally exclude the center offset.
-VonNeumannHood(dim, excludeCenter=False)
-# Build relative integer offsets for a Von Neumann neighborhood in `dim` dimensions; optionally exclude the center offset.
-CircleHood(dim, rad, excludeCenter=False)
-# Build relative integer offsets within radius `rad` in `dim` dimensions; optionally exclude the center offset.
-NewMultinomial(other=None)
-# Create a PAL multinomial/binomial sampler, optionally reusing configuration from `other`.
-NewGrid(dimensions, dtype)
-# Create a typed lattice grid with the requested dimensions and element dtype.
-NewAgentGrid(dimensions, numAgentProps=0, isStackable=False)
-# Create a grid for individual agents; `numAgentProps` sets the number of per-agent properties and `isStackable` controls whether multiple agents may occupy a site.
-NewPopGrid(dimensions, capacity=None)
-# Create a lattice of integer population counts, optionally limiting the count at each site with `capacity`.
-NewPDEgrid(dimensions)
-# Create a lattice-backed scalar field for numerical transport operations.
-```
+| Function | Description |
+| --- | --- |
+| `FastMode()` | Select PAL fast mode before constructing any PAL object or window; the process-wide mode cannot be changed after construction. |
+| `Seed(seed)` | Seed PAL's shared random-number stream; repeatability also depends on the sequence of random calls. |
+| `Random()` | Draw a uniform random value from PAL's shared random-number stream. |
+| `RandInt(max)` | Draw an integer from PAL's random stream in the supported range below the positive bound `max`. |
+| `AwaitWindows(timeout=30)` | Wait for PAL windows that are still initializing; raises if a window exits early or initialization times out. |
+| `ColorScale(colors, value)` | Map a scalar value to an RGB color by interpolating through the supplied color scale. |
+| `NewIList()` | Create an empty PAL integer list usable from Python and supported compiled functions. |
+| `MooreHood(dim, excludeCenter=False)` | Build relative integer offsets for a Moore neighborhood in `dim` dimensions; optionally exclude the center offset. |
+| `VonNeumannHood(dim, excludeCenter=False)` | Build relative integer offsets for a Von Neumann neighborhood in `dim` dimensions; optionally exclude the center offset. |
+| `CircleHood(dim, rad, excludeCenter=False)` | Build relative integer offsets within radius `rad` in `dim` dimensions; optionally exclude the center offset. |
+| `NewMultinomial(other=None)` | Create a PAL multinomial/binomial sampler, optionally reusing configuration from `other`. |
+| `NewGrid(dimensions, dtype)` | Create a typed lattice grid with the requested dimensions and element dtype. |
+| `NewAgentGrid(dimensions, numAgentProps=0, isStackable=False)` | Create a grid for individual agents; `numAgentProps` sets the number of per-agent properties and `isStackable` controls whether multiple agents may occupy a site. |
+| `NewPopGrid(dimensions, capacity=None)` | Create a lattice of integer population counts, optionally limiting the count at each site with `capacity`. |
+| `NewPDEgrid(dimensions)` | Create a lattice-backed scalar field for numerical transport operations. |
 
 ## Multinomial
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `Binomial(self, n: int, p: float) -> int` | Description not yet provided. |
+| method | `Binomial(self, n: int, p: float) -> int` | Draw a binomial sample with n trials and success probability p using this sampler's configured random stream. |
 | method | `Setup(self, n: int)` | Configure the sampler for `n` trials before repeated sampling. |
-| method | `Sample(self, p: float) -> int` | Description not yet provided. |
+| method | `Sample(self, p: float) -> int` | Draw a binomial sample using the sampler's current configuration and success probability p. |
 
 ## IList
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `__len__(self) -> int` | Description not yet provided. |
-| method | `__getitem__(self, index: int) -> int` | Description not yet provided. |
+| method | `__len__(self) -> int` | Return the number of integers currently stored in the list. |
+| method | `__getitem__(self, index: int) -> int` | Return the integer stored at the given list position. |
 | method | `Append(self, i: int)` | Append integer `i` to the end of the list. |
 | method | `Clear(self)` | Remove all values from the list. |
-| method | `Random(self) -> int` | Description not yet provided. |
+| method | `Random(self) -> int` | Return a randomly selected value from the list; the list must be nonempty. |
 | method | `Shuffle(self)` | Shuffle the list in place using PAL's random stream. |
-| method | `All(self) -> np.ndarray` | Description not yet provided. |
-| method | `Iter(self) -> np.ndarray` | Description not yet provided. |
+| method | `All(self) -> np.ndarray` | Return a detached NumPy array containing the list values. |
+| method | `Iter(self) -> np.ndarray` | Iterate over the current list values without creating the detached copy returned by All(). |
 
 ## AgentGrid
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `__len__(self) -> int` | Description not yet provided. |
-| property | `xDim(self) -> int` | Description not yet provided. |
-| property | `yDim(self) -> int` | Description not yet provided. |
-| property | `zDim(self) -> int` | Description not yet provided. |
-| property | `nDims(self) -> int` | Description not yet provided. |
-| property | `wrapX(self) -> bool` | Description not yet provided. |
-| property | `wrapY(self) -> bool` | Description not yet provided. |
-| property | `wrapZ(self) -> bool` | Description not yet provided. |
+| method | `__len__(self) -> int` | Return the number of living agents in the grid. |
+| property | `xDim(self) -> int` | Number of lattice sites along x. |
+| property | `yDim(self) -> int` | Number of lattice sites along y; zero when absent. |
+| property | `zDim(self) -> int` | Number of lattice sites along z; zero when absent. |
+| property | `nDims(self) -> int` | Number of spatial dimensions. |
+| property | `wrapX(self) -> bool` | Whether x uses periodic boundary wrapping. |
+| property | `wrapY(self) -> bool` | Whether y uses periodic boundary wrapping. |
+| property | `wrapZ(self) -> bool` | Whether z uses periodic boundary wrapping. |
 | method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` | Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions. |
 | method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` | Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported. |
-| method | `GetPop(self) -> int` | Description not yet provided. |
-| method | `Alive(self, agent: int) -> bool` | Description not yet provided. |
-| method | `NewAgentSQ(self, x: int, y: int=-1, z: int=-1) -> int` | Description not yet provided. |
-| method | `NewAgent(self, x: float, y: float=-1.0, z: float=-1.0) -> int` | Description not yet provided. |
+| method | `GetPop(self) -> int` | Return the number of living agents in the grid. |
+| method | `Alive(self, agent: int) -> bool` | Return whether agent currently identifies a living agent. |
+| method | `NewAgentSQ(self, x: int, y: int=-1, z: int=-1) -> int` | Create an agent at the center of a lattice site specified by integer coordinates or a supported linear site index. |
+| method | `NewAgent(self, x: float, y: float=-1.0, z: float=-1.0) -> int` | Create an agent at the supplied continuous spatial coordinates. |
 | method | `Dispose(self, agent: int)` | Remove a living agent from the grid; its handle must not be used as a live agent afterward. |
-| method | `I(self, agent: int) -> int` | Description not yet provided. |
-| method | `XSQ(self, agent: int) -> int` | Description not yet provided. |
-| method | `YSQ(self, agent: int) -> int` | Description not yet provided. |
-| method | `ZSQ(self, agent: int) -> int` | Description not yet provided. |
-| method | `X(self, agent: int) -> float` | Description not yet provided. |
-| method | `Y(self, agent: int) -> float` | Description not yet provided. |
-| method | `Z(self, agent: int) -> float` | Description not yet provided. |
-| method | `__getitem__(self, key) -> float` | Description not yet provided. |
+| method | `I(self, agent: int) -> int` | Return the linear lattice-site index containing the agent. |
+| method | `XSQ(self, agent: int) -> int` | Return the agent's integer x site coordinate. |
+| method | `YSQ(self, agent: int) -> int` | Return the agent's integer y site coordinate. |
+| method | `ZSQ(self, agent: int) -> int` | Return the agent's integer z site coordinate. |
+| method | `X(self, agent: int) -> float` | Return the agent's continuous x coordinate. |
+| method | `Y(self, agent: int) -> float` | Return the agent's continuous y coordinate. |
+| method | `Z(self, agent: int) -> float` | Return the agent's continuous z coordinate. |
+| method | `__getitem__(self, key) -> float` | Read a supported per-agent property value. |
 | method | `__setitem__(self, key, value: float)` | Set a supported per-agent property value for the selected agent/property key. |
-| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Description not yet provided. |
-| method | `ItoX(self, i: int) -> int` | Description not yet provided. |
-| method | `ItoY(self, i: int) -> int` | Description not yet provided. |
-| method | `ItoZ(self, i: int) -> int` | Description not yet provided. |
-| method | `InWrapSQX(self, value: int) -> int` | Description not yet provided. |
-| method | `InWrapSQY(self, value: int) -> int` | Description not yet provided. |
-| method | `InWrapSQZ(self, value: int) -> int` | Description not yet provided. |
-| method | `InWrapX(self, value: float) -> float` | Description not yet provided. |
-| method | `InWrapY(self, value: float) -> float` | Description not yet provided. |
-| method | `InWrapZ(self, value: float) -> float` | Description not yet provided. |
-| method | `DispWrapX(self, x1: float, x2: float) -> float` | Description not yet provided. |
-| method | `DispWrapY(self, y1: float, y2: float) -> float` | Description not yet provided. |
-| method | `DispWrapZ(self, z1: float, z2: float) -> float` | Description not yet provided. |
-| property | `counts(self) -> object` | Description not yet provided. |
-| method | `LastAgent(self, x: int, y: int=-1, z: int=-1) -> int` | Description not yet provided. |
+| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Convert lattice coordinates to the corresponding linear site index. |
+| method | `ItoX(self, i: int) -> int` | Convert a linear site index to its x coordinate. |
+| method | `ItoY(self, i: int) -> int` | Convert a linear site index to its y coordinate. |
+| method | `ItoZ(self, i: int) -> int` | Convert a linear site index to its z coordinate. |
+| method | `InWrapSQX(self, value: int) -> int` | Wrap an integer x site coordinate when x is periodic. |
+| method | `InWrapSQY(self, value: int) -> int` | Wrap an integer y site coordinate when y is periodic. |
+| method | `InWrapSQZ(self, value: int) -> int` | Wrap an integer z site coordinate when z is periodic. |
+| method | `InWrapX(self, value: float) -> float` | Wrap a continuous x coordinate when x is periodic. |
+| method | `InWrapY(self, value: float) -> float` | Wrap a continuous y coordinate when y is periodic. |
+| method | `InWrapZ(self, value: float) -> float` | Wrap a continuous z coordinate when z is periodic. |
+| method | `DispWrapX(self, x1: float, x2: float) -> float` | Return the shortest signed x displacement under periodic wrapping. |
+| method | `DispWrapY(self, y1: float, y2: float) -> float` | Return the shortest signed y displacement under periodic wrapping. |
+| method | `DispWrapZ(self, z1: float, z2: float) -> float` | Return the shortest signed z displacement under periodic wrapping. |
+| property | `counts(self) -> object` | Read-only occupancy counts for lattice sites; change occupancy through agent creation, movement, and disposal methods. |
+| method | `LastAgent(self, x: int, y: int=-1, z: int=-1) -> int` | Return the last agent handle at the specified lattice site, or the empty-site sentinel when none is present. |
 | method | `MoveSQ(self, agent: int, x: int, y: int=-1, z: int=-1)` | Move an agent to a lattice site specified by integer coordinates or a supported linear site index. |
 | method | `Move(self, agent: int, x: float, y: float=-1.0, z: float=-1.0)` | Move an agent to continuous coordinates; use `MoveSQ` when movement should target a lattice site. |
 | method | `AgentsAt(self, x: int, y: int=-1, z: int=-1)` | Return the agent handle or handles occupying the specified lattice site. |
 | method | `AgentsInRadius(self, rad: float, x: float, y: float=-1.0, z: float=-1.0, *, exclude: int=None)` | Return agents within radius `rad` of a continuous position; `exclude` can omit one agent from the results. |
-| method | `All(self, shuffle: bool=False) -> np.ndarray` | Description not yet provided. |
+| method | `All(self, shuffle: bool=False) -> np.ndarray` | Return a snapshot of living agent handles, optionally shuffled. The snapshot fixes membership, not later world state or occupancy queries. |
 
 ## Grid
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `__len__(self) -> int` | Description not yet provided. |
+| method | `__len__(self) -> int` | Return the number of lattice sites. |
 | method | `__getitem__(self, key)` | Read the value or state selected by the supported index or coordinate key. |
 | method | `__setitem__(self, key, value)` | Assign the value or state selected by the supported index or coordinate key. |
-| property | `xDim(self) -> int` | Description not yet provided. |
-| property | `yDim(self) -> int` | Description not yet provided. |
-| property | `zDim(self) -> int` | Description not yet provided. |
-| property | `nDims(self) -> int` | Description not yet provided. |
-| property | `wrapX(self) -> bool` | Description not yet provided. |
-| property | `wrapY(self) -> bool` | Description not yet provided. |
-| property | `wrapZ(self) -> bool` | Description not yet provided. |
+| property | `xDim(self) -> int` | Number of lattice sites along x. |
+| property | `yDim(self) -> int` | Number of lattice sites along y; zero when absent. |
+| property | `zDim(self) -> int` | Number of lattice sites along z; zero when absent. |
+| property | `nDims(self) -> int` | Number of spatial dimensions. |
+| property | `wrapX(self) -> bool` | Whether x uses periodic boundary wrapping. |
+| property | `wrapY(self) -> bool` | Whether y uses periodic boundary wrapping. |
+| property | `wrapZ(self) -> bool` | Whether z uses periodic boundary wrapping. |
 | method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` | Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions. |
 | method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` | Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported. |
-| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Description not yet provided. |
-| method | `ItoX(self, i: int) -> int` | Description not yet provided. |
-| method | `ItoY(self, i: int) -> int` | Description not yet provided. |
-| method | `ItoZ(self, i: int) -> int` | Description not yet provided. |
-| method | `InWrapX(self, value: int) -> int` | Description not yet provided. |
-| method | `InWrapY(self, value: int) -> int` | Description not yet provided. |
-| method | `InWrapZ(self, value: int) -> int` | Description not yet provided. |
+| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Convert lattice coordinates to a linear site index. |
+| method | `ItoX(self, i: int) -> int` | Convert a linear site index to its x coordinate. |
+| method | `ItoY(self, i: int) -> int` | Convert a linear site index to its y coordinate. |
+| method | `ItoZ(self, i: int) -> int` | Convert a linear site index to its z coordinate. |
+| method | `InWrapX(self, value: int) -> int` | Wrap an x coordinate when x is periodic; otherwise return it unchanged. |
+| method | `InWrapY(self, value: int) -> int` | Wrap a y coordinate when y is periodic; otherwise return it unchanged. |
+| method | `InWrapZ(self, value: int) -> int` | Wrap a z coordinate when z is periodic; otherwise return it unchanged. |
 
 ## PopGrid
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `__len__(self) -> int` | Description not yet provided. |
-| property | `xDim(self) -> int` | Description not yet provided. |
-| property | `yDim(self) -> int` | Description not yet provided. |
-| property | `zDim(self) -> int` | Description not yet provided. |
-| property | `nDims(self) -> int` | Description not yet provided. |
-| property | `wrapX(self) -> bool` | Description not yet provided. |
-| property | `wrapY(self) -> bool` | Description not yet provided. |
-| property | `wrapZ(self) -> bool` | Description not yet provided. |
+| method | `__len__(self) -> int` | Return the number of lattice sites. |
+| property | `xDim(self) -> int` | Number of lattice sites along x. |
+| property | `yDim(self) -> int` | Number of lattice sites along y; zero when absent. |
+| property | `zDim(self) -> int` | Number of lattice sites along z; zero when absent. |
+| property | `nDims(self) -> int` | Number of spatial dimensions. |
+| property | `wrapX(self) -> bool` | Whether x uses periodic boundary wrapping. |
+| property | `wrapY(self) -> bool` | Whether y uses periodic boundary wrapping. |
+| property | `wrapZ(self) -> bool` | Whether z uses periodic boundary wrapping. |
 | method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` | Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions. |
 | method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` | Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported. |
-| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Description not yet provided. |
-| method | `ItoX(self, i: int) -> int` | Description not yet provided. |
-| method | `ItoY(self, i: int) -> int` | Description not yet provided. |
-| method | `ItoZ(self, i: int) -> int` | Description not yet provided. |
-| method | `InWrapX(self, value: int) -> int` | Description not yet provided. |
-| method | `InWrapY(self, value: int) -> int` | Description not yet provided. |
-| method | `InWrapZ(self, value: int) -> int` | Description not yet provided. |
-| method | `__getitem__(self, key) -> int` | Description not yet provided. |
+| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Convert lattice coordinates to a linear site index. |
+| method | `ItoX(self, i: int) -> int` | Convert a linear site index to its x coordinate. |
+| method | `ItoY(self, i: int) -> int` | Convert a linear site index to its y coordinate. |
+| method | `ItoZ(self, i: int) -> int` | Convert a linear site index to its z coordinate. |
+| method | `InWrapX(self, value: int) -> int` | Wrap an x coordinate when x is periodic; otherwise return it unchanged. |
+| method | `InWrapY(self, value: int) -> int` | Wrap a y coordinate when y is periodic; otherwise return it unchanged. |
+| method | `InWrapZ(self, value: int) -> int` | Wrap a z coordinate when z is periodic; otherwise return it unchanged. |
+| method | `__getitem__(self, key) -> int` | Return the integer population count at the selected site. |
 | method | `__setitem__(self, key, value: int)` | Set the population count at the selected site immediately; this is distinct from queueing a delta with `Add()`. |
 | method | `Add(self, value: int, x: int, y: int=-1, z: int=-1)` | Queue a signed population-count delta at a site; call `Update()` to apply pending deltas. |
 | method | `Update(self)` | Apply queued population-count deltas to the current counts. |
 | method | `Reset(self)` | Clear population counts and any pending deltas. |
-| method | `GetPop(self) -> int` | Description not yet provided. |
-| method | `All(self) -> np.ndarray` | Description not yet provided. |
+| method | `GetPop(self) -> int` | Return the total population summed across all lattice sites. |
+| method | `All(self) -> np.ndarray` | Return linear indices of sites whose population count is nonzero. |
 
 ## PDEgrid
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `__len__(self) -> int` | Description not yet provided. |
-| property | `xDim(self) -> int` | Description not yet provided. |
-| property | `yDim(self) -> int` | Description not yet provided. |
-| property | `zDim(self) -> int` | Description not yet provided. |
-| property | `nDims(self) -> int` | Description not yet provided. |
-| property | `wrapX(self) -> bool` | Description not yet provided. |
-| property | `wrapY(self) -> bool` | Description not yet provided. |
-| property | `wrapZ(self) -> bool` | Description not yet provided. |
+| method | `__len__(self) -> int` | Return the number of lattice sites. |
+| property | `xDim(self) -> int` | Number of lattice sites along x. |
+| property | `yDim(self) -> int` | Number of lattice sites along y; zero when absent. |
+| property | `zDim(self) -> int` | Number of lattice sites along z; zero when absent. |
+| property | `nDims(self) -> int` | Number of spatial dimensions. |
+| property | `wrapX(self) -> bool` | Whether x uses periodic boundary wrapping. |
+| property | `wrapY(self) -> bool` | Whether y uses periodic boundary wrapping. |
+| property | `wrapZ(self) -> bool` | Whether z uses periodic boundary wrapping. |
 | method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` | Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions. |
 | method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` | Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported. |
-| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Description not yet provided. |
-| method | `ItoX(self, i: int) -> int` | Description not yet provided. |
-| method | `ItoY(self, i: int) -> int` | Description not yet provided. |
-| method | `ItoZ(self, i: int) -> int` | Description not yet provided. |
-| method | `InWrapX(self, value: int) -> int` | Description not yet provided. |
-| method | `InWrapY(self, value: int) -> int` | Description not yet provided. |
-| method | `InWrapZ(self, value: int) -> int` | Description not yet provided. |
-| method | `__getitem__(self, key) -> float` | Description not yet provided. |
+| method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Convert lattice coordinates to a linear site index. |
+| method | `ItoX(self, i: int) -> int` | Convert a linear site index to its x coordinate. |
+| method | `ItoY(self, i: int) -> int` | Convert a linear site index to its y coordinate. |
+| method | `ItoZ(self, i: int) -> int` | Convert a linear site index to its z coordinate. |
+| method | `InWrapX(self, value: int) -> int` | Wrap an x coordinate when x is periodic; otherwise return it unchanged. |
+| method | `InWrapY(self, value: int) -> int` | Wrap a y coordinate when y is periodic; otherwise return it unchanged. |
+| method | `InWrapZ(self, value: int) -> int` | Wrap a z coordinate when z is periodic; otherwise return it unchanged. |
+| method | `__getitem__(self, key) -> float` | Return the field value at the selected site. |
 | method | `__setitem__(self, key, value: float)` | Set the field value at the selected site immediately; this is distinct from queueing a change with `Add()`. |
 | method | `Add(self, value: float, x: int, y: int=-1, z: int=-1)` | Queue a field-value delta at a site; call `Update()` to apply pending changes. |
 | method | `Update(self)` | Apply queued field changes to the current field. |
 | method | `Reset(self)` | Clear the field and any pending changes. |
 | method | `SetTimeSpaceStep(self, dt: float, dx: float, dy: float=1.0, dz: float=1.0)` | Set the temporal step `dt` and spatial steps `dx`, `dy`, and `dz` used by numerical transport methods. |
-| method | `Dx(self) -> float` | Description not yet provided. |
-| method | `Dy(self) -> float` | Description not yet provided. |
-| method | `Dz(self) -> float` | Description not yet provided. |
-| method | `Dt(self) -> float` | Description not yet provided. |
+| method | `Dx(self) -> float` | Return the configured spatial step along x. |
+| method | `Dy(self) -> float` | Return the configured spatial step along y. |
+| method | `Dz(self) -> float` | Return the configured spatial step along z. |
+| method | `Dt(self) -> float` | Return the configured time step. |
 | method | `Diffusion(self, rateConstant: float, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` | Apply scalar-coefficient diffusion using the configured grid spacing and optional per-face boundary conditions. |
 | method | `DiffusionMask(self, rateConstant: float, mask=None)` | Apply diffusion only across interfaces allowed by `mask`. |
 | method | `DiffusionField(self, rateConstants, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` | Apply diffusion with spatially varying rate constants and optional boundary conditions. |
@@ -198,17 +193,17 @@ NewPDEgrid(dimensions)
 StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False) -> tuple[Pix, PixWindow]
 ```
 
-Description not yet provided.
+Create a pixel-based visualization window and its writable pixel buffer.
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `IsOpen(self) -> bool` | Description not yet provided. |
-| method | `Update(self)` | Description not yet provided. |
-| method | `Save(self, path: str, block=False)` | Description not yet provided. |
-| method | `StartGif(self, path: str, delay=100)` | Description not yet provided. |
-| method | `AddGifFrame(self, block=False)` | Description not yet provided. |
-| method | `StopGif(self)` | Description not yet provided. |
-| method | `Close(self)` | Description not yet provided. |
+| method | `IsOpen(self) -> bool` | Return whether the window is currently open. |
+| method | `Update(self)` | Publish the current pixel buffer as a frame. |
+| method | `Save(self, path: str, block=False)` | Save the current pixel buffer to an image file; block controls whether to wait for completion. |
+| method | `StartGif(self, path: str, delay=100)` | Start recording frames to a GIF at path with the requested frame delay in milliseconds. |
+| method | `AddGifFrame(self, block=False)` | Append the current pixel buffer as a GIF frame; optionally wait for the frame operation to finish. |
+| method | `StopGif(self)` | Finish GIF recording and write the accumulated animation. |
+| method | `Close(self)` | Close the window and release its rendering resources. |
 
 ## OpenGLWindow visualization
 
@@ -216,25 +211,25 @@ Description not yet provided.
 StartOpenGLWindow(xDim, yDim, zDim=None, width=800, height=800, title='PAL', headless=False) -> tuple[OpenGLDraw, OpenGLWindow]
 ```
 
-Description not yet provided.
+Create an OpenGL visualization window for 2D or 3D drawing.
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `Update(self)` | Description not yet provided. |
-| method | `IsOpen(self) -> bool` | Description not yet provided. |
-| method | `StartGif(self, path, delay=100)` | Description not yet provided. |
-| method | `AddGifFrame(self, block=False, timeout=30)` | Description not yet provided. |
-| method | `StopGif(self, timeout=30)` | Description not yet provided. |
-| method | `Circle(self, rad, color, x, y, z=None)` | Description not yet provided. |
-| method | `Box(self, xLen, color, x, y, z=None, yLen=None, zLen=None)` | Description not yet provided. |
-| method | `BoxSQ(self, color, x, y, z=None)` | Description not yet provided. |
-| method | `Line(self, width, color, x1, y1, x2, y2, z1=None, z2=None)` | Description not yet provided. |
-| method | `Borders(self, width, color)` | Description not yet provided. |
-| method | `Camera(self, x, y, z, yaw=None, pitch=None)` | Description not yet provided. |
-| method | `Clear(self)` | Description not yet provided. |
-| method | `Background(self, color)` | Description not yet provided. |
-| method | `Save(self, path: str, block=False)` | Description not yet provided. |
-| method | `Close(self)` | Description not yet provided. |
+| method | `Update(self)` | Publish the accumulated drawing primitives as the next frame. |
+| method | `IsOpen(self) -> bool` | Return whether the window is currently open. |
+| method | `StartGif(self, path, delay=100)` | Start recording rendered frames to a GIF with the requested frame delay in milliseconds. |
+| method | `AddGifFrame(self, block=False, timeout=30)` | Capture the current scene as a GIF frame; optionally wait for completion. |
+| method | `StopGif(self, timeout=30)` | Finish GIF recording and write the animation. |
+| method | `Circle(self, rad, color, x, y, z=None)` | Add a circle primitive to the current frame. |
+| method | `Box(self, xLen, color, x, y, z=None, yLen=None, zLen=None)` | Add a box primitive to the current frame; side lengths may be specified independently. |
+| method | `BoxSQ(self, color, x, y, z=None)` | Add a unit box centered on the lattice site (x, y, z). |
+| method | `Line(self, width, color, x1, y1, x2, y2, z1=None, z2=None)` | Add a line segment to the current frame. |
+| method | `Borders(self, width, color)` | Draw persistent outline borders around the model domain. |
+| method | `Camera(self, x, y, z, yaw=None, pitch=None)` | Set the 3D camera position and optional yaw/pitch angles. |
+| method | `Clear(self)` | Clear accumulated drawing primitives for the next frame. |
+| method | `Background(self, color)` | Set the background color used when rendering frames. |
+| method | `Save(self, path: str, block=False)` | Save the currently published scene to an image file; block controls whether to wait for completion. |
+| method | `Close(self)` | Close the window and release rendering resources. |
 
 The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](API_GUIDE.pdf) for which object to use in Python and compiled drawing code.
 
@@ -242,23 +237,23 @@ The `OpenGLWindow` table follows its source Protocol, which also contains method
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `__setitem__(self, key, color)` | Description not yet provided. |
-| method | `Xdim(self)` | Description not yet provided. |
-| method | `Ydim(self)` | Description not yet provided. |
-| method | `ToI(self, x, y)` | Description not yet provided. |
-| method | `ItoX(self, i)` | Description not yet provided. |
-| method | `ItoY(self, i)` | Description not yet provided. |
-| method | `__len__(self)` | Description not yet provided. |
+| method | `__setitem__(self, key, color)` | Write a packed RGB color to a pixel by (x, y) coordinates or a linear pixel index. |
+| method | `Xdim(self)` | Return the pixel buffer width. |
+| method | `Ydim(self)` | Return the pixel buffer height. |
+| method | `ToI(self, x, y)` | Convert pixel coordinates (x, y) to a linear index. |
+| method | `ItoX(self, i)` | Convert a linear pixel index to its x coordinate. |
+| method | `ItoY(self, i)` | Convert a linear pixel index to its y coordinate. |
+| method | `__len__(self)` | Return the total number of pixels. |
 
 ## OpenGLDraw primitive collector
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
-| method | `Clear(self)` | Description not yet provided. |
-| method | `Circle(self, rad, color, x, y, z=0.0)` | Description not yet provided. |
-| method | `Box(self, xLen, color, x, y, z=0.0, yLen=-1.0, zLen=-1.0)` | Description not yet provided. |
-| method | `BoxSQ(self, color, x, y, z=0.0)` | Description not yet provided. |
-| method | `Line(self, width, color, x1, y1, x2, y2, z1=0.0, z2=0.0)` | Description not yet provided. |
+| method | `Clear(self)` | Discard all primitives accumulated for the next frame. |
+| method | `Circle(self, rad, color, x, y, z=0.0)` | Add a circle centered at (x, y, z) with radius rad and color. |
+| method | `Box(self, xLen, color, x, y, z=0.0, yLen=-1.0, zLen=-1.0)` | Add a box centered at (x, y, z); negative side lengths default to xLen. |
+| method | `BoxSQ(self, color, x, y, z=0.0)` | Add a unit box centered on lattice site (x, y, z). |
+| method | `Line(self, width, color, x1, y1, x2, y2, z1=0.0, z2=0.0)` | Add a line segment between endpoints with the requested width and color. |
 
 ## Scope and validation
 
