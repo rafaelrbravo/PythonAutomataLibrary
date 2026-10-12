@@ -91,7 +91,7 @@ def _api_entries():
                 groups.append((title, rows))
             title, rows = line[3:], []
         elif line.startswith("| ") and "`" in line:
-            cells = [part.strip() for part in re.split(r"(?<!\\\\)\\|", line.strip().strip("|"))]
+            cells = [part.strip() for part in line.strip().strip("|").split("|")]
             signature = next((c.strip("`") for c in cells[:-1] if c.startswith("`")), None)
             if signature and len(cells) >= 2:
                 rows.append((signature, cells[-1].replace("\\\\|", "|")))
@@ -110,7 +110,7 @@ def _md():
         for sig, description in rows:
             lines.append("- `" + sig + "`: " + description)
         lines.append("")
-    return "\\n".join(lines).rstrip() + "\\n"
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _md_markup(s, heading=False):
