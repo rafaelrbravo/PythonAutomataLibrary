@@ -36,6 +36,7 @@ try:
             self.count=0
 
         def Clear(self):
+            """Discard all primitives accumulated for the next frame."""
             self.count=0
 
         def _Next(self):
@@ -45,11 +46,13 @@ try:
             return i
 
         def Circle(self,rad,color,x,y,z=0.0):
+            """Add a circle centered at (x, y, z) with radius rad and color."""
             i=self._Next()
             self.kind[i]=1;self.color[i]=color
             self.data[i,0]=rad;self.data[i,1]=x;self.data[i,2]=y;self.data[i,3]=z
 
         def Box(self,xLen,color,x,y,z=0.0,yLen=-1.0,zLen=-1.0):
+            """Add a box centered at (x, y, z); negative side lengths default to xLen."""
             if yLen<0: yLen=xLen
             if zLen<0: zLen=xLen
             i=self._Next()
@@ -64,9 +67,11 @@ try:
             self.data[i,3]=x;self.data[i,4]=y;self.data[i,5]=z
 
         def BoxSQ(self,color,x,y,z=0.0):
+            """Add a unit box centered on lattice site (x, y, z)."""
             self.Box(1.0,color,x+0.5,y+0.5,z+0.5,1.0,1.0)
 
         def Line(self,width,color,x1,y1,x2,y2,z1=0.0,z2=0.0):
+            """Add a line segment between endpoints with the requested width and color."""
             i=self._Next()
             self.kind[i]=3;self.color[i]=color
             self.data[i,0]=width
