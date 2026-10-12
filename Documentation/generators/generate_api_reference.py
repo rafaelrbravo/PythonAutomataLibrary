@@ -36,14 +36,15 @@ def render(source):
         "Regenerate with `python Documentation/generators/generate_api_reference.py`; "
         "use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; "
         "consult [API Guide](API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.",
-        "", "## Factories and utilities", "", "```python",
+        "", "## Factories and utilities", "",
+        "| Function | Description |", "| --- | --- |",
     ]
     for name in FACTORIES:
-        lines.append(signature(functions[name]))
         description = ast.get_docstring(functions[name])
-        if description:
-            lines.append(f"# {description}")
-    lines.extend(["```", ""])
+        if not description:
+            raise ValueError(f"Missing public API docstring: {name}")
+        lines.append(f"| `{signature(functions[name])}` | {description.replace(chr(124), chr(92) + chr(124))} |")
+    lines.append("")
     for name in PROTOCOLS:
         cls = classes["_" + name + "Protocol"]
         lines.extend([f"## {name}", "", "| Kind | Declaration | Description |", "| --- | --- | --- |"])
@@ -53,7 +54,9 @@ def render(source):
             kind = "property" if any(isinstance(d, ast.Name) and d.id == "property"
                                      for d in member.decorator_list) else "method"
             sig = signature(member).replace("|", "\\|")
-            description = ast.get_docstring(member) or "Description not yet provided."
+            description = ast.get_docstring(member)
+            if not description:
+                raise ValueError(f"Missing public API docstring: {name}.{member.name}")
             description = description.replace("|", "\\|").replace("\\n", " ")
             lines.append(f"| {kind} | `{sig}` | {description} |")
         lines.append("")
@@ -63,14 +66,16 @@ def render(source):
         visual_classes = {n.name: n for n in visual_tree.body if isinstance(n, ast.ClassDef)}
         lines.extend([f"## {protocol} visualization", "", "```python",
                       signature(visual_functions[factory]), "```", "",
-                      (ast.get_docstring(visual_functions[factory]) or "Description not yet provided."), "",
+                      (ast.get_docstring(visual_functions[factory]) or ""), "",
                       "| Kind | Declaration | Description |", "| --- | --- | --- |"])
         seen = set()
         for member in visual_classes[protocol].body:
             if not isinstance(member, ast.FunctionDef) or member.name.startswith("_") or member.name in seen:
                 continue
             seen.add(member.name)
-            description = ast.get_docstring(member) or "Description not yet provided."
+            description = ast.get_docstring(member)
+            if not description:
+                raise ValueError(f"Missing visualization API docstring: {protocol}.{member.name}")
             description = description.replace("|", "\\|").replace("\\n", " ")
             lines.append(f"| method | `{signature(member).replace('|', chr(92) + '|')}` | {description} |")
         lines.append("")
@@ -81,7 +86,9 @@ def render(source):
     for member in pix_class.body:
         if isinstance(member, ast.FunctionDef) and (not member.name.startswith("_") or
                 member.name in ("__setitem__", "__len__")):
-            description = ast.get_docstring(member) or "Description not yet provided."
+            description = ast.get_docstring(member)
+            if not description:
+                raise ValueError(f"Missing Pix API docstring: Pix.{member.name}")
             description = description.replace("|", "\\|").replace("\\n", " ")
             lines.append(f"| method | `{signature(member)}` | {description} |")
     lines.append("")
