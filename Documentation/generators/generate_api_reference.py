@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "NativeCore.py"
 MD_TARGET = ROOT / "Documentation" / "API_REFERENCE.md"
 PDF_TARGET = ROOT / "Documentation" / "API_REFERENCE.pdf"
-FACTORIES = ("FastMode", "NewIList", "MooreHood", "VonNeumannHood", "CircleHood",
+FACTORIES = ("FastMode", "Seed", "Random", "RandInt", "AwaitWindows", "ColorScale",
+             "NewIList", "MooreHood", "VonNeumannHood", "CircleHood",
              "NewMultinomial", "NewGrid", "NewAgentGrid", "NewPopGrid", "NewPDEgrid")
 PROTOCOLS = ("Multinomial", "IList", "AgentGrid", "Grid", "PopGrid", "PDEgrid")
 VISUALIZATION = (("PixWindow.py", "PixWindow", "StartPixWindow"),
