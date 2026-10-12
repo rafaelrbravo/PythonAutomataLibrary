@@ -19,12 +19,24 @@ class Pix:
         """Write a packed RGB color to a pixel by (x, y) coordinates or a linear pixel index."""
         if isinstance(key,tuple): self._array[key]=color
         else: self._flat[key]=color
-    def Xdim(self): return self._array.shape[0]
-    def Ydim(self): return self._array.shape[1]
-    def ToI(self,x,y): return x*self._array.shape[1]+y
-    def ItoX(self,i): return i//self._array.shape[1]
-    def ItoY(self,i): return i%self._array.shape[1]
-    def __len__(self): return self._array.shape[0]*self._array.shape[1]
+    def Xdim(self):
+        """Return the pixel buffer width."""
+        return self._array.shape[0]
+    def Ydim(self):
+        """Return the pixel buffer height."""
+        return self._array.shape[1]
+    def ToI(self,x,y):
+        """Convert pixel coordinates (x, y) to a linear index."""
+        return x*self._array.shape[1]+y
+    def ItoX(self,i):
+        """Convert a linear pixel index to its x coordinate."""
+        return i//self._array.shape[1]
+    def ItoY(self,i):
+        """Convert a linear pixel index to its y coordinate."""
+        return i%self._array.shape[1]
+    def __len__(self):
+        """Return the total number of pixels."""
+        return self._array.shape[0]*self._array.shape[1]
 
 
 class _PixSafe(Pix):
