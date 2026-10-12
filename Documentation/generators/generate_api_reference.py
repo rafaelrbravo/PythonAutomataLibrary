@@ -65,9 +65,12 @@ def render(source):
         visual_tree = ast.parse((ROOT / filename).read_text(encoding="utf-8"))
         visual_functions = {n.name: n for n in visual_tree.body if isinstance(n, ast.FunctionDef)}
         visual_classes = {n.name: n for n in visual_tree.body if isinstance(n, ast.ClassDef)}
+        factory_description = ast.get_docstring(visual_functions[factory])
+        if not factory_description:
+            raise ValueError(f"Missing visualization factory docstring: {factory}")
         lines.extend([f"## {protocol} visualization", "", "```python",
                       signature(visual_functions[factory]), "```", "",
-                      (ast.get_docstring(visual_functions[factory]) or ""), "",
+                      factory_description, "",
                       "| Kind | Declaration | Description |", "| --- | --- | --- |"])
         seen = set()
         for member in visual_classes[protocol].body:
