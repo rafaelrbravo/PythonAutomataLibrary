@@ -147,6 +147,7 @@ class OpenGLWindow(Protocol):
         raise TimeoutError(f"timed out waiting for OpenGLWindow {op}")
 
     def StartGif(self,path,delay=100):
+        """Start recording rendered frames to a GIF with the requested frame delay in milliseconds."""
         if not self.IsOpen(): raise Exception("cannot start GIF on a closed OpenGLWindow")
         if self._gifActive: raise Exception("an OpenGLWindow GIF is already active")
         if not isinstance(path,(str,Path)): raise Exception(f"GIF path must be a string or Path path:{path}")
@@ -159,6 +160,7 @@ class OpenGLWindow(Protocol):
         return self
 
     def AddGifFrame(self,block=False,timeout=30):
+        """Capture the current scene as a GIF frame; optionally wait for completion."""
         if not self.IsOpen(): raise Exception("cannot add GIF frame from a closed OpenGLWindow")
         if not self._gifActive: raise Exception("StartGif must be called before AddGifFrame")
         if not isinstance(block,bool): raise Exception(f"block must be bool block:{block}")
@@ -171,6 +173,7 @@ class OpenGLWindow(Protocol):
         return self
 
     def StopGif(self,timeout=30):
+        """Finish GIF recording and write the animation."""
         if not self._gifActive: raise Exception("no OpenGLWindow GIF is active")
         _Finite('timeout',timeout)
         if timeout<=0: raise Exception(f"timeout must be positive timeout:{timeout}")
