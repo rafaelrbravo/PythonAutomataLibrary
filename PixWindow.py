@@ -169,7 +169,9 @@ def _olPixLen(pix):
 
 
 class PixWindow(Protocol):
-    def IsOpen(self) -> bool: ...
+    def IsOpen(self) -> bool:
+        """Return whether the window is currently open."""
+        ...
     def Update(self):
         """Publish the current pixel buffer as a frame."""
         ...
