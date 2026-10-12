@@ -40,17 +40,22 @@ def render(source):
     ]
     for name in FACTORIES:
         lines.append(signature(functions[name]))
+        description = ast.get_docstring(functions[name])
+        if description:
+            lines.append(f"# {description}")
     lines.extend(["```", ""])
     for name in PROTOCOLS:
         cls = classes["_" + name + "Protocol"]
-        lines.extend([f"## {name}", "", "| Kind | Declaration |", "| --- | --- |"])
+        lines.extend([f"## {name}", "", "| Kind | Declaration | Description |", "| --- | --- | --- |"])
         for member in cls.body:
             if not isinstance(member, ast.FunctionDef):
                 continue
             kind = "property" if any(isinstance(d, ast.Name) and d.id == "property"
                                      for d in member.decorator_list) else "method"
             sig = signature(member).replace("|", "\\|")
-            lines.append(f"| {kind} | `{sig}` |")
+            description = ast.get_docstring(member) or "Description not yet provided."
+            description = description.replace("|", "\\|").replace("\\n", " ")
+            lines.append(f"| {kind} | `{sig}` | {description} |")
         lines.append("")
     for filename, protocol, factory in VISUALIZATION:
         visual_tree = ast.parse((ROOT / filename).read_text(encoding="utf-8"))
@@ -58,32 +63,39 @@ def render(source):
         visual_classes = {n.name: n for n in visual_tree.body if isinstance(n, ast.ClassDef)}
         lines.extend([f"## {protocol} visualization", "", "```python",
                       signature(visual_functions[factory]), "```", "",
-                      "| Kind | Declaration |", "| --- | --- |"])
+                      (ast.get_docstring(visual_functions[factory]) or "Description not yet provided."), "",
+                      "| Kind | Declaration | Description |", "| --- | --- | --- |"])
         seen = set()
         for member in visual_classes[protocol].body:
             if not isinstance(member, ast.FunctionDef) or member.name.startswith("_") or member.name in seen:
                 continue
             seen.add(member.name)
-            lines.append(f"| method | `{signature(member).replace('|', chr(92) + '|')}` |")
+            description = ast.get_docstring(member) or "Description not yet provided."
+            description = description.replace("|", "\\|").replace("\\n", " ")
+            lines.append(f"| method | `{signature(member).replace('|', chr(92) + '|')}` | {description} |")
         lines.append("")
     pix_tree = ast.parse((ROOT / "PixWindow.py").read_text(encoding="utf-8"))
     pix_class = next(n for n in pix_tree.body if isinstance(n, ast.ClassDef) and n.name == "Pix")
     lines.extend(["The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](API_GUIDE.pdf) for which object to use in Python and compiled drawing code.", ""])
-    lines.extend(["## Pix drawing buffer", "", "| Kind | Declaration |", "| --- | --- |"])
+    lines.extend(["## Pix drawing buffer", "", "| Kind | Declaration | Description |", "| --- | --- | --- |"])
     for member in pix_class.body:
         if isinstance(member, ast.FunctionDef) and (not member.name.startswith("_") or
                 member.name in ("__setitem__", "__len__")):
-            lines.append(f"| method | `{signature(member)}` |")
+            description = ast.get_docstring(member) or "Description not yet provided."
+            description = description.replace("|", "\\|").replace("\\n", " ")
+            lines.append(f"| method | `{signature(member)}` | {description} |")
     lines.append("")
     gl_tree = ast.parse((ROOT / "OpenGLWindow.py").read_text(encoding="utf-8"))
     draw_classes = [n for n in ast.walk(gl_tree) if isinstance(n, ast.ClassDef) and n.name == "OpenGLDraw"]
     if len(draw_classes) != 1:
         raise ValueError("Expected exactly one OpenGLDraw declaration")
-    lines.extend(["## OpenGLDraw primitive collector", "", "| Kind | Declaration |", "| --- | --- |"])
+    lines.extend(["## OpenGLDraw primitive collector", "", "| Kind | Declaration | Description |", "| --- | --- | --- |"])
     for member in draw_classes[0].body:
         if isinstance(member, ast.FunctionDef) and (
                 member.name in ("Clear", "Circle", "Box", "BoxSQ", "Line")):
-            lines.append(f"| method | `{signature(member)}` |")
+            description = ast.get_docstring(member) or "Description not yet provided."
+            description = description.replace("|", "\\|").replace("\\n", " ")
+            lines.append(f"| method | `{signature(member)}` | {description} |")
     lines.append("")
     lines.extend([
         "## Scope and validation", "",
