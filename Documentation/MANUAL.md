@@ -285,7 +285,83 @@ Safe and fast modes are tested in separate processes because mode selection is l
 
 Integrated examples then exercise combinations of components under realistic control flow. No single test layer is sufficient: focused tests localize defects, parity tests catch execution-path differences, invariants check mathematical properties, and full examples reveal integration problems.
 
-## 12. Performance: measure the right thing
+## 12. Subsystem design choices
+
+The previous chapter explains cross-cutting principles. This chapter follows those principles into individual subsystems and describes the practical consequences of their contracts.
+
+### 12.1 Grid: typed site state and explicit indexing
+
+A `Grid` represents one typed value per lattice site. The element type is chosen at construction, which makes the intended state representation explicit and allows the implementation to use compact native storage rather than a Python object at every site. Use a type that matches the model's meaning: integer labels for categories, Boolean values for masks, and floating-point values for continuous attributes.
+
+Indexing supports both linear site indices and coordinate forms, but these are different views of the same lattice. Use coordinate indexing when the equation is naturally spatial; use a linear index when iterating sites or passing a site identifier between APIs. In more than one dimension, coordinate tuples are often easier to review because the axes remain visible. The conversions `ToI` and `ItoX`/`ItoY`/`ItoZ` are explicit so the mapping can be tested rather than guessed.
+
+Grid slices are detached NumPy copies, not live native-backed views. This avoids pretending that a slice is a mutable view into storage when it is actually materialized for Python. Read a slice as a snapshot, then assign the result back if changes should affect the Grid. In safe mode, assignment validates relevant type, range, and nonfinite conditions; do not rely on fast mode to diagnose invalid values.
+
+### 12.2 AgentGrid: handles, occupancy, and mutation
+
+An agent handle is distinct from its position. The handle identifies the living agent; position determines where it is located. This separation lets a model retain identity while an agent moves, and lets queries report handles without copying whole Python objects. The model remains responsible for the meaning and lifecycle of any additional per-agent state.
+
+Stackability is an explicit constructor choice because allowing multiple agents at a site changes the model's state space and affects occupancy logic. A nonstackable grid rejects a second occupant in safe mode. Do not enable stackability merely to suppress an error: decide whether multiple occupancy is biologically or physically meaningful.
+
+The distinction between `All()` and a live iteration matters for mutation. `All()` returns a snapshot of handles and is therefore the appropriate pattern when the loop can create or dispose agents. A snapshot freezes membership, not agent state or grid occupancy. Each later query observes current occupancy. If newborns must not act until the next timestep, build the snapshot before processing the timestep; if all agents must compute from the same old world, snapshot the required state as well.
+
+The `counts` property is a read-only occupancy query view, not a writable alternate path to agent state. Changing a count directly would bypass agent handles, placement rules, and lifecycle bookkeeping. Query occupancy through this view; create, move, and dispose agents through the AgentGrid API.
+
+### 12.3 PopGrid: counts instead of individual objects
+
+A `PopGrid` stores integer population counts per site. It is intended for populations whose members are interchangeable for the questions being asked. That can greatly reduce storage and update overhead compared with representing every individual as an agent, but it removes individual-level history and identity.
+
+Its `Add` operation queues a delta; `Update` applies pending changes; `Reset` clears current state and pending deltas. The explicit delta buffer makes it possible to compute a set of changes before committing them. For a movement event from site A to site B, queue a negative delta at A and a positive delta at B, then update once. If the model reads current counts during this phase, it sees the pre-commit counts, which helps make the update independent of visitation order.
+
+The `capacity` option is a per-site cap. It is not the total population limit. `All()` returns the indices of nonzero sites, not the counts themselves; read the count at each returned index when the value is needed. Keeping these semantics distinct avoids confusing the set of occupied sites with the population data stored there.
+
+### 12.4 PDEgrid: numerical operations with explicit assumptions
+
+A `PDEgrid` stores a scalar field on a lattice and supplies numerical operations for changing it. The library provides families of diffusion and advection routines because there is no single transport method that is best for every geometry and numerical regime. Cartesian, interface-based, masked, ADI, and radial methods encode different assumptions about dimensionality, geometry, boundaries, and update strategy. Choose a method because it matches the problem, not because its name sounds more sophisticated.
+
+Call `SetTimeSpaceStep` to specify the time and spatial scales used by transport methods. These values are part of the discretized equation. A timestep that is too large can produce unstable or inaccurate results even if every API call is valid. Boundary conditions likewise belong to the mathematical problem: fixed-value, face-dependent, and periodic boundaries can produce different solutions.
+
+PDE updates use pending changes and `Update()` to separate the calculation from committing the result. This supports a consistent old-state/new-state distinction, but does not automatically prove stability, positivity, or conservation for every scheme and parameter choice. Test the method on a known field, verify the boundary behavior, and check convergence as the timestep and grid spacing change.
+
+### 12.5 IList: reusable collections for compiled workflows
+
+`IList` is a PAL-managed integer list for workflows that need to retain, shuffle, or compose collections of indices or handles, including inside compiled code. It can be useful when building a list of empty neighboring sites before choosing one for reproduction, or when a query result needs to survive beyond a single iteration.
+
+`All()` returns a detached copy; `Iter()` avoids creating that copy when the caller only needs to traverse the current list. That is a deliberate distinction between a convenient independent result and a lower-overhead traversal. Do not assume a returned copy is a live view. Clear and reuse a list when repeated allocation would otherwise become part of the timestep cost, while ensuring its contents are reset at the right point in the model.
+
+### 12.6 Randomness: one explicit PAL stream
+
+PAL exposes `Seed`, `Random`, and `RandInt` and provides a multinomial sampler so model code can use a consistent PAL random stream in Python and compiled code. The stream is call-order dependent: each draw advances the shared stream, so adding a draw in one branch can change all later random outcomes. Reproducibility therefore requires more than choosing a seed; it requires matching initial state, parameters, and random-call order.
+
+Use PAL's RNG functions when a model should share one reproducible stream across PAL calls. External RNGs have independent state and need their own seed or checkpoint handling. A PAL object checkpoint does not by itself serialize the random stream, so exact stochastic continuation requires separately preserving or reconstructing random state. Do not claim that a seed alone guarantees identical outcomes after changing the algorithm.
+
+### 12.7 Multinomial sampling: configuration versus sample state
+
+`NewMultinomial` constructs a sampler for repeated multinomial or binomial sampling. Constructing one from another sampler reuses solver configuration, not the other sampler's current sample state. This separation allows a model to share sampling setup without implying that two sampler objects are the same evolving object. The safety mode must match, because PAL's mode is process-wide and sampler behavior belongs to that contract.
+
+### 12.8 Visualization: simulation state versus presentation
+
+PAL separates model state from rendering. A `PixWindow` gives the model a writable pixel buffer; it is appropriate when the simulation naturally maps one site or quantity to a pixel. An `OpenGLWindow` provides geometric drawing for 2D/3D scenes. These are different presentation abstractions, not two names for the same renderer.
+
+For pixel rendering, write colors into the buffer and call `Update()` to publish the frame. For OpenGL, use the drawing interface to collect primitives and then update the window. In both cases, drawing frequency is a model-control decision: rendering every timestep is convenient for inspection but can dominate runtime, so long runs may draw only selected steps. Keep drawing outside the computational kernel unless a specific compiled drawing API is intended.
+
+Headless rendering exists so output can be generated and tested without a visible interactive window, but it still depends on the relevant image or graphics backend. A headless test validates the supported off-screen path; it cannot fully validate window placement, user input, or a display server's lifecycle.
+
+### 12.9 Source-aware diagnostics and AST transformation
+
+PAL's `njit` interface transforms selected PAL constructs before Numba compiles the function. For example, neighborhood and Box iteration can be expanded in compiled code, and annotated arguments can receive source-aware diagnostics in safe mode. This helps preserve a modeler's high-level expression of a neighborhood loop while making the repeated operations suitable for compilation.
+
+The transformation layer is also a reason to test examples and edge cases rather than assuming that valid Python syntax guarantees identical compiled semantics. The AST transformation, wrapper signatures, native core, and Numba typing rules all participate in the final behavior. When an error appears only in compiled mode, reduce it to a minimal function and compare the public behavior in Python and compiled execution.
+
+Source-line diagnostics depend on sufficient type information, including annotations for relevant PAL arguments. Unannotated arguments do not promise the same diagnostics. Treat annotations as part of writing clear compiled model code, not as a guarantee that every error can be attributed to an exact source expression.
+
+### 12.10 Why the public API and implementation are tested together
+
+PAL's public API is intended to feel coherent across Python and `@pal.njit`, but the two paths have different execution machinery. The Python wrapper may validate an argument before calling native code, while the compiled wrapper may need a Numba-compatible overload and may use different diagnostics. Both must still agree on the public result and supported inputs.
+
+This is why the project uses API coverage inventories, Python/compiled parity tests, integrated examples, and safe/fast test runs. A type declaration or docstring is not sufficient evidence if runtime behavior disagrees. Conversely, a one-off implementation detail should not be elevated to a public promise unless the tests and documentation support it. When changing a contract, update the implementation, declarations, generated reference, manual, examples, and tests as one coherent change.
+
+## 13. Performance: measure the right thing
 
 ### 12.1 Cold compilation is not steady-state runtime
 
@@ -305,7 +381,7 @@ Fast mode can reduce selected validation overhead; it cannot eliminate the funda
 
 Do not optimize by removing a check merely because it appears in a profile. First establish that the check is responsible for a meaningful fraction of runtime, that the faster behavior is safe for the intended workload, and that tests cover the affected contract.
 
-## 13. Validation: prove the model, not just the program
+## 14. Validation: prove the model, not just the program
 
 ### 13.1 Start with a hand-calculable case
 
@@ -325,7 +401,7 @@ Safe-mode checks and passing unit tests show that operations respect tested cont
 
 Document assumptions alongside the model: whether agents update sequentially or synchronously, whether boundaries are reflecting, fixed, or periodic, whether rates are per unit time or per step, and whether counts or fields represent densities or totals. These assumptions determine what the simulation means.
 
-## 14. Where to go next
+## 15. Where to go next
 
 Use the [Cheatsheet](CHEATSHEET.pdf) for short code patterns, the [API Guide](API_GUIDE.pdf) for behavioral contracts, and the generated [API Reference](API_REFERENCE.pdf) for current signatures. `Examples/` contains complete models; the [Testing guide](../Testing/README.md) describes regression coverage and how to run the suite.
 
