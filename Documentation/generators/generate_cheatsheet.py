@@ -1,6 +1,6 @@
 """Generate PAL CHEATSHEET.md and CHEATSHEET.pdf from one compact definition.
 
-The PDF uses a readable two-column, multi-page layout generated from the same
+The PDF uses a readable three-column, single-page landscape layout generated from the same
 structured content as the Markdown cheatsheet.
 
 Usage: python Documentation/generators/generate_cheatsheet.py [--check]
@@ -9,7 +9,7 @@ import argparse, html, re
 from io import BytesIO
 from pathlib import Path
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
+from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.units import inch
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph
@@ -108,35 +108,106 @@ def _markup(s, heading=False):
     return s
 
 
-def _build_pdf(body_font):
-    buf=BytesIO(); pw,ph=letter; margin=.38*inch; header=.34*inch
-    usable=ph-2*margin-header
-    gutter=.22*inch; col_w=(pw-2*margin-gutter)/2
-    frames=[Frame(margin,margin,col_w,usable,leftPadding=5,rightPadding=5,topPadding=2,bottomPadding=2), Frame(margin+col_w+gutter,margin,col_w,usable,leftPadding=5,rightPadding=5,topPadding=2,bottomPadding=2)]
-    def header_fn(canvas,doc):
-        canvas.saveState(); canvas.setFont("Helvetica-Bold",16); canvas.drawString(margin,ph-margin-9,TITLE)
-        canvas.setStrokeColor(colors.HexColor("#888888")); canvas.setLineWidth(.5); canvas.line(margin,ph-margin-14,pw-margin,ph-margin-14); canvas.restoreState()
-    intro=ParagraphStyle("intro",fontName="Helvetica",fontSize=body_font+.25,leading=(body_font+.25)*1.12,spaceAfter=3)
-    heading=ParagraphStyle("heading",fontName="Helvetica-Bold",fontSize=body_font+1.4,leading=(body_font+1.4)*1.15,spaceBefore=3.0,spaceAfter=3.0,borderColor=colors.HexColor("#888888"),borderWidth=.55,borderPadding=3,backColor=colors.HexColor("#F7F7F7"),leftIndent=0)
-    entry=ParagraphStyle("entry",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=.9,leftIndent=7,firstLineIndent=-7)
-    box=ParagraphStyle("box",fontName="Helvetica",fontSize=body_font,leading=body_font*1.10,spaceAfter=2.5,backColor=colors.HexColor("#F4F4F4"),borderPadding=3)
-    story=[Paragraph("<b>Conventions</b><br/>" + _markup(INTRO + " " + CONVENTIONS),box)]
-    for section_i,(title,entries) in enumerate(SECTIONS):
-        items=[Paragraph(f"{_markup(k, heading=True)}: {_markup(d, heading=(k in ('Properties', 'Indexing')))}",entry) for k,d in entries]
-        story.append(Paragraph(title,heading))
-        story.extend(items)
-    story.append(Paragraph(f"<b>{_markup(FOOTER)}</b>",intro))
-    doc=BaseDocTemplate(buf,pagesize=letter,leftMargin=margin,rightMargin=margin,topMargin=margin,bottomMargin=margin,invariant=1)
-    doc.addPageTemplates(PageTemplate(id="main",frames=frames,onPage=header_fn)); doc.build(story)
+def _build_pdf(body_font=8.0):
+    """Render a deliberately selective one-page quick-reference; Markdown retains all entries."""
+    buf = BytesIO()
+    pw, ph = landscape(letter)
+    margin = .30 * inch
+    header = .32 * inch
+    gutter = .14 * inch
+    col_w = (pw - 2 * margin - 2 * gutter) / 3
+    usable = ph - 2 * margin - header
+    frames = [Frame(margin + i * (col_w + gutter), margin, col_w, usable,
+                    leftPadding=3, rightPadding=3, topPadding=1, bottomPadding=1)
+              for i in range(3)]
+
+    def header_fn(canvas, doc):
+        canvas.saveState()
+        canvas.setFont("Helvetica-Bold", 13)
+        canvas.drawString(margin, ph - margin - 8, TITLE)
+        canvas.setFont("Helvetica", 7)
+        canvas.drawRightString(pw - margin, ph - margin - 7, "Full details: API Guide · API Reference")
+        canvas.setStrokeColor(colors.HexColor("#888888"))
+        canvas.line(margin, ph - margin - 13, pw - margin, ph - margin - 13)
+        canvas.restoreState()
+
+    heading = ParagraphStyle("heading", fontName="Helvetica-Bold", fontSize=9,
+                             leading=10, spaceBefore=4, spaceAfter=2,
+                             backColor=colors.HexColor("#F1F1F1"), borderPadding=2)
+    entry = ParagraphStyle("entry", fontName="Helvetica", fontSize=body_font,
+                           leading=body_font * 1.13, spaceAfter=1.5,
+                           leftIndent=5, firstLineIndent=-5)
+    intro = ParagraphStyle("intro", fontName="Helvetica", fontSize=body_font,
+                           leading=body_font * 1.13, spaceAfter=3)
+
+    # The printable sheet is intentionally selective. The Markdown is exhaustive.
+    # Use short descriptions instead of compressing the complete prose into tiny type.
+    selected = [
+        ("Create state", [
+            ("NewGrid", "pal.NewGrid(dims,dtype): values at lattice sites"),
+            ("NewAgentGrid", "pal.NewAgentGrid(dims,numAgentProps=0,isStackable=False): individual agents"),
+            ("NewPopGrid", "pal.NewPopGrid(dims,capacity=None): integer counts"),
+            ("NewPDEgrid", "pal.NewPDEgrid(dims): continuous field"),
+            ("NewIList", "pal.NewIList(): mutable integer list"),
+            ("NewMultinomial", "pal.NewMultinomial(): binomial/multinomial draws"),
+        ]),
+        ("Geometry / indexing", [
+            ("Dimensions", "dims=(nx,), (nx,ny), or (nx,ny,nz); negative sizes wrap"),
+            ("Coordinates", "grid[i] linear index; grid[x,y,z] site coordinates"),
+            ("Conversions", "ToI(x,...); ItoX/Y/Z(i)"),
+            ("Neighbors", "Hood(hood,x,...); pal.MooreHood, VonNeumannHood, CircleHood"),
+            ("Region", "Box(...) iterates a rectangular coordinate region"),
+        ]),
+        ("AgentGrid", [
+            ("Birth", "NewAgentSQ(x,...) lattice; NewAgent(x,...) continuous"),
+            ("Move", "MoveSQ(a,x,...) lattice; Move(a,x,...) continuous"),
+            ("Properties", "agents[a,p] reads/writes property p"),
+            ("Position", "I(a); XSQ/YSQ/ZSQ(a); X/Y/Z(a)"),
+            ("Lifetime", "Alive(a); Dispose(a); GetPop()"),
+            ("Queries", "AgentsAt(...); LastAgent(...); AgentsInRadius(...)"),
+            ("Iteration", "All(shuffle=True) snapshots living agent handles"),
+        ]),
+        ("Population / fields", [
+            ("State", "grid[i] = v writes immediately"),
+            ("Queued change", "Add(v,...) queues; Update() applies; Reset() clears"),
+            ("Population", "pop.GetPop() total; pop.All() occupied indices"),
+            ("PDE spacing", "field.SetTimeSpaceStep(dt,dx,dy,dz)"),
+            ("Diffusion", "Diffusion, DiffusionMask, DiffusionField, DiffusionInterfaces, DiffusionADI"),
+            ("Radial", "DiffusionRadialCircle / DiffusionRadialSphere"),
+            ("Advection", "Advection, AdvectionField, AdvectionInterfaces"),
+        ]),
+        ("Random / lists", [
+            ("RNG", "pal.Seed(seed); pal.Random(); pal.RandInt(n)"),
+            ("IList", "Append, Clear, Random, Shuffle, All (copy), Iter (no copy)"),
+            ("Sampling", "m.Binomial(n,p); m.Setup(...); m.Sample(...)"),
+        ]),
+        ("Drawing / execution", [
+            ("Compile", "@pal.njit(cache=True) for model kernels"),
+            ("Mode", "Safe by default; pal.FastMode() before object creation"),
+            ("Pixels", "pal.StartPixWindow(...); pix[x,y] = color; win.Update()"),
+            ("OpenGL", "pal.StartOpenGLWindow(...); draw.Circle/Box/Line(...)"),
+            ("Output", "win.Save(path); StartGif, AddGifFrame, StopGif; Close"),
+        ]),
+    ]
+    story = [Paragraph(_markup(INTRO), intro)]
+    for title, rows in selected:
+        story.append(Paragraph(title, heading))
+        for key, desc in rows:
+            story.append(Paragraph("<b>" + html.escape(key) + "</b>: " + html.escape(desc), entry))
+    doc = BaseDocTemplate(buf, pagesize=landscape(letter), leftMargin=margin,
+                          rightMargin=margin, topMargin=margin, bottomMargin=margin,
+                          invariant=1)
+    doc.addPageTemplates(PageTemplate(id="main", frames=frames, onPage=header_fn))
+    doc.build(story)
     return buf.getvalue(), doc.page
 
 
 def _pdf():
-    # Keep body text comfortably readable rather than shrinking to one page.
-    data,pages=_build_pdf(9.2)
-    print(f"PAL cheatsheet generated {pages} pages at 9.2 pt body font.")
+    data, pages = _build_pdf(8.0)
+    if pages != 1:
+        raise RuntimeError(f"Cheatsheet must be exactly one page; generated {pages}.")
+    print("PAL cheatsheet generated 1 landscape page at 8 pt body font.")
     return data
-
 
 def build(): return _md(), _pdf()
 
