@@ -100,7 +100,9 @@ def render(source):
     for member in draw_classes[0].body:
         if isinstance(member, ast.FunctionDef) and (
                 member.name in ("Clear", "Circle", "Box", "BoxSQ", "Line")):
-            description = ast.get_docstring(member) or "Description not yet provided."
+            description = ast.get_docstring(member)
+            if not description:
+                raise ValueError(f"Missing OpenGLDraw API docstring: {member.name}")
             description = description.replace("|", "\\|").replace("\\n", " ")
             lines.append(f"| method | `{signature(member)}` | {description} |")
     lines.append("")
