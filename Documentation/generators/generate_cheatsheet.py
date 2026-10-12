@@ -154,6 +154,7 @@ def _build_pdf(body_font=8.0):
     columns[0].append(intro_p)
     heights[0] += ih + intro_p.style.spaceAfter
     current = 0
+    target_first_column = 0.84 * max_height
 
     def cost(p):
         _, h = p.wrap(inner_width, max_height)
@@ -172,7 +173,7 @@ def _build_pdf(body_font=8.0):
             new_section = not columns[current] or (
                 not any(getattr(x, "_pal_section", None) == title for x in columns[current]))
             need = hp + (cost(heading_p) if new_section else 0)
-            if heights[current] + need > max_height:
+            if heights[current] + need > (target_first_column if current == 0 else max_height):
                 if current == 0:
                     current = 1
                     new_section = True
