@@ -208,18 +208,18 @@ This chapter makes explicit the tradeoffs that are easy to miss when reading the
 
 PAL is designed for models whose timestep performs many small operations: inspect a neighborhood, update state, move agents, accumulate a field, or sample a random event. Python is productive for configuring experiments, loading data, controlling the simulation loop, and drawing. But calling Python for every cell or agent can dominate the cost of a large model.
 
-PAL therefore separates orchestration from the inner loop. A normal Python function can create objects, open a window, choose parameters, and decide how many timesteps to run. Functions decorated with \`@pal.njit(cache=True)\` express the repeated computation. The cache can avoid recompiling the same specialization on later runs, while the first call may still pay a compilation cost.
+PAL therefore separates orchestration from the inner loop. A normal Python function can create objects, open a window, choose parameters, and decide how many timesteps to run. Functions decorated with `@pal.njit(cache=True)` express the repeated computation. The cache can avoid recompiling the same specialization on later runs, while the first call may still pay a compilation cost.
 
 This division is a recommendation, not a requirement that every function be compiled. Start with clear Python code, identify the repeated work, and move the computational kernel into compiled code when that is useful. Keep file I/O, interactive controls, and other orchestration outside compiled functions unless the public API explicitly supports them.
 
 ### 11.2 Use a small set of representations with distinct meanings
 
-PAL deliberately distinguishes a typed \`Grid\`, an \`AgentGrid\`, a \`PopGrid\`, and a \`PDEgrid\`. These are not interchangeable containers with different names. Each representation encodes assumptions about what the model needs to remember:
+PAL deliberately distinguishes a typed `Grid`, an `AgentGrid`, a `PopGrid`, and a `PDEgrid`. These are not interchangeable containers with different names. Each representation encodes assumptions about what the model needs to remember:
 
-- A \`Grid\` stores a value at each lattice site. Use it for attributes such as terrain, occupancy masks, or local state that is not itself a collection of individuals.
-- An \`AgentGrid\` preserves individual identity. Agents can have different positions, histories, properties, and fates.
-- A \`PopGrid\` stores integer counts. It is suited to interchangeable individuals when the model needs the number at each site, but not a handle for each one.
-- A \`PDEgrid\` stores a scalar field and supplies numerical transport operations such as diffusion and advection.
+- A `Grid` stores a value at each lattice site. Use it for attributes such as terrain, occupancy masks, or local state that is not itself a collection of individuals.
+- An `AgentGrid` preserves individual identity. Agents can have different positions, histories, properties, and fates.
+- A `PopGrid` stores integer counts. It is suited to interchangeable individuals when the model needs the number at each site, but not a handle for each one.
+- A `PDEgrid` stores a scalar field and supplies numerical transport operations such as diffusion and advection.
 
 The point is not to force every model into one abstraction. It is to make the meaning of state explicit. A count grid avoids per-individual bookkeeping, but cannot answer which individual moved or what its personal history was. A continuous field can represent concentration smoothly, but it does not preserve integer identity or discrete events. A hybrid model is often appropriate, provided the conversions between representations are part of the scientific model rather than accidental implementation details.
 
@@ -227,39 +227,39 @@ The point is not to force every model into one abstraction. It is to make the me
 
 A simulation's update order is part of its mathematics. PAL does not hide every update behind an automatic scheduler because different models need different timing semantics. A synchronous cellular update, a sequential agent sweep, and a numerical field solve are not the same operation.
 
-For \`PopGrid\` and \`PDEgrid\`, queued changes and \`Update()\` provide a transaction-like boundary: calls that accumulate deltas do not immediately become the current state. This lets a model calculate changes from one shared starting state and then commit them together. Direct indexing, by contrast, changes current state immediately. Mixing the two is permitted, but the order then matters and must be deliberate.
+For `PopGrid` and `PDEgrid`, queued changes and `Update()` provide a transaction-like boundary: calls that accumulate deltas do not immediately become the current state. This lets a model calculate changes from one shared starting state and then commit them together. Direct indexing, by contrast, changes current state immediately. Mixing the two is permitted, but the order then matters and must be deliberate.
 
-An \`AgentGrid\` has a different contract. \`All()\` returns a snapshot of the living handles at the time it is called, so adding or removing agents does not change which handles are in that snapshot. It does not freeze the entire world: occupancy queries performed later still see the current grid, including births and deaths that have already happened. This is useful for a sequential agent update, but it is not a synchronous update. If all agents must act from the same old state, store the necessary old values separately and commit changes in a second phase.
+An `AgentGrid` has a different contract. `All()` returns a snapshot of the living handles at the time it is called, so adding or removing agents does not change which handles are in that snapshot. It does not freeze the entire world: occupancy queries performed later still see the current grid, including births and deaths that have already happened. This is useful for a sequential agent update, but it is not a synchronous update. If all agents must act from the same old state, store the necessary old values separately and commit changes in a second phase.
 
 ### 11.4 Make dimensionality explicit but keep the API unified
 
-Most model concepts—grids, neighborhoods, movement, and fields—exist in one, two, or three spatial dimensions. Requiring a separate class and method family for every dimension would multiply the API surface and make examples harder to transfer between models. PAL instead uses dimension-aware objects and coordinate tuples, with shared geometry metadata such as \`nDims\`, \`xDim\`, \`yDim\`, \`zDim\`, and wrapping flags.
+Most model concepts—grids, neighborhoods, movement, and fields—exist in one, two, or three spatial dimensions. Requiring a separate class and method family for every dimension would multiply the API surface and make examples harder to transfer between models. PAL instead uses dimension-aware objects and coordinate tuples, with shared geometry metadata such as `nDims`, `xDim`, `yDim`, `zDim`, and wrapping flags.
 
 The coordinate shape still matters. In one dimension a site can be represented by one integer; in two and three dimensions, coordinate tuples identify the axes. PAL retains explicit site-index operations where they are useful, but APIs that mean continuous position remain distinct from APIs that mean lattice position. This prevents a linear index, a lattice coordinate, and a continuous location from being silently treated as the same thing.
 
-A dimensions tuple also communicates the shape of a lattice. A negative extent requests wrapping on that axis; for example, \`(-40, 40)\` wraps x but not y. This is compact, but it means that the sign of a dimension is configuration, not a request for a negative-sized array. When reading a model, always check both the absolute extents and the wrap flags implied by the signs.
+A dimensions tuple also communicates the shape of a lattice. A negative extent requests wrapping on that axis; for example, `(-40, 40)` wraps x but not y. This is compact, but it means that the sign of a dimension is configuration, not a request for a negative-sized array. When reading a model, always check both the absolute extents and the wrap flags implied by the signs.
 
 ### 11.5 Distinguish lattice coordinates from continuous positions
 
 A lattice site is discrete; an off-lattice agent position is continuous. PAL keeps both concepts because many models need both: an agent may move continuously while still interacting with fields stored at lattice sites.
 
-For a lattice site \`(x, y)\`, the associated unit cell occupies \`[x, x+1) × [y, y+1)\`. Its center is \`(x+0.5, y+0.5)\`. Creating an agent with \`NewAgentSQ(x, y)\` places it at the site center; creating it with \`NewAgent(x, y)\` uses the continuous coordinates supplied. The resulting \`XSQ\`/\`YSQ\` values identify the containing site, while \`X\`/\`Y\` retain continuous position.
+For a lattice site `(x, y)`, the associated unit cell occupies `[x, x+1) × [y, y+1)`. Its center is `(x+0.5, y+0.5)`. Creating an agent with `NewAgentSQ(x, y)` places it at the site center; creating it with `NewAgent(x, y)` uses the continuous coordinates supplied. The resulting `XSQ`/`YSQ` values identify the containing site, while `X`/`Y` retain continuous position.
 
 This distinction affects neighborhood searches, visualization, coupling to fields, and boundary behavior. Use site-based movement when the model is lattice-based. Use continuous movement when sub-site displacement matters. Do not round continuous positions manually unless that rounding is part of the model; use the documented conversion or site properties.
 
 ### 11.6 Separate relative neighborhoods from their application
 
-\`MooreHood\`, \`VonNeumannHood\`, and \`CircleHood\` describe relative integer offsets. A hood is reusable geometry: it is not itself a list of absolute sites around a particular location. Applying \`grid.Hood(hood, x, y)\` translates those offsets to lattice coordinates, applies wrapping, and omits coordinates outside nonperiodic boundaries.
+`MooreHood`, `VonNeumannHood`, and `CircleHood` describe relative integer offsets. A hood is reusable geometry: it is not itself a list of absolute sites around a particular location. Applying `grid.Hood(hood, x, y)` translates those offsets to lattice coordinates, applies wrapping, and omits coordinates outside nonperiodic boundaries.
 
 This separation makes neighborhood definitions independent of the grid location and allows PAL to expand neighborhood loops in compiled functions. It also exposes an important detail: wrapping may map multiple offsets to the same site, and the API preserves offset order and duplicates. If duplicate visits would double-count a contribution, choose a neighborhood and domain size that avoid them or explicitly deduplicate according to the model's intended semantics.
 
-\`Box\` has a different purpose: it describes a half-open rectangular region. The upper bound is excluded, so \`Box(0, 4)\` visits 0, 1, 2, and 3 along that axis. Neighborhood offsets are relative; Box bounds describe a region. Confusing the two produces off-by-one errors and boundary mistakes.
+`Box` has a different purpose: it describes a half-open rectangular region. The upper bound is excluded, so `Box(0, 4)` visits 0, 1, 2, and 3 along that axis. Neighborhood offsets are relative; Box bounds describe a region. Confusing the two produces off-by-one errors and boundary mistakes.
 
 ### 11.7 Make safety a process-level choice
 
 PAL's safe mode is the default. It adds validation and diagnostics around selected operations, helping catch invalid indices, illegal occupancy changes, and other contract violations close to their source. This is especially valuable while developing a new model, when an error may otherwise appear later as a corrupted result.
 
-Fast mode removes selected checks for performance-sensitive paths. It does not turn invalid operations into valid ones, and it does not make a numerically unstable scheme stable. PAL locks the process-wide mode when the first PAL model or window is constructed; call \`pal.FastMode()\` before any such construction. Because the choice is process-wide, compare safe and fast behavior in separate processes rather than trying to switch modes midway through a run.
+Fast mode removes selected checks for performance-sensitive paths. It does not turn invalid operations into valid ones, and it does not make a numerically unstable scheme stable. PAL locks the process-wide mode when the first PAL model or window is constructed; call `pal.FastMode()` before any such construction. Because the choice is process-wide, compare safe and fast behavior in separate processes rather than trying to switch modes midway through a run.
 
 This is an explicit tradeoff: predictable diagnostics during development, with a deliberate route to reduce selected overhead after profiling. Safe mode is not a proof of scientific correctness. A program can use every API correctly and still encode the wrong equations or assumptions.
 
@@ -273,7 +273,7 @@ The public Protocol declarations provide the annotation and autocomplete surface
 
 ### 11.9 Prefer explicit state changes and inspectable contracts
 
-PAL uses explicit operations such as \`Add\`, \`Update\`, \`Reset\`, \`Move\`, and \`Dispose\` rather than relying on hidden automatic mutation. The names make important state transitions visible in a timestep. For example, a queued delta is not the same as a committed population, and a moved agent is not the same as an agent whose handle has been disposed.
+PAL uses explicit operations such as `Add`, `Update`, `Reset`, `Move`, and `Dispose` rather than relying on hidden automatic mutation. The names make important state transitions visible in a timestep. For example, a queued delta is not the same as a committed population, and a moved agent is not the same as an agent whose handle has been disposed.
 
 This explicitness requires the model author to understand lifecycle and update order, but it makes the simulation easier to reason about and test. For stateful models, clarity about when state changes is more valuable than hiding those changes behind a convenient-looking abstraction.
 
@@ -327,7 +327,5 @@ Document assumptions alongside the model: whether agents update sequentially or 
 
 ## 14. Where to go next
 
-Use the [Cheatsheet](CHEATSHEET.pdf) for short code patterns, the [API Guide](API_GUIDE.pdf) for behavioral contracts, and the generated [API Reference](API_REFERENCE.pdf) for current signatures. \`Examples/\` contains complete models; the [Testing guide](../Testing/README.md) describes regression coverage and how to run the suite.
-
-
 Use the [Cheatsheet](CHEATSHEET.pdf) for short code patterns, the [API Guide](API_GUIDE.pdf) for behavioral contracts, and the generated [API Reference](API_REFERENCE.pdf) for current signatures. `Examples/` contains complete models; the [Testing guide](../Testing/README.md) describes regression coverage and how to run the suite.
+
