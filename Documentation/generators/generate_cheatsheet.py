@@ -12,7 +12,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.units import inch
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph
+from reportlab.platypus import BaseDocTemplate, Frame, FrameBreak, PageTemplate, Paragraph
 
 ROOT = Path(__file__).resolve().parents[2]
 MD_TARGET = ROOT / "Documentation" / "CHEATSHEET.md"
@@ -190,7 +190,10 @@ def _build_pdf(body_font=8.0):
         ]),
     ]
     story = [Paragraph(_markup(INTRO), intro)]
-    for title, rows in selected:
+    for section_index, (title, rows) in enumerate(selected):
+        # Two sections per column: force use of all three landscape columns.
+        if section_index in (2, 4):
+            story.append(FrameBreak())
         story.append(Paragraph(title, heading))
         for key, desc in rows:
             story.append(Paragraph("<b>" + html.escape(key) + "</b>: " + html.escape(desc), entry))
