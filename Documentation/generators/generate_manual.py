@@ -213,7 +213,7 @@ A useful mental model is to separate PAL into several cooperating layers:
 1. **Public API and Protocol declarations.** These define the names, signatures, type-facing interface, and expected user-visible operations. They support readable calls, type annotations, and autocomplete.
 2. **Python constructors and wrappers.** These create objects, translate public arguments into implementation calls, and expose native-backed state through a Python-friendly interface.
 3. **Numba-compatible wrappers and overloads.** These let compiled model functions call PAL operations while preserving supported argument forms and return behavior.
-4. **The \`pal.njit\` preparation step.** This transforms selected PAL-specific constructs before compilation, including neighborhood/box iteration and some source-aware diagnostics.
+4. **The `pal.njit` preparation step.** This transforms selected PAL-specific constructs before compilation, including neighborhood/box iteration and some source-aware diagnostics.
 5. **The native C core.** This provides low-level storage and computational routines used by the Python/Numba-facing layer.
 6. **Tests, examples, and generated documentation.** These act as executable and written statements of the public contract, checking that the layers agree.
 
@@ -253,19 +253,19 @@ Supporting both is not free. Numba imposes typing and compilation constraints th
 
 PAL treats parity as a correctness requirement for supported usage, not as a promise that Python and compiled code have identical internals or performance. Compare observable behavior: return values, mutations, errors where they are part of the contract, boundary handling, and state after the operation. If a difference appears, reduce it to a minimal reproducer and test both paths.
 
-### 9.7 Why \`pal.njit\` transforms model code
+### 9.7 Why `pal.njit` transforms model code
 
-PAL's \`njit\` interface is not simply a spelling alias for Numba's decorator. Before compilation, it can prepare functions that use PAL-specific syntax and diagnostics. In particular, neighborhood and Box iteration are model-friendly abstractions that may need to be expanded into forms that the compiler can type and execute efficiently.
+PAL's `njit` interface is not simply a spelling alias for Numba's decorator. Before compilation, it can prepare functions that use PAL-specific syntax and diagnostics. In particular, neighborhood and Box iteration are model-friendly abstractions that may need to be expanded into forms that the compiler can type and execute efficiently.
 
 The transformation allows users to write code in terms of the model's spatial concepts rather than manually implementing every coordinate conversion in every loop. It also gives PAL a place to attach source-aware safe-mode diagnostics when the relevant argument annotations provide enough type information.
 
 Transformations add a layer that users should understand when debugging. The Python source a modeler reads is not necessarily the exact function body Numba receives. A traceback or typing error may refer to transformed code or a synthetic compilation context. Annotations improve the information available to the transformer, but they do not guarantee that every error can be attributed to a perfect source location.
 
-When a failure occurs only under \`@pal.njit\`, do not immediately rewrite the scientific algorithm. First isolate the smallest function that reproduces it, confirm argument annotations and supported API usage, and compare it with a Python version. Then determine whether the problem lies in the transformation, Numba typing, a wrapper, or the underlying operation.
+When a failure occurs only under `@pal.njit`, do not immediately rewrite the scientific algorithm. First isolate the smallest function that reproduces it, confirm argument annotations and supported API usage, and compare it with a Python version. Then determine whether the problem lies in the transformation, Numba typing, a wrapper, or the underlying operation.
 
 ### 9.8 Why neighborhoods are represented as relative offsets
 
-A neighborhood such as Moore or Von Neumann is naturally a pattern around a location. PAL represents it as relative integer offsets, then applies it to a specific grid position with \`grid.Hood(...)\`. This separates the reusable pattern from the grid location where it is used.
+A neighborhood such as Moore or Von Neumann is naturally a pattern around a location. PAL represents it as relative integer offsets, then applies it to a specific grid position with `grid.Hood(...)`. This separates the reusable pattern from the grid location where it is used.
 
 The distinction also makes boundary behavior explicit. Applying a hood must account for grid dimensions and wrapping flags; the relative pattern alone does not know whether a particular neighbor falls outside a nonperiodic domain. PAL's application step can translate offsets into coordinates, wrap periodic axes, and omit out-of-domain sites according to the public contract.
 
@@ -273,11 +273,11 @@ This split avoids embedding a separate absolute-neighbor list in every cell. It 
 
 ### 9.9 Why update and commit are separate operations
 
-PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For \`PopGrid\` and \`PDEgrid\`, \`Add\` queues a delta and \`Update\` commits pending changes. This makes the timestep boundary visible in code.
+PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits pending changes. This makes the timestep boundary visible in code.
 
 That boundary matters mathematically. If every site's new value must be calculated from the same old field, immediate mutation can make later calculations depend on iteration order. Queuing deltas allows the model to calculate changes before applying them. Direct indexing still exists for cases where immediate assignment is intended; PAL does not prohibit order-dependent algorithms, but it makes the distinction available to the modeler.
 
-Agent updates have different semantics. \`All()\` snapshots which handles will be visited, but it does not snapshot the world. If one agent reproduces, later agents may see the newborn's occupancy even though the newborn is not part of the original handle snapshot. This is a deliberate and useful pattern for sequential agent models, but it is not equivalent to a synchronous cellular update.
+Agent updates have different semantics. `All()` snapshots which handles will be visited, but it does not snapshot the world. If one agent reproduces, later agents may see the newborn's occupancy even though the newborn is not part of the original handle snapshot. This is a deliberate and useful pattern for sequential agent models, but it is not equivalent to a synchronous cellular update.
 
 The library does not impose one universal scheduler because these update schemes express different models. The author must choose the intended timing and test it with a small hand-calculable case.
 
@@ -285,7 +285,7 @@ The library does not impose one universal scheduler because these update schemes
 
 Safe mode performs selected validation and provides diagnostics that are useful while developing a model. Fast mode removes selected checks from performance-sensitive paths. Keeping one mode active for a process makes the execution contract predictable for objects created within that process; PAL locks the choice at first construction.
 
-A process-wide mode also avoids pretending that an individual object can be switched independently when calls across objects may share compiled functions or native machinery. The consequence is operational: call \`pal.FastMode()\` before creating any PAL object or window, and run safe and fast test suites in separate processes.
+A process-wide mode also avoids pretending that an individual object can be switched independently when calls across objects may share compiled functions or native machinery. The consequence is operational: call `pal.FastMode()` before creating any PAL object or window, and run safe and fast test suites in separate processes.
 
 Fast mode should be treated as a measured optimization, not a correctness mode. It can reduce validation overhead; it cannot repair invalid model assumptions, unsafe numerical parameters, or a wrong update order. Safe mode can catch selected contract violations, but it cannot establish that the biological or physical equations are appropriate.
 
@@ -332,9 +332,9 @@ When an operation behaves unexpectedly, follow the layers in order:
 
 1. **Check the public contract.** Confirm the method, argument forms, coordinate convention, and return type in the API Guide and Reference.
 2. **Reduce the model.** Build the smallest example with a tiny grid and a known expected result.
-3. **Compare Python and compiled paths.** If the error appears only under \`@pal.njit\`, inspect annotations and transformation-related constraints.
+3. **Compare Python and compiled paths.** If the error appears only under `@pal.njit`, inspect annotations and transformation-related constraints.
 4. **Compare safe and fast modes in separate processes.** A safe-mode exception may reveal a contract violation that fast mode does not check.
-5. **Inspect the state transition.** Verify whether a method mutates immediately or queues a change for \`Update()\`; verify whether iteration uses a snapshot or current occupancy.
+5. **Inspect the state transition.** Verify whether a method mutates immediately or queues a change for `Update()`; verify whether iteration uses a snapshot or current occupancy.
 6. **Check geometry and boundaries.** Confirm dimensions, wrapping, index conversions, and neighborhood duplicates.
 7. **Check independent invariants.** Test a conservation law, exact coordinate identity, or hand-computed update.
 8. **Only then localize the implementation layer.** Determine whether the defect belongs to the public wrapper, Numba overload/transformer, native core, or visualization layer.
