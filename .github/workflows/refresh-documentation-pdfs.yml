@@ -24,7 +24,7 @@ jobs:
       - run: python -m pip install reportlab==5.0.1
       - name: Generate documentation
         run: |
-          python Documentation/generators/generate_manual.py
+          python Documentation/generators/generate_architecture_and_design.py
           python Documentation/generators/generate_api_guide.py
           python Documentation/generators/generate_api_reference.py
           python Documentation/generators/generate_cheatsheet.py
