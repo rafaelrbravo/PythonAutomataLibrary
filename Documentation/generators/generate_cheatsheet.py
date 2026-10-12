@@ -80,14 +80,37 @@ SECTIONS = [
 FOOTER = "More detail: Manual · API Guide · API Reference (Documentation/)."
 
 
+def _api_entries():
+    """Read the generated API Reference and keep its public signatures as the source of truth."""
+    reference = (ROOT / "Documentation" / "API_REFERENCE.md").read_text(encoding="utf-8")
+    groups = []
+    title, rows = None, []
+    for line in reference.splitlines():
+        if line.startswith("## "):
+            if title and rows:
+                groups.append((title, rows))
+            title, rows = line[3:], []
+        elif line.startswith("| ") and "`" in line:
+            cells = [part.strip() for part in re.split(r"(?<!\\\\)\\|", line.strip().strip("|"))]
+            signature = next((c.strip("`") for c in cells[:-1] if c.startswith("`")), None)
+            if signature and len(cells) >= 2:
+                rows.append((signature, cells[-1].replace("\\\\|", "|")))
+    if title and rows:
+        groups.append((title, rows))
+    if not groups:
+        raise RuntimeError("API Reference has no parseable declarations")
+    return groups
+
+
 def _md():
-    out=["# PAL Cheatsheet", "", "## Conventions", "", INTRO + " " + CONVENTIONS, ""]
-    for title, entries in SECTIONS:
-        out += [f"## {title}", ""]
-        for key, desc in entries: out.append(f"- {_md_markup(key, heading=True)}: {_md_markup(desc, heading=(key in ('Properties', 'Indexing')))}")
-        out.append("")
-    out.append(f"**{FOOTER}**")
-    return "\n".join(out).rstrip()+"\n"
+    lines = ["# PAL Cheatsheet", "", INTRO, "",
+             "Condensed from the generated API Reference; see API Guide for examples.", ""]
+    for title, rows in _api_entries():
+        lines += ["## " + title, ""]
+        for sig, description in rows:
+            lines.append("- `" + sig + "`: " + description)
+        lines.append("")
+    return "\\n".join(lines).rstrip() + "\\n"
 
 
 def _md_markup(s, heading=False):
@@ -140,55 +163,66 @@ def _build_pdf(body_font=8.0):
     intro = ParagraphStyle("intro", fontName="Helvetica", fontSize=body_font,
                            leading=body_font * 1.13, spaceAfter=3)
 
-    # Start from the same full entry inventory as the Markdown, not a handpicked subset.
-    # Measure each paragraph at the actual column width, then pack in reading order.
-    # No paragraph is clipped, and a section title is never orphaned.
-    max_height = usable - 12  # Frame padding and flowable spacing reserve
+    # Pack the source-derived API Reference into two near-full columns.
+    # Favor concise declarations over truncated, ambiguous descriptions.
+    max_height = usable - 12
     inner_width = col_w - 8
-    columns = [[], []]
-    heights = [0.0, 0.0]
-    included = 0
-    total = sum(len(rows) for _, rows in SECTIONS)
-    intro_p = Paragraph(_markup(INTRO), intro)
-    _, ih = intro_p.wrap(inner_width, max_height)
-    columns[0].append(intro_p)
-    heights[0] += ih + intro_p.style.spaceAfter
-    current = 0
-    target_first_column = 0.84 * max_height
+    groups = _api_entries()
+    entries = [(title, sig, desc) for title, rows in groups for sig, desc in rows]
+    total = len(entries)
 
     def cost(p):
         _, h = p.wrap(inner_width, max_height)
         return h + p.style.spaceBefore + p.style.spaceAfter
 
-    for title, rows in SECTIONS:
-        heading_p = Paragraph(html.escape(title), heading)
-        for key, desc in rows:
-            # Preserve the method name and useful behavior, but limit long prose.
-            # Full descriptions remain in the Markdown and API Guide.
-            short_desc = re.sub(r"\\s+", " ", re.sub(r"`", "", desc)).strip()
-            if len(short_desc) > 132:
-                short_desc = short_desc[:129].rsplit(" ", 1)[0] + "..."
-            p = Paragraph(_markup(key, heading=True) + ": " + html.escape(short_desc), entry)
-            hp = cost(p)
-            new_section = not columns[current] or (
-                not any(getattr(x, "_pal_section", None) == title for x in columns[current]))
-            need = hp + (cost(heading_p) if new_section else 0)
-            if heights[current] + need > (target_first_column if current == 0 else max_height):
+    def compact(sig, desc, limit):
+        sig = re.sub(r"\\s+", " ", sig)
+        sig = re.sub(r" -> [^)]*$", "", sig)
+        if len(sig) > 76:
+            sig = sig[:73].rsplit(",", 1)[0] + ",...)"
+        desc = re.sub(r"\\s+", " ", re.sub(r"`", "", desc)).strip()
+        if len(desc) > limit:
+            desc = desc[:limit - 3].rsplit(" ", 1)[0] + "..."
+        return Paragraph("<b>" + html.escape(sig) + "</b> — " + html.escape(desc), entry)
+
+    def pack(desc_limit, first_target):
+        columns = [[], []]
+        heights = [0., 0.]
+        intro_p = Paragraph(_markup(INTRO), intro)
+        columns[0].append(intro_p)
+        heights[0] += cost(intro_p)
+        current = 0
+        count = 0
+        last_title = [None, None]
+        for title, sig, desc in entries:
+            p = compact(sig, desc, desc_limit)
+            heading_p = Paragraph(html.escape(title), heading)
+            needed = cost(p) + (cost(heading_p) if title != last_title[current] else 0)
+            if heights[current] + needed > (first_target if current == 0 else max_height):
                 if current == 0:
                     current = 1
-                    new_section = True
-                    need = hp + cost(heading_p)
-                if heights[current] + need > max_height:
+                    needed = cost(p) + cost(heading_p)
+                if heights[current] + needed > max_height:
                     continue
-            if new_section:
-                heading_p._pal_section = title
+            if title != last_title[current]:
                 columns[current].append(heading_p)
                 heights[current] += cost(heading_p)
-            p._pal_section = title
+                last_title[current] = title
             columns[current].append(p)
-            heights[current] += hp
-            included += 1
+            heights[current] += cost(p)
+            count += 1
+        return columns, heights, count
 
+    candidates = []
+    for desc_limit in (44, 58, 72, 86):
+        for target_ratio in (.88, .94, .98):
+            cols, hs, count = pack(desc_limit, max_height * target_ratio)
+            score = count * 100 + min(hs) / max_height * 20 + desc_limit / 100
+            candidates.append((score, cols, hs, count, desc_limit))
+    _, columns, heights, included, chosen_limit = max(candidates, key=lambda x: x[0])
+    print(f"PAL cheatsheet packed {included}/{total} API declarations "
+          f"(description limit {chosen_limit}); column heights "
+          f"{heights[0]:.1f}/{heights[1]:.1f} of {max_height:.1f} pt.")
     story = columns[0] + [FrameBreak()] + columns[1]
     print(f"PAL cheatsheet packed {included}/{total} source entries; "
           f"column heights {heights[0]:.1f}/{heights[1]:.1f} of {max_height:.1f} pt.")
