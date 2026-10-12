@@ -135,7 +135,9 @@ class OpenGLWindow(Protocol):
     def Update(self):
         """Publish the accumulated drawing primitives as the next frame."""
         ...
-    def IsOpen(self) -> bool: ...
+    def IsOpen(self) -> bool:
+        """Return whether the window is currently open."""
+        ...
     def _WaitAck(self,op,token,timeout):
         end=time.time()+timeout
         while time.time()<end:
