@@ -32,10 +32,10 @@ def render(source):
     classes = {n.name: n for n in tree.body if isinstance(n, ast.ClassDef)}
     lines = [
         "# PAL API Reference", "",
-        "Generated from public `Protocol` declarations and top-level factory signatures in `NativeCore.py`. "
-        "Regenerate with `python Documentation/generators/generate_api_reference.py`; "
-        "use `--check` to detect drift. These declarations describe the annotation/autocomplete surface; "
-        "consult [API Guide](API_GUIDE.pdf) for behavior and the implementation/tests for runtime semantics.",
+        "Generated from public `Protocol` declarations and source docstrings. "
+        "Each description is maintained beside its source signature. Regenerate with "
+        "`python Documentation/generators/generate_api_reference.py`; use `--check` to detect drift. "
+        "Consult the API Guide for worked usage and Architecture and Design for implementation rationale.",
         "", "## Factories and utilities", "",
         "| Function | Description |", "| --- | --- |",
     ]
