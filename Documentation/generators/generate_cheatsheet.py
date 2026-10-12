@@ -1,6 +1,6 @@
 """Generate PAL CHEATSHEET.md and CHEATSHEET.pdf from one compact definition.
 
-The PDF uses a readable three-column, single-page landscape layout generated from the same
+The PDF uses a readable two-column, full-height single-page landscape layout generated from the same
 structured content as the Markdown cheatsheet.
 
 Usage: python Documentation/generators/generate_cheatsheet.py [--check]
@@ -114,12 +114,12 @@ def _build_pdf(body_font=8.0):
     pw, ph = landscape(letter)
     margin = .30 * inch
     header = .32 * inch
-    gutter = .14 * inch
-    col_w = (pw - 2 * margin - 2 * gutter) / 3
+    gutter = .22 * inch
+    col_w = (pw - 2 * margin - gutter) / 2
     usable = ph - 2 * margin - header
     frames = [Frame(margin + i * (col_w + gutter), margin, col_w, usable,
                     leftPadding=3, rightPadding=3, topPadding=1, bottomPadding=1)
-              for i in range(3)]
+              for i in range(2)]
 
     def header_fn(canvas, doc):
         canvas.saveState()
@@ -131,14 +131,14 @@ def _build_pdf(body_font=8.0):
         canvas.line(margin, ph - margin - 13, pw - margin, ph - margin - 13)
         canvas.restoreState()
 
-    heading = ParagraphStyle("heading", fontName="Helvetica-Bold", fontSize=9,
-                             leading=10, spaceBefore=4, spaceAfter=2,
+    heading = ParagraphStyle("heading", fontName="Helvetica-Bold", fontSize=11,
+                             leading=12.5, spaceBefore=8, spaceAfter=4,
                              backColor=colors.HexColor("#F1F1F1"), borderPadding=2)
     entry = ParagraphStyle("entry", fontName="Helvetica", fontSize=body_font,
-                           leading=body_font * 1.13, spaceAfter=1.5,
+                           leading=body_font * 1.22, spaceAfter=3.2,
                            leftIndent=5, firstLineIndent=-5)
     intro = ParagraphStyle("intro", fontName="Helvetica", fontSize=body_font,
-                           leading=body_font * 1.13, spaceAfter=3)
+                           leading=body_font * 1.22, spaceAfter=6)
 
     # The printable sheet is intentionally selective. The Markdown is exhaustive.
     # Use short descriptions instead of compressing the complete prose into tiny type.
@@ -191,8 +191,8 @@ def _build_pdf(body_font=8.0):
     ]
     story = [Paragraph(_markup(INTRO), intro)]
     for section_index, (title, rows) in enumerate(selected):
-        # Two sections per column: force use of all three landscape columns.
-        if section_index in (2, 4):
+        # Three sections per column; balance both columns across the full sheet.
+        if section_index == 3:
             story.append(FrameBreak())
         story.append(Paragraph(title, heading))
         for key, desc in rows:
@@ -206,10 +206,10 @@ def _build_pdf(body_font=8.0):
 
 
 def _pdf():
-    data, pages = _build_pdf(8.0)
+    data, pages = _build_pdf(10.0)
     if pages != 1:
         raise RuntimeError(f"Cheatsheet must be exactly one page; generated {pages}.")
-    print("PAL cheatsheet generated 1 landscape page at 8 pt body font.")
+    print("PAL cheatsheet generated 1 landscape page, 2 full-height columns at 10 pt body font.")
     return data
 
 def build(): return _md(), _pdf()
