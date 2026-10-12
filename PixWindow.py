@@ -16,6 +16,7 @@ class Pix:
         self._array=array
         self._flat=array.reshape(-1)
     def __setitem__(self,key,color):
+        """Write a packed RGB color to a pixel by (x, y) coordinates or a linear pixel index."""
         if isinstance(key,tuple): self._array[key]=color
         else: self._flat[key]=color
     def Xdim(self): return self._array.shape[0]
@@ -169,12 +170,24 @@ def _olPixLen(pix):
 
 class PixWindow(Protocol):
     def IsOpen(self) -> bool: ...
-    def Update(self): ...
-    def Save(self,path:str,block=False): ...
-    def StartGif(self,path:str,delay=100): ...
-    def AddGifFrame(self,block=False): ...
-    def StopGif(self): ...
-    def Close(self): ...
+    def Update(self):
+        """Publish the current pixel buffer as a frame."""
+        ...
+    def Save(self,path:str,block=False):
+        """Save the current pixel buffer to an image file; block controls whether to wait for completion."""
+        ...
+    def StartGif(self,path:str,delay=100):
+        """Start recording frames to a GIF at path with the requested frame delay in milliseconds."""
+        ...
+    def AddGifFrame(self,block=False):
+        """Append the current pixel buffer as a GIF frame; optionally wait for the frame operation to finish."""
+        ...
+    def StopGif(self):
+        """Finish GIF recording and write the accumulated animation."""
+        ...
+    def Close(self):
+        """Close the window and release its rendering resources."""
+        ...
 
 def _WindowProcess(shmName,frameShmName,saveShmName,xDim,yDim,scale,title,screenX,screenY,closeRequest,visualClosed,closedEvent,savePath,saveEvent,saveDone,frameSeq,frameLock,framePending,readyEvent,outputQ,outputAckQ):
     import pygame
@@ -511,6 +524,7 @@ def _StartPixWindow(xDim,yDim,scale,title,headless,windowClass,pixClass):
 
 
 def StartPixWindow(xDim,yDim,scale=1,title='PAL',headless=False) -> tuple[Pix,PixWindow]:
+    """Create a pixel-based visualization window and its writable pixel buffer."""
     fast=_UseFastMode()
     if fast:
         return _StartPixWindow(xDim,yDim,scale,title,headless,_PixWindowFast,_PixFast)
