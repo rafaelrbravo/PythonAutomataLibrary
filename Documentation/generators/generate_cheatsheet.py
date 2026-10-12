@@ -109,7 +109,7 @@ def _markup(s, heading=False):
 
 
 def _build_pdf(body_font=8.0):
-    """Render a deliberately selective one-page quick-reference; Markdown retains all entries."""
+    """Pack as many complete source entries as fit into two balanced columns."""
     buf = BytesIO()
     pw, ph = landscape(letter)
     margin = .30 * inch
@@ -131,72 +131,66 @@ def _build_pdf(body_font=8.0):
         canvas.line(margin, ph - margin - 13, pw - margin, ph - margin - 13)
         canvas.restoreState()
 
-    heading = ParagraphStyle("heading", fontName="Helvetica-Bold", fontSize=11,
-                             leading=12.5, spaceBefore=8, spaceAfter=4,
+    heading = ParagraphStyle("heading", fontName="Helvetica-Bold", fontSize=9,
+                             leading=10.2, spaceBefore=3, spaceAfter=2,
                              backColor=colors.HexColor("#F1F1F1"), borderPadding=2)
     entry = ParagraphStyle("entry", fontName="Helvetica", fontSize=body_font,
-                           leading=body_font * 1.22, spaceAfter=3.2,
+                           leading=body_font * 1.13, spaceAfter=1.2,
                            leftIndent=5, firstLineIndent=-5)
     intro = ParagraphStyle("intro", fontName="Helvetica", fontSize=body_font,
-                           leading=body_font * 1.22, spaceAfter=6)
+                           leading=body_font * 1.13, spaceAfter=3)
 
-    # The printable sheet is intentionally selective. The Markdown is exhaustive.
-    # Use short descriptions instead of compressing the complete prose into tiny type.
-    selected = [
-        ("Create state", [
-            ("NewGrid", "pal.NewGrid(dims,dtype): values at lattice sites"),
-            ("NewAgentGrid", "pal.NewAgentGrid(dims,numAgentProps=0,isStackable=False): individual agents"),
-            ("NewPopGrid", "pal.NewPopGrid(dims,capacity=None): integer counts"),
-            ("NewPDEgrid", "pal.NewPDEgrid(dims): continuous field"),
-            ("NewIList", "pal.NewIList(): mutable integer list"),
-            ("NewMultinomial", "pal.NewMultinomial(): binomial/multinomial draws"),
-        ]),
-        ("Geometry / indexing", [
-            ("Dimensions", "dims=(nx,), (nx,ny), or (nx,ny,nz); negative sizes wrap"),
-            ("Coordinates", "grid[i] linear index; grid[x,y,z] site coordinates"),
-            ("Conversions", "ToI(x,...); ItoX/Y/Z(i)"),
-            ("Neighbors", "Hood(hood,x,...); pal.MooreHood, VonNeumannHood, CircleHood"),
-            ("Region", "Box(...) iterates a rectangular coordinate region"),
-        ]),
-        ("AgentGrid", [
-            ("Birth", "NewAgentSQ(x,...) lattice; NewAgent(x,...) continuous"),
-            ("Move", "MoveSQ(a,x,...) lattice; Move(a,x,...) continuous"),
-            ("Properties", "agents[a,p] reads/writes property p"),
-            ("Position", "I(a); XSQ/YSQ/ZSQ(a); X/Y/Z(a)"),
-            ("Lifetime", "Alive(a); Dispose(a); GetPop()"),
-            ("Queries", "AgentsAt(...); LastAgent(...); AgentsInRadius(...)"),
-            ("Iteration", "All(shuffle=True) snapshots living agent handles"),
-        ]),
-        ("Population / fields", [
-            ("State", "grid[i] = v writes immediately"),
-            ("Queued change", "Add(v,...) queues; Update() applies; Reset() clears"),
-            ("Population", "pop.GetPop() total; pop.All() occupied indices"),
-            ("PDE spacing", "field.SetTimeSpaceStep(dt,dx,dy,dz)"),
-            ("Diffusion", "Diffusion, DiffusionMask, DiffusionField, DiffusionInterfaces, DiffusionADI"),
-            ("Radial", "DiffusionRadialCircle / DiffusionRadialSphere"),
-            ("Advection", "Advection, AdvectionField, AdvectionInterfaces"),
-        ]),
-        ("Random / lists", [
-            ("RNG", "pal.Seed(seed); pal.Random(); pal.RandInt(n)"),
-            ("IList", "Append, Clear, Random, Shuffle, All (copy), Iter (no copy)"),
-            ("Sampling", "m.Binomial(n,p); m.Setup(...); m.Sample(...)"),
-        ]),
-        ("Drawing / execution", [
-            ("Compile", "@pal.njit(cache=True) for model kernels"),
-            ("Mode", "Safe by default; pal.FastMode() before object creation"),
-            ("Pixels", "pal.StartPixWindow(...); pix[x,y] = color; win.Update()"),
-            ("OpenGL", "pal.StartOpenGLWindow(...); draw.Circle/Box/Line(...)"),
-            ("Output", "win.Save(path); StartGif, AddGifFrame, StopGif; Close"),
-        ]),
-    ]
-    story = [Paragraph(_markup(INTRO), intro)]
-    for section_index, (title, rows) in enumerate(selected):
-        # Three sections per column; balance both columns across the full sheet.
-        if section_index == 3:
-            story.append(FrameBreak())
-        story.append(Paragraph(title, heading))
+    # Start from the same full entry inventory as the Markdown, not a handpicked subset.
+    # Measure each paragraph at the actual column width, then pack in reading order.
+    # No paragraph is clipped, and a section title is never orphaned.
+    max_height = usable - 12  # Frame padding and flowable spacing reserve
+    inner_width = col_w - 8
+    columns = [[], []]
+    heights = [0.0, 0.0]
+    included = 0
+    total = sum(len(rows) for _, rows in SECTIONS)
+    intro_p = Paragraph(_markup(INTRO), intro)
+    _, ih = intro_p.wrap(inner_width, max_height)
+    columns[0].append(intro_p)
+    heights[0] += ih + intro_p.style.spaceAfter
+    current = 0
+
+    def cost(p):
+        _, h = p.wrap(inner_width, max_height)
+        return h + p.style.spaceBefore + p.style.spaceAfter
+
+    for title, rows in SECTIONS:
+        heading_p = Paragraph(html.escape(title), heading)
         for key, desc in rows:
-            story.append(Paragraph("<b>" + html.escape(key) + "</b>: " + html.escape(desc), entry))
+            # Preserve the method name and useful behavior, but limit long prose.
+            # Full descriptions remain in the Markdown and API Guide.
+            short_desc = re.sub(r"\\s+", " ", re.sub(r"`", "", desc)).strip()
+            if len(short_desc) > 132:
+                short_desc = short_desc[:129].rsplit(" ", 1)[0] + "..."
+            p = Paragraph(_markup(key, heading=True) + ": " + html.escape(short_desc), entry)
+            hp = cost(p)
+            new_section = not columns[current] or (
+                not any(getattr(x, "_pal_section", None) == title for x in columns[current]))
+            need = hp + (cost(heading_p) if new_section else 0)
+            if heights[current] + need > max_height:
+                if current == 0:
+                    current = 1
+                    new_section = True
+                    need = hp + cost(heading_p)
+                if heights[current] + need > max_height:
+                    continue
+            if new_section:
+                heading_p._pal_section = title
+                columns[current].append(heading_p)
+                heights[current] += cost(heading_p)
+            p._pal_section = title
+            columns[current].append(p)
+            heights[current] += hp
+            included += 1
+
+    story = columns[0] + [FrameBreak()] + columns[1]
+    print(f"PAL cheatsheet packed {included}/{total} source entries; "
+          f"column heights {heights[0]:.1f}/{heights[1]:.1f} of {max_height:.1f} pt.")
     doc = BaseDocTemplate(buf, pagesize=landscape(letter), leftMargin=margin,
                           rightMargin=margin, topMargin=margin, bottomMargin=margin,
                           invariant=1)
@@ -206,10 +200,10 @@ def _build_pdf(body_font=8.0):
 
 
 def _pdf():
-    data, pages = _build_pdf(10.0)
+    data, pages = _build_pdf(8.0)
     if pages != 1:
         raise RuntimeError(f"Cheatsheet must be exactly one page; generated {pages}.")
-    print("PAL cheatsheet generated 1 landscape page, 2 full-height columns at 10 pt body font.")
+    print("PAL cheatsheet generated 1 landscape page, 2 full-height columns at 8 pt body font.")
     return data
 
 def build(): return _md(), _pdf()
