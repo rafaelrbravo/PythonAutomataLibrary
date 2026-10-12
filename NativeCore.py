@@ -169,6 +169,7 @@ def _RegisterWindowInit(readyEvent,process,name):
         _WINDOW_INITS.append((readyEvent,process,name))
 
 def AwaitWindows(timeout=30):
+    """Wait for PAL windows that are still initializing; raises if a window exits early or initialization times out."""
     import time as _time
     with _WINDOW_INIT_LOCK:
         _WINDOW_INITS[:]=[entry for entry in _WINDOW_INITS if not entry[0].is_set()]
@@ -344,6 +345,7 @@ GetBlue = _get_blue
 
 @nb.njit(cache=True, inline="always")
 def ColorScale(colors, value):
+    """Map a scalar value to an RGB color by interpolating through the supplied color scale."""
     nColors=len(colors)
     if nColors==0: return np.uint32(0)
     if nColors==1: return np.uint32(colors[0])
@@ -3430,6 +3432,7 @@ def _dimensions_array(dimensions, allowZero=False):
 
 
 def Seed(seed):
+    """Seed PAL's shared random-number stream; repeatability also depends on the sequence of random calls."""
     try: raw=float(seed)
     except (TypeError,ValueError,OverflowError): raise ValueError("seed must be a uint64")
     if not np.isfinite(raw) or raw!=int(raw): raise ValueError("seed must be a uint64")
@@ -3440,11 +3443,13 @@ def Seed(seed):
 
 @nb.njit(cache=True, inline="always")
 def Random():
+    """Draw a uniform random value from PAL's shared random-number stream."""
     return _random()
 
 
 @nb.njit(cache=True, inline="always")
 def RandInt(max):
+    """Draw an integer from PAL's random stream in the supported range below the positive bound `max`."""
     if not np.isfinite(max) or max!=int(max) or max<=0 or max>np.iinfo(np.int64).max: raise ValueError("max must be a positive int64")
     return _rand_int(int(max))
 
