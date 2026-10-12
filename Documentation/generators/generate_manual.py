@@ -17,7 +17,7 @@ This manual starts with a small working model and then explains how PAL's pieces
 
 ## 1. The model loop
 
-A PAL model normally has three parts: **Setup** creates state, **Step** changes state, and **Draw** presents it. PAL does not impose a model class or a scheduler. You choose the update order and when to render.
+A PAL model commonly has three parts: **Setup** creates the initial state, **Step** updates it, and **Draw** renders it. PAL does not require a model class or impose a scheduler; you choose the update order and when to render.
 
 ```python
 import PythonAutomataLibrary as pal
@@ -39,21 +39,21 @@ if __name__ == "__main__":
     main()
 ```
 
-The example contains 1,600 sites and runs 10 increments per site, so the final total population is 16,000. `Add` accumulates changes; `Update` applies them together. That distinction is useful when one site's update must not affect its neighbors during the same timestep. The printed value is `16000`; every site contains `10`.
+The grid contains 1,600 sites. Each site receives one increment per timestep for 10 timesteps, so every site ends at 10 and `GetPop()` returns `16000`. `Add` queues changes; `Update` commits them together. This separation prevents an update at one site from changing the state read at another site during the same timestep.
 
 PAL uses **safe mode** by default. Develop and validate your model in this mode. If profiling shows that validation overhead matters, call `pal.FastMode()` before creating any PAL objects to remove selected performance-sensitive checks.
 
 ## 2. Choose the right representation
 
-A `Grid` holds one typed value per site. An `AgentGrid` holds individually identifiable agents, optionally with per-agent properties. A `PopGrid` holds integer counts without individual identity. A `PDEgrid` holds a continuous scalar field and transport operations. These can be combined: for example, agents consume a PDE field while population counts accumulate in a separate PopGrid.
+Choose the representation that matches the state your model needs to preserve. A `Grid` stores one typed value per site; an `AgentGrid` stores identifiable agents and can hold per-agent properties; a `PopGrid` stores integer counts without individual identities; and a `PDEgrid` stores a scalar field with transport operations. A model can combine them—for example, agents can consume a `PDEgrid` field while a separate `PopGrid` tracks counts.
 
 Use a tuple of dimensions when constructing a spatial grid. Negative dimensions mean periodic wrapping on that axis, so `(-40, 40)` wraps x but not y. `AgentGrid` also supports an empty dimension tuple for a nonspatial population.
 
 ### Choosing a representation by scale
 
-Individual agents are useful when identity, history, or per-agent properties affect behavior. If agents are interchangeable within a site, a `PopGrid` replaces many handles with one integer count per site and can be much cheaper to update. Its optional `capacity` is a per-site population cap, not a cap on the total population. A `Grid` is appropriate for a site attribute that is not a population, such as a terrain type or a fixed mask. Use `PDEgrid` for a field whose values change continuously through diffusion or advection. A hybrid model can use different representations for different scales, but must explicitly define how state is exchanged between them.
+Use individual agents when identity, history, or per-agent properties affect behavior. If individuals are interchangeable within each site, a `PopGrid` can replace many agent handles with one integer count per site, often reducing update cost. Its optional `capacity` limits each site, not the total population. Use a `Grid` for nonpopulation site attributes such as terrain or a fixed mask, and a `PDEgrid` for a scalar field that changes through diffusion or advection. A hybrid model can combine representations, but must define how they exchange state.
 
-Choose a representation based on what the model must preserve, not just on the number of sites. Converting individual agents to counts loses individual identity and history; representing a count as a continuous field can lose integer and stochastic behavior. Those are modeling assumptions, not implementation details.
+Choose a representation according to what the model must preserve, not just the number of sites. Replacing agents with counts discards individual identity and history; replacing counts with a continuous field can discard integer and stochastic behavior. These are modeling assumptions, not merely implementation details.
 
 ## 3. Coordinates and neighborhoods
 
@@ -65,13 +65,13 @@ PAL provides `MooreHood`, `VonNeumannHood`, and `CircleHood`. They return relati
 
 An agent is an integer handle owned by an `AgentGrid`, distinct from both its lattice site and its continuous position. Create it with `NewAgentSQ` for a lattice site or `NewAgent` for a continuous position. `NewAgentSQ` and `MoveSQ` accept either a linear site index or lattice coordinates; `NewAgent` and `Move` use continuous coordinates. An agent can move within a site without changing its lattice site. Remove it with `Dispose`.
 
-`agents.All()` returns a snapshot of living handles. That allows creation and disposal during an iteration without changing the iteration's current membership. On a nonstackable grid, safe mode rejects attempts to place two agents at the same site. Use `isStackable=True` only when multiple occupancy is part of the model.
+`agents.All()` returns a snapshot of living handles, so creating or disposing agents does not change which handles are in that snapshot. On a nonstackable grid, safe mode rejects attempts to place two agents at the same site. Use `isStackable=True` only when multiple occupancy is part of the model.
 
 ### Iterating nearby agents
 
 Use `AgentsAt(x, y)` to visit the agents occupying one lattice site. For a continuous search around a point, `AgentsInRadius(rad, x, y)` yields `(agent, dx, dy, distSq)` in 2D. The displacement components account for periodic wrapping and `distSq` is squared distance. In 1D the tuple is `(agent, dx)`; in 3D it is `(agent, dx, dy, dz, distSq)`. Pass `exclude=agent` to omit an agent from its own neighborhood search.
 
-Both iterators work in Python and inside `@pal.njit` loops. Python iteration materializes matching handles first; this does not permit structural modification of the grid during iteration. Safe mode checks for structural changes while iterating, whereas fast mode omits the check. For a loop that creates or disposes agents, iterate a snapshot from `agents.All()` instead.
+Both iterators work in Python and inside `@pal.njit` loops. Python iteration materializes matching handles first, but the grid must not be structurally modified during that iteration. Safe mode checks for structural changes; fast mode omits this check. If the loop creates or disposes agents, iterate over a snapshot from `agents.All()` instead.
 
 For example, this Python-side search finds the agent across a periodic x boundary:
 
@@ -92,13 +92,13 @@ assert list(agents.AgentsInRadius(1.5, 0.0, 2.0, exclude=agent)) == []
 
 `Examples/Agents/SaveLoadModel.py` is a complete agent-based model using a nonstackable 2D `AgentGrid`. Its compiled `Step` iterates `grid.All(shuffle=True)`, removes an agent on a death draw, and otherwise attempts reproduction on a second draw. To reproduce, it scans the Moore neighborhood, stores empty site indices in a reusable `IList`, and creates an agent at a randomly selected empty site.
 
-The distinction between **snapshot iteration** and **current occupancy** matters here. `All()` fixes which agents get a turn at the beginning of the step; newborn agents do not act until the next step. But neighborhood occupancy is queried when each parent acts, so births and deaths earlier in the same step can change later agents' options. Shuffling changes that order and therefore can change outcomes even with identical initial occupancy. This is a sequential stochastic agent update, unlike the simultaneous queued `PopGrid.Add`/`Update` pattern below.
+The distinction between **snapshot membership** and **current occupancy** is important. `All()` determines which agents get a turn at the start of the step, so newborns do not act until the next step. However, each parent's neighborhood query sees the current grid; births and deaths earlier in the step can therefore change later agents' options. Shuffling changes the update order and can change outcomes even from the same initial occupancy. This is a sequential stochastic update, unlike the queued, simultaneous `PopGrid.Add`/`Update` pattern described below.
 
 The example's `Setup`, `Step`, and `Draw` functions are `@pal.njit(cache=True)` functions. The Python `main` loop owns the window, timestep, and checkpoints; compiled functions handle repeated model operations. Use the source example for the complete runnable program rather than duplicating its graphics and checkpoint lifecycle here.
 
 ## 5. Simultaneous population and field updates
 
-Both `PopGrid` and `PDEgrid` distinguish current state from pending changes. Direct indexing changes current state immediately; `Add` queues a delta, and `Update` applies queued changes. `Reset` clears both current state and pending changes.
+`PopGrid` and `PDEgrid` distinguish current state from pending changes. Direct indexing changes the current state immediately; `Add` queues a delta, and `Update` applies pending changes. `Reset` clears both current state and pending changes.
 
 A `PDEgrid` also provides diffusion and advection. Set the timestep and spatial spacings with `SetTimeSpaceStep(dt, dx, dy, dz)` before transport operations. Cartesian, interface-based, masked, ADI, and radial diffusion variants are available; choose the method that matches the model's geometry and numerical assumptions. Cartesian boundaries may be uniform or vary across a face; wrapped axes are periodic instead. Validate timestep stability and boundary behavior in safe mode before optimizing.
 
@@ -106,9 +106,9 @@ A `PDEgrid` also provides diffusion and advection. Set the timestep and spatial 
 
 `Examples/Diffusibles/ReactionDiffusion2D.py` compares two `PDEgrid` fields on the same 20 × 10 lattice. Each timestep sets a short vertical source at `x=10` in both fields. One field then calls `Advection(vx=0.01, vy=0.01, xMaxBC=0, yMaxBC=0)`; the other calls `DiffusionADI(0.01, xMaxBC=0, xMinBC=0)`. Each transport call is followed by its own `Update()`.
 
-This makes the physical distinction visible: advection transports the field along a velocity, while diffusion spreads it down concentration gradients. Boundary concentrations also play different roles: diffusion couples them to the boundary gradient, while advection uses them only where velocity points into the domain; an advective outflow uses the interior upwind value. The explicit boundary arguments are part of the model, not cosmetic rendering settings. `Draw` maps each field's current values through `ColorScale` into separate pixel windows. As in the agent example, `Step` and `Draw` are compiled, while `main` manages windows and iteration.
+The example illustrates two different processes: advection transports the field with a velocity, whereas diffusion spreads it down concentration gradients. Boundary values also enter the two methods differently. Diffusion uses the boundary gradient; advection uses a boundary value only for inflow and uses the interior upwind value for outflow. The explicit boundary arguments are part of the model, not cosmetic rendering settings. `Draw` maps each field's current values through `ColorScale` into separate pixel windows. As in the agent example, `Step` and `Draw` are compiled, while `main` manages windows and iteration.
 
-The example is a qualitative comparison, **not** a convergence or mass-conservation test: it continually resets source cells and uses different boundary conditions for the two fields. For quantitative validation, remove the source, use equivalent boundary conditions, and check expected mass balance and grid/timestep convergence.
+This example is qualitative, **not** a convergence or mass-conservation test. It continually resets source cells and uses different boundary conditions for the two fields. For quantitative validation, remove the source, use equivalent boundary conditions, and check mass balance and convergence across grid spacings and timesteps.
 
 ### A hand-checkable field gradient
 
@@ -132,13 +132,13 @@ The field is constant in x and linear in y, so its expected discrete gradients a
 
 ### Numerical update order
 
-The timestep order is part of the model. For example, queue all births and deaths in a `PopGrid` before calling `Update()` if changes must be simultaneous. Reading current counts while queuing deltas then uses the same starting population throughout the step. By contrast, assigning directly to `pop[x, y]` changes the value that subsequent calculations read. Mixing immediate assignments and queued changes is possible, but their order then changes the model.
+Update order is part of the model. If births and deaths in a `PopGrid` must be simultaneous, queue all changes before calling `Update()`. Reads during this phase see the same starting population. Direct assignment to `pop[x, y]`, by contrast, changes what later calculations read. Mixing immediate assignments and queued changes is valid, but the order then affects the model.
 
 For a `PDEgrid`, transport routines accumulate changes that become current at `Update()`. Check timestep stability and convergence by varying the timestep and grid spacing. Safe-mode checks do not replace numerical validation.
 
 Consider two sites with populations 10 and 0. If a transfer moves 5 from site 0 to site 1, queue -5 and +5 before a single `Update()`; the result is (5, 5) and total population remains 10. Applying one change immediately would alter what later calculations read and can make an intended simultaneous update order-dependent.
 
-For a small hand-calculated timestep, check the properties the model requires: counts stay nonnegative, internal transfers conserve total population, totals change only through explicit births, deaths, or boundary flux, and results are independent of site visitation order when the update is meant to be simultaneous.
+For a hand-calculable timestep, check the required invariants: counts remain nonnegative; internal transfers conserve total population; totals change only through explicit births, deaths, or boundary flux; and a supposedly simultaneous update is independent of site visitation order.
 
 ## 6. Compiled model code
 
@@ -196,7 +196,7 @@ assert restored["pop"][1] == 17
 
 This chapter explains the path from a line of model code to a state change in PAL. It is intentionally more architectural than the API chapters: the goal is to explain the responsibilities of each layer, why the boundaries exist, and what those boundaries mean when debugging, extending, or benchmarking a model.
 
-The explanations below distinguish documented contracts from engineering rationale. The public API and tests establish what users can rely on. Where a design choice is described as a rationale, it is an explanation of the tradeoff the architecture serves, not a claim about an undocumented historical decision or the only possible implementation.
+The discussion distinguishes documented contracts from engineering rationale. The public API and tests establish what users can rely on. A rationale explains the tradeoff a design serves; it does not claim an undocumented historical motivation or that no alternative design is possible.
 
 ### 9.1 The design problem PAL is solving
 
@@ -204,7 +204,7 @@ PAL targets models that repeatedly update many small pieces of state. A timestep
 
 PAL's architecture splits the problem by frequency and responsibility. Python remains the control language for constructing the model, selecting parameters, loading inputs, managing experiments, and deciding when to draw or checkpoint. Repeated computation is expressed in functions that PAL can prepare for Numba compilation. The native core supplies low-level state and kernels behind that interface.
 
-This split is not a rule that all Python is slow or that all model code must be compiled. It is a way to put the cost where it matters. A function called once to configure a run usually does not need the same treatment as a loop executed for every site over millions of timesteps. Start with clear model code, identify the repeated work, and benchmark before moving additional logic into compiled kernels.
+This split does not mean that all Python code is slow or that every model function should be compiled. It puts optimization effort where repeated work makes it worthwhile. A function called once during setup usually needs less attention than a loop executed at every site over millions of timesteps. Start with clear model code, identify the repeated work, and benchmark before moving more logic into compiled kernels.
 
 ### 9.2 The layers and their responsibilities
 
@@ -217,7 +217,7 @@ A useful mental model is to separate PAL into several cooperating layers:
 5. **The native C core.** This provides low-level storage and computational routines used by the Python/Numba-facing layer.
 6. **Tests, examples, and generated documentation.** These act as executable and written statements of the public contract, checking that the layers agree.
 
-These are responsibilities, not necessarily six independent packages. The implementation may place multiple responsibilities in one source file. Keeping the responsibilities conceptually separate helps locate a bug: a constructor issue, a Numba typing issue, a native-state issue, and a stale API declaration require different fixes.
+These are responsibilities, not necessarily six separate packages; several may share a source file. Keeping them conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
 
 ### 9.3 Why the native core is behind a Python interface
 
@@ -257,7 +257,7 @@ PAL treats parity as a correctness requirement for supported usage, not as a pro
 
 PAL's `njit` interface is not simply a spelling alias for Numba's decorator. Before compilation, it can prepare functions that use PAL-specific syntax and diagnostics. In particular, neighborhood and Box iteration are model-friendly abstractions that may need to be expanded into forms that the compiler can type and execute efficiently.
 
-The transformation allows users to write code in terms of the model's spatial concepts rather than manually implementing every coordinate conversion in every loop. It also gives PAL a place to attach source-aware safe-mode diagnostics when the relevant argument annotations provide enough type information.
+The transformation lets users express spatial operations directly instead of writing coordinate conversions in every loop. It also gives PAL a place to add source-aware safe-mode diagnostics when argument annotations provide enough type information.
 
 Transformations add a layer that users should understand when debugging. The Python source a modeler reads is not necessarily the exact function body Numba receives. A traceback or typing error may refer to transformed code or a synthetic compilation context. Annotations improve the information available to the transformer, but they do not guarantee that every error can be attributed to a perfect source location.
 
@@ -269,17 +269,17 @@ A neighborhood such as Moore or Von Neumann is naturally a pattern around a loca
 
 The distinction also makes boundary behavior explicit. Applying a hood must account for grid dimensions and wrapping flags; the relative pattern alone does not know whether a particular neighbor falls outside a nonperiodic domain. PAL's application step can translate offsets into coordinates, wrap periodic axes, and omit out-of-domain sites according to the public contract.
 
-This split avoids embedding a separate absolute-neighbor list in every cell. It also lets the compiled path transform high-level neighborhood loops. However, it does not promise that every offset maps to a unique site: small or wrapped domains can produce duplicate destinations. The correct response depends on the model. Some models count each offset contribution; others require unique neighboring sites. Choose and test the intended semantics rather than assuming deduplication.
+This avoids storing a separate absolute-neighbor list for every cell and lets the compiled path transform high-level neighborhood loops. It does not guarantee unique destinations: small or wrapped domains can map multiple offsets to the same site. Whether to count those repeated contributions or deduplicate them depends on the model, so choose and test the intended behavior.
 
 ### 9.9 Why update and commit are separate operations
 
 PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits pending changes. This makes the timestep boundary visible in code.
 
-That boundary matters mathematically. If every site's new value must be calculated from the same old field, immediate mutation can make later calculations depend on iteration order. Queuing deltas allows the model to calculate changes before applying them. Direct indexing still exists for cases where immediate assignment is intended; PAL does not prohibit order-dependent algorithms, but it makes the distinction available to the modeler.
+This distinction matters mathematically. If every new site value must be computed from the same old field, immediate mutation can make results depend on iteration order. Queued deltas let the model calculate changes before committing them. Direct indexing remains available when immediate assignment is intended; PAL permits order-dependent algorithms but makes the choice explicit.
 
 Agent updates have different semantics. `All()` snapshots which handles will be visited, but it does not snapshot the world. If one agent reproduces, later agents may see the newborn's occupancy even though the newborn is not part of the original handle snapshot. This is a deliberate and useful pattern for sequential agent models, but it is not equivalent to a synchronous cellular update.
 
-The library does not impose one universal scheduler because these update schemes express different models. The author must choose the intended timing and test it with a small hand-calculable case.
+PAL does not impose one scheduler because these update schemes represent different models. Choose the intended timing and test it with a small case whose result can be calculated by hand.
 
 ### 9.10 Why safe mode and fast mode are process-wide
 
@@ -421,7 +421,7 @@ This is an explicit tradeoff: predictable diagnostics during development, with a
 
 ### 11.8 Use a native core behind a Python-facing API
 
-The public Python API is intended to remain readable and compatible with Numba-compiled model code. The native C core owns important storage and kernels, while Python and Numba-facing wrappers expose that functionality to ordinary Python and compiled functions. The wrapper layer is therefore API glue, not a second independent implementation of the model state.
+PAL's public Python API is designed to remain readable and usable from Numba-compiled model code. The native C core provides storage and kernels; Python and Numba-facing wrappers expose them to both execution paths. The wrappers connect the API to the implementation rather than maintaining a separate copy of model state.
 
 This separation lets PAL combine Python usability with native-backed data structures and compiled loops. It also creates obligations: wrapper signatures, argument names, indexing behavior, safe-mode checks, and Python/compiled behavior must agree. A mismatch between a Python path and a compiled path is a correctness defect even if each path appears plausible in isolation.
 
@@ -429,7 +429,7 @@ The public Protocol declarations provide the annotation and autocomplete surface
 
 ### 11.9 Prefer explicit state changes and inspectable contracts
 
-PAL uses explicit operations such as `Add`, `Update`, `Reset`, `Move`, and `Dispose` rather than relying on hidden automatic mutation. The names make important state transitions visible in a timestep. For example, a queued delta is not the same as a committed population, and a moved agent is not the same as an agent whose handle has been disposed.
+PAL exposes explicit state-changing operations such as `Add`, `Update`, `Reset`, `Move`, and `Dispose`. This makes important transitions visible in the model code: a queued delta is not yet part of the committed population, and moving an agent is different from disposing its handle.
 
 This explicitness requires the model author to understand lifecycle and update order, but it makes the simulation easier to reason about and test. For stateful models, clarity about when state changes is more valuable than hiding those changes behind a convenient-looking abstraction.
 
@@ -519,19 +519,19 @@ This is why the project uses API coverage inventories, Python/compiled parity te
 
 ## 13. Performance: measure the right thing
 
-### 12.1 Cold compilation is not steady-state runtime
+### 13.1 Cold compilation is not steady-state runtime
 
 The first call to a compiled function may include Numba compilation and specialization. Later calls can be much faster, particularly when caching is enabled. Timing one first call and reporting it as the simulation's runtime mixes two different costs.
 
 For a useful benchmark, measure cold compilation in a fresh process and steady-state runtime over repeated timesteps separately. Use the same model state, workload, seed, and operation count for each comparison. Report medians over repeated runs rather than relying on one timing. If comparing safe and fast modes, use separate processes because the mode is fixed at construction.
 
-### 12.2 Optimize the actual workload
+### 13.2 Optimize the actual workload
 
 A faster microbenchmark does not guarantee a faster full model. An optimization may help a large agent sweep but hurt a small grid, or reduce steady-state time while increasing compilation cost. Before changing implementation, define the workload that matters: number of sites or agents, number of timesteps, neighborhood size, mutation rate, transport method, and mode.
 
 Use a before/after benchmark with fresh-process cold compilation and repeated hot runtime. Keep workload sizes identical, check outputs for equivalence, and investigate any reproducible regression. Treat tiny differences as noise until repeated measurements show otherwise. Prefer simpler correct code when a performance gain is not robust.
 
-### 12.3 Know what fast mode cannot fix
+### 13.3 Know what fast mode cannot fix
 
 Fast mode can reduce selected validation overhead; it cannot eliminate the fundamental cost of updating millions of state elements, choosing an inefficient representation, doing unnecessary neighborhood work, or solving an unstable numerical scheme. Before optimizing low-level code, ask whether the model's algorithm is doing unnecessary work. Replacing individually represented interchangeable agents with counts, reusing a neighborhood list, reducing repeated conversions, or drawing less often can have a larger impact than a local kernel tweak.
 
@@ -539,19 +539,19 @@ Do not optimize by removing a check merely because it appears in a profile. Firs
 
 ## 14. Validation: prove the model, not just the program
 
-### 13.1 Start with a hand-calculable case
+### 14.1 Start with a hand-calculable case
 
 Before running a large simulation, reduce the domain and timestep count until the expected answer can be computed manually. A two-site transfer can establish whether queued population changes conserve the total. A linear field can establish whether indexing and finite differences produce the expected gradient. A tiny periodic grid can show exactly which neighbor lies across a boundary.
 
 Small examples are powerful because they turn vague visual plausibility into an assertion with a known answer. Keep such examples as regression tests after the model grows.
 
-### 13.2 Test invariants and edge cases
+### 14.2 Test invariants and edge cases
 
 Choose invariants from the scientific model. For a closed diffusion problem, total mass should be conserved within a stated numerical tolerance. For an internal population transfer, the total should remain constant and counts should stay nonnegative. For an agent model, every live handle should refer to a living agent and occupancy should obey the stacking rule. For geometry, conversions should round-trip and wrapping should return the expected coordinates.
 
 Test the cases most likely to break assumptions: the first and last site, wrapped and nonwrapped axes, empty neighborhoods, a single agent, zero or maximal allowed counts, and updates that add and remove state in the same timestep. A model that works only away from boundaries has not yet validated its geometry.
 
-### 13.3 Separate API correctness from scientific validity
+### 14.3 Separate API correctness from scientific validity
 
 Safe-mode checks and passing unit tests show that operations respect tested contracts. They do not establish that the chosen growth law, diffusion coefficient, update schedule, stochastic distribution, or boundary condition is scientifically justified. Validate the numerical method against known solutions where possible; test convergence as grid spacing and timestep change; and compare stochastic results across independent seeds.
 
@@ -559,7 +559,7 @@ Document assumptions alongside the model: whether agents update sequentially or 
 
 ## 15. Where to go next
 
-Use the [Cheatsheet](CHEATSHEET.pdf) for short code patterns, the [API Guide](API_GUIDE.pdf) for behavioral contracts, and the generated [API Reference](API_REFERENCE.pdf) for current signatures. `Examples/` contains complete models; the [Testing guide](../Testing/README.md) describes regression coverage and how to run the suite.
+Use the [Cheatsheet](CHEATSHEET.pdf) for short code patterns, the [API Guide](API_GUIDE.pdf) for behavioral contracts, and the [API Reference](API_REFERENCE.pdf) for current signatures. The `Examples/` directory contains complete models. The [Testing guide](../Testing/README.md) describes regression coverage and how to run the test suite.
 
 '''
 
