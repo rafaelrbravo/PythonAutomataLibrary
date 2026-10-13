@@ -19,7 +19,7 @@ To check a wheel without importing from the checkout, install it in a new enviro
 
 - `.github/workflows/package-smoke.yml` builds and tests wheels and source distributions on Windows, Linux, and macOS.
 - `.github/workflows/conda-smoke.yml` builds and tests the local conda recipe on Windows, Linux, and macOS; this is not a conda-forge publication.
-- `.github/workflows/release-build.yml` builds versioned wheel artifacts for CPython 3.10–3.13 using cibuildwheel and a source archive. On a `v*` tag, successful builds are collected into a **draft** GitHub Release with SHA256 checksums; publishing the draft requires review.
+- `.github/workflows/release-build.yml` builds versioned wheel artifacts for CPython 3.10–3.13 using cibuildwheel and a source archive; it runs on relevant packaging changes to `main`, manual dispatch, and `v*` tags. On a `v*` tag, successful builds are collected into a **draft** GitHub Release with SHA256 checksums; publishing the draft requires review.
 - Before publishing, inspect every job result, install wheels on each supported platform, and confirm the bundled native library loads and PAL tests pass.
 
 ## Release procedure (pending validation)
@@ -40,6 +40,6 @@ conda install conda-forge::pythonautomatalibrary
 
 ## Release blockers
 
-**Verified:** The package-smoke workflow passed on Windows, Linux, and macOS for commit `a2852eac` ([run 38346812005](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38346812005)). The corrected conda-smoke workflow passed on macOS and Linux for commit `e5acc72f` ([run 38346917628](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38346917628)); Windows was still running at the last check. These results are specific to those commits, not blanket guarantees for subsequent changes.
+**Verified:** Package-smoke passed on Windows, Linux, and macOS for commit `a2852eac` ([run 38346812005](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38346812005)). Conda-smoke passed on all three platforms for commit `bac272e4` ([run 38346999220](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38346999220)). These checks validate local builds and tests, not public package availability.
 
-**Still blocked:** Complete and verify the Windows conda build, verify the full CPython 3.10–3.13 release-wheel matrix, review and publish GitHub Release assets, configure PyPI Trusted Publishing, and submit a source-archive-based conda-forge recipe. The local conda recipe is a starting point, not a published feedstock.
+**Still blocked:** Verify the full CPython 3.10–3.13 release-wheel matrix, review and publish GitHub Release assets, configure PyPI Trusted Publishing, and submit a source-archive-based conda-forge recipe. The local conda recipe is a starting point, not a published feedstock.
