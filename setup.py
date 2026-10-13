@@ -45,8 +45,8 @@ class BuildWithNative(build_py):
 class SourceWithoutNativeBinaries(sdist):
     def get_file_list(self):
         super().get_file_list()
-        forbidden = ("pal_native.dll", "libpal_native.so", "libpal_native.dylib")
-        self.filelist.files = [name for name in self.filelist.files if not name.endswith(forbidden)]
+        forbidden_suffixes = (".dll", ".so", ".dylib", ".pyd")
+        self.filelist.files = [name for name in self.filelist.files if not name.lower().endswith(forbidden_suffixes)]
 
 class NativeDistribution(Distribution):
     def has_ext_modules(self):
