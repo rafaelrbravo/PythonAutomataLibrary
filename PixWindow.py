@@ -6,7 +6,7 @@ import operator
 from .NativeCore import _ReserveWindowPosition,_ReleaseWindow,_RegisterWindowInit,_RegisterCrashWindow,_UnregisterCrashWindow,_UseFastMode
 from typing import Protocol
 from numba import types
-from numba.extending import typeof_impl,register_model,models,make_attribute_wrapper,unbox,NativeValue,overload_method,overload
+from numba.extending import typeof_impl,register_model,models,make_attribute_wrapper,unbox,NativeValue,overload_method,overload_attribute,overload
 
 
 
@@ -19,10 +19,12 @@ class Pix:
         """Write a packed RGB color to a pixel by (x, y) coordinates or a linear pixel index."""
         if isinstance(key,tuple): self._array[key]=color
         else: self._flat[key]=color
-    def Xdim(self):
+    @property
+    def xDim(self):
         """Return the pixel buffer width."""
         return self._array.shape[0]
-    def Ydim(self):
+    @property
+    def yDim(self):
         """Return the pixel buffer height."""
         return self._array.shape[1]
     def ToI(self,x,y):
@@ -141,13 +143,13 @@ def _olPixSetItem(pix,key,color):
         return impl
 
 
-@overload_method(_PixNumbaType,"Xdim",inline="always")
+@overload_attribute(_PixNumbaType,"xDim")
 def _olPixXdim(pix):
     def impl(pix): return pix._array.shape[0]
     return impl
 
 
-@overload_method(_PixNumbaType,"Ydim",inline="always")
+@overload_attribute(_PixNumbaType,"yDim")
 def _olPixYdim(pix):
     def impl(pix): return pix._array.shape[1]
     return impl
