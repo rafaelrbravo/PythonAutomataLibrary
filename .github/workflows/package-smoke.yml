@@ -7,6 +7,7 @@ on:
       - 'pyproject.toml'
       - 'MANIFEST.in'
       - 'pal_native.c'
+      - 'packaging/smoke_install.py'
       - '.github/workflows/package-smoke.yml'
   pull_request:
     branches: [main]
