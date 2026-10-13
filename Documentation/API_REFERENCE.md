@@ -220,10 +220,6 @@ Create an OpenGL visualization window for 2D or 3D drawing.
 | method | `StartGif(self, path, delay=100)` | Start recording rendered frames to a GIF with the requested frame delay in milliseconds. |
 | method | `AddGifFrame(self, block=False, timeout=30)` | Capture the current scene as a GIF frame; optionally wait for completion. |
 | method | `StopGif(self, timeout=30)` | Finish GIF recording and write the animation. |
-| method | `Circle(self, rad, color, x, y, z=None)` | Add a circle primitive to the current frame. |
-| method | `Box(self, xLen, color, x, y, z=None, yLen=None, zLen=None)` | Add a box primitive to the current frame; side lengths may be specified independently. |
-| method | `BoxSQ(self, color, x, y, z=None)` | Add a unit box centered on the lattice site (x, y, z). |
-| method | `Line(self, width, color, x1, y1, x2, y2, z1=None, z2=None)` | Add a line segment to the current frame. |
 | method | `Borders(self, width, color)` | Draw persistent outline borders around the model domain. |
 | method | `Camera(self, x, y, z, yaw=None, pitch=None)` | Set the 3D camera position and optional yaw/pitch angles. |
 | method | `Clear(self)` | Clear accumulated drawing primitives for the next frame. |
