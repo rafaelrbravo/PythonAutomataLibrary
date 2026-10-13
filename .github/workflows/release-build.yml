@@ -39,6 +39,7 @@ jobs:
           import os, pathlib, tomllib
           project = tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']
           assert os.environ['RELEASE_TAG'] == 'v' + project['version'], (os.environ['RELEASE_TAG'], project['version'])
+          assert not any(marker in project['version'] for marker in ('a', 'b', 'rc', 'dev', '+')), 'Release tag must use a final public version'
           PY
   wheels:
     needs: version-check
