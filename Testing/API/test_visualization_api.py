@@ -11,7 +11,7 @@ def test_pix_compiled_write_geometry_and_slices(api, tmp_path):
             p[:] = 0
             p[1:4] = 0x010203
             p[2, 3] = 0xA0B0C0
-            return len(p), p.Xdim(), p.Ydim(), p.ToI(2, 3), p.ItoX(11), p.ItoY(11)
+            return len(p), p.xDim, p.yDim, p.ToI(2, 3), p.ItoX(11), p.ItoY(11)
 
         assert draw(pix) == (20, 5, 4, 11, 2, 3)
         win.Update()
