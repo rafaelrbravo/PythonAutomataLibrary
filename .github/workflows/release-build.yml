@@ -55,6 +55,22 @@ jobs:
           CIBW_ARCHS_MACOS: auto
           CIBW_ENVIRONMENT: 'PIP_ONLY_BINARY=:all:'
           CIBW_TEST_COMMAND: python {project}/packaging/smoke_install.py
+      - name: Validate wheel layout and native payload
+        shell: python {0}
+        run: |
+          from pathlib import Path
+          from zipfile import ZipFile
+          wheels = list(Path("wheelhouse").glob("*.whl"))
+          assert wheels, "No wheels built"
+          for wheel in wheels:
+              with ZipFile(wheel) as archive:
+                  names = archive.namelist()
+                  assert any(name.endswith(("pal_native.dll", "libpal_native.so", "libpal_native.dylib")) for name in names), wheel
+                  assert not any(".data/purelib/" in name for name in names), f"Binary wheel contains purelib payload: {wheel}"
+                  wheel_metadata = next(name for name in names if name.endswith(".dist-info/WHEEL"))
+                  metadata = archive.read(wheel_metadata).decode()
+                  assert "Root-Is-Purelib: false" in metadata, f"Wheel marked pure: {wheel}"
+          print(f"Validated {len(wheels)} native wheels")
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}
