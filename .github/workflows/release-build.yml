@@ -132,6 +132,9 @@ jobs:
           from zipfile import ZipFile
           wheels = list(Path('sdist-wheel').glob('*.whl'))
           assert len(wheels) == 1, f'Expected one rebuilt wheel: {wheels}'
+          import tomllib
+          version = tomllib.loads(Path('pyproject.toml').read_text())['project']['version']
+          assert wheels[0].name.startswith(f'pythonautomatalibrary-{version}-'), f'sdist-rebuilt wheel version mismatch: {wheels[0]}'
           with ZipFile(wheels[0]) as archive:
               names = archive.namelist()
               native = [name for name in names if name.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib'))]
