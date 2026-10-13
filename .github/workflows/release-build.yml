@@ -55,6 +55,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - uses: actions/download-artifact@v4
         with:
           pattern: wheels-*
@@ -64,6 +68,16 @@ jobs:
         with:
           name: source-distribution
           path: release-assets
+      - name: Verify release tag matches package version
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python - <<'PY'
+          import os, pathlib, tomllib
+          project = tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']
+          assert os.environ['RELEASE_TAG'] == 'v' + project['version'], (os.environ['RELEASE_TAG'], project['version'])
+          PY
       - name: Verify collected distributions
         working-directory: release-assets
         shell: python {0}
