@@ -19,6 +19,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.release_tag }}
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -31,6 +34,12 @@ jobs:
           version = tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version']
           assert os.environ['RELEASE_TAG'] == 'v' + version, 'Tag/version mismatch'
           PY
+      - name: Confirm GitHub release is published
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease --jq 'if .isDraft or .isPrerelease then error("Release must be published and non-prerelease") else "Release verified" end'
       - name: Download published GitHub release assets
         env:
           GH_TOKEN: ${{ github.token }}
