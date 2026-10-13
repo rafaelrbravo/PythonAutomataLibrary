@@ -39,19 +39,33 @@ Condensed from the generated API Reference; see API Guide for examples.
 - `All(self) -> np.ndarray`: Return a detached NumPy array containing the list values.
 - `Iter(self) -> np.ndarray`: Iterate over the current list values without creating the detached copy returned by All().
 
+## Shared grid API
+
+- `__len__() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
+- `xDim() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along x.
+- `yDim() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along y; zero when absent.
+- `zDim() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along z; zero when absent.
+- `nDims() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of spatial dimensions.
+- `wrapX() -> bool`: [AgentGrid, Grid, PopGrid, PDEgrid] Whether x uses periodic boundary wrapping.
+- `wrapY() -> bool`: [AgentGrid, Grid, PopGrid, PDEgrid] Whether y uses periodic boundary wrapping.
+- `wrapZ() -> bool`: [AgentGrid, Grid, PopGrid, PDEgrid] Whether z uses periodic boundary wrapping.
+- `Box(x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)`: [AgentGrid, Grid, PopGrid, PDEgrid] Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions.
+- `Hood(hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)`: [AgentGrid, Grid, PopGrid, PDEgrid] Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported.
+- `GetPop() -> int`: [AgentGrid, PopGrid] Shared signature; behavior depends on grid type (see API Reference).
+- `__getitem__(key) -> float`: [AgentGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
+- `__setitem__(key, value: float)`: [AgentGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
+- `ToI(x: int, y: int=-1, z: int=-1) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
+- `ItoX(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its x coordinate.
+- `ItoY(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its y coordinate.
+- `ItoZ(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its z coordinate.
+- `InWrapX(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap an x coordinate when x is periodic; otherwise return it unchanged.
+- `InWrapY(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap a y coordinate when y is periodic; otherwise return it unchanged.
+- `InWrapZ(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap a z coordinate when z is periodic; otherwise return it unchanged.
+- `Update()`: [PopGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
+- `Reset()`: [PopGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
+
 ## AgentGrid
 
-- `__len__(self) -> int`: Return the number of living agents in the grid.
-- `xDim(self) -> int`: Number of lattice sites along x.
-- `yDim(self) -> int`: Number of lattice sites along y; zero when absent.
-- `zDim(self) -> int`: Number of lattice sites along z; zero when absent.
-- `nDims(self) -> int`: Number of spatial dimensions.
-- `wrapX(self) -> bool`: Whether x uses periodic boundary wrapping.
-- `wrapY(self) -> bool`: Whether y uses periodic boundary wrapping.
-- `wrapZ(self) -> bool`: Whether z uses periodic boundary wrapping.
-- `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)`: Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions.
-- `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)`: Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported.
-- `GetPop(self) -> int`: Return the number of living agents in the grid.
 - `Alive(self, agent: int) -> bool`: Return whether agent currently identifies a living agent.
 - `NewAgentSQ(self, x: int, y: int=-1, z: int=-1) -> int`: Create an agent at the center of a lattice site specified by integer coordinates or a supported linear site index.
 - `NewAgent(self, x: float, y: float=-1.0, z: float=-1.0) -> int`: Create an agent at the supplied continuous spatial coordinates.
@@ -63,12 +77,6 @@ Condensed from the generated API Reference; see API Guide for examples.
 - `X(self, agent: int) -> float`: Return the agent's continuous x coordinate.
 - `Y(self, agent: int) -> float`: Return the agent's continuous y coordinate.
 - `Z(self, agent: int) -> float`: Return the agent's continuous z coordinate.
-- `__getitem__(self, key) -> float`: Read a supported per-agent property value.
-- `__setitem__(self, key, value: float)`: Set a supported per-agent property value for the selected agent/property key.
-- `ToI(self, x: int, y: int=-1, z: int=-1) -> int`: Convert lattice coordinates to the corresponding linear site index.
-- `ItoX(self, i: int) -> int`: Convert a linear site index to its x coordinate.
-- `ItoY(self, i: int) -> int`: Convert a linear site index to its y coordinate.
-- `ItoZ(self, i: int) -> int`: Convert a linear site index to its z coordinate.
 - `InWrapSQX(self, value: int) -> int`: Wrap an integer x site coordinate when x is periodic.
 - `InWrapSQY(self, value: int) -> int`: Wrap an integer y site coordinate when y is periodic.
 - `InWrapSQZ(self, value: int) -> int`: Wrap an integer z site coordinate when z is periodic.
@@ -88,77 +96,19 @@ Condensed from the generated API Reference; see API Guide for examples.
 
 ## Grid
 
-- `__len__(self) -> int`: Return the number of lattice sites.
 - `__getitem__(self, key)`: Read the value or state selected by the supported index or coordinate key.
 - `__setitem__(self, key, value)`: Assign the value or state selected by the supported index or coordinate key.
-- `xDim(self) -> int`: Number of lattice sites along x.
-- `yDim(self) -> int`: Number of lattice sites along y; zero when absent.
-- `zDim(self) -> int`: Number of lattice sites along z; zero when absent.
-- `nDims(self) -> int`: Number of spatial dimensions.
-- `wrapX(self) -> bool`: Whether x uses periodic boundary wrapping.
-- `wrapY(self) -> bool`: Whether y uses periodic boundary wrapping.
-- `wrapZ(self) -> bool`: Whether z uses periodic boundary wrapping.
-- `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)`: Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions.
-- `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)`: Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported.
-- `ToI(self, x: int, y: int=-1, z: int=-1) -> int`: Convert lattice coordinates to a linear site index.
-- `ItoX(self, i: int) -> int`: Convert a linear site index to its x coordinate.
-- `ItoY(self, i: int) -> int`: Convert a linear site index to its y coordinate.
-- `ItoZ(self, i: int) -> int`: Convert a linear site index to its z coordinate.
-- `InWrapX(self, value: int) -> int`: Wrap an x coordinate when x is periodic; otherwise return it unchanged.
-- `InWrapY(self, value: int) -> int`: Wrap a y coordinate when y is periodic; otherwise return it unchanged.
-- `InWrapZ(self, value: int) -> int`: Wrap a z coordinate when z is periodic; otherwise return it unchanged.
 
 ## PopGrid
 
-- `__len__(self) -> int`: Return the number of lattice sites.
-- `xDim(self) -> int`: Number of lattice sites along x.
-- `yDim(self) -> int`: Number of lattice sites along y; zero when absent.
-- `zDim(self) -> int`: Number of lattice sites along z; zero when absent.
-- `nDims(self) -> int`: Number of spatial dimensions.
-- `wrapX(self) -> bool`: Whether x uses periodic boundary wrapping.
-- `wrapY(self) -> bool`: Whether y uses periodic boundary wrapping.
-- `wrapZ(self) -> bool`: Whether z uses periodic boundary wrapping.
-- `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)`: Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions.
-- `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)`: Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported.
-- `ToI(self, x: int, y: int=-1, z: int=-1) -> int`: Convert lattice coordinates to a linear site index.
-- `ItoX(self, i: int) -> int`: Convert a linear site index to its x coordinate.
-- `ItoY(self, i: int) -> int`: Convert a linear site index to its y coordinate.
-- `ItoZ(self, i: int) -> int`: Convert a linear site index to its z coordinate.
-- `InWrapX(self, value: int) -> int`: Wrap an x coordinate when x is periodic; otherwise return it unchanged.
-- `InWrapY(self, value: int) -> int`: Wrap a y coordinate when y is periodic; otherwise return it unchanged.
-- `InWrapZ(self, value: int) -> int`: Wrap a z coordinate when z is periodic; otherwise return it unchanged.
 - `__getitem__(self, key) -> int`: Return the integer population count at the selected site.
 - `__setitem__(self, key, value: int)`: Set the population count at the selected site immediately; this is distinct from queueing a delta with `Add()`.
 - `Add(self, value: int, x: int, y: int=-1, z: int=-1)`: Queue a signed population-count delta at a site; call `Update()` to apply pending deltas.
-- `Update(self)`: Apply queued population-count deltas to the current counts.
-- `Reset(self)`: Clear population counts and any pending deltas.
-- `GetPop(self) -> int`: Return the total population summed across all lattice sites.
 - `All(self) -> np.ndarray`: Return linear indices of sites whose population count is nonzero.
 
 ## PDEgrid
 
-- `__len__(self) -> int`: Return the number of lattice sites.
-- `xDim(self) -> int`: Number of lattice sites along x.
-- `yDim(self) -> int`: Number of lattice sites along y; zero when absent.
-- `zDim(self) -> int`: Number of lattice sites along z; zero when absent.
-- `nDims(self) -> int`: Number of spatial dimensions.
-- `wrapX(self) -> bool`: Whether x uses periodic boundary wrapping.
-- `wrapY(self) -> bool`: Whether y uses periodic boundary wrapping.
-- `wrapZ(self) -> bool`: Whether z uses periodic boundary wrapping.
-- `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)`: Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions.
-- `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)`: Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported.
-- `ToI(self, x: int, y: int=-1, z: int=-1) -> int`: Convert lattice coordinates to a linear site index.
-- `ItoX(self, i: int) -> int`: Convert a linear site index to its x coordinate.
-- `ItoY(self, i: int) -> int`: Convert a linear site index to its y coordinate.
-- `ItoZ(self, i: int) -> int`: Convert a linear site index to its z coordinate.
-- `InWrapX(self, value: int) -> int`: Wrap an x coordinate when x is periodic; otherwise return it unchanged.
-- `InWrapY(self, value: int) -> int`: Wrap a y coordinate when y is periodic; otherwise return it unchanged.
-- `InWrapZ(self, value: int) -> int`: Wrap a z coordinate when z is periodic; otherwise return it unchanged.
-- `__getitem__(self, key) -> float`: Return the field value at the selected site.
-- `__setitem__(self, key, value: float)`: Set the field value at the selected site immediately; this is distinct from queueing a change with `Add()`.
 - `Add(self, value: float, x: int, y: int=-1, z: int=-1)`: Queue a field-value delta at a site; call `Update()` to apply pending changes.
-- `Update(self)`: Apply queued field changes to the current field.
-- `Reset(self)`: Clear the field and any pending changes.
 - `SetTimeSpaceStep(self, dt: float, dx: float, dy: float=1.0, dz: float=1.0)`: Set the temporal step `dt` and spatial steps `dx`, `dy`, and `dz` used by numerical transport methods.
 - `Dx(self) -> float`: Return the configured spatial step along x.
 - `Dy(self) -> float`: Return the configured spatial step along y.
