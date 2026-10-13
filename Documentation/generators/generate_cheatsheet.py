@@ -99,30 +99,41 @@ def _api_entries():
         groups.append((title, rows))
     if not groups:
         raise RuntimeError("API Reference has no parseable declarations")
-    grid_names = ("AgentGrid", "Grid", "PopGrid", "PDEgrid")
-    grid_groups = {name: rows for name, rows in groups if name in grid_names}
+    # Share a declaration whenever two or more object APIs expose the same
+    # signature. Keep factories/utilities separate from instance methods.
+    object_names = ("AgentGrid", "Grid", "PopGrid", "PDEgrid",
+                    "PixWindow visualization", "OpenGLWindow visualization",
+                    "Pix drawing buffer", "OpenGLDraw primitive collector")
+    objects = {name: rows for name, rows in groups if name in object_names}
+
+    def normalize(sig):
+        return sig.replace("(self, ", "(").replace("(self)", "()")
+
     occurrences = {}
-    for name in grid_names:
-        for sig, desc in grid_groups.get(name, []):
-            normalized = sig.replace("(self, ", "(").replace("(self)", "()")
-            occurrences.setdefault(normalized, []).append((name, desc))
+    for name in object_names:
+        for sig, desc in objects.get(name, []):
+            occurrences.setdefault(normalize(sig), []).append((name, desc))
+
     shared = []
     for sig, variants in occurrences.items():
-        if len(variants) < 2:
+        if len({name for name, _ in variants}) < 2:
             continue
-        applicable = ", ".join(name for name, _ in variants)
+        owners = ", ".join(name.replace(" visualization", "").replace(" drawing buffer", "")
+                           .replace(" primitive collector", "") for name, _ in variants)
         descriptions = {desc for _, desc in variants}
-        desc = variants[0][1] if len(descriptions) == 1 else "Shared signature; behavior depends on grid type (see API Reference)."
-        shared.append((sig, f"[{applicable}] {desc}"))
+        desc = (variants[0][1] if len(descriptions) == 1
+                else "Same signature; consult API Reference for type-specific behavior.")
+        shared.append((sig, f"[{owners}] {desc}"))
+
     consolidated = []
     inserted = False
     for title, rows in groups:
-        if title in grid_names:
+        if title in object_names:
             if not inserted:
-                consolidated.append(("Shared grid API", shared))
+                consolidated.append(("Shared object API (2+ types)", shared))
                 inserted = True
             rows = [(sig, desc) for sig, desc in rows
-                    if len(occurrences[sig.replace("(self, ", "(").replace("(self)", "()")]) == 1]
+                    if len({name for name, _ in occurrences[normalize(sig)]}) < 2]
         if rows:
             consolidated.append((title, rows))
     return consolidated
