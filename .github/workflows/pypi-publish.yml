@@ -61,7 +61,14 @@ jobs:
           from zipfile import ZipFile
           wheels = list(Path('.').glob('*.whl'))
           sources = list(Path('.').glob('*.tar.gz'))
-          assert wheels and len(sources) == 1
+          assert len(wheels) == 16, f'Expected 16 release wheels, got {len(wheels)}'
+          assert len(sources) == 1
+          for python_tag in ('cp310', 'cp311', 'cp312', 'cp313'):
+              matches = [wheel for wheel in wheels if f'-{python_tag}-{python_tag}-' in wheel.name]
+              assert len(matches) == 4, f'Incomplete {python_tag} wheel matrix: {matches}'
+              assert sum('manylinux' in wheel.name for wheel in matches) == 1, matches
+              assert sum('win_amd64' in wheel.name for wheel in matches) == 1, matches
+              assert sum('macosx' in wheel.name for wheel in matches) == 2, matches
           checksums = Path('SHA256SUMS.txt').read_text().splitlines()
           listed = [line.split('  ', 1)[1] for line in checksums]
           actual = sorted(path.name for path in [*wheels, *sources])
