@@ -13,7 +13,7 @@ Curated one-page API map; see API Guide and API Reference for details.
 - `i = linear site index · SQ = lattice site · a = agent ID`: Coordinates are integer sites or continuous positions.
 - `grid[i] / grid[x,y,z] · slices copy`: Index by site or coordinates; slicing returns a copy.
 - `Add(...) then Update() · Reset()`: Queued changes apply synchronously.
-- `safe by default · FastMode() before construction`: Use @pal.njit(cache=True) for compiled kernels.
+- `SafeMode default · pal.FastMode() before construction`: Compile kernels with @pal.njit(cache=True).
 
 ## START / UTILITIES
 
