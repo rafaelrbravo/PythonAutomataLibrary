@@ -113,6 +113,34 @@ def _api_entries():
             sig = sig.replace(", timeout=30", "").replace("(timeout=30)", "()")
         return sig
 
+    # Place creation functions beside the objects they construct.
+    factory_sections = {
+        "NewIList": "IList", "NewMultinomial": "Multinomial",
+        "NewGrid": "Grid", "NewAgentGrid": "AgentGrid",
+        "NewPopGrid": "PopGrid", "NewPDEgrid": "PDEgrid",
+        "StartPixWindow": "PixWindow visualization",
+        "StartOpenGLWindow": "OpenGLWindow visualization",
+    }
+    relocated = {name: [] for name in factory_sections.values()}
+    regrouped = []
+    for title, rows in groups:
+        retained = []
+        for sig, desc in rows:
+            function = sig.split("(", 1)[0]
+            if title == "Factories and utilities" and function in factory_sections:
+                relocated[factory_sections[function]].append((sig, desc))
+            else:
+                retained.append((sig, desc))
+        regrouped.append((title, retained))
+    # Window factories are documented as standalone code blocks in the reference.
+    relocated["PixWindow visualization"].insert(0, (
+        "StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False)",
+        "Create a pixel buffer and display window."))
+    relocated["OpenGLWindow visualization"].insert(0, (
+        "StartOpenGLWindow(xDim, yDim, zDim=None, width=800, height=800, title='PAL', headless=False)",
+        "Create an OpenGL drawing collector and window."))
+    groups = [(title, relocated.get(title, []) + rows) for title, rows in regrouped]
+
     occurrences = {}
     for name in object_names:
         for sig, desc in objects.get(name, []):
