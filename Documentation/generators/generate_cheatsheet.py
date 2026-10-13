@@ -176,11 +176,40 @@ def _api_entries():
                     if len({name for name, _ in occurrences[normalize(sig)]}) < 2]
         if rows:
             consolidated.append((title, rows))
+
+    # Compact complete axis families, including properties and agent coordinates.
+    # Apply after shared-API relocation so each section is consolidated independently.
+    import re
+    def compact_axes(rows):
+        names = {sig.split("(", 1)[0]: (sig, desc) for sig, desc in rows}
+        skip = set()
+        result = []
+        for sig, desc in rows:
+            name = sig.split("(", 1)[0]
+            if name in skip:
+                continue
+            match = re.fullmatch(r"(.*?)(X|x)(SQ|Dim|)", name)
+            if match:
+                prefix, axis, suffix = match.groups()
+                axes = ("X", "Y", "Z") if axis == "X" else ("x", "y", "z")
+                family = [prefix + a + suffix for a in axes]
+                if all(n in names for n in family):
+                    tails = [names[n][0].split("(", 1)[1] for n in family]
+                    if len(set(tails)) == 1:
+                        skip.update(family[1:])
+                        result.append((sig.replace(name + "(", name + "...(", 1),
+                                       desc.rstrip(".") + " (Y/Z equivalents)."))
+                        continue
+            result.append((sig, desc))
+        return result
+
+    consolidated = [(title, compact_axes(rows)) for title, rows in consolidated]
     return consolidated
 
 
 def _md():
     lines = ["# PAL Cheatsheet", "", INTRO, "",
+             "Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y and Z/z variants.", "",
              "Condensed from the generated API Reference; see API Guide for examples.", ""]
     for title, rows in _api_entries():
         lines += ["## " + title, ""]
