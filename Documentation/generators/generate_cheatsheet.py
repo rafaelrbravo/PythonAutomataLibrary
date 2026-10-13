@@ -1,6 +1,6 @@
 """Generate PAL CHEATSHEET.md and CHEATSHEET.pdf from one compact definition.
 
-The PDF uses a readable two-column, full-height single-page landscape layout generated from the same
+The PDF uses a readable two-column, full-height two-page portrait layout generated from the same
 structured content as the Markdown cheatsheet.
 
 Usage: python Documentation/generators/generate_cheatsheet.py [--check]
@@ -9,7 +9,7 @@ import argparse, html, re
 from io import BytesIO
 from pathlib import Path
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter, landscape
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.units import inch
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import BaseDocTemplate, Frame, FrameBreak, PageTemplate, Paragraph
@@ -163,8 +163,7 @@ def _build_pdf(body_font=8.0):
     intro = ParagraphStyle("intro", fontName="Helvetica", fontSize=body_font,
                            leading=body_font * 1.13, spaceAfter=3)
 
-    # Pack the source-derived API Reference into two near-full columns.
-    # Favor concise declarations over truncated, ambiguous descriptions.
+    # Four columns across two portrait pages. Every public declaration is mandatory.
     max_height = usable - 12
     inner_width = col_w - 8
     groups = _api_entries()
@@ -177,57 +176,55 @@ def _build_pdf(body_font=8.0):
 
     def compact(sig, desc, limit):
         sig = re.sub(r"\\s+", " ", sig)
-        sig = re.sub(r"\(self,\s*", "(", sig)
-        sig = re.sub(r"\(self\)", "()", sig)
-        sig = re.sub(r" -> [^)]*$", "", sig)
-        if len(sig) > 76:
-            sig = sig[:73].rsplit(",", 1)[0] + ",...)"
+        sig = re.sub(r"\\(self,\\s*", "(", sig)
+        sig = re.sub(r"\\(self\\)", "()", sig)
         desc = re.sub(r"\\s+", " ", re.sub(r"`", "", desc)).strip()
         if len(desc) > limit:
             desc = desc[:limit - 3].rsplit(" ", 1)[0] + "..."
         return Paragraph("<b>" + html.escape(sig) + "</b> — " + html.escape(desc), entry)
 
-    def pack(desc_limit, first_target):
-        columns = [[], []]
-        heights = [0., 0.]
+    def pack(desc_limit):
+        columns = [[], [], [], []]
+        heights = [0.] * 4
         intro_p = Paragraph(_markup(INTRO), intro)
         columns[0].append(intro_p)
         heights[0] += cost(intro_p)
         current = 0
-        count = 0
-        last_title = [None, None]
+        last_title = [None] * 4
         for title, sig, desc in entries:
             p = compact(sig, desc, desc_limit)
             heading_p = Paragraph(html.escape(title), heading)
             needed = cost(p) + (cost(heading_p) if title != last_title[current] else 0)
-            if heights[current] + needed > (first_target if current == 0 else max_height):
-                if current == 0:
-                    current = 1
-                    needed = cost(p) + cost(heading_p)
-                if heights[current] + needed > max_height:
-                    continue
+            if heights[current] + needed > max_height:
+                current += 1
+                if current >= 4:
+                    return None
+                needed = cost(p) + cost(heading_p)
+            if heights[current] + needed > max_height:
+                return None
             if title != last_title[current]:
                 columns[current].append(heading_p)
                 heights[current] += cost(heading_p)
                 last_title[current] = title
             columns[current].append(p)
             heights[current] += cost(p)
-            count += 1
-        return columns, heights, count
+        return columns, heights
 
-    candidates = []
-    for desc_limit in (44, 58, 72, 86):
-        for target_ratio in (.88, .94, .98):
-            cols, hs, count = pack(desc_limit, max_height * target_ratio)
-            score = count * 100 + min(hs) / max_height * 20 + desc_limit / 100
-            candidates.append((score, cols, hs, count, desc_limit))
-    _, columns, heights, included, chosen_limit = max(candidates, key=lambda x: x[0])
-    print(f"PAL cheatsheet packed {included}/{total} API declarations "
-          f"(description limit {chosen_limit}); column heights "
-          f"{heights[0]:.1f}/{heights[1]:.1f} of {max_height:.1f} pt.")
-    story = columns[0] + [FrameBreak()] + columns[1]
-    print(f"PAL cheatsheet packed {included}/{total} source entries; "
-          f"column heights {heights[0]:.1f}/{heights[1]:.1f} of {max_height:.1f} pt.")
+    chosen = None
+    for limit in (180, 150, 120, 100, 80, 60, 40):
+        chosen = pack(limit)
+        if chosen is not None:
+            break
+    if chosen is None:
+        raise RuntimeError(f"Full API ({total} declarations) cannot fit on two pages at 8 pt")
+    columns, heights = chosen
+    print(f"PAL cheatsheet includes all {total} API declarations on two pages; "
+          f"description limit {limit}; column heights {[round(h, 1) for h in heights]}.")
+    story = []
+    for i, column in enumerate(columns):
+        if i:
+            story.append(FrameBreak())
+        story.extend(column)
     doc = BaseDocTemplate(buf, pagesize=letter, leftMargin=margin,
                           rightMargin=margin, topMargin=margin, bottomMargin=margin,
                           invariant=1)
@@ -238,9 +235,9 @@ def _build_pdf(body_font=8.0):
 
 def _pdf():
     data, pages = _build_pdf(8.0)
-    if pages != 1:
-        raise RuntimeError(f"Cheatsheet must be exactly one page; generated {pages}.")
-    print("PAL cheatsheet generated 1 portrait page, 2 full-height columns at 8 pt body font.")
+    if pages != 2:
+        raise RuntimeError(f"Cheatsheet must be exactly two pages; generated {pages}.")
+    print("PAL cheatsheet generated 2 portrait pages, 2 full-height columns at 8 pt body font.")
     return data
 
 def build(): return _md(), _pdf()
