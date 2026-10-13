@@ -197,7 +197,7 @@ def _build_pdf():
         x = margin + col * (width + gap)
         y = ph - top
         for title, pieces in blocks:
-            c.setFillColor(colors.HexColor("#DCEAF5") if title == "CONVENTIONS" else colors.HexColor("#E9EDF2"))
+            c.setFillColor(colors.HexColor("#D9D9D9") if title == "CONVENTIONS" else colors.HexColor("#E9EDF2"))
             c.rect(x, y - heading_h + 2, width, heading_h - 2, fill=1, stroke=0)
             c.setFillColor(colors.HexColor("#172B4D"))
             c.setFont("Helvetica-Bold", size + .6)
