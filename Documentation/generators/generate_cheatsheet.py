@@ -26,16 +26,15 @@ SECTIONS = [
 ("`pal.NewGrid(dims, dtype)`", "Create one value per site; supports bool, fixed-width integer, and float dtypes."), ("`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`", "Create mobile agents with per-agent properties. `isStackable` permits multiple agents per site; `dims=()` makes a nonspatial collection."),
 ("`pal.NewPopGrid(dims, capacity=None)`", "Store integer population counts per site; `capacity` limits total population."), ("`pal.NewPDEgrid(dims)`", "Create a continuous field with queued synchronous updates and diffusion/advection operators."),
 ("`pal.NewIList()`", "Create a mutable integer list for collecting/reusing query results."), ("`pal.NewMultinomial()`", "Create a sampler for binomial/multinomial population draws."),]),
-("Shared lattice geometry", [
+("Shared grid API", [
 ("Properties", "`xDim` / `yDim` / `zDim`: axis sizes; `nDims`: number of axes; `wrapX` / `wrapY` / `wrapZ`: wrapping flags."),
 ("`ToI(x...)`", "Convert coordinates to a linear site index; inverse methods are `ItoX/Y/Z(i)`."),
 
 
-("`grid.Hood(hood, x...)`", "Apply relative coordinate offsets, e.g. `((x1,y1),(x2,y2),...)`, at `x...`. Special-case hoods: **`pal.MooreHood`**`(*)`, **`pal.VonNeumannHood`**`(*)`, **`pal.CircleHood`**`(*,rad,*)`. `*` represents shared arguments: `dim` (number of dimensions) and `excludeCenter=False` (omit the center when true)."),]),
-("Grid / common indexing", [
-("Indexing", "`grid[i]` reads/writes by linear index; `grid[x...]` uses dimensional coordinates."), ("Slices", "Return detached NumPy copies, not views; write back explicitly to change the grid."),
-("`Box(x1,x2,...)`", "Select a rectangular region: `(xLow,xHigh,yLow,yHigh,...)`, with exclusive upper bounds."),
-]),
+("`grid.Hood(hood, x...)`", "Apply relative coordinate offsets, e.g. `((x1,y1),(x2,y2),...)`, at `x...`. Special-case hoods: **`pal.MooreHood`**`(*)`, **`pal.VonNeumannHood`**`(*)`, **`pal.CircleHood`**`(*,rad,*)`. `*` represents shared arguments: `dim` (number of dimensions) and `excludeCenter=False` (omit the center when true)."),
+("Indexing", "`grid[i]` reads/writes by linear index; `grid[x...]` uses dimensional coordinates."),
+("Slices", "Return detached NumPy copies, not views; write back explicitly to change the grid."),
+("`Box(x1,x2,...)`", "Select a rectangular region with exclusive upper bounds."),]),
 ("Shared window API", [
 ("GIF recording", "`win.StartGif(path,delay=100)` starts recording; `win.AddGifFrame(...)` appends a frame; `win.StopGif(...)` finishes. Supported by PixWindow and OpenGLWindow; optional frame arguments differ."),]),
 ("Draw / output", [
