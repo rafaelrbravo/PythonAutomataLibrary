@@ -70,7 +70,15 @@ jobs:
           for wheel in wheels:
               assert not wheel.name.endswith('-none-any.whl'), wheel
               with ZipFile(wheel) as z:
-                  assert any(n.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib')) for n in z.namelist()), wheel
+                  names = z.namelist()
+                  expected = ('pal_native.dll' if 'win_amd64' in wheel.name else
+                              'libpal_native.dylib' if 'macosx' in wheel.name else
+                              'libpal_native.so')
+                  native = [n for n in names if n.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib'))]
+                  assert len(native) == 1 and native[0].endswith(expected), f'Unexpected native payload: {wheel}: {native}'
+                  assert not any('.data/purelib/' in n for n in names), wheel
+                  wheel_info = next(n for n in names if n.endswith('.dist-info/WHEEL'))
+                  assert 'Root-Is-Purelib: false' in z.read(wheel_info).decode(), wheel
           PY
           rm SHA256SUMS.txt
       - name: Publish verified artifacts using PyPI trusted publishing
