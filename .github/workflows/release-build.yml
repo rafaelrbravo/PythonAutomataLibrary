@@ -136,8 +136,15 @@ jobs:
           from zipfile import ZipFile
           wheels = list(Path('.').glob('*.whl'))
           sources = list(Path('.').glob('*.tar.gz'))
-          assert wheels, 'No wheels collected'
+          assert len(wheels) == 16, f'Expected 16 wheels (4 Python versions x 4 platforms), got {len(wheels)}'
           assert len(sources) == 1, 'Expected one source archive'
+          expected_platforms = ('manylinux', 'win_amd64', 'macosx')
+          for python_tag in ('cp310', 'cp311', 'cp312', 'cp313'):
+              matches = [wheel for wheel in wheels if f'-{python_tag}-{python_tag}-' in wheel.name]
+              assert len(matches) == 4, f'Expected 4 wheels for {python_tag}, got {matches}'
+              assert sum('macosx' in wheel.name for wheel in matches) == 2, matches
+              assert sum('manylinux' in wheel.name for wheel in matches) == 1, matches
+              assert sum('win_amd64' in wheel.name for wheel in matches) == 1, matches
           for wheel in wheels:
               assert not wheel.name.endswith('-none-any.whl'), wheel
               with ZipFile(wheel) as archive:
