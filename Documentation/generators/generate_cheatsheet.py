@@ -29,7 +29,7 @@ SECTIONS = [
 ("i = linear site index · SQ = lattice site · a = agent ID", "Coordinates are integer sites or continuous positions."),
 ("grid[i] / grid[x,y,z] · slices copy", "Index by site or coordinates; slicing returns a copy."),
 ("Add(...) then Update() · Reset()", "Queued changes apply synchronously."),
-("safe by default · FastMode() before construction", "Use @pal.njit(cache=True) for compiled kernels."),
+("SafeMode default · pal.FastMode() before construction", "Compile kernels with @pal.njit(cache=True)."),
 ]),
 ("START / UTILITIES", [
 ("pal.FastMode() · pal.njit(cache=True)", "Select fast mode before object creation; compile model kernels."),
@@ -197,7 +197,11 @@ def _build_pdf():
         x = margin + col * (width + gap)
         y = ph - top
         for title, pieces in blocks:
-            c.setFillColor(colors.HexColor("#D9D9D9") if title == "CONVENTIONS" else colors.HexColor("#E9EDF2"))
+            if title == "CONVENTIONS":
+                block_h = heading_h + sum(p[2] for p in pieces) + 4
+                c.setFillColor(colors.HexColor("#E3E3E3"))
+                c.rect(x, y - block_h, width, block_h, fill=1, stroke=0)
+            c.setFillColor(colors.HexColor("#D0D0D0") if title == "CONVENTIONS" else colors.HexColor("#E9EDF2"))
             c.rect(x, y - heading_h + 2, width, heading_h - 2, fill=1, stroke=0)
             c.setFillColor(colors.HexColor("#172B4D"))
             c.setFont("Helvetica-Bold", size + .6)
