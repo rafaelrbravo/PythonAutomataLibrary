@@ -151,6 +151,7 @@ jobs:
         run: |
           python -m venv "$RUNNER_TEMP/pal-sdist-install"
           "$RUNNER_TEMP/pal-sdist-install/bin/python" -m pip install sdist-wheel/*.whl
+          "$RUNNER_TEMP/pal-sdist-install/bin/python" -m pip check
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/pal-sdist-install/bin/python" "$GITHUB_WORKSPACE/packaging/smoke_install.py"
       - uses: actions/upload-artifact@v4
