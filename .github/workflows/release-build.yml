@@ -164,7 +164,6 @@ jobs:
               assert any(name.endswith('/pal_native.c') for name in source_names), 'Missing native C source'
               assert any(name.endswith('/setup.py') for name in source_names), 'Missing setup.py'
               assert not any(name.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib')) for name in source_names), 'Precompiled binary in source distribution'
-          expected_platforms = ('manylinux', 'win_amd64', 'macosx')
           for python_tag in ('cp310', 'cp311', 'cp312', 'cp313'):
               matches = [wheel for wheel in wheels if f'-{python_tag}-{python_tag}-' in wheel.name]
               assert len(matches) == 4, f'Expected 4 wheels for {python_tag}, got {matches}'
