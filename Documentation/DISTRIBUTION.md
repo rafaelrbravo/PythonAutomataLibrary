@@ -27,7 +27,7 @@ To check a wheel without importing from the checkout, install it in a new enviro
 2. Ensure the platform build matrix passes and inspect wheel tags and artifacts. Do not publish a wheel tagged `none-any`.
 3. Download build artifacts and verify filenames, architectures, and native library inclusion.
 4. Inspect the draft GitHub Release created after successful tagged builds, verify wheel assets and SHA256 checksums, then publish the draft.
-5. Configure PyPI Trusted Publishing for the repository workflow, then publish the **same tested artifacts**. Do not embed a PyPI token in source code.
+5. Configure a PyPI Trusted Publisher for GitHub repository `rafaelrbravo/PythonAutomataLibrary`, workflow `pypi-publish.yml`, environment `pypi`. After publishing the GitHub Release, manually dispatch `.github/workflows/pypi-publish.yml` with the published version tag. The workflow verifies SHA256 checksums and publishes the **same tested artifacts** using OpenID Connect. Do not embed a PyPI token in source code.
 6. Replace the local-path conda recipe in `packaging/conda/meta.yaml` with the published source archive URL and SHA256. Submit to conda-forge, then validate installs on all three OSes.
 7. After publication and verification, document supported install commands:
 
@@ -39,4 +39,4 @@ conda install conda-forge::pythonautomatalibrary
 
 ## Release blockers
 
-The CI workflows have not yet been confirmed passing, release assets have not been verified or published, PyPI Trusted Publishing is not configured, and the conda-forge feedstock has not been submitted. The local conda recipe is a starting point, not a published feedstock.
+The CI workflows have not yet been confirmed passing, release assets have not been verified or published, PyPI Trusted Publishing is not confirmed configured, and the conda-forge feedstock has not been submitted. The local conda recipe is a starting point, not a published feedstock.
