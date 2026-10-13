@@ -1,5 +1,7 @@
 """Build PAL's platform-native library into binary wheels."""
+import os
 from pathlib import Path
+import shlex
 import subprocess
 import sys
 from setuptools import setup
@@ -17,13 +19,16 @@ class BuildWithNative(build_py):
         if sys.platform == "win32":
             output = destination / "pal_native.dll"
             # Use the Visual Studio environment provided by cibuildwheel.
-            subprocess.check_call(["cl", "/O2", "/LD", str(source), "/link", "/OUT:" + str(output)], cwd=ROOT)
+            compiler = shlex.split(os.environ.get("CC", "cl"))
+            subprocess.check_call([*compiler, "/O2", "/LD", str(source), "/link", "/OUT:" + str(output)], cwd=ROOT)
         elif sys.platform == "darwin":
             output = destination / "libpal_native.dylib"
-            subprocess.check_call(["cc", "-O3", "-dynamiclib", str(source), "-o", str(output)], cwd=ROOT)
+            compiler = shlex.split(os.environ.get("CC", "cc"))
+            subprocess.check_call([*compiler, "-O3", "-dynamiclib", str(source), "-o", str(output)], cwd=ROOT)
         else:
             output = destination / "libpal_native.so"
-            subprocess.check_call(["cc", "-O3", "-std=c11", "-shared", "-fPIC", str(source), "-o", str(output), "-lm"], cwd=ROOT)
+            compiler = shlex.split(os.environ.get("CC", "cc"))
+            subprocess.check_call([*compiler, "-O3", "-std=c11", "-shared", "-fPIC", str(source), "-o", str(output), "-lm"], cwd=ROOT)
 
 class PlatformWheel(bdist_wheel):
     def finalize_options(self):
