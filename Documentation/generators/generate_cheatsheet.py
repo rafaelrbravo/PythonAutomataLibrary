@@ -122,16 +122,16 @@ def _markup(s, heading=False):
 
 
 def _build_pdf():
-    """Render a one-page landscape, three-column quick reference."""
+    """Render a one-page portrait, two-column quick reference."""
     from reportlab.pdfgen import canvas
-    from reportlab.lib.pagesizes import landscape
+    from reportlab.lib.pagesizes import portrait
     from reportlab.pdfbase.pdfmetrics import stringWidth
     buf = BytesIO()
-    pw, ph = landscape(letter)
+    pw, ph = portrait(letter)
     c = canvas.Canvas(buf, pagesize=(pw, ph), pageCompression=1, invariant=1)
     c.setTitle(TITLE)
-    margin, gap, top, bottom = 20, 13, 42, 18
-    ncols = 3
+    margin, gap, top, bottom = 17, 12, 40, 17
+    ncols = 2
     width = (pw - 2 * margin - gap * (ncols - 1)) / ncols
     rows = [(title, sig.strip("&#96;"), desc) for title, entries in SECTIONS for sig, desc in entries]
     def split_lines(value, font, size, max_width):
@@ -159,11 +159,11 @@ def _build_pdf():
                 details = split_lines(desc, "Helvetica", size - .4, width - 8)
                 pieces.append((lines, details, lead * (len(lines) + len(details)) + 2))
             blocks.append((title, pieces, heading_h + sum(p[2] for p in pieces) + 4))
-        columns = [[], [], []]
-        heights = [0, 0, 0]
+        columns = [[], []]
+        heights = [0, 0]
         usable = ph - top - bottom
         for title, pieces, h in blocks:
-            col = min(range(3), key=lambda i: heights[i])
+            col = min(range(ncols), key=lambda i: heights[i])
             if heights[col] + h > usable:
                 candidates = [i for i in range(3) if heights[i] + h <= usable]
                 if not candidates:
@@ -173,7 +173,7 @@ def _build_pdf():
             heights[col] += h
         return columns, heights, lead, heading_h
     selected = None
-    for size in (8.0, 7.8, 7.6, 7.4, 7.2, 7.0, 6.8, 6.6):
+    for size in (8.0, 7.8, 7.6, 7.4, 7.2, 7.0, 6.8, 6.6, 6.4, 6.2):
         selected = layout(size)
         if selected is not None:
             break
