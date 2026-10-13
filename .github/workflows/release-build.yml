@@ -141,7 +141,15 @@ jobs:
           for wheel in wheels:
               assert not wheel.name.endswith('-none-any.whl'), wheel
               with ZipFile(wheel) as archive:
-                  assert any(name.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib')) for name in archive.namelist()), wheel
+                  names = archive.namelist()
+                  expected = ('pal_native.dll' if 'win_amd64' in wheel.name else
+                              'libpal_native.dylib' if 'macosx' in wheel.name else
+                              'libpal_native.so')
+                  native = [name for name in names if name.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib'))]
+                  assert len(native) == 1 and native[0].endswith(expected), f'Unexpected native payload: {wheel}: {native}'
+                  assert not any('.data/purelib/' in name for name in names), wheel
+                  wheel_info = next(name for name in names if name.endswith('.dist-info/WHEEL'))
+                  assert 'Root-Is-Purelib: false' in archive.read(wheel_info).decode(), wheel
           print(f'Validated {len(wheels)} wheels and {len(sources)} source archive')
       - name: Generate SHA256 checksums
         working-directory: release-assets
