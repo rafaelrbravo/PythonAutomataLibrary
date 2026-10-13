@@ -6,6 +6,7 @@ import subprocess
 import sys
 from setuptools import setup, Distribution
 from setuptools.command.build_py import build_py
+from setuptools.command.sdist import sdist
 from wheel.bdist_wheel import bdist_wheel
 
 ROOT = Path(__file__).resolve().parent
@@ -41,6 +42,12 @@ class BuildWithNative(build_py):
             flags = shlex.split(os.environ.get("CFLAGS", ""))
             subprocess.check_call([*compiler, *flags, "-O3", "-std=c11", "-shared", "-fPIC", str(source), "-o", str(output), "-lm"], cwd=ROOT)
 
+class SourceWithoutNativeBinaries(sdist):
+    def get_file_list(self):
+        super().get_file_list()
+        forbidden = ("pal_native.dll", "libpal_native.so", "libpal_native.dylib")
+        self.filelist.files = [name for name in self.filelist.files if not name.endswith(forbidden)]
+
 class NativeDistribution(Distribution):
     def has_ext_modules(self):
         return True
@@ -50,4 +57,4 @@ class PlatformWheel(bdist_wheel):
         super().finalize_options()
         self.root_is_pure = False
 
-setup(distclass=NativeDistribution, cmdclass={"build_py": BuildWithNative, "bdist_wheel": PlatformWheel})
+setup(distclass=NativeDistribution, cmdclass={"build_py": BuildWithNative, "bdist_wheel": PlatformWheel, "sdist": SourceWithoutNativeBinaries})
