@@ -10,7 +10,11 @@ on:
       - 'setup.py'
       - 'MANIFEST.in'
       - 'pal_native.c'
-      - 'packaging/smoke_install.py'
+      - '*.py'
+      - '*.pyi'
+      - 'packaging/**'
+      - 'Tests/**'
+      - 'Testing/**'
 permissions:
   contents: read
 jobs:
