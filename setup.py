@@ -1,0 +1,28 @@
+"""Build PAL's platform-native library into binary wheels."""
+from pathlib import Path
+import os
+import subprocess
+import sys
+from setuptools import setup
+from setuptools.command.build_py import build_py
+
+ROOT = Path(__file__).resolve().parent
+
+class BuildWithNative(build_py):
+    def run(self):
+        super().run()
+        source = ROOT / "pal_native.c"
+        destination = Path(self.build_lib) / "PythonAutomataLibrary"
+        destination.mkdir(parents=True, exist_ok=True)
+        if sys.platform == "win32":
+            output = destination / "pal_native.dll"
+            # Use the Visual Studio environment provided by cibuildwheel.
+            subprocess.check_call(["cl", "/O2", "/LD", str(source), "/link", "/OUT:" + str(output)], cwd=ROOT)
+        elif sys.platform == "darwin":
+            output = destination / "libpal_native.dylib"
+            subprocess.check_call(["cc", "-O3", "-dynamiclib", str(source), "-o", str(output)], cwd=ROOT)
+        else:
+            output = destination / "libpal_native.so"
+            subprocess.check_call(["cc", "-O3", "-std=c11", "-shared", "-fPIC", str(source), "-o", str(output), "-lm"], cwd=ROOT)
+
+setup(cmdclass={"build_py": BuildWithNative})
