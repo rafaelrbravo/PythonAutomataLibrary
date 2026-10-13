@@ -68,6 +68,8 @@ jobs:
           from zipfile import ZipFile
           wheels = list(Path("wheelhouse").glob("*.whl"))
           assert len(wheels) == 4, f"Expected four CPython wheels per platform, found {len(wheels)}: {wheels}"
+          for tag in ("cp310", "cp311", "cp312", "cp313"):
+              assert sum(f"-{tag}-{tag}-" in wheel.name for wheel in wheels) == 1, tag
           for wheel in wheels:
               with ZipFile(wheel) as archive:
                   names = archive.namelist()
