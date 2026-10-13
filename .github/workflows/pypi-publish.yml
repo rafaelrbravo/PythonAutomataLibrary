@@ -50,6 +50,8 @@ jobs:
           gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist --pattern '*.tar.gz'
           gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist --pattern 'SHA256SUMS.txt'
       - name: Verify checksums and distributions
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
         working-directory: dist
         run: |
           test -f SHA256SUMS.txt
@@ -57,6 +59,7 @@ jobs:
           test -n "$(find . -maxdepth 1 -name '*.whl' -print -quit)"
           test -n "$(find . -maxdepth 1 -name '*.tar.gz' -print -quit)"
           python - <<'PY'
+          import os
           from pathlib import Path
           from zipfile import ZipFile
           import tarfile
@@ -64,6 +67,9 @@ jobs:
           sources = list(Path('.').glob('*.tar.gz'))
           assert len(wheels) == 16, f'Expected 16 release wheels, got {len(wheels)}'
           assert len(sources) == 1
+          version = os.environ['RELEASE_TAG'].removeprefix('v')
+          assert all(wheel.name.startswith(f'pythonautomatalibrary-{version}-') for wheel in wheels), 'Wheel version differs from release tag'
+          assert sources[0].name == f'pythonautomatalibrary-{version}.tar.gz', 'Source version differs from release tag'
           with tarfile.open(sources[0], 'r:gz') as archive:
               source_names = archive.getnames()
               assert any(name.endswith('/pal_native.c') for name in source_names), 'Missing native source'
