@@ -6,6 +6,7 @@ import sys
 import PythonAutomataLibrary as pal
 
 package_dir = Path(pal.__file__).resolve().parent
+assert "site-packages" in package_dir.parts or "dist-packages" in package_dir.parts, f"PAL imported from non-installed location: {package_dir}"
 native_name = ("pal_native.dll" if sys.platform == "win32" else
                "libpal_native.dylib" if sys.platform == "darwin" else
                "libpal_native.so")
