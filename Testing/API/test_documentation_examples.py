@@ -54,12 +54,12 @@ def test_cheatsheet_markup_bolds_syntax_without_monospace():
     assert "Courier" not in path.read_text(encoding="utf-8")
 
 
-def test_cheatsheet_pdf_fits_two_pages():
-    """The full API must fit in the published two-page layout at 8 pt."""
+def test_cheatsheet_pdf_fits_one_page():
+    """The curated cheatsheet must fit in its published one-page layout."""
     path = Path(__file__).resolve().parents[2] / "Documentation" / "generators" / "generate_cheatsheet.py"
     namespace = runpy.run_path(str(path), run_name="pal_cheatsheet_layout_test")
-    _, pages = namespace["_build_pdf"](8.0)
-    assert pages == 2
+    _, pages = namespace["_build_pdf"]()
+    assert pages == 1
 
 
 def test_manual_checkpoint_snippet():
