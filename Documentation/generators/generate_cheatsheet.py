@@ -23,6 +23,14 @@ INTRO = "`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pa
 CONVENTIONS = "`dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D."
 
 SECTIONS = [
+("CONVENTIONS", [
+("dims=(nx[,ny[,nz]]) · negative axis size = periodic", "1D/2D/3D; omit unused axes."),
+("x... / X... / ItoX... / DispWrapX...", "X shorthand includes corresponding Y/Z variants."),
+("i = linear site index · SQ = lattice site · a = agent ID", "Coordinates are integer sites or continuous positions."),
+("grid[i] / grid[x,y,z] · slices copy", "Index by site or coordinates; slicing returns a copy."),
+("Add(...) then Update() · Reset()", "Queued changes apply synchronously."),
+("safe by default · FastMode() before construction", "Use @pal.njit(cache=True) for compiled kernels."),
+]),
 ("START / UTILITIES", [
 ("pal.FastMode() · pal.njit(cache=True)", "Select fast mode before object creation; compile model kernels."),
 ("pal.Seed(s) · Random() · RandInt(n)", "Shared PAL RNG; seed for reproducibility."),
@@ -164,7 +172,7 @@ def _build_pdf():
         for title, pieces, h in blocks:
             col = min(range(ncols), key=lambda i: heights[i])
             if heights[col] + h > usable:
-                candidates = [i for i in range(3) if heights[i] + h <= usable]
+                candidates = [i for i in range(ncols) if heights[i] + h <= usable]
                 if not candidates:
                     return None
                 col = min(candidates, key=lambda i: heights[i])
@@ -189,7 +197,7 @@ def _build_pdf():
         x = margin + col * (width + gap)
         y = ph - top
         for title, pieces in blocks:
-            c.setFillColor(colors.HexColor("#E9EDF2"))
+            c.setFillColor(colors.HexColor("#DCEAF5") if title == "CONVENTIONS" else colors.HexColor("#E9EDF2"))
             c.rect(x, y - heading_h + 2, width, heading_h - 2, fill=1, stroke=0)
             c.setFillColor(colors.HexColor("#172B4D"))
             c.setFont("Helvetica-Bold", size + .6)
