@@ -23,6 +23,15 @@ INTRO = "`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pa
 CONVENTIONS = "`dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D."
 
 SECTIONS = [
+("CONVENTIONS", [
+("dims=(nx[,ny[,nz]]) · negative dimension = wrap", "1D/2D/3D; omit unused axes. Negative sizes enable periodic boundaries."),
+("hood = array of offset tuples", "Neighborhoods contain relative (dx[,dy[,dz]]) offsets."),
+("x... / X... / ItoX... / DispWrapX...", "X shorthand includes corresponding Y/Z variants."),
+("i = linear site index · SQ = lattice site · a = agent ID", "Coordinates are integer sites or continuous positions."),
+("grid[i] / grid[x,y,z] · slices copy", "Index by site or coordinates; slicing returns a copy."),
+("Add(...) then Update() · Reset()", "Queued changes apply synchronously."),
+("SafeMode default · pal.FastMode() before construction", "Compile kernels with @pal.njit(cache=True)."),
+]),
 ("SHARED GRID API · NewGrid(dims,dtype)", [
 ("dims=(nx,ny,nz); negative size = wrap", "1–3 dimensions; unused axes omitted."),
 ("grid.xDim... · nDims · wrapX...", "Axis sizes, dimensionality, periodicity."),
@@ -83,14 +92,7 @@ SECTIONS = [
 ("win.IsOpen() · Update() · Save(path,block=False) · Close()", "Window lifecycle / image output."),
 ("win.StartGif(path,delay=100) · AddGifFrame(block=False) · StopGif()", "GIF recording; OpenGL supports timeout options."),
 ]),
-("CONVENTIONS", [
-("dims=(nx[,ny[,nz]]) · negative axis size = periodic", "1D/2D/3D; omit unused axes."),
-("x... / X... / ItoX... / DispWrapX...", "X shorthand includes corresponding Y/Z variants."),
-("i = linear site index · SQ = lattice site · a = agent ID", "Coordinates are integer sites or continuous positions."),
-("grid[i] / grid[x,y,z] · slices copy", "Index by site or coordinates; slicing returns a copy."),
-("Add(...) then Update() · Reset()", "Queued changes apply synchronously."),
-("SafeMode default · pal.FastMode() before construction", "Compile kernels with @pal.njit(cache=True)."),
-]),
+
 ]
 
 def _api_entries():
@@ -222,7 +224,7 @@ def _build_pdf():
             y -= 4
     c.setFont("Helvetica", 6.7)
     c.setFillColor(colors.HexColor("#555555"))
-    c.drawString(margin, 8, "dims=(nx,ny,nz); negative dimension wraps · API Reference has exact signatures and defaults")
+    c.drawString(margin, 8, "See API Reference for exact signatures and defaults")
     c.save()
     print(f"One-page cheatsheet: {sum(len(e) for _,e in SECTIONS)} curated entries, {size:.1f} pt, column heights {[round(h) for h in heights]}")
     return buf.getvalue(), 1
