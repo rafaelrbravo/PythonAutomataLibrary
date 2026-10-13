@@ -66,13 +66,16 @@ jobs:
         run: |
           from pathlib import Path
           from zipfile import ZipFile
+          import os
           import tomllib
           version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
           wheels = list(Path("wheelhouse").glob("*.whl"))
           assert len(wheels) == 4, f"Expected four CPython wheels per platform, found {len(wheels)}: {wheels}"
           for tag in ("cp310", "cp311", "cp312", "cp313"):
               assert sum(f"-{tag}-{tag}-" in wheel.name for wheel in wheels) == 1, tag
+          platform = {"Windows": "win_amd64", "Linux": "manylinux", "macOS": "macosx"}[os.environ["RUNNER_OS"]]
           for wheel in wheels:
+              assert platform in wheel.name, f"Wheel platform does not match runner {platform}: {wheel}"
               assert wheel.name.startswith(f"pythonautomatalibrary-{version}-"), f"Wheel version mismatch: {wheel}"
               with ZipFile(wheel) as archive:
                   names = archive.namelist()
