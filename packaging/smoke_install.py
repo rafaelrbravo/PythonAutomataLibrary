@@ -11,7 +11,10 @@ native_name = ("pal_native.dll" if sys.platform == "win32" else
                "libpal_native.so")
 native_path = package_dir / native_name
 assert native_path.is_file(), f"Missing native PAL binary: {native_path}"
-ctypes.CDLL(str(native_path))
+lib = ctypes.CDLL(str(native_path))
+lib.pal_rgb.argtypes = [ctypes.c_int32, ctypes.c_int32, ctypes.c_int32]
+lib.pal_rgb.restype = ctypes.c_uint32
+assert lib.pal_rgb(12, 34, 56) == 0x0C2238, 'Native PAL function returned wrong value'
 assert hasattr(pal, "AgentGrid"), "PAL public API missing AgentGrid"
 assert hasattr(pal, "PDEgrid"), "PAL public API missing PDEgrid"
 assert hasattr(pal, "PopGrid"), "PAL public API missing PopGrid"
