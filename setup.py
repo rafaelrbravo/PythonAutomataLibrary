@@ -24,11 +24,13 @@ class BuildWithNative(build_py):
         elif sys.platform == "darwin":
             output = destination / "libpal_native.dylib"
             compiler = shlex.split(os.environ.get("CC", "cc"))
-            subprocess.check_call([*compiler, "-O3", "-dynamiclib", str(source), "-o", str(output)], cwd=ROOT)
+            flags = shlex.split(os.environ.get("CFLAGS", ""))
+            subprocess.check_call([*compiler, *flags, "-O3", "-dynamiclib", str(source), "-o", str(output)], cwd=ROOT)
         else:
             output = destination / "libpal_native.so"
             compiler = shlex.split(os.environ.get("CC", "cc"))
-            subprocess.check_call([*compiler, "-O3", "-std=c11", "-shared", "-fPIC", str(source), "-o", str(output), "-lm"], cwd=ROOT)
+            flags = shlex.split(os.environ.get("CFLAGS", ""))
+            subprocess.check_call([*compiler, *flags, "-O3", "-std=c11", "-shared", "-fPIC", str(source), "-o", str(output), "-lm"], cwd=ROOT)
 
 class PlatformWheel(bdist_wheel):
     def finalize_options(self):
