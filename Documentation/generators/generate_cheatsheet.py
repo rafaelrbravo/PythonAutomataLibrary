@@ -36,12 +36,13 @@ SECTIONS = [
 ("Indexing", "`grid[i]` reads/writes by linear index; `grid[x...]` uses dimensional coordinates."), ("Slices", "Return detached NumPy copies, not views; write back explicitly to change the grid."),
 ("`Box(x1,x2,...)`", "Select a rectangular region: `(xLow,xHigh,yLow,yHigh,...)`, with exclusive upper bounds."),
 ]),
+("Shared window API", [
+("GIF recording", "`win.StartGif(path,delay=100)` starts recording; `win.AddGifFrame(...)` appends a frame; `win.StopGif(...)` finishes. Supported by PixWindow and OpenGLWindow; optional frame arguments differ."),]),
 ("Draw / output", [
 ("`pal.StartPixWindow(...)`", "Create a pixel buffer and display window; `headless=True` supports noninteractive rendering."),
 ("`pix[x,y] = RGB`", "Set a pixel color in the shared pixel buffer."),
 ("Color utilities", "`pal.RGB(r,g,b)` packs red, green, and blue channels into a color; `pal.GetR(color)`, `pal.GetG(color)`, and `pal.GetB(color)` extract channels; `pal.ColorScale(...)` maps values to colors."),
 ("PixWindow controls", "`win.Update()` refreshes the display; `win.Save(path,block=True)` saves an image; `win.Close()` releases the window."),
-("PixWindow GIF", "`win.StartGif(path,delay=100)` starts recording; `win.AddGifFrame(block=False)` appends a frame; `win.StopGif()` finishes."),
 ("`pal.StartOpenGLWindow(xDim,yDim,zDim=None,width=800,height=800,...)`", "Create the renderer and return `(draw, win)`: `draw` collects primitives; `win` handles display, updates, and output. Omit `zDim` for 2D; set it for 3D. `headless=True` supports noninteractive rendering."),
 ("`draw.Circle(rad,color,x,y,z=None)`", "Add a circle or sphere-like primitive with the given radius and color."),
 ("`draw.Box(xLen,color,x,y,z=None,yLen=None,zLen=None)`", "Add a box centered at a position; specify axis lengths to control its size."),
@@ -51,7 +52,7 @@ SECTIONS = [
 ("`win.Camera(x,y,z,yaw=None,pitch=None)`", "Set the camera position and optional yaw/pitch angles for a 3D scene."),
 ("OpenGL frame", "`win.Background(color)` sets the background; `draw.Clear()` clears collected primitives; `win.Clear()` clears the scene; `win.Update()` renders."),
 ("OpenGL output", "`win.IsOpen()` checks the window; `win.Save(path,block=False)` saves an image; `win.Close()` releases resources."),
-("OpenGL GIF", "`win.StartGif(...)` begins recording; `win.AddGifFrame(...)` adds a frame; `win.StopGif(...)` finishes."),]),("Lists + randomness", [
+]),("Lists + randomness", [
 ("IList methods", "`Append(i)` adds an integer; `Clear()` empties the list; `Random()` picks an entry; `Shuffle()` reorders entries; `All()` copies the list; `Iter()` traverses without copying."),
 ("RNG methods", "`pal.Seed(seed)` seeds PAL’s RNG; `pal.Random()` draws uniform [0,1); `pal.RandInt(n)` draws an integer in [0,n). PAL’s RNG is separate from NumPy’s."),
 ("Multinomial methods", "`m.Binomial(n,p)` draws a binomial count; `m.Setup(...)` configures multinomial probabilities; `m.Sample(...)` draws counts."),]),
