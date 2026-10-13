@@ -1,0 +1,4 @@
+include pal_native.c
+include build_native.py
+include README.md
+recursive-exclude * __pycache__ *.py[cod]
