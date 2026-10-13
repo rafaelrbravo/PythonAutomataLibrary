@@ -33,6 +33,7 @@ jobs:
         with:
           name: wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
+          if-no-files-found: error
   sdist:
     runs-on: ubuntu-latest
     steps:
@@ -46,6 +47,7 @@ jobs:
         with:
           name: source-distribution
           path: dist/*.tar.gz
+          if-no-files-found: error
   github-release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [wheels, sdist]
@@ -62,6 +64,21 @@ jobs:
         with:
           name: source-distribution
           path: release-assets
+      - name: Verify collected distributions
+        working-directory: release-assets
+        shell: python {0}
+        run: |
+          from pathlib import Path
+          from zipfile import ZipFile
+          wheels = list(Path('.').glob('*.whl'))
+          sources = list(Path('.').glob('*.tar.gz'))
+          assert wheels, 'No wheels collected'
+          assert len(sources) == 1, 'Expected one source archive'
+          for wheel in wheels:
+              assert not wheel.name.endswith('-none-any.whl'), wheel
+              with ZipFile(wheel) as archive:
+                  assert any(name.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib')) for name in archive.namelist()), wheel
+          print(f'Validated {len(wheels)} wheels and {len(sources)} source archive')
       - name: Generate SHA256 checksums
         working-directory: release-assets
         run: sha256sum *.whl *.tar.gz > SHA256SUMS.txt
