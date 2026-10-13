@@ -134,7 +134,7 @@ def _markup(s, heading=False):
 def _build_pdf(body_font=8.0):
     """Pack as many complete source entries as fit into two balanced columns."""
     buf = BytesIO()
-    pw, ph = landscape(letter)
+    pw, ph = letter
     margin = .30 * inch
     header = .32 * inch
     gutter = .22 * inch
@@ -226,7 +226,7 @@ def _build_pdf(body_font=8.0):
     story = columns[0] + [FrameBreak()] + columns[1]
     print(f"PAL cheatsheet packed {included}/{total} source entries; "
           f"column heights {heights[0]:.1f}/{heights[1]:.1f} of {max_height:.1f} pt.")
-    doc = BaseDocTemplate(buf, pagesize=landscape(letter), leftMargin=margin,
+    doc = BaseDocTemplate(buf, pagesize=letter, leftMargin=margin,
                           rightMargin=margin, topMargin=margin, bottomMargin=margin,
                           invariant=1)
     doc.addPageTemplates(PageTemplate(id="main", frames=frames, onPage=header_fn))
@@ -238,7 +238,7 @@ def _pdf():
     data, pages = _build_pdf(8.0)
     if pages != 1:
         raise RuntimeError(f"Cheatsheet must be exactly one page; generated {pages}.")
-    print("PAL cheatsheet generated 1 landscape page, 2 full-height columns at 8 pt body font.")
+    print("PAL cheatsheet generated 1 portrait page, 2 full-height columns at 8 pt body font.")
     return data
 
 def build(): return _md(), _pdf()
