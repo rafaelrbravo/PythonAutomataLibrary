@@ -39,9 +39,9 @@ Condensed from the generated API Reference; see API Guide for examples.
 - `All(self) -> np.ndarray`: Return a detached NumPy array containing the list values.
 - `Iter(self) -> np.ndarray`: Iterate over the current list values without creating the detached copy returned by All().
 
-## Shared grid API
+## Shared object API (2+ types)
 
-- `__len__() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
+- `__len__() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
 - `xDim() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along x.
 - `yDim() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along y; zero when absent.
 - `zDim() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along z; zero when absent.
@@ -51,18 +51,22 @@ Condensed from the generated API Reference; see API Guide for examples.
 - `wrapZ() -> bool`: [AgentGrid, Grid, PopGrid, PDEgrid] Whether z uses periodic boundary wrapping.
 - `Box(x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)`: [AgentGrid, Grid, PopGrid, PDEgrid] Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions.
 - `Hood(hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)`: [AgentGrid, Grid, PopGrid, PDEgrid] Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported.
-- `GetPop() -> int`: [AgentGrid, PopGrid] Shared signature; behavior depends on grid type (see API Reference).
-- `__getitem__(key) -> float`: [AgentGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
-- `__setitem__(key, value: float)`: [AgentGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
-- `ToI(x: int, y: int=-1, z: int=-1) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
+- `GetPop() -> int`: [AgentGrid, PopGrid] Same signature; consult API Reference for type-specific behavior.
+- `__getitem__(key) -> float`: [AgentGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
+- `__setitem__(key, value: float)`: [AgentGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
+- `ToI(x: int, y: int=-1, z: int=-1) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
 - `ItoX(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its x coordinate.
 - `ItoY(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its y coordinate.
 - `ItoZ(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its z coordinate.
 - `InWrapX(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap an x coordinate when x is periodic; otherwise return it unchanged.
 - `InWrapY(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap a y coordinate when y is periodic; otherwise return it unchanged.
 - `InWrapZ(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap a z coordinate when z is periodic; otherwise return it unchanged.
-- `Update()`: [PopGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
-- `Reset()`: [PopGrid, PDEgrid] Shared signature; behavior depends on grid type (see API Reference).
+- `Update()`: [PopGrid, PDEgrid, PixWindow, OpenGLWindow] Same signature; consult API Reference for type-specific behavior.
+- `Reset()`: [PopGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
+- `IsOpen() -> bool`: [PixWindow, OpenGLWindow] Return whether the window is currently open.
+- `Save(path: str, block=False)`: [PixWindow, OpenGLWindow] Same signature; consult API Reference for type-specific behavior.
+- `Close()`: [PixWindow, OpenGLWindow] Same signature; consult API Reference for type-specific behavior.
+- `Clear()`: [OpenGLWindow, OpenGLDraw] Same signature; consult API Reference for type-specific behavior.
 
 ## AgentGrid
 
@@ -127,18 +131,12 @@ Condensed from the generated API Reference; see API Guide for examples.
 
 ## PixWindow visualization
 
-- `IsOpen(self) -> bool`: Return whether the window is currently open.
-- `Update(self)`: Publish the current pixel buffer as a frame.
-- `Save(self, path: str, block=False)`: Save the current pixel buffer to an image file; block controls whether to wait for completion.
 - `StartGif(self, path: str, delay=100)`: Start recording frames to a GIF at path with the requested frame delay in milliseconds.
 - `AddGifFrame(self, block=False)`: Append the current pixel buffer as a GIF frame; optionally wait for the frame operation to finish.
 - `StopGif(self)`: Finish GIF recording and write the accumulated animation.
-- `Close(self)`: Close the window and release its rendering resources.
 
 ## OpenGLWindow visualization
 
-- `Update(self)`: Publish the accumulated drawing primitives as the next frame.
-- `IsOpen(self) -> bool`: Return whether the window is currently open.
 - `StartGif(self, path, delay=100)`: Start recording rendered frames to a GIF with the requested frame delay in milliseconds.
 - `AddGifFrame(self, block=False, timeout=30)`: Capture the current scene as a GIF frame; optionally wait for completion.
 - `StopGif(self, timeout=30)`: Finish GIF recording and write the animation.
@@ -148,10 +146,7 @@ Condensed from the generated API Reference; see API Guide for examples.
 - `Line(self, width, color, x1, y1, x2, y2, z1=None, z2=None)`: Add a line segment to the current frame.
 - `Borders(self, width, color)`: Draw persistent outline borders around the model domain.
 - `Camera(self, x, y, z, yaw=None, pitch=None)`: Set the 3D camera position and optional yaw/pitch angles.
-- `Clear(self)`: Clear accumulated drawing primitives for the next frame.
 - `Background(self, color)`: Set the background color used when rendering frames.
-- `Save(self, path: str, block=False)`: Save the currently published scene to an image file; block controls whether to wait for completion.
-- `Close(self)`: Close the window and release rendering resources.
 
 ## Pix drawing buffer
 
@@ -165,7 +160,6 @@ Condensed from the generated API Reference; see API Guide for examples.
 
 ## OpenGLDraw primitive collector
 
-- `Clear(self)`: Discard all primitives accumulated for the next frame.
 - `Circle(self, rad, color, x, y, z=0.0)`: Add a circle centered at (x, y, z) with radius rad and color.
 - `Box(self, xLen, color, x, y, z=0.0, yLen=-1.0, zLen=-1.0)`: Add a box centered at (x, y, z); negative side lengths default to xLen.
 - `BoxSQ(self, color, x, y, z=0.0)`: Add a unit box centered on lattice site (x, y, z).
