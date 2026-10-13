@@ -2,7 +2,15 @@ name: Build release distributions
 on:
   workflow_dispatch:
   push:
+    branches: [main]
     tags: ['v*']
+    paths:
+      - '.github/workflows/release-build.yml'
+      - 'pyproject.toml'
+      - 'setup.py'
+      - 'MANIFEST.in'
+      - 'pal_native.c'
+      - 'packaging/smoke_install.py'
 permissions:
   contents: read
 jobs:
