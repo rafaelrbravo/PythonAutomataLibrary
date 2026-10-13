@@ -13,6 +13,9 @@ dependencies = [
     "numba",
 ]
 
+[project.optional-dependencies]
+visualization = ["pygame>=2.5", "moderngl>=5.10", "pyglet>=2.0", "pillow>=10"]
+
 [tool.setuptools]
 packages = ["PythonAutomataLibrary"]
 include-package-data = true
