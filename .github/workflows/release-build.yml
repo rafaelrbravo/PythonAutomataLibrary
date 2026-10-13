@@ -124,8 +124,8 @@ jobs:
               assert any(name.endswith("/pyproject.toml") for name in names), "Missing pyproject.toml"
               assert any(name.endswith("/README.md") for name in names), "Missing README.md"
               assert any(name.endswith("/build_native.py") for name in names), "Missing native build helper"
-              forbidden = ("pal_native.dll", "libpal_native.so", "libpal_native.dylib")
-              assert not any(name.endswith(forbidden) for name in names), "Precompiled native library included in sdist"
+              forbidden_suffixes = (".dll", ".so", ".dylib", ".pyd")
+              assert not any(name.lower().endswith(forbidden_suffixes) for name in names), "Precompiled native library included in sdist"
       - name: Verify source distribution builds a native wheel
         run: |
           python -m pip install --upgrade pip
