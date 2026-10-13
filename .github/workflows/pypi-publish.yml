@@ -1,0 +1,50 @@
+name: Publish PAL to PyPI
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Published GitHub release tag to publish (for example v0.1.0)
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/PythonAutomataLibrary/
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify release version
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          python - <<'PY'
+          import os, pathlib, tomllib
+          version = tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version']
+          assert os.environ['RELEASE_TAG'] == 'v' + version, 'Tag/version mismatch'
+          PY
+      - name: Download published GitHub release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          mkdir -p dist
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist --pattern '*.whl' --pattern '*.tar.gz' --pattern 'SHA256SUMS.txt'
+      - name: Verify checksums and distributions
+        working-directory: dist
+        run: |
+          test -f SHA256SUMS.txt
+          sha256sum --check SHA256SUMS.txt
+          test -n "$(find . -maxdepth 1 -name '*.whl' -print -quit)"
+          test -n "$(find . -maxdepth 1 -name '*.tar.gz' -print -quit)"
+          rm SHA256SUMS.txt
+      - name: Publish verified artifacts using PyPI trusted publishing
+        uses: pypa/gh-action-pypi-publish@release/v1
