@@ -23,6 +23,10 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+        with:
+          arch: amd64
       - name: Build wheel and source distribution
         run: |
           python -m pip install -U build wheel
@@ -30,12 +34,14 @@ jobs:
       - name: Check wheel tags and native library
         shell: python
         run: |
-          import glob, zipfile
+          import glob, zipfile, tarfile
           wheel, = glob.glob('dist/*.whl')
           with zipfile.ZipFile(wheel) as z:
               names = z.namelist()
               assert any(n.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib')) for n in names), names
               assert '-none-any.whl' not in wheel, wheel
+          with tarfile.open(glob.glob('dist/*.tar.gz')[0], 'r:gz') as t:
+              assert any(n.endswith('/pal_native.c') for n in t.getnames()), 'C source missing from sdist'
           print(wheel)
       - name: Install wheel outside repository
         shell: bash
