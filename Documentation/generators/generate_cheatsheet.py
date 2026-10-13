@@ -4,6 +4,8 @@ The PDF uses a readable two-column, full-height two-page portrait layout generat
 structured content as the Markdown cheatsheet.
 
 Usage: python Documentation/generators/generate_cheatsheet.py [--check]
+
+The generated Markdown and PDF must be refreshed together after API changes.
 """
 import argparse, html, re
 from io import BytesIO
