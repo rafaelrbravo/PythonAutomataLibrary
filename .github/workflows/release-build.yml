@@ -53,6 +53,7 @@ jobs:
           CIBW_ARCHS_LINUX: auto
           CIBW_ARCHS_WINDOWS: AMD64
           CIBW_ARCHS_MACOS: auto
+          CIBW_ENVIRONMENT: 'PIP_ONLY_BINARY=:all:'
           CIBW_TEST_COMMAND: python {project}/packaging/smoke_install.py
       - uses: actions/upload-artifact@v4
         with:
