@@ -67,7 +67,7 @@ jobs:
           from pathlib import Path
           from zipfile import ZipFile
           wheels = list(Path("wheelhouse").glob("*.whl"))
-          assert wheels, "No wheels built"
+          assert len(wheels) == 4, f"Expected four CPython wheels per platform, found {len(wheels)}: {wheels}"
           for wheel in wheels:
               with ZipFile(wheel) as archive:
                   names = archive.namelist()
