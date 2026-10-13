@@ -4,7 +4,7 @@ from pathlib import Path
 import shlex
 import subprocess
 import sys
-from setuptools import setup
+from setuptools import setup, Distribution
 from setuptools.command.build_py import build_py
 from wheel.bdist_wheel import bdist_wheel
 
@@ -32,9 +32,13 @@ class BuildWithNative(build_py):
             flags = shlex.split(os.environ.get("CFLAGS", ""))
             subprocess.check_call([*compiler, *flags, "-O3", "-std=c11", "-shared", "-fPIC", str(source), "-o", str(output), "-lm"], cwd=ROOT)
 
+class NativeDistribution(Distribution):
+    def has_ext_modules(self):
+        return True
+
 class PlatformWheel(bdist_wheel):
     def finalize_options(self):
         super().finalize_options()
         self.root_is_pure = False
 
-setup(cmdclass={"build_py": BuildWithNative, "bdist_wheel": PlatformWheel})
+setup(distclass=NativeDistribution, cmdclass={"build_py": BuildWithNative, "bdist_wheel": PlatformWheel})
