@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - pal-audit-ci-fix
+      - fix/diffusion-mask-boundary-conditions
     paths-ignore:
       - 'Documentation/generators/**'
       - '.github/workflows/refresh-documentation-pdfs.yml'
