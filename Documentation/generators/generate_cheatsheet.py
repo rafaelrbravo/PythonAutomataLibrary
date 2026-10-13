@@ -198,9 +198,16 @@ def _build_pdf():
     for col, blocks in enumerate(columns):
         x = margin + col * (width + gap)
         y = ph - top
+        # Spend spare vertical space on breathing room, not on empty page area.
+        # Preserve the section order and keep the conventions rectangle intact.
+        spare = max(0, ph - top - bottom - heights[col])
+        entry_count = sum(len(pieces) for _, pieces in blocks)
+        section_count = len(blocks)
+        extra_entry = min(3.0, spare * 0.7 / max(1, entry_count))
+        extra_section = min(9.0, max(0, spare - extra_entry * entry_count) / max(1, section_count - 1))
         for title, pieces in blocks:
             if title == "CONVENTIONS":
-                block_h = heading_h + sum(p[2] for p in pieces) + 4
+                block_h = heading_h + sum(p[2] for p in pieces) + 4 + extra_entry * len(pieces)
                 c.setFillColor(colors.HexColor("#E3E3E3"))
                 c.rect(x, y - block_h, width, block_h, fill=1, stroke=0)
             c.setFillColor(colors.HexColor("#D0D0D0") if title == "CONVENTIONS" else colors.HexColor("#E9EDF2"))
@@ -220,8 +227,8 @@ def _build_pdf():
                 for line in desc_lines:
                     c.drawString(x + 3, y - size, line)
                     y -= lead
-                y -= 2
-            y -= 4
+                y -= 2 + extra_entry
+            y -= 4 + (extra_section if title != blocks[-1][0] else 0)
     c.setFont("Helvetica", 6.7)
     c.setFillColor(colors.HexColor("#555555"))
     c.drawString(margin, 8, "See API Reference for exact signatures and defaults")
