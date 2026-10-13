@@ -548,7 +548,7 @@ pix[x, y] = 0xFF0000
 pix[i] = 0x00FF00
 ```
 
-It also provides `Xdim()`, `Ydim()`, `ToI(x, y)`, `ItoX(i)`, `ItoY(i)`, and `len(pix)`.
+It also provides `xDim`, `yDim`, `ToI(x, y)`, `ItoX(i)`, `ItoY(i)`, and `len(pix)`.
 
 The window lifecycle is:
 
