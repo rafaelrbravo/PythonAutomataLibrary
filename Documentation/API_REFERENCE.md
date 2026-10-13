@@ -2,6 +2,8 @@
 
 Generated from public `Protocol` declarations and source docstrings. Each description is maintained beside its source signature. Regenerate with `python Documentation/generators/generate_api_reference.py`; use `--check` to detect drift. Consult the API Guide for worked usage and Architecture and Design for implementation rationale.
 
+Axis shorthand: `...` after an X/x-specific name includes its Y/y and Z/z variants. Each variant remains a separate callable or property.
+
 ## Factories and utilities
 
 | Function | Description |
@@ -48,13 +50,9 @@ Generated from public `Protocol` declarations and source docstrings. Each descri
 | Kind | Declaration | Description |
 | --- | --- | --- |
 | method | `__len__(self) -> int` | Return the number of living agents in the grid. |
-| property | `xDim(self) -> int` | Number of lattice sites along x. |
-| property | `yDim(self) -> int` | Number of lattice sites along y; zero when absent. |
-| property | `zDim(self) -> int` | Number of lattice sites along z; zero when absent. |
+| property | `xDim...(self) -> int` | Number of lattice sites along x; corresponding Y/Z variants use the same contract. |
 | property | `nDims(self) -> int` | Number of spatial dimensions. |
-| property | `wrapX(self) -> bool` | Whether x uses periodic boundary wrapping. |
-| property | `wrapY(self) -> bool` | Whether y uses periodic boundary wrapping. |
-| property | `wrapZ(self) -> bool` | Whether z uses periodic boundary wrapping. |
+| property | `wrapX...(self) -> bool` | Whether x uses periodic boundary wrapping; corresponding Y/Z variants use the same contract. |
 | method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` | Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions. |
 | method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` | Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported. |
 | method | `GetPop(self) -> int` | Return the number of living agents in the grid. |
@@ -63,24 +61,14 @@ Generated from public `Protocol` declarations and source docstrings. Each descri
 | method | `NewAgent(self, x: float, y: float=-1.0, z: float=-1.0) -> int` | Create an agent at the supplied continuous spatial coordinates. |
 | method | `Dispose(self, agent: int)` | Remove a living agent from the grid; its handle must not be used as a live agent afterward. |
 | method | `I(self, agent: int) -> int` | Return the linear lattice-site index containing the agent. |
-| method | `XSQ(self, agent: int) -> int` | Return the agent's integer x site coordinate. |
-| method | `YSQ(self, agent: int) -> int` | Return the agent's integer y site coordinate. |
-| method | `ZSQ(self, agent: int) -> int` | Return the agent's integer z site coordinate. |
-| method | `X(self, agent: int) -> float` | Return the agent's continuous x coordinate. |
-| method | `Y(self, agent: int) -> float` | Return the agent's continuous y coordinate. |
-| method | `Z(self, agent: int) -> float` | Return the agent's continuous z coordinate. |
+| method | `XSQ...(self, agent: int) -> int` | Return the agent's integer x site coordinate; corresponding Y/Z variants use the same contract. |
+| method | `X...(self, agent: int) -> float` | Return the agent's continuous x coordinate; corresponding Y/Z variants use the same contract. |
 | method | `__getitem__(self, key) -> float` | Read a supported per-agent property value. |
 | method | `__setitem__(self, key, value: float)` | Set a supported per-agent property value for the selected agent/property key. |
 | method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Convert lattice coordinates to the corresponding linear site index. |
-| method | `ItoX(self, i: int) -> int` | Convert a linear site index to its x coordinate. |
-| method | `ItoY(self, i: int) -> int` | Convert a linear site index to its y coordinate. |
-| method | `ItoZ(self, i: int) -> int` | Convert a linear site index to its z coordinate. |
-| method | `InWrapSQX(self, value: int) -> int` | Wrap an integer x site coordinate when x is periodic. |
-| method | `InWrapSQY(self, value: int) -> int` | Wrap an integer y site coordinate when y is periodic. |
-| method | `InWrapSQZ(self, value: int) -> int` | Wrap an integer z site coordinate when z is periodic. |
-| method | `InWrapX(self, value: float) -> float` | Wrap a continuous x coordinate when x is periodic. |
-| method | `InWrapY(self, value: float) -> float` | Wrap a continuous y coordinate when y is periodic. |
-| method | `InWrapZ(self, value: float) -> float` | Wrap a continuous z coordinate when z is periodic. |
+| method | `ItoX...(self, i: int) -> int` | Convert a linear site index to its x coordinate; corresponding Y/Z variants use the same contract. |
+| method | `InWrapSQX...(self, value: int) -> int` | Wrap an integer x site coordinate when x is periodic; corresponding Y/Z variants use the same contract. |
+| method | `InWrapX...(self, value: float) -> float` | Wrap a continuous x coordinate when x is periodic; corresponding Y/Z variants use the same contract. |
 | method | `DispWrapX(self, x1: float, x2: float) -> float` | Return the shortest signed x displacement under periodic wrapping. |
 | method | `DispWrapY(self, y1: float, y2: float) -> float` | Return the shortest signed y displacement under periodic wrapping. |
 | method | `DispWrapZ(self, z1: float, z2: float) -> float` | Return the shortest signed z displacement under periodic wrapping. |
@@ -99,44 +87,28 @@ Generated from public `Protocol` declarations and source docstrings. Each descri
 | method | `__len__(self) -> int` | Return the number of lattice sites. |
 | method | `__getitem__(self, key)` | Read the value or state selected by the supported index or coordinate key. |
 | method | `__setitem__(self, key, value)` | Assign the value or state selected by the supported index or coordinate key. |
-| property | `xDim(self) -> int` | Number of lattice sites along x. |
-| property | `yDim(self) -> int` | Number of lattice sites along y; zero when absent. |
-| property | `zDim(self) -> int` | Number of lattice sites along z; zero when absent. |
+| property | `xDim...(self) -> int` | Number of lattice sites along x; corresponding Y/Z variants use the same contract. |
 | property | `nDims(self) -> int` | Number of spatial dimensions. |
-| property | `wrapX(self) -> bool` | Whether x uses periodic boundary wrapping. |
-| property | `wrapY(self) -> bool` | Whether y uses periodic boundary wrapping. |
-| property | `wrapZ(self) -> bool` | Whether z uses periodic boundary wrapping. |
+| property | `wrapX...(self) -> bool` | Whether x uses periodic boundary wrapping; corresponding Y/Z variants use the same contract. |
 | method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` | Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions. |
 | method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` | Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported. |
 | method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Convert lattice coordinates to a linear site index. |
-| method | `ItoX(self, i: int) -> int` | Convert a linear site index to its x coordinate. |
-| method | `ItoY(self, i: int) -> int` | Convert a linear site index to its y coordinate. |
-| method | `ItoZ(self, i: int) -> int` | Convert a linear site index to its z coordinate. |
-| method | `InWrapX(self, value: int) -> int` | Wrap an x coordinate when x is periodic; otherwise return it unchanged. |
-| method | `InWrapY(self, value: int) -> int` | Wrap a y coordinate when y is periodic; otherwise return it unchanged. |
-| method | `InWrapZ(self, value: int) -> int` | Wrap a z coordinate when z is periodic; otherwise return it unchanged. |
+| method | `ItoX...(self, i: int) -> int` | Convert a linear site index to its x coordinate; corresponding Y/Z variants use the same contract. |
+| method | `InWrapX...(self, value: int) -> int` | Wrap an x coordinate when x is periodic; otherwise return it unchanged; corresponding Y/Z variants use the same contract. |
 
 ## PopGrid
 
 | Kind | Declaration | Description |
 | --- | --- | --- |
 | method | `__len__(self) -> int` | Return the number of lattice sites. |
-| property | `xDim(self) -> int` | Number of lattice sites along x. |
-| property | `yDim(self) -> int` | Number of lattice sites along y; zero when absent. |
-| property | `zDim(self) -> int` | Number of lattice sites along z; zero when absent. |
+| property | `xDim...(self) -> int` | Number of lattice sites along x; corresponding Y/Z variants use the same contract. |
 | property | `nDims(self) -> int` | Number of spatial dimensions. |
-| property | `wrapX(self) -> bool` | Whether x uses periodic boundary wrapping. |
-| property | `wrapY(self) -> bool` | Whether y uses periodic boundary wrapping. |
-| property | `wrapZ(self) -> bool` | Whether z uses periodic boundary wrapping. |
+| property | `wrapX...(self) -> bool` | Whether x uses periodic boundary wrapping; corresponding Y/Z variants use the same contract. |
 | method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` | Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions. |
 | method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` | Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported. |
 | method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Convert lattice coordinates to a linear site index. |
-| method | `ItoX(self, i: int) -> int` | Convert a linear site index to its x coordinate. |
-| method | `ItoY(self, i: int) -> int` | Convert a linear site index to its y coordinate. |
-| method | `ItoZ(self, i: int) -> int` | Convert a linear site index to its z coordinate. |
-| method | `InWrapX(self, value: int) -> int` | Wrap an x coordinate when x is periodic; otherwise return it unchanged. |
-| method | `InWrapY(self, value: int) -> int` | Wrap a y coordinate when y is periodic; otherwise return it unchanged. |
-| method | `InWrapZ(self, value: int) -> int` | Wrap a z coordinate when z is periodic; otherwise return it unchanged. |
+| method | `ItoX...(self, i: int) -> int` | Convert a linear site index to its x coordinate; corresponding Y/Z variants use the same contract. |
+| method | `InWrapX...(self, value: int) -> int` | Wrap an x coordinate when x is periodic; otherwise return it unchanged; corresponding Y/Z variants use the same contract. |
 | method | `__getitem__(self, key) -> int` | Return the integer population count at the selected site. |
 | method | `__setitem__(self, key, value: int)` | Set the population count at the selected site immediately; this is distinct from queueing a delta with `Add()`. |
 | method | `Add(self, value: int, x: int, y: int=-1, z: int=-1)` | Queue a signed population-count delta at a site; call `Update()` to apply pending deltas. |
@@ -150,31 +122,21 @@ Generated from public `Protocol` declarations and source docstrings. Each descri
 | Kind | Declaration | Description |
 | --- | --- | --- |
 | method | `__len__(self) -> int` | Return the number of lattice sites. |
-| property | `xDim(self) -> int` | Number of lattice sites along x. |
-| property | `yDim(self) -> int` | Number of lattice sites along y; zero when absent. |
-| property | `zDim(self) -> int` | Number of lattice sites along z; zero when absent. |
+| property | `xDim...(self) -> int` | Number of lattice sites along x; corresponding Y/Z variants use the same contract. |
 | property | `nDims(self) -> int` | Number of spatial dimensions. |
-| property | `wrapX(self) -> bool` | Whether x uses periodic boundary wrapping. |
-| property | `wrapY(self) -> bool` | Whether y uses periodic boundary wrapping. |
-| property | `wrapZ(self) -> bool` | Whether z uses periodic boundary wrapping. |
+| property | `wrapX...(self) -> bool` | Whether x uses periodic boundary wrapping; corresponding Y/Z variants use the same contract. |
 | method | `Box(self, x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)` | Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions. |
 | method | `Hood(self, hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)` | Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported. |
 | method | `ToI(self, x: int, y: int=-1, z: int=-1) -> int` | Convert lattice coordinates to a linear site index. |
-| method | `ItoX(self, i: int) -> int` | Convert a linear site index to its x coordinate. |
-| method | `ItoY(self, i: int) -> int` | Convert a linear site index to its y coordinate. |
-| method | `ItoZ(self, i: int) -> int` | Convert a linear site index to its z coordinate. |
-| method | `InWrapX(self, value: int) -> int` | Wrap an x coordinate when x is periodic; otherwise return it unchanged. |
-| method | `InWrapY(self, value: int) -> int` | Wrap a y coordinate when y is periodic; otherwise return it unchanged. |
-| method | `InWrapZ(self, value: int) -> int` | Wrap a z coordinate when z is periodic; otherwise return it unchanged. |
+| method | `ItoX...(self, i: int) -> int` | Convert a linear site index to its x coordinate; corresponding Y/Z variants use the same contract. |
+| method | `InWrapX...(self, value: int) -> int` | Wrap an x coordinate when x is periodic; otherwise return it unchanged; corresponding Y/Z variants use the same contract. |
 | method | `__getitem__(self, key) -> float` | Return the field value at the selected site. |
 | method | `__setitem__(self, key, value: float)` | Set the field value at the selected site immediately; this is distinct from queueing a change with `Add()`. |
 | method | `Add(self, value: float, x: int, y: int=-1, z: int=-1)` | Queue a field-value delta at a site; call `Update()` to apply pending changes. |
 | method | `Update(self)` | Apply queued field changes to the current field. |
 | method | `Reset(self)` | Clear the field and any pending changes. |
 | method | `SetTimeSpaceStep(self, dt: float, dx: float, dy: float=1.0, dz: float=1.0)` | Set the temporal step `dt` and spatial steps `dx`, `dy`, and `dz` used by numerical transport methods. |
-| method | `Dx(self) -> float` | Return the configured spatial step along x. |
-| method | `Dy(self) -> float` | Return the configured spatial step along y. |
-| method | `Dz(self) -> float` | Return the configured spatial step along z. |
+| method | `Dx...(self) -> float` | Return the configured spatial step along x; corresponding Y/Z variants use the same contract. |
 | method | `Dt(self) -> float` | Return the configured time step. |
 | method | `Diffusion(self, rateConstant: float, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` | Apply scalar-coefficient diffusion using the configured grid spacing and optional per-face boundary conditions. |
 | method | `DiffusionMask(self, rateConstant: float, mask=None)` | Apply diffusion only across interfaces allowed by `mask`. |
@@ -220,10 +182,6 @@ Create an OpenGL visualization window for 2D or 3D drawing.
 | method | `StartGif(self, path, delay=100)` | Start recording rendered frames to a GIF with the requested frame delay in milliseconds. |
 | method | `AddGifFrame(self, block=False, timeout=30)` | Capture the current scene as a GIF frame; optionally wait for completion. |
 | method | `StopGif(self, timeout=30)` | Finish GIF recording and write the animation. |
-| method | `Circle(self, rad, color, x, y, z=None)` | Add a circle primitive to the current frame. |
-| method | `Box(self, xLen, color, x, y, z=None, yLen=None, zLen=None)` | Add a box primitive to the current frame; side lengths may be specified independently. |
-| method | `BoxSQ(self, color, x, y, z=None)` | Add a unit box centered on the lattice site (x, y, z). |
-| method | `Line(self, width, color, x1, y1, x2, y2, z1=None, z2=None)` | Add a line segment to the current frame. |
 | method | `Borders(self, width, color)` | Draw persistent outline borders around the model domain. |
 | method | `Camera(self, x, y, z, yaw=None, pitch=None)` | Set the 3D camera position and optional yaw/pitch angles. |
 | method | `Clear(self)` | Clear accumulated drawing primitives for the next frame. |

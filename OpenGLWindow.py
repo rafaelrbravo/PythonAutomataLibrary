@@ -190,18 +190,6 @@ class OpenGLWindow(Protocol):
         self._gifActive=False
         return self
 
-    def Circle(self,rad,color,x,y,z=None):
-        """Add a circle primitive to the current frame."""
-        ...
-    def Box(self,xLen,color,x,y,z=None,yLen=None,zLen=None):
-        """Add a box primitive to the current frame; side lengths may be specified independently."""
-        ...
-    def BoxSQ(self,color,x,y,z=None):
-        """Add a unit box centered on the lattice site (x, y, z)."""
-        ...
-    def Line(self,width,color,x1,y1,x2,y2,z1=None,z2=None):
-        """Add a line segment to the current frame."""
-        ...
     def Borders(self,width,color):
         """Draw persistent outline borders around the model domain."""
         ...
@@ -964,74 +952,6 @@ class _OpenGLWindowSafe:
         try: atexit.unregister(self._Close)
         except Exception: pass
 
-    def Circle(self,rad,color,x,y,z=None):
-        _Finite('radius and coordinates',rad,x,y)
-        if rad<=0: raise Exception(f"radius must be positive rad:{rad}")
-        color=_Color(color)
-        if self.zDim is None:
-            if z is not None: raise Exception("Circle on a 2D OpenGLWindow takes x and y only")
-            z=0.0
-        else:
-            if z is None: raise Exception("Circle on a 3D OpenGLWindow requires x, y, and z")
-            _Finite('z',z)
-        return self._Circle(rad,color,x,y,z)
-
-    def _Circle(self,rad,color,x,y,z=0.0):
-        self._cmdQ.put(('circle',float(rad),color,float(x),float(y),float(z)));return self
-
-    def Box(self,xLen,color,x,y,z=None,yLen=None,zLen=None):
-        if yLen is None: yLen=xLen
-        if self.zDim is None:
-            if z is not None or zLen is not None: raise Exception("Box on a 2D OpenGLWindow takes x and y only; z/zLen are 3D arguments")
-            z=0.0;zLen=0.0
-        else:
-            if z is None: raise Exception("Box on a 3D OpenGLWindow requires x, y, and z")
-            if zLen is None: zLen=xLen
-        _Finite('box lengths and coordinates',xLen,yLen,x,y,z,zLen)
-        if self.zDim is None:
-            if xLen<=0 or yLen<=0: raise Exception(f"box side lengths must be positive xLen:{xLen} yLen:{yLen}")
-        else:
-            if xLen<0 or yLen<0 or zLen<0: raise Exception(f"box side lengths cannot be negative xLen:{xLen} yLen:{yLen} zLen:{zLen}")
-            if (xLen==0)+(yLen==0)+(zLen==0)>1: raise Exception(f"3D Box may have at most one zero side length xLen:{xLen} yLen:{yLen} zLen:{zLen}")
-        color=_Color(color)
-        return self._Box(xLen,color,x,y,z,yLen,zLen)
-
-    def _Box(self,xLen,color,x,y,z=0.0,yLen=None,zLen=None):
-        if yLen is None: yLen=xLen
-        if zLen is None: zLen=xLen if self.zDim is not None else 0.0
-        self._cmdQ.put(('box',float(xLen),float(yLen),float(zLen),color,float(x),float(y),float(z)));return self
-
-    def BoxSQ(self,color,x,y,z=None):
-        color=_Color(color)
-        _Finite('square coordinates',x,y)
-        if x!=int(x) or y!=int(y): raise Exception(f"BoxSQ coordinates must be integers x:{x} y:{y}")
-        if self.zDim is None:
-            if z is not None: raise Exception("BoxSQ on a 2D OpenGLWindow takes x and y only")
-        else:
-            if z is None: raise Exception("BoxSQ on a 3D OpenGLWindow requires x, y, and z")
-            _Finite('z',z)
-            if z!=int(z): raise Exception(f"BoxSQ coordinates must be integers x:{x} y:{y} z:{z}")
-        return self._BoxSQ(color,x,y,z)
-
-    def _BoxSQ(self,color,x,y,z=None):
-        if self.zDim is None: return self._Box(1,color,x+0.5,y+0.5)
-        return self._Box(1,color,x+0.5,y+0.5,z+0.5)
-
-    def Line(self,width,color,x1,y1,x2,y2,z1=None,z2=None):
-        _Finite('line width and coordinates',width,x1,y1,x2,y2)
-        if width<=0: raise Exception(f"line width must be positive width:{width}")
-        color=_Color(color)
-        if self.zDim is None:
-            if z1 is not None or z2 is not None: raise Exception("Line on a 2D OpenGLWindow takes x1, y1, x2, and y2 only")
-            z1=z2=0.0
-        else:
-            if z1 is None or z2 is None: raise Exception("Line on a 3D OpenGLWindow requires z1 and z2")
-            _Finite('line z coordinates',z1,z2)
-        return self._Line(width,color,x1,y1,x2,y2,z1,z2)
-
-    def _Line(self,width,color,x1,y1,x2,y2,z1=0.0,z2=0.0):
-        self._cmdQ.put(('line',float(width),color,float(x1),float(y1),float(z1),float(x2),float(y2),float(z2)));return self
-
     def Borders(self,width,color):
         if self.zDim is None: raise Exception("Borders is only available on a 3D OpenGLWindow")
         _Finite('border width',width)
@@ -1146,10 +1066,6 @@ class _OpenGLWindowFast:
         self._closed=True
         try: atexit.unregister(self._Close)
         except Exception: pass
-    def Circle(self,rad,color,x,y,z=0.0): return self._Circle(rad,_Color(color),x,y,z)
-    def Box(self,xLen,color,x,y,z=0.0,yLen=None,zLen=None): return self._Box(xLen,_Color(color),x,y,z,yLen,zLen)
-    def BoxSQ(self,color,x,y,z=None): return self._BoxSQ(_Color(color),x,y,z)
-    def Line(self,width,color,x1,y1,x2,y2,z1=0.0,z2=0.0): return self._Line(width,_Color(color),x1,y1,x2,y2,z1,z2)
     def Borders(self,width,color): return self._Borders(width,_Color(color))
     def Camera(self,x,y,z,yaw=None,pitch=None): return self._Camera(x,y,z,yaw,pitch)
     def Clear(self): return self._Clear()
@@ -1191,25 +1107,6 @@ class _OpenGLWindowFast:
         self._WaitAck('gif_stop',token,timeout)
         self._gifActive=False
         return self
-
-    def _Circle(self,rad,color,x,y,z=0.0):
-        self._cmdQ.put(('circle',float(rad),color,float(x),float(y),float(z)));return self
-
-
-    def _Box(self,xLen,color,x,y,z=0.0,yLen=None,zLen=None):
-        if yLen is None: yLen=xLen
-        if zLen is None: zLen=xLen if self.zDim is not None else 0.0
-        self._cmdQ.put(('box',float(xLen),float(yLen),float(zLen),color,float(x),float(y),float(z)));return self
-
-
-    def _BoxSQ(self,color,x,y,z=None):
-        if self.zDim is None: return self._Box(1,color,x+0.5,y+0.5)
-        return self._Box(1,color,x+0.5,y+0.5,z+0.5)
-
-
-    def _Line(self,width,color,x1,y1,x2,y2,z1=0.0,z2=0.0):
-        self._cmdQ.put(('line',float(width),color,float(x1),float(y1),float(z1),float(x2),float(y2),float(z2)));return self
-
 
     def _Borders(self,width,color):
         self._cmdQ.put(('borders',float(width),color));return self

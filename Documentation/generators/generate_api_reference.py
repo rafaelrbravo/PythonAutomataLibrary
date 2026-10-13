@@ -27,6 +27,33 @@ def signature(node):
     return f"{node.name}({args}){returns}"
 
 
+def axis_rows(members, owner):
+    """Collapse complete equivalent axis families for display only."""
+    import re
+    members = [m for m in members if isinstance(m, ast.FunctionDef)]
+    by_name = {m.name: m for m in members}
+    omitted = set()
+    for member in members:
+        name = member.name
+        if name in omitted:
+            continue
+        match = re.match(r"^(.*?)(X|x)(SQ|Dim|)$", name)
+        if not match:
+            yield member, name, None
+            continue
+        prefix, axis, suffix = match.groups()
+        variants = [prefix + a + suffix for a in ("X", "Y", "Z") if axis == "X"] if axis == "X" else [prefix + a + suffix for a in ("x", "y", "z")]
+        if name != variants[0] or not all(v in by_name for v in variants):
+            yield member, name, None
+            continue
+        signatures = [signature(by_name[v]).split("(", 1)[1] for v in variants]
+        kinds = [any(isinstance(d, ast.Name) and d.id == "property" for d in by_name[v].decorator_list) for v in variants]
+        if len(set(signatures)) != 1 or len(set(kinds)) != 1:
+            yield member, name, None
+            continue
+        omitted.update(variants[1:])
+        yield member, name + "...", variants
+
 def render(source):
     tree = ast.parse(source)
     functions = {n.name: n for n in tree.body if isinstance(n, ast.FunctionDef)}
@@ -37,7 +64,7 @@ def render(source):
         "Each description is maintained beside its source signature. Regenerate with "
         "`python Documentation/generators/generate_api_reference.py`; use `--check` to detect drift. "
         "Consult the API Guide for worked usage and Architecture and Design for implementation rationale.",
-        "", "## Factories and utilities", "",
+        "", "Axis shorthand: `...` after an X/x-specific name includes its Y/y and Z/z variants. Each variant remains a separate callable or property.", "", "## Factories and utilities", "",
         "| Function | Description |", "| --- | --- |",
     ]
     for name in FACTORIES:
@@ -49,15 +76,15 @@ def render(source):
     for name in PROTOCOLS:
         cls = classes["_" + name + "Protocol"]
         lines.extend([f"## {name}", "", "| Kind | Declaration | Description |", "| --- | --- | --- |"])
-        for member in cls.body:
-            if not isinstance(member, ast.FunctionDef):
-                continue
+        for member, display_name, variants in axis_rows(cls.body, name):
             kind = "property" if any(isinstance(d, ast.Name) and d.id == "property"
                                      for d in member.decorator_list) else "method"
-            sig = signature(member).replace("|", "\\|")
+            sig = signature(member).replace(member.name + "(", display_name + "(", 1).replace("|", "\\|")
             description = ast.get_docstring(member)
             if not description:
                 raise ValueError(f"Missing public API docstring: {name}.{member.name}")
+            if variants:
+                description = description.rstrip(".") + "; corresponding Y/Z variants use the same contract."
             description = description.replace("|", "\\|").replace("\\n", " ")
             lines.append(f"| {kind} | `{sig}` | {description} |")
         lines.append("")
