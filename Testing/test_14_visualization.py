@@ -14,7 +14,7 @@ def test_pix_geometry_and_indexing(api):
     pix, win = api.StartPixWindow(5, 4, headless=True)
     try:
         assert len(pix) == 20
-        assert pix.Xdim() == 5 and pix.Ydim() == 4
+        assert pix.xDim == 5 and pix.yDim == 4
         for x in range(5):
             for y in range(4):
                 i = pix.ToI(x, y)
