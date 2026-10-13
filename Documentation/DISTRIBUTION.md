@@ -44,4 +44,8 @@ conda install conda-forge::pythonautomatalibrary
 
 **Release matrix:** The full CPython 3.10–3.13 matrix passed on Linux, Windows AMD64, macOS ARM64, and macOS Intel in [run 38347630189](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38347630189), and again in [run 38347711431](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38347711431). Later validation changes, including per-platform wheel completeness checks, still require a successful current-head run.
 
+**Known source-archive failure:** [run 38348218337](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38348218337) failed its `sdist` job because the archive contained `pal_native.dll` and `libpal_native.so`. The source archive must ship `pal_native.c` and build helpers, **not** precompiled native libraries. `MANIFEST.in` now uses recursive exclusions and `setup.py` filters the `sdist` file list; these changes have not yet passed a full CI rebuild. Do not use the failed run's source archive for release.
+
+**Next validation gate:** Wait for a **new run at the current commit** to pass `sdist` (including the rebuilt native wheel), all four wheel platforms, and version checks. Inspect the artifacts before tagging. Older passing matrices do not establish current-head release readiness.
+
 **Still blocked:** Confirm the latest stricter release matrix and source-archive validation, review and publish GitHub Release assets, configure PyPI Trusted Publishing, and submit a source-archive-based conda-forge recipe. The local conda recipe is a starting point, not a published feedstock.
