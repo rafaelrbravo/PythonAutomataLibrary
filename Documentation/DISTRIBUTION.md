@@ -18,6 +18,7 @@ To check a wheel without importing from the checkout, install it in a new enviro
 ## Continuous integration
 
 - `.github/workflows/package-smoke.yml` builds and tests wheels and source distributions on Windows, Linux, and macOS.
+- `.github/workflows/conda-smoke.yml` builds and tests the local conda recipe on Windows, Linux, and macOS; this is not a conda-forge publication.
 - `.github/workflows/release-build.yml` builds versioned wheel artifacts for CPython 3.10–3.13 using cibuildwheel and a source archive. On a `v*` tag, successful builds are collected into a **draft** GitHub Release with SHA256 checksums; publishing the draft requires review.
 - Before publishing, inspect every job result, install wheels on each supported platform, and confirm the bundled native library loads and PAL tests pass.
 
