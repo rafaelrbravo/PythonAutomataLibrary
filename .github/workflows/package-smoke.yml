@@ -63,9 +63,9 @@ jobs:
       - name: Build wheel from source archive
         shell: bash
         run: |
-          mkdir -p ../pal-sdist-check
-          tar -xzf dist/*.tar.gz -C ../pal-sdist-check --strip-components=1
-          cd ../pal-sdist-check
+          mkdir -p "$RUNNER_TEMP/pal-sdist-check"
+          tar -xzf dist/*.tar.gz -C "$RUNNER_TEMP/pal-sdist-check" --strip-components=1
+          cd "$RUNNER_TEMP/pal-sdist-check"
           python -m build --wheel
           python -m venv "$RUNNER_TEMP/pal-sdist-install"
           if [ -f "$RUNNER_TEMP/pal-sdist-install/bin/python" ]; then SPY="$RUNNER_TEMP/pal-sdist-install/bin/python"; else SPY="$RUNNER_TEMP/pal-sdist-install/Scripts/python.exe"; fi
