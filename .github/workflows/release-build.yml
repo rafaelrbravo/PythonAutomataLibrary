@@ -225,6 +225,13 @@ jobs:
       - name: Generate SHA256 checksums
         working-directory: release-assets
         run: sha256sum *.whl *.tar.gz > SHA256SUMS.txt
+      - name: Upload verified release assets for review
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-release-assets
+          path: release-assets/*
+          if-no-files-found: error
       - name: Create draft GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
