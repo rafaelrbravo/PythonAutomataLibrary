@@ -53,6 +53,11 @@ jobs:
           wheels = list(Path('.').glob('*.whl'))
           sources = list(Path('.').glob('*.tar.gz'))
           assert wheels and len(sources) == 1
+          checksums = Path('SHA256SUMS.txt').read_text().splitlines()
+          listed = [line.split('  ', 1)[1] for line in checksums]
+          actual = sorted(path.name for path in [*wheels, *sources])
+          assert sorted(listed) == actual, f'Checksum manifest does not exactly match distributions: {listed!r} vs {actual!r}'
+          assert len({wheel.name for wheel in wheels}) == len(wheels)
           for wheel in wheels:
               assert not wheel.name.endswith('-none-any.whl'), wheel
               with ZipFile(wheel) as z:
