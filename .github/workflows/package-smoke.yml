@@ -32,7 +32,7 @@ jobs:
           python -m pip install -U build wheel
           python -m build
       - name: Check wheel tags and native library
-        shell: python
+        shell: python {0}
         run: |
           import glob, zipfile, tarfile
           wheel, = glob.glob('dist/*.whl')
