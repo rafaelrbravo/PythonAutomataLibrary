@@ -111,7 +111,15 @@ def _api_entries():
         # Hide OpenGL-only timeout arguments in the shared GIF API.
         if sig.startswith("AddGifFrame(") or sig.startswith("StopGif("):
             sig = sig.replace(", timeout=30", "").replace("(timeout=30)", "()")
-        return sig
+        pix_shared = {
+            "xDim()": "xDim() -> int",
+            "yDim()": "yDim() -> int",
+            "ToI(x, y)": "ToI(x: int, y: int=-1, z: int=-1) -> int",
+            "ItoX(i)": "ItoX(i: int) -> int",
+            "ItoY(i)": "ItoY(i: int) -> int",
+            "__len__()": "__len__() -> int",
+        }
+        return pix_shared.get(sig, sig)
 
     # Place creation functions beside the objects they construct.
     factory_sections = {
