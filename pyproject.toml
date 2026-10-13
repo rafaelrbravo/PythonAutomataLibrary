@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,6 +12,10 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["PythonAutomataLibrary"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+PythonAutomataLibrary = ["*.dll", "*.so", "*.dylib"]
 
 [tool.setuptools.package-dir]
 PythonAutomataLibrary = "."
