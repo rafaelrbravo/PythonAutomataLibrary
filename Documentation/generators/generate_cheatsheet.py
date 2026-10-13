@@ -1,7 +1,6 @@
 """Generate PAL CHEATSHEET.md and CHEATSHEET.pdf from one compact definition.
 
-The PDF uses a readable two-column, full-height two-page portrait layout generated from the same
-structured content as the Markdown cheatsheet.
+The one-page PDF and Markdown use the same independently curated entries.
 
 Usage: python Documentation/generators/generate_cheatsheet.py [--check]
 """
@@ -22,63 +21,70 @@ INTRO = "`import PythonAutomataLibrary as pal` · Safe mode is default. Call `pa
 CONVENTIONS = "`dims` gives grid size per axis: `(nx,)` for 1D, `(nx, ny)` for 2D, `(nx, ny, nz)` for 3D. Negative dimensions enable wrapping; out-of-range coordinates wrap on wrapped axes and are skipped on nonwrapped axes. `x...` means `x`, `x,y`, or `x,y,z` in 1D/2D/3D."
 
 SECTIONS = [
-("Create state", [
-("`pal.NewGrid(dims, dtype)`", "Create one value per site; supports bool, fixed-width integer, and float dtypes."), ("`pal.NewAgentGrid(dims, numAgentProps=0, isStackable=False)`", "Create mobile agents with per-agent properties. `isStackable` permits multiple agents per site; `dims=()` makes a nonspatial collection."),
-("`pal.NewPopGrid(dims, capacity=None)`", "Store integer population counts per site; `capacity` limits total population."), ("`pal.NewPDEgrid(dims)`", "Create a continuous field with queued synchronous updates and diffusion/advection operators."),
-("`pal.NewIList()`", "Create a mutable integer list for collecting/reusing query results."), ("`pal.NewMultinomial()`", "Create a sampler for binomial/multinomial population draws."),]),
-("Shared grid API", [
-("Properties", "`xDim` / `yDim` / `zDim`: axis sizes; `nDims`: number of axes; `wrapX` / `wrapY` / `wrapZ`: wrapping flags."),
-("`ToI(x...)`", "Convert coordinates to a linear site index; inverse methods are `ItoX/Y/Z(i)`."),
-
-
-("`grid.Hood(hood, x...)`", "Apply relative coordinate offsets, e.g. `((x1,y1),(x2,y2),...)`, at `x...`. Special-case hoods: **`pal.MooreHood`**`(*)`, **`pal.VonNeumannHood`**`(*)`, **`pal.CircleHood`**`(*,rad,*)`. `*` represents shared arguments: `dim` (number of dimensions) and `excludeCenter=False` (omit the center when true)."),
-("Indexing", "`grid[i]` reads/writes by linear index; `grid[x...]` uses dimensional coordinates."),
-("Slices", "Return detached NumPy copies, not views; write back explicitly to change the grid."),
-("`Box(x1,x2,...)`", "Select a rectangular region with exclusive upper bounds."),]),
-("Shared window API", [
-("GIF recording", "`win.StartGif(path,delay=100)` starts recording; `win.AddGifFrame(...)` appends a frame; `win.StopGif(...)` finishes. Supported by PixWindow and OpenGLWindow; optional frame arguments differ."),]),
-("Draw / output", [
-("`pal.StartPixWindow(...)`", "Create a pixel buffer and display window; `headless=True` supports noninteractive rendering."),
-("`pix[x,y] = RGB`", "Set a pixel color in the shared pixel buffer."),
-("Color utilities", "`pal.RGB(r,g,b)` packs red, green, and blue channels into a color; `pal.GetR(color)`, `pal.GetG(color)`, and `pal.GetB(color)` extract channels; `pal.ColorScale(...)` maps values to colors."),
-("PixWindow controls", "`win.Update()` refreshes the display; `win.Save(path,block=True)` saves an image; `win.Close()` releases the window."),
-("`pal.StartOpenGLWindow(xDim,yDim,zDim=None,width=800,height=800,...)`", "Create the renderer and return `(draw, win)`: `draw` collects primitives; `win` handles display, updates, and output. Omit `zDim` for 2D; set it for 3D. `headless=True` supports noninteractive rendering."),
-("`draw.Circle(rad,color,x,y,z=None)`", "Add a circle or sphere-like primitive with the given radius and color."),
-("`draw.Box(xLen,color,x,y,z=None,yLen=None,zLen=None)`", "Add a box centered at a position; specify axis lengths to control its size."),
-("`draw.BoxSQ(color,x,y,z=None)`", "Add a box aligned to a lattice site."),
-("`draw.Line(width,color,x1,y1,x2,y2,z1=None,z2=None)`", "Add a line segment between two 2D/3D points."),
-("`draw.Borders(width,color)`", "Draw grid borders with the requested line width and color."),
-("`win.Camera(x,y,z,yaw=None,pitch=None)`", "Set the camera position and optional yaw/pitch angles for a 3D scene."),
-("OpenGL frame", "`win.Background(color)` sets the background; `draw.Clear()` clears collected primitives; `win.Clear()` clears the scene; `win.Update()` renders."),
-("OpenGL output", "`win.IsOpen()` checks the window; `win.Save(path,block=False)` saves an image; `win.Close()` releases resources."),
-]),("Lists + randomness", [
-("IList methods", "`Append(i)` adds an integer; `Clear()` empties the list; `Random()` picks an entry; `Shuffle()` reorders entries; `All()` copies the list; `Iter()` traverses without copying."),
-("RNG methods", "`pal.Seed(seed)` seeds PAL’s RNG; `pal.Random()` draws uniform [0,1); `pal.RandInt(n)` draws an integer in [0,n). PAL’s RNG is separate from NumPy’s."),
-("Multinomial methods", "`m.Binomial(n,p)` draws a binomial count; `m.Setup(...)` configures multinomial probabilities; `m.Sample(...)` draws counts."),]),
-("AgentGrid", [
-("`NewAgentSQ(x...)` / `MoveSQ(a,x...)`", "Create/move agents by integer site coordinates; linear-site variants are also available."),
-("`NewAgent(x...)` / `Move(a,x...)`", "Create/move agents by continuous coordinates (off-lattice)."),
-("`grid[a,p]`", "Read or write property p for agent a."),
-("Agent position", "`I(a)` gives the linear site index; `XSQ/YSQ/ZSQ(a)` give lattice coordinates; `X/Y/Z(a)` give continuous coordinates."),
-("`Alive(a)` / `Dispose(a)`", "Check whether an agent is still valid, or remove it from the grid."),
-("`GetPop()`", "Count agents currently in the grid."),
-("`AgentsAt(x...)` / `LastAgent(x...)`", "Query all agents at a site or just its last agent; useful for stackable grids."),
-("`AgentsInRadius(...)`", "Find nearby agents, respecting periodic boundaries."),
-("`counts[x...]`", "Read site occupancy counts without modifying them."),
-("Iteration", "`agents.All()` returns a detached snapshot, safe for iteration while adding or disposing agents."),
-("`DispWrapX...(p1,p2)`", "Compute the shortest displacement along a periodic axis."),]),
-("PopGrid + PDEgrid", [
-("Synchronous updates", "`Add(v,...)` queues a change; `Update()` applies queued changes together; `Reset()` clears current and pending values. Indexed assignment changes current state immediately."),
-("`pop.GetPop()`", "Return total population across all sites."),
-("`pop.All()`", "Return occupied site indices (not their counts)."),
-("PDE setup", "`field.SetTimeSpaceStep(dt, dx[,dy,dz])` sets time and axis spacing; explicit updates require stable time steps."),
-("Diffusion methods", "`Diffusion(...)` uses the standard scheme; `DiffusionMask(...)` applies a mask; `DiffusionField(...)` uses spatially varying coefficients; `DiffusionInterfaces(...)` specifies interfaces; `DiffusionADI(...)` uses an implicit scheme; `DiffusionRadialCircle/Sphere(...)` handles radial geometry."),
-("Advection methods", "`Advection(...)` uses constant velocity; `AdvectionField(...)` uses spatially varying velocity; `AdvectionInterfaces(...)` specifies interface velocities."),]),
-
+("START / UTILITIES", [
+("pal.FastMode() · pal.njit(cache=True)", "Select fast mode before object creation; compile model kernels."),
+("pal.Seed(s) · Random() · RandInt(n)", "Shared PAL RNG; seed for reproducibility."),
+("pal.NewGrid(dims,dtype) · NewAgentGrid(dims,props=0,stack=False)", "Typed sites; mobile agents."),
+("pal.NewPopGrid(dims,capacity=None) · NewPDEgrid(dims)", "Integer populations; continuous fields."),
+("pal.NewIList() · NewMultinomial(other=None)", "Reusable integer list; random sampler."),
+("pal.MooreHood(dim,excludeCenter=False) · VonNeumannHood(...) · CircleHood(dim,rad,...)", "Relative neighbor offsets."),
+("pal.RGB(r,g,b) · GetR/G/B(c) · ColorScale(colors,value)", "Pack, extract, interpolate colors."),
+("pal.AwaitWindows(timeout=30)", "Wait for rendering windows."),
+]),
+("SHARED GRID API", [
+("dims=(nx,ny,nz); negative size = wrap", "1–3 dimensions; unused axes omitted."),
+("grid.xDim... · nDims · wrapX...", "Axis sizes, dimensionality, periodicity."),
+("len(grid) · grid[i] · grid[x,y,z] · grid[...] = value", "Site count; read/write; slices copy."),
+("grid.ToI(x,y,z) · ItoX...(i)", "Coordinate ↔ linear index."),
+("grid.InWrapX...(x)", "Wrap coordinate on periodic axis."),
+("grid.Box(x1,x2,y1,y2,z1,z2)", "Half-open rectangular iterator."),
+("grid.Hood(hood,x,y,z,unroll=False)", "Offset neighborhood at a site."),
+]),
+("AGENT GRID", [
+("a=agents.NewAgentSQ(x,y,z) · NewAgent(x,y,z)", "Create at lattice site / continuous point."),
+("agents.MoveSQ(a,x,y,z) · Move(a,x,y,z)", "Move by lattice / continuous position."),
+("agents.I(a) · XSQ...(a) · X...(a)", "Site index, lattice and real coordinates."),
+("agents.Alive(a) · Dispose(a) · GetPop()", "Life status, removal, count."),
+("agents[a,p] · agents.counts", "Agent properties; read-only occupancy."),
+("agents.AgentsAt(x,y,z) · LastAgent(x,y,z)", "Site occupants / last occupant."),
+("agents.AgentsInRadius(rad,x,y,z,exclude=None)", "Nearby agents; periodic-aware."),
+("agents.All(shuffle=False)", "Snapshot of living agent IDs."),
+("agents.InWrapSQX...(x) · DispWrapX...(p1,p2)", "Wrap lattice coordinate; shortest displacement."),
+]),
+("POP GRID / PDE FIELD", [
+("pop.Add(v,x,y,z) · Update() · Reset()", "Queue count deltas, apply, clear."),
+("pop.GetPop() · All()", "Total population; occupied indices."),
+("field.Add(v,x,y,z) · Update() · Reset()", "Queue field deltas, apply, clear."),
+("field.SetTimeSpaceStep(dt,dx,dy=1,dz=1) · Dt() · Dx...()", "Numerical spacing."),
+("field.Diffusion(rate,BC...) · DiffusionMask(rate,mask,...)", "Uniform / masked diffusion."),
+("field.DiffusionField(rates,BC...) · DiffusionInterfaces(rx,ry,rz,BC...)", "Cell / face coefficients."),
+("field.DiffusionADI(rate,BC...) · DiffusionRadialCircle/Sphere(rate,outerBC)", "Implicit / radial diffusion."),
+("field.Advection(vx,vy,vz,BC...) · AdvectionField(vx,vy,vz,BC...)", "Uniform / spatial velocity."),
+("field.AdvectionInterfaces(vx,vy,vz,BC...)", "Face-centered velocity."),
+("BC... = xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC", "Optional face boundary conditions."),
+]),
+("LISTS / SAMPLING", [
+("lst.Append(i) · Clear() · Random() · Shuffle()", "Integer-list operations."),
+("lst.All() · Iter() · len(lst) · lst[i]", "Copy / no-copy traversal, indexing."),
+("m.Binomial(n,p) · Setup(n) · Sample(p)", "Binomial sampling."),
+]),
+("SHARED WINDOW API", [
+("win.IsOpen() · Update() · Save(path,block=False) · Close()", "Window lifecycle / image output."),
+("win.StartGif(path,delay=100) · AddGifFrame(block=False) · StopGif()", "GIF recording; OpenGL supports timeout options."),
+]),
+("PIX WINDOW", [
+("pix,win=pal.StartPixWindow(nx,ny,scale=1,title='PAL',headless=False)", "Pixel renderer."),
+("pix[x,y]=pal.RGB(r,g,b) · pix[i]=color", "Draw packed RGB pixels."),
+("pix.xDim · yDim · ToI(x,y) · ItoX/Y(i) · len(pix)", "Buffer geometry."),
+]),
+("OPENGL WINDOW / DRAW", [
+("draw,win=pal.StartOpenGLWindow(nx,ny,nz=None,width=800,height=800,...)", "2D/3D primitive renderer."),
+("draw.Circle(rad,color,x,y,z=0) · Box(xLen,color,x,y,z=0,...)", "Add circles/spheres and boxes."),
+("draw.BoxSQ(color,x,y,z=0) · Line(width,color,x1,y1,x2,y2,...)", "Site boxes and segments."),
+("draw.Clear() · win.Clear() · win.Background(color)", "Reset primitives / scene / background."),
+("win.Borders(width,color) · win.Camera(x,y,z,yaw=None,pitch=None)", "Domain border and 3D camera."),
+]),
 ]
-
-FOOTER = "More detail: Manual · API Guide · API Reference (Documentation/)."
-
 
 def _api_entries():
     """Return the independently curated cheatsheet content."""
@@ -88,7 +94,7 @@ def _api_entries():
 def _md():
     lines = ["# PAL Cheatsheet", "", INTRO, "",
              "Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y and Z/z variants.", "",
-             "Curated quick reference; see API Guide and API Reference for details.", ""]
+             "Curated one-page API map; see API Guide and API Reference for details.", ""]
     for title, rows in _api_entries():
         lines += ["## " + title, ""]
         for sig, description in rows:
@@ -115,112 +121,106 @@ def _markup(s, heading=False):
     return s
 
 
-def _build_pdf(body_font=8.0):
-    """Pack as many complete source entries as fit into two balanced columns."""
+def _build_pdf():
+    """Render a one-page landscape, three-column quick reference."""
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import landscape
+    from reportlab.pdfbase.pdfmetrics import stringWidth
     buf = BytesIO()
-    pw, ph = letter
-    margin = .30 * inch
-    header = .32 * inch
-    gutter = .22 * inch
-    col_w = (pw - 2 * margin - gutter) / 2
-    usable = ph - 2 * margin - header
-    frames = [Frame(margin + i * (col_w + gutter), margin, col_w, usable,
-                    leftPadding=3, rightPadding=3, topPadding=1, bottomPadding=1)
-              for i in range(2)]
-
-    def header_fn(canvas, doc):
-        canvas.saveState()
-        canvas.setFont("Helvetica-Bold", 13)
-        canvas.drawString(margin, ph - margin - 8, TITLE)
-        canvas.setFont("Helvetica", 7)
-        canvas.drawRightString(pw - margin, ph - margin - 7, "Full details: API Guide · API Reference")
-        canvas.setStrokeColor(colors.HexColor("#888888"))
-        canvas.line(margin, ph - margin - 13, pw - margin, ph - margin - 13)
-        canvas.restoreState()
-
-    heading = ParagraphStyle("heading", fontName="Helvetica-Bold", fontSize=9,
-                             leading=10.2, spaceBefore=3, spaceAfter=2,
-                             backColor=colors.HexColor("#F1F1F1"), borderPadding=2)
-    entry = ParagraphStyle("entry", fontName="Helvetica", fontSize=body_font,
-                           leading=body_font * 1.13, spaceAfter=1.2,
-                           leftIndent=5, firstLineIndent=-5)
-    intro = ParagraphStyle("intro", fontName="Helvetica", fontSize=body_font,
-                           leading=body_font * 1.13, spaceAfter=3)
-
-    # Four columns across two portrait pages; content is manually curated.
-    max_height = usable - 12
-    inner_width = col_w - 8
-    groups = _api_entries()
-    entries = [(title, sig, desc) for title, rows in groups for sig, desc in rows]
-    total = len(entries)
-
-    def cost(p):
-        _, h = p.wrap(inner_width, max_height)
-        return h + p.style.spaceBefore + p.style.spaceAfter
-
-    def compact(sig, desc, limit):
-        sig = " ".join(sig.split())
-        sig = sig.replace("(self, ", "(").replace("(self)", "()")
-        desc = " ".join(desc.replace("`", "").split())
-        if len(desc) > limit:
-            desc = desc[:limit - 3].rsplit(" ", 1)[0] + "..."
-        return Paragraph("<b>" + html.escape(sig) + "</b> — " + html.escape(desc), entry)
-
-    def pack(desc_limit):
-        columns = [[], [], [], []]
-        heights = [0.] * 4
-        intro_p = Paragraph(_markup(INTRO), intro)
-        columns[0].append(intro_p)
-        heights[0] += cost(intro_p)
-        current = 0
-        last_title = [None] * 4
-        for title, sig, desc in entries:
-            p = compact(sig, desc, desc_limit)
-            heading_p = Paragraph(html.escape(title), heading)
-            needed = cost(p) + (cost(heading_p) if title != last_title[current] else 0)
-            if heights[current] + needed > max_height:
-                current += 1
-                if current >= 4:
+    pw, ph = landscape(letter)
+    c = canvas.Canvas(buf, pagesize=(pw, ph), pageCompression=1, invariant=1)
+    c.setTitle(TITLE)
+    margin, gap, top, bottom = 20, 13, 42, 18
+    ncols = 3
+    width = (pw - 2 * margin - gap * (ncols - 1)) / ncols
+    rows = [(title, sig.strip("&#96;"), desc) for title, entries in SECTIONS for sig, desc in entries]
+    def split_lines(value, font, size, max_width):
+        words = value.split()
+        lines, line = [], ""
+        for word in words:
+            candidate = (line + " " + word).strip()
+            if line and stringWidth(candidate, font, size) > max_width:
+                lines.append(line)
+                line = word
+            else:
+                line = candidate
+        if line:
+            lines.append(line)
+        return lines
+    def layout(size):
+        lead = size * 1.12
+        heading_h = size * 1.45 + 4
+        blocks = []
+        for title, entries in SECTIONS:
+            pieces = []
+            for sig, desc in entries:
+                sig = sig.strip("&#96;")
+                lines = split_lines(sig, "Helvetica-Bold", size, width - 8)
+                details = split_lines(desc, "Helvetica", size - .4, width - 8)
+                pieces.append((lines, details, lead * (len(lines) + len(details)) + 2))
+            blocks.append((title, pieces, heading_h + sum(p[2] for p in pieces) + 4))
+        columns = [[], [], []]
+        heights = [0, 0, 0]
+        usable = ph - top - bottom
+        for title, pieces, h in blocks:
+            col = min(range(3), key=lambda i: heights[i])
+            if heights[col] + h > usable:
+                candidates = [i for i in range(3) if heights[i] + h <= usable]
+                if not candidates:
                     return None
-                needed = cost(p) + cost(heading_p)
-            if heights[current] + needed > max_height:
-                return None
-            if title != last_title[current]:
-                columns[current].append(heading_p)
-                heights[current] += cost(heading_p)
-                last_title[current] = title
-            columns[current].append(p)
-            heights[current] += cost(p)
-        return columns, heights
-
-    chosen = None
-    for limit in (180, 150, 120, 100, 80, 60, 40):
-        chosen = pack(limit)
-        if chosen is not None:
+                col = min(candidates, key=lambda i: heights[i])
+            columns[col].append((title, pieces))
+            heights[col] += h
+        return columns, heights, lead, heading_h
+    selected = None
+    for size in (8.0, 7.8, 7.6, 7.4, 7.2, 7.0, 6.8, 6.6):
+        selected = layout(size)
+        if selected is not None:
             break
-    if chosen is None:
-        raise RuntimeError(f"Curated cheatsheet ({total} entries) cannot fit on two pages at 8 pt")
-    columns, heights = chosen
-    print(f"PAL cheatsheet includes {total} curated entries on two pages; "
-          f"description limit {limit}; column heights {[round(h, 1) for h in heights]}.")
-    story = []
-    for i, column in enumerate(columns):
-        if i:
-            story.append(FrameBreak())
-        story.extend(column)
-    doc = BaseDocTemplate(buf, pagesize=letter, leftMargin=margin,
-                          rightMargin=margin, topMargin=margin, bottomMargin=margin,
-                          invariant=1)
-    doc.addPageTemplates(PageTemplate(id="main", frames=frames, onPage=header_fn))
-    doc.build(story)
-    return buf.getvalue(), doc.page
+    if selected is None:
+        raise RuntimeError("Curated cheatsheet cannot fit on one page at minimum readable font")
+    columns, heights, lead, heading_h = selected
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(margin, ph - 22, TITLE)
+    c.setFont("Helvetica", 7.5)
+    c.drawRightString(pw - margin, ph - 22, "1-page API map · X... includes Y/Z variants")
+    c.setStrokeColor(colors.HexColor("#666666"))
+    c.line(margin, ph - 28, pw - margin, ph - 28)
+    for col, blocks in enumerate(columns):
+        x = margin + col * (width + gap)
+        y = ph - top
+        for title, pieces in blocks:
+            c.setFillColor(colors.HexColor("#E9EDF2"))
+            c.rect(x, y - heading_h + 2, width, heading_h - 2, fill=1, stroke=0)
+            c.setFillColor(colors.HexColor("#172B4D"))
+            c.setFont("Helvetica-Bold", size + .6)
+            c.drawString(x + 3, y - size - 2, title)
+            y -= heading_h
+            for sig_lines, desc_lines, _ in pieces:
+                c.setFillColor(colors.black)
+                c.setFont("Helvetica-Bold", size)
+                for line in sig_lines:
+                    c.drawString(x + 3, y - size, line)
+                    y -= lead
+                c.setFillColor(colors.HexColor("#414141"))
+                c.setFont("Helvetica", size - .4)
+                for line in desc_lines:
+                    c.drawString(x + 3, y - size, line)
+                    y -= lead
+                y -= 2
+            y -= 4
+    c.setFont("Helvetica", 6.7)
+    c.setFillColor(colors.HexColor("#555555"))
+    c.drawString(margin, 8, "dims=(nx,ny,nz); negative dimension wraps · API Reference has exact signatures and defaults")
+    c.save()
+    print(f"One-page cheatsheet: {sum(len(e) for _,e in SECTIONS)} curated entries, {size:.1f} pt, column heights {[round(h) for h in heights]}")
+    return buf.getvalue(), 1
 
 
 def _pdf():
-    data, pages = _build_pdf(8.0)
-    if pages != 2:
-        raise RuntimeError(f"Cheatsheet must be exactly two pages; generated {pages}.")
-    print("PAL cheatsheet generated 2 portrait pages, 2 full-height columns at 8 pt body font.")
+    data, pages = _build_pdf()
+    if pages != 1:
+        raise RuntimeError(f"Cheatsheet must be one page, got {pages}")
     return data
 
 def build(): return _md(), _pdf()
