@@ -12,6 +12,8 @@ on:
       - 'pal_native.c'
       - '*.py'
       - '*.pyi'
+      - 'README.md'
+      - 'LICENSE*'
       - 'packaging/**'
       - 'Tests/**'
       - 'Testing/**'
