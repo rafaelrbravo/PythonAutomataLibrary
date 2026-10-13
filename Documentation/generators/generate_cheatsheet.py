@@ -99,7 +99,33 @@ def _api_entries():
         groups.append((title, rows))
     if not groups:
         raise RuntimeError("API Reference has no parseable declarations")
-    return groups
+    grid_names = ("AgentGrid", "Grid", "PopGrid", "PDEgrid")
+    grid_groups = {name: rows for name, rows in groups if name in grid_names}
+    occurrences = {}
+    for name in grid_names:
+        for sig, desc in grid_groups.get(name, []):
+            normalized = sig.replace("(self, ", "(").replace("(self)", "()")
+            occurrences.setdefault(normalized, []).append((name, desc))
+    shared = []
+    for sig, variants in occurrences.items():
+        if len(variants) < 2:
+            continue
+        applicable = ", ".join(name for name, _ in variants)
+        descriptions = {desc for _, desc in variants}
+        desc = variants[0][1] if len(descriptions) == 1 else "Shared signature; behavior depends on grid type (see API Reference)."
+        shared.append((sig, f"[{applicable}] {desc}"))
+    consolidated = []
+    inserted = False
+    for title, rows in groups:
+        if title in grid_names:
+            if not inserted:
+                consolidated.append(("Shared grid API", shared))
+                inserted = True
+            rows = [(sig, desc) for sig, desc in rows
+                    if len(occurrences[sig.replace("(self, ", "(").replace("(self)", "()")]) == 1]
+        if rows:
+            consolidated.append((title, rows))
+    return consolidated
 
 
 def _md():
