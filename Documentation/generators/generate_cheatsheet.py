@@ -195,7 +195,9 @@ def _api_entries():
                 family = [prefix + a + suffix for a in axes]
                 if all(n in names for n in family):
                     tails = [names[n][0].split("(", 1)[1] for n in family]
-                    if len(set(tails)) == 1:
+                    # Axis-specific parameter names (x1/y1/z1, etc.) are equivalent.
+                    normalized = [re.sub(r"\b" + a.lower() + r"(?=\d|\b)", "x", tail) for a, tail in zip(axes, tails)]
+                    if len(set(normalized)) == 1:
                         skip.update(family[1:])
                         result.append((sig.replace(name + "(", name + "...(", 1),
                                        desc.rstrip(".") + " (Y/Z equivalents)."))
