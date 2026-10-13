@@ -37,7 +37,9 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           mkdir -p dist
-          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist --pattern '*.whl' --pattern '*.tar.gz' --pattern 'SHA256SUMS.txt'
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist --pattern '*.whl'
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist --pattern '*.tar.gz'
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir dist --pattern 'SHA256SUMS.txt'
       - name: Verify checksums and distributions
         working-directory: dist
         run: |
@@ -45,6 +47,17 @@ jobs:
           sha256sum --check SHA256SUMS.txt
           test -n "$(find . -maxdepth 1 -name '*.whl' -print -quit)"
           test -n "$(find . -maxdepth 1 -name '*.tar.gz' -print -quit)"
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          wheels = list(Path('.').glob('*.whl'))
+          sources = list(Path('.').glob('*.tar.gz'))
+          assert wheels and len(sources) == 1
+          for wheel in wheels:
+              assert not wheel.name.endswith('-none-any.whl'), wheel
+              with ZipFile(wheel) as z:
+                  assert any(n.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib')) for n in z.namelist()), wheel
+          PY
           rm SHA256SUMS.txt
       - name: Publish verified artifacts using PyPI trusted publishing
         uses: pypa/gh-action-pypi-publish@release/v1
