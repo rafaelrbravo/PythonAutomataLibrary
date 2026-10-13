@@ -103,6 +103,22 @@ jobs:
               assert any(name.endswith("/setup.py") for name in names), "Missing setup.py"
               forbidden = ("pal_native.dll", "libpal_native.so", "libpal_native.dylib")
               assert not any(name.endswith(forbidden) for name in names), "Precompiled native library included in sdist"
+      - name: Verify source distribution builds a native wheel
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip wheel --no-deps --wheel-dir sdist-wheel dist/*.tar.gz
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          wheels = list(Path('sdist-wheel').glob('*.whl'))
+          assert len(wheels) == 1, f'Expected one rebuilt wheel: {wheels}'
+          with ZipFile(wheels[0]) as archive:
+              names = archive.namelist()
+              assert any(name.endswith('libpal_native.so') for name in names), 'sdist-built wheel missing Linux native library'
+              assert not any(name.endswith(('pal_native.dll', 'libpal_native.dylib')) for name in names), 'sdist-built wheel contains foreign native library'
+              metadata = next(name for name in names if name.endswith('.dist-info/WHEEL'))
+              assert 'Root-Is-Purelib: false' in archive.read(metadata).decode(), 'sdist-built wheel is pure'
+          PY
       - uses: actions/upload-artifact@v4
         with:
           name: source-distribution
