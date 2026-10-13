@@ -107,7 +107,11 @@ def _api_entries():
     objects = {name: rows for name, rows in groups if name in object_names}
 
     def normalize(sig):
-        return sig.replace("(self, ", "(").replace("(self)", "()")
+        sig = sig.replace("(self, ", "(").replace("(self)", "()")
+        # Hide OpenGL-only timeout arguments in the shared GIF API.
+        if sig.startswith("AddGifFrame(") or sig.startswith("StopGif("):
+            sig = sig.replace(", timeout=30", "").replace("(timeout=30)", "()")
+        return sig
 
     occurrences = {}
     for name in object_names:
