@@ -568,8 +568,8 @@ _pd_region_set_array = _bind("pal_pd_region_set_array", None, _PTR, _I32, _I32, 
 _pd_bc_scalar = _bind("pal_pd_bc_scalar", _PTR, _PTR, _I32, _F32)
 _pd_diffusion_bc = _bind("pal_pd_diffusion_bc", _I32, _PTR, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_diffusion_bc_fast = _bind("pal_pd_diffusion_bc_fast", _I32, _PTR, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
-_pd_diffusion_mask = _bind("pal_pd_diffusion_mask", _I32, _PTR, _F32, _PTR)
-_pd_diffusion_mask_fast = _bind("pal_pd_diffusion_mask_fast", _I32, _PTR, _F32, _PTR)
+_pd_diffusion_mask = _bind("pal_pd_diffusion_mask", _I32, _PTR, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
+_pd_diffusion_mask_fast = _bind("pal_pd_diffusion_mask_fast", _I32, _PTR, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_diffusion_field = _bind("pal_pd_diffusion_field", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_diffusion_field_fast = _bind("pal_pd_diffusion_field_fast", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_diffusion_interfaces = _bind("pal_pd_diffusion_interfaces", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
@@ -1100,8 +1100,8 @@ class _PDEgridProtocol(Protocol):
     def Diffusion(self, rateConstant: float, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         """Apply scalar-coefficient diffusion using the configured grid spacing and optional per-face boundary conditions."""
         ...
-    def DiffusionMask(self, rateConstant: float, mask=None):
-        """Apply diffusion only across interfaces allowed by `mask`."""
+    def DiffusionMask(self, rateConstant: float, mask=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
+        """Diffuse across unmasked interfaces, with optional boundary values on active domain faces; masked cells remain impermeable."""
         ...
     def DiffusionField(self, rateConstants, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         """Apply diffusion with spatially varying rate constants and optional boundary conditions."""
@@ -2820,11 +2820,12 @@ class _PDEgridSafePython:
         self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
         ok=_pd_diffusion_bc(self._ptr,rateConstant,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok==0: raise ValueError("explicit diffusion stability condition violated")
-    def DiffusionMask(self, rateConstant, mask):
+    def DiffusionMask(self, rateConstant, mask, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         if not np.isfinite(rateConstant) or rateConstant<0: raise ValueError("diffusion rate must be finite and nonnegative")
+        self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
         if mask.size != len(self): raise ValueError("mask shape must match grid dimensions")
         maskF=np.asarray(mask,dtype=np.float32).reshape(len(self))
-        ok=_pd_diffusion_mask(self._ptr,rateConstant,maskF.ctypes.data)
+        ok=_pd_diffusion_mask(self._ptr,rateConstant,maskF.ctypes.data,*(_BCPointer(b,self._ptr,i) for i,b in enumerate((xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC))))
         if ok<0: raise ValueError("mask values must be finite")
         if ok==0: raise ValueError("explicit diffusion stability condition violated")
     def DiffusionField(self, rateConstants, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
@@ -2954,10 +2955,10 @@ class _PDEgridFastPython:
 
     def Diffusion(self, rateConstant, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         _pd_diffusion_bc_fast(self._ptr,rateConstant,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
-    def DiffusionMask(self, rateConstant, mask):
+    def DiffusionMask(self, rateConstant, mask, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         if not np.isfinite(rateConstant) or rateConstant<0: raise ValueError("diffusion rate must be finite and nonnegative")
         maskF=np.asarray(mask,dtype=np.float32).reshape(len(self))
-        _pd_diffusion_mask_fast(self._ptr,rateConstant,maskF.ctypes.data)
+        _pd_diffusion_mask_fast(self._ptr,rateConstant,maskF.ctypes.data,*(_BCPointer(b,self._ptr,i) for i,b in enumerate((xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC))))
     def DiffusionField(self, rateConstants, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         ratesF=np.asarray(rateConstants,dtype=np.float32).reshape(len(self))
         _pd_diffusion_field_fast(self._ptr,ratesF.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
