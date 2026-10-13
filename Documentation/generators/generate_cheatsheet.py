@@ -203,8 +203,11 @@ def _build_pdf():
         spare = max(0, ph - top - bottom - heights[col])
         entry_count = sum(len(pieces) for _, pieces in blocks)
         section_count = len(blocks)
-        extra_entry = min(3.0, spare * 0.7 / max(1, entry_count))
-        extra_section = min(9.0, max(0, spare - extra_entry * entry_count) / max(1, section_count - 1))
+        # Distribute the entire available height instead of imposing small caps.
+        # Keep a modest share between sections, with most added space between entries.
+        section_gaps = max(0, section_count - 1)
+        extra_section = (spare * 0.20 / section_gaps) if section_gaps else 0
+        extra_entry = (spare - extra_section * section_gaps) / max(1, entry_count)
         for title, pieces in blocks:
             if title == "CONVENTIONS":
                 block_h = heading_h + sum(p[2] for p in pieces) + 4 + extra_entry * len(pieces)
