@@ -1,0 +1,52 @@
+name: Package smoke tests
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'setup.py'
+      - 'pyproject.toml'
+      - 'MANIFEST.in'
+      - 'pal_native.c'
+      - '.github/workflows/package-smoke.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  wheel-install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build wheel and source distribution
+        run: |
+          python -m pip install -U build wheel
+          python -m build
+      - name: Check wheel tags and native library
+        shell: python
+        run: |
+          import glob, zipfile
+          wheel, = glob.glob('dist/*.whl')
+          with zipfile.ZipFile(wheel) as z:
+              names = z.namelist()
+              assert any(n.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib')) for n in names), names
+              assert '-none-any.whl' not in wheel, wheel
+          print(wheel)
+      - name: Install wheel outside repository
+        shell: bash
+        run: |
+          python -m venv ../pal-install-check
+          ../pal-install-check/bin/python -m pip install --upgrade pip || ../pal-install-check/Scripts/python.exe -m pip install --upgrade pip
+          if [ -f ../pal-install-check/bin/python ]; then PY=../pal-install-check/bin/python; else PY=../pal-install-check/Scripts/python.exe; fi
+          "$PY" -m pip install dist/*.whl
+          cd ..
+          "$PY" -c "import PythonAutomataLibrary as pal; print(pal.__file__); assert 'pal-install-check' in pal.__file__"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pal-package-${{ matrix.os }}
+          path: dist/*
