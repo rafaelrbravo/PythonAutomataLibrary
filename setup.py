@@ -1,10 +1,10 @@
 """Build PAL's platform-native library into binary wheels."""
 from pathlib import Path
-import os
 import subprocess
 import sys
 from setuptools import setup
 from setuptools.command.build_py import build_py
+from wheel.bdist_wheel import bdist_wheel
 
 ROOT = Path(__file__).resolve().parent
 
@@ -25,4 +25,9 @@ class BuildWithNative(build_py):
             output = destination / "libpal_native.so"
             subprocess.check_call(["cc", "-O3", "-std=c11", "-shared", "-fPIC", str(source), "-o", str(output), "-lm"], cwd=ROOT)
 
-setup(cmdclass={"build_py": BuildWithNative})
+class PlatformWheel(bdist_wheel):
+    def finalize_options(self):
+        super().finalize_options()
+        self.root_is_pure = False
+
+setup(cmdclass={"build_py": BuildWithNative, "bdist_wheel": PlatformWheel})
