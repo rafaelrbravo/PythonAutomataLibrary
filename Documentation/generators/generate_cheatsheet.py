@@ -177,6 +177,8 @@ def _build_pdf(body_font=8.0):
 
     def compact(sig, desc, limit):
         sig = re.sub(r"\\s+", " ", sig)
+        sig = re.sub(r"\(self,\s*", "(", sig)
+        sig = re.sub(r"\(self\)", "()", sig)
         sig = re.sub(r" -> [^)]*$", "", sig)
         if len(sig) > 76:
             sig = sig[:73].rsplit(",", 1)[0] + ",...)"
