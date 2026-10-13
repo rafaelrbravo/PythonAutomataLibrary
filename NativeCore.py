@@ -2825,7 +2825,7 @@ class _PDEgridSafePython:
         self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
         if mask.size != len(self): raise ValueError("mask shape must match grid dimensions")
         maskF=np.asarray(mask,dtype=np.float32).reshape(len(self))
-        ok=_pd_diffusion_mask(self._ptr,rateConstant,maskF.ctypes.data,*(_BCPointer(b,self._ptr,i) for i,b in enumerate((xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC))))
+        ok=_pd_diffusion_mask(self._ptr,rateConstant,maskF.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok<0: raise ValueError("mask values must be finite")
         if ok==0: raise ValueError("explicit diffusion stability condition violated")
     def DiffusionField(self, rateConstants, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
@@ -2958,7 +2958,7 @@ class _PDEgridFastPython:
     def DiffusionMask(self, rateConstant, mask, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         if not np.isfinite(rateConstant) or rateConstant<0: raise ValueError("diffusion rate must be finite and nonnegative")
         maskF=np.asarray(mask,dtype=np.float32).reshape(len(self))
-        _pd_diffusion_mask_fast(self._ptr,rateConstant,maskF.ctypes.data,*(_BCPointer(b,self._ptr,i) for i,b in enumerate((xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC))))
+        _pd_diffusion_mask_fast(self._ptr,rateConstant,maskF.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
     def DiffusionField(self, rateConstants, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         ratesF=np.asarray(rateConstants,dtype=np.float32).reshape(len(self))
         _pd_diffusion_field_fast(self._ptr,ratesF.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
