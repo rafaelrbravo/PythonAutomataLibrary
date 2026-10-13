@@ -169,6 +169,8 @@ jobs:
               matches = [wheel for wheel in wheels if f'-{python_tag}-{python_tag}-' in wheel.name]
               assert len(matches) == 4, f'Expected 4 wheels for {python_tag}, got {matches}'
               assert sum('macosx' in wheel.name for wheel in matches) == 2, matches
+              assert sum('macosx' in wheel.name and wheel.name.endswith('_arm64.whl') for wheel in matches) == 1, matches
+              assert sum('macosx' in wheel.name and wheel.name.endswith('_x86_64.whl') for wheel in matches) == 1, matches
               assert sum('manylinux' in wheel.name for wheel in matches) == 1, matches
               assert sum('win_amd64' in wheel.name for wheel in matches) == 1, matches
           for wheel in wheels:
