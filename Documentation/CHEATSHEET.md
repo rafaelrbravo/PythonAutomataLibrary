@@ -72,9 +72,7 @@ Condensed from the generated API Reference; see API Guide for examples.
 - `X...(self, agent: int) -> float`: Return the agent's continuous x coordinate; corresponding Y/Z variants use the same contract.
 - `InWrapSQX...(self, value: int) -> int`: Wrap an integer x site coordinate when x is periodic; corresponding Y/Z variants use the same contract.
 - `InWrapX...(self, value: float) -> float`: Wrap a continuous x coordinate when x is periodic; corresponding Y/Z variants use the same contract.
-- `DispWrapX(self, x1: float, x2: float) -> float`: Return the shortest signed x displacement under periodic wrapping.
-- `DispWrapY(self, y1: float, y2: float) -> float`: Return the shortest signed y displacement under periodic wrapping.
-- `DispWrapZ(self, z1: float, z2: float) -> float`: Return the shortest signed z displacement under periodic wrapping.
+- `DispWrapX...(self, x1: float, x2: float) -> float`: Return the shortest signed x displacement under periodic wrapping (Y/Z equivalents).
 - `counts(self) -> object`: Read-only occupancy counts for lattice sites; change occupancy through agent creation, movement, and disposal methods.
 - `LastAgent(self, x: int, y: int=-1, z: int=-1) -> int`: Return the last agent handle at the specified lattice site, or the empty-site sentinel when none is present.
 - `MoveSQ(self, agent: int, x: int, y: int=-1, z: int=-1)`: Move an agent to a lattice site specified by integer coordinates or a supported linear site index.
