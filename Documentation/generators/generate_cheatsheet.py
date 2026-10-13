@@ -66,7 +66,7 @@ SECTIONS = [
 ("`AgentsInRadius(...)`", "Find nearby agents, respecting periodic boundaries."),
 ("`counts[x...]`", "Read site occupancy counts without modifying them."),
 ("Iteration", "`agents.All()` returns a detached snapshot, safe for iteration while adding or disposing agents."),
-("`DispWrapX/Y/Z(p1,p2)`", "Compute the shortest displacement along a periodic axis."),]),
+("`DispWrapX...(p1,p2)`", "Compute the shortest displacement along a periodic axis."),]),
 ("PopGrid + PDEgrid", [
 ("Synchronous updates", "`Add(v,...)` queues a change; `Update()` applies queued changes together; `Reset()` clears current and pending values. Indexed assignment changes current state immediately."),
 ("`pop.GetPop()`", "Return total population across all sites."),
