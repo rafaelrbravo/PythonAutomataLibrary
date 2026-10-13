@@ -175,10 +175,9 @@ def _build_pdf(body_font=8.0):
         return h + p.style.spaceBefore + p.style.spaceAfter
 
     def compact(sig, desc, limit):
-        sig = re.sub(r"\\s+", " ", sig)
-        sig = re.sub(r"\\(self,\\s*", "(", sig)
-        sig = re.sub(r"\\(self\\)", "()", sig)
-        desc = re.sub(r"\\s+", " ", re.sub(r"`", "", desc)).strip()
+        sig = " ".join(sig.split())
+        sig = sig.replace("(self, ", "(").replace("(self)", "()")
+        desc = " ".join(desc.replace("`", "").split())
         if len(desc) > limit:
             desc = desc[:limit - 3].rsplit(" ", 1)[0] + "..."
         return Paragraph("<b>" + html.escape(sig) + "</b> — " + html.escape(desc), entry)
