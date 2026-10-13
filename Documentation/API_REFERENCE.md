@@ -238,8 +238,8 @@ The `OpenGLWindow` table follows its source Protocol, which also contains method
 | Kind | Declaration | Description |
 | --- | --- | --- |
 | method | `__setitem__(self, key, color)` | Write a packed RGB color to a pixel by (x, y) coordinates or a linear pixel index. |
-| method | `Xdim(self)` | Return the pixel buffer width. |
-| method | `Ydim(self)` | Return the pixel buffer height. |
+| method | `xDim(self)` | Return the pixel buffer width. |
+| method | `yDim(self)` | Return the pixel buffer height. |
 | method | `ToI(self, x, y)` | Convert pixel coordinates (x, y) to a linear index. |
 | method | `ItoX(self, i)` | Convert a linear pixel index to its x coordinate. |
 | method | `ItoY(self, i)` | Convert a linear pixel index to its y coordinate. |

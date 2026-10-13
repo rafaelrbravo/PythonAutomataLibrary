@@ -156,8 +156,8 @@ Condensed from the generated API Reference; see API Guide for examples.
 ## Pix drawing buffer
 
 - `__setitem__(self, key, color)`: Write a packed RGB color to a pixel by (x, y) coordinates or a linear pixel index.
-- `Xdim(self)`: Return the pixel buffer width.
-- `Ydim(self)`: Return the pixel buffer height.
+- `xDim(self)`: Return the pixel buffer width.
+- `yDim(self)`: Return the pixel buffer height.
 - `ToI(self, x, y)`: Convert pixel coordinates (x, y) to a linear index.
 - `ItoX(self, i)`: Convert a linear pixel index to its x coordinate.
 - `ItoY(self, i)`: Convert a linear pixel index to its y coordinate.
