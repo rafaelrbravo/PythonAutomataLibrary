@@ -19,6 +19,9 @@ on:
       - 'Testing/**'
 permissions:
   contents: read
+concurrency:
+  group: release-build-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 jobs:
   version-check:
     runs-on: ubuntu-latest
