@@ -51,7 +51,7 @@ jobs:
           if [ -f ../pal-install-check/bin/python ]; then PY=../pal-install-check/bin/python; else PY=../pal-install-check/Scripts/python.exe; fi
           "$PY" -m pip install dist/*.whl
           PY="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"
-          cd ..
+          cd "$RUNNER_TEMP"
           "$PY" -c "import PythonAutomataLibrary as pal; assert 'pal-install-check' in pal.__file__"
           "$PY" "$GITHUB_WORKSPACE/packaging/smoke_install.py"
       - name: Build wheel from source archive
@@ -62,7 +62,7 @@ jobs:
           cd ../pal-sdist-check
           python -m build --wheel
           python -m pip install --force-reinstall dist/*.whl
-          cd ..
+          cd "$RUNNER_TEMP"
           python "$GITHUB_WORKSPACE/packaging/smoke_install.py"
       - uses: actions/upload-artifact@v4
         with:
