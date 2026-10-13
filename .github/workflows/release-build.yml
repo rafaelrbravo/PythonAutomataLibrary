@@ -128,8 +128,9 @@ jobs:
           assert len(wheels) == 1, f'Expected one rebuilt wheel: {wheels}'
           with ZipFile(wheels[0]) as archive:
               names = archive.namelist()
-              assert any(name.endswith('libpal_native.so') for name in names), 'sdist-built wheel missing Linux native library'
-              assert not any(name.endswith(('pal_native.dll', 'libpal_native.dylib')) for name in names), 'sdist-built wheel contains foreign native library'
+              native = [name for name in names if name.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib'))]
+              assert len(native) == 1 and native[0].endswith('libpal_native.so'), f'sdist-built wheel has invalid native payload: {native}'
+              assert not any('.data/purelib/' in name for name in names), 'sdist-built wheel contains purelib payload'
               metadata = next(name for name in names if name.endswith('.dist-info/WHEEL'))
               assert 'Root-Is-Purelib: false' in archive.read(metadata).decode(), 'sdist-built wheel is pure'
           PY
