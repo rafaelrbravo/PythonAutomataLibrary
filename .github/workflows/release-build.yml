@@ -146,6 +146,13 @@ jobs:
               metadata = next(name for name in names if name.endswith('.dist-info/WHEEL'))
               assert 'Root-Is-Purelib: false' in archive.read(metadata).decode(), 'sdist-built wheel is pure'
           PY
+      - name: Smoke-test wheel rebuilt from source archive
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/pal-sdist-install"
+          "$RUNNER_TEMP/pal-sdist-install/bin/python" -m pip install sdist-wheel/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/pal-sdist-install/bin/python" "$GITHUB_WORKSPACE/packaging/smoke_install.py"
       - uses: actions/upload-artifact@v4
         with:
           name: source-distribution
