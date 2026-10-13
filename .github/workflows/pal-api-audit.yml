@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - pal-audit-ci-fix
+      - fix/diffusion-mask-boundary-conditions
     paths-ignore:
       - 'Documentation/generators/**'
       - '.github/workflows/refresh-documentation-pdfs.yml'
@@ -18,6 +19,7 @@ on:
     types: [completed]
     branches:
       - main
+      - fix/diffusion-mask-boundary-conditions
 jobs:
   api-audit:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}

@@ -139,7 +139,7 @@ Axis shorthand: `...` after an X/x-specific name includes its Y/y and Z/z varian
 | method | `Dx...(self) -> float` | Return the configured spatial step along x; corresponding Y/Z variants use the same contract. |
 | method | `Dt(self) -> float` | Return the configured time step. |
 | method | `Diffusion(self, rateConstant: float, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` | Apply scalar-coefficient diffusion using the configured grid spacing and optional per-face boundary conditions. |
-| method | `DiffusionMask(self, rateConstant: float, mask=None)` | Apply diffusion only across interfaces allowed by `mask`. |
+| method | `DiffusionMask(self, rateConstant: float, mask=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` | Diffuse across unmasked interfaces, with optional boundary values on active domain faces; masked cells remain impermeable. |
 | method | `DiffusionField(self, rateConstants, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` | Apply diffusion with spatially varying rate constants and optional boundary conditions. |
 | method | `DiffusionInterfaces(self, rateConstantsX, rateConstantsY=None, rateConstantsZ=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` | Apply diffusion using rate constants defined on grid interfaces; separate arrays may specify x, y, and z interfaces. |
 | method | `DiffusionADI(self, rateConstant: float, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)` | Apply diffusion using an alternating-direction implicit method. |

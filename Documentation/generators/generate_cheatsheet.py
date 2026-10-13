@@ -3,6 +3,8 @@
 The one-page PDF and Markdown use the same independently curated entries.
 
 Usage: python Documentation/generators/generate_cheatsheet.py [--check]
+
+The generated Markdown and PDF must be refreshed together after API changes.
 """
 import argparse, html, re
 from io import BytesIO

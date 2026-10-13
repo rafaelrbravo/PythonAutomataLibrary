@@ -1363,13 +1363,33 @@ static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,float rate,const float*x0,con
 PAL_API int32_t pal_pd_diffusion_bc(uintptr_t h,float r,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){return PDEGrid_DiffusionConstant((PDEGrid*)h,r,(float*)x0,(float*)x1,(float*)y0,(float*)y1,(float*)z0,(float*)z1,1);}
 PAL_API int32_t pal_pd_diffusion_bc_fast(uintptr_t h,float r,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){return PDEGrid_DiffusionConstant((PDEGrid*)h,r,(float*)x0,(float*)x1,(float*)y0,(float*)y1,(float*)z0,(float*)z1,0);}
 
-static int32_t PDEGrid_DiffusionMask(PDEGrid*g,float rate,float*m,int checked){
+static int32_t PDEGrid_DiffusionMask(PDEGrid*g,float rate,float*m,float*x0,float*x1,float*y0,float*y1,float*z0,float*z1,int checked){
+    float*bc0[3]={x0,y0,z0},*bc1[3]={x1,y1,z1};
     if(checked){for(int32_t i=0;i<g->length;i++)if(!isfinite(m[i]))return -1;if(!PDEGrid_ExplicitStable(g,rate))return 0;}
-    int X=g->dimensions[0],Y=g->dimension>1?g->dimensions[1]:1,Z=g->dimension>2?g->dimensions[2]:1;float s[3]={rate*g->dt/(g->dx*g->dx),rate*g->dt/(g->dy*g->dy),rate*g->dt/(g->dz*g->dz)};
-    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z);if(m[i]<0)continue;float c=g->field[i],v=0;int q[3]={x,y,z};for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a);if(t==PAL_NULL)continue;int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;int j=PDEGrid_ToI(g,xx,yy,zz);if(m[j]>=0)v+=(g->field[j]-c)*s[a];}g->deltas[i]+=v;}return 1;
+    int X=g->dimensions[0],Y=g->dimension>1?g->dimensions[1]:1,Z=g->dimension>2?g->dimensions[2]:1;
+    float s[3]={rate*g->dt/(g->dx*g->dx),rate*g->dt/(g->dy*g->dy),rate*g->dt/(g->dz*g->dz)};
+    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){
+        int i=PDEGrid_ToI(g,x,y,z);if(m[i]<0)continue;
+        float c=g->field[i],v=0;int q[3]={x,y,z};
+        for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){
+            int t=PDEGrid_Wrap(g,q[a]+sg,a);
+            if(t==PAL_NULL){
+                float*bc=sg<0?bc0[a]:bc1[a];
+                if(bc){
+                    int face=a==0?y*Z+z:a==1?x*Z+z:x*Y+y;
+                    v+=2.0f*(PDEGrid_BC(g,bc,face)-c)*s[a];
+                }
+                continue;
+            }
+            int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;
+            int j=PDEGrid_ToI(g,xx,yy,zz);if(m[j]>=0)v+=(g->field[j]-c)*s[a];
+        }
+        g->deltas[i]+=v;
+    }
+    return 1;
 }
-PAL_API int32_t pal_pd_diffusion_mask(uintptr_t h,float rate,uintptr_t mh){return PDEGrid_DiffusionMask((PDEGrid*)h,rate,(float*)mh,1);}
-PAL_API int32_t pal_pd_diffusion_mask_fast(uintptr_t h,float rate,uintptr_t mh){return PDEGrid_DiffusionMask((PDEGrid*)h,rate,(float*)mh,0);}
+PAL_API int32_t pal_pd_diffusion_mask(uintptr_t h,float rate,uintptr_t mh,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){return PDEGrid_DiffusionMask((PDEGrid*)h,rate,(float*)mh,(float*)x0,(float*)x1,(float*)y0,(float*)y1,(float*)z0,(float*)z1,1);}
+PAL_API int32_t pal_pd_diffusion_mask_fast(uintptr_t h,float rate,uintptr_t mh,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){return PDEGrid_DiffusionMask((PDEGrid*)h,rate,(float*)mh,(float*)x0,(float*)x1,(float*)y0,(float*)y1,(float*)z0,(float*)z1,0);}
 static float PDEGrid_Harmonic(float a,float b){return a>0&&b>0?2*a*b/(a+b):0;}
 static int32_t PDEGrid_DiffusionField(PDEGrid*g,uintptr_t rh,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h,int checked){float*r=(float*)rh,*bc0[3]={(float*)x0h,(float*)y0h,(float*)z0h},*bc1[3]={(float*)x1h,(float*)y1h,(float*)z1h};int X=g->dimensions[0],Y=g->dimension>1?g->dimensions[1]:1,Z=g->dimension>2?g->dimensions[2]:1;float ds[3]={g->dt/(g->dx*g->dx),g->dt/(g->dy*g->dy),g->dt/(g->dz*g->dz)};
     /* Safe mode is transactional: validate the entire rate field and CFL bound before touching deltas. */
