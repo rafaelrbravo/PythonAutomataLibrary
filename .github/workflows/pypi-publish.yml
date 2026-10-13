@@ -39,7 +39,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
-          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease --jq 'if .isDraft or .isPrerelease then error("Release must be published and non-prerelease") else "Release verified" end'
+          gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft,isPrerelease,tagName --jq 'if .isDraft or .isPrerelease or .tagName != env.RELEASE_TAG then error("Release must be published, non-prerelease, and match the requested tag") else "Release verified" end'
       - name: Download published GitHub release assets
         env:
           GH_TOKEN: ${{ github.token }}
