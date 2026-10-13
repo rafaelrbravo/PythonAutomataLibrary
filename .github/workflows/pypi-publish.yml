@@ -59,10 +59,16 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile
+          import tarfile
           wheels = list(Path('.').glob('*.whl'))
           sources = list(Path('.').glob('*.tar.gz'))
           assert len(wheels) == 16, f'Expected 16 release wheels, got {len(wheels)}'
           assert len(sources) == 1
+          with tarfile.open(sources[0], 'r:gz') as archive:
+              source_names = archive.getnames()
+              assert any(name.endswith('/pal_native.c') for name in source_names), 'Missing native source'
+              assert any(name.endswith('/setup.py') for name in source_names), 'Missing build configuration'
+              assert not any(name.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib')) for name in source_names), 'Precompiled library in source distribution'
           for python_tag in ('cp310', 'cp311', 'cp312', 'cp313'):
               matches = [wheel for wheel in wheels if f'-{python_tag}-{python_tag}-' in wheel.name]
               assert len(matches) == 4, f'Incomplete {python_tag} wheel matrix: {matches}'
