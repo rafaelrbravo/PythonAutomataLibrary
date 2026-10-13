@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - fix/diffusion-mask-boundary-conditions
     paths:
       - 'Documentation/generators/*.py'
       - '.github/workflows/refresh-documentation-pdfs.yml'
@@ -35,5 +36,5 @@ jobs:
           git add Documentation/*.md Documentation/*.pdf
           git diff --cached --quiet && exit 0
           git commit -m "Refresh PAL documentation"
-          git pull --rebase origin main
+          git pull --rebase origin "${GITHUB_REF_NAME}"
           git push
