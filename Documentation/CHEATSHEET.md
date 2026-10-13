@@ -138,10 +138,6 @@ Condensed from the generated API Reference; see API Guide for examples.
 ## OpenGLWindow visualization
 
 - `StartGif(self, path, delay=100)`: Start recording rendered frames to a GIF with the requested frame delay in milliseconds.
-- `Circle(self, rad, color, x, y, z=None)`: Add a circle primitive to the current frame.
-- `Box(self, xLen, color, x, y, z=None, yLen=None, zLen=None)`: Add a box primitive to the current frame; side lengths may be specified independently.
-- `BoxSQ(self, color, x, y, z=None)`: Add a unit box centered on the lattice site (x, y, z).
-- `Line(self, width, color, x1, y1, x2, y2, z1=None, z2=None)`: Add a line segment to the current frame.
 - `Borders(self, width, color)`: Draw persistent outline borders around the model domain.
 - `Camera(self, x, y, z, yaw=None, pitch=None)`: Set the 3D camera position and optional yaw/pitch angles.
 - `Background(self, color)`: Set the background color used when rendering frames.
