@@ -44,6 +44,7 @@ jobs:
           ../pal-install-check/bin/python -m pip install --upgrade pip || ../pal-install-check/Scripts/python.exe -m pip install --upgrade pip
           if [ -f ../pal-install-check/bin/python ]; then PY=../pal-install-check/bin/python; else PY=../pal-install-check/Scripts/python.exe; fi
           "$PY" -m pip install dist/*.whl
+          PY="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"
           cd ..
           "$PY" -c "import PythonAutomataLibrary as pal; print(pal.__file__); assert 'pal-install-check' in pal.__file__"
       - uses: actions/upload-artifact@v4
