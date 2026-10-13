@@ -29,6 +29,8 @@ requirements:
 test:
   imports:
     - PythonAutomataLibrary
+  commands:
+    - python -c "import ctypes, pathlib, sys, PythonAutomataLibrary as pal; p=pathlib.Path(pal.__file__).parent; n='pal_native.dll' if sys.platform=='win32' else 'libpal_native.dylib' if sys.platform=='darwin' else 'libpal_native.so'; lib=ctypes.CDLL(str(p/n)); lib.pal_rgb.argtypes=[ctypes.c_int32]*3; lib.pal_rgb.restype=ctypes.c_uint32; assert lib.pal_rgb(12,34,56)==0x0c2238"
 
 about:
   home: https://github.com/rafaelrbravo/PythonAutomataLibrary
