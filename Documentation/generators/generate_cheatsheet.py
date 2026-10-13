@@ -171,13 +171,13 @@ def _build_pdf():
         columns = [[], []]
         heights = [0, 0]
         usable = ph - top - bottom
+        col = 0
         for title, pieces, h in blocks:
-            col = min(range(ncols), key=lambda i: heights[i])
+            # Preserve reading order: finish the left column before starting the right.
             if heights[col] + h > usable:
-                candidates = [i for i in range(ncols) if heights[i] + h <= usable]
-                if not candidates:
-                    return None
-                col = min(candidates, key=lambda i: heights[i])
+                col += 1
+            if col >= ncols or heights[col] + h > usable:
+                return None
             columns[col].append((title, pieces))
             heights[col] += h
         return columns, heights, lead, heading_h
