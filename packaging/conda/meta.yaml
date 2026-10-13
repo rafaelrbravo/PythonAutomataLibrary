@@ -33,7 +33,8 @@ test:
 about:
   home: https://github.com/rafaelrbravo/PythonAutomataLibrary
   summary: Python modeling library with native agent, population, and PDE kernels
-  license: LicenseRef-Unknown
+  license: Apache-2.0
+  license_file: LICENSE
 
 extra:
   recipe-maintainers:
