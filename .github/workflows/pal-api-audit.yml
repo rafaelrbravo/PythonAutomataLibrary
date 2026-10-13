@@ -18,6 +18,7 @@ on:
     types: [completed]
     branches:
       - main
+      - fix/diffusion-mask-boundary-conditions
 jobs:
   api-audit:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
