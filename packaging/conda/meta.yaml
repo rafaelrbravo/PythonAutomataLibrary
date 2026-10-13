@@ -1,0 +1,40 @@
+{% set name = "pythonautomatalibrary" %}
+{% set version = "0.1.0" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  path: ../..
+
+build:
+  number: 0
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ stdlib('c') }}
+  host:
+    - python
+    - pip
+    - setuptools >=69
+    - wheel
+  run:
+    - python
+    - numpy
+    - numba
+
+test:
+  imports:
+    - PythonAutomataLibrary
+
+about:
+  home: https://github.com/rafaelrbravo/PythonAutomataLibrary
+  summary: Python modeling library with native agent, population, and PDE kernels
+  license: LicenseRef-Unknown
+
+extra:
+  recipe-maintainers:
+    - rafaelrbravo
