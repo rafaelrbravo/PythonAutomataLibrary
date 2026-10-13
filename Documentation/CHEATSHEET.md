@@ -6,6 +6,15 @@ Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y a
 
 Curated one-page API map; see API Guide and API Reference for details.
 
+## CONVENTIONS
+
+- `dims=(nx[,ny[,nz]]) · negative axis size = periodic`: 1D/2D/3D; omit unused axes.
+- `x... / X... / ItoX... / DispWrapX...`: X shorthand includes corresponding Y/Z variants.
+- `i = linear site index · SQ = lattice site · a = agent ID`: Coordinates are integer sites or continuous positions.
+- `grid[i] / grid[x,y,z] · slices copy`: Index by site or coordinates; slicing returns a copy.
+- `Add(...) then Update() · Reset()`: Queued changes apply synchronously.
+- `safe by default · FastMode() before construction`: Use @pal.njit(cache=True) for compiled kernels.
+
 ## START / UTILITIES
 
 - `pal.FastMode() · pal.njit(cache=True)`: Select fast mode before object creation; compile model kernels.
