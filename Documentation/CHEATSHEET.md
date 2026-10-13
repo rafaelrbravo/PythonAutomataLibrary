@@ -65,6 +65,8 @@ Condensed from the generated API Reference; see API Guide for examples.
 - `Reset()`: [PopGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
 - `IsOpen() -> bool`: [PixWindow, OpenGLWindow] Return whether the window is currently open.
 - `Save(path: str, block=False)`: [PixWindow, OpenGLWindow] Same signature; consult API Reference for type-specific behavior.
+- `AddGifFrame(block=False)`: [PixWindow, OpenGLWindow] Same signature; consult API Reference for type-specific behavior.
+- `StopGif()`: [PixWindow, OpenGLWindow] Same signature; consult API Reference for type-specific behavior.
 - `Close()`: [PixWindow, OpenGLWindow] Same signature; consult API Reference for type-specific behavior.
 - `Clear()`: [OpenGLWindow, OpenGLDraw] Same signature; consult API Reference for type-specific behavior.
 
@@ -132,14 +134,10 @@ Condensed from the generated API Reference; see API Guide for examples.
 ## PixWindow visualization
 
 - `StartGif(self, path: str, delay=100)`: Start recording frames to a GIF at path with the requested frame delay in milliseconds.
-- `AddGifFrame(self, block=False)`: Append the current pixel buffer as a GIF frame; optionally wait for the frame operation to finish.
-- `StopGif(self)`: Finish GIF recording and write the accumulated animation.
 
 ## OpenGLWindow visualization
 
 - `StartGif(self, path, delay=100)`: Start recording rendered frames to a GIF with the requested frame delay in milliseconds.
-- `AddGifFrame(self, block=False, timeout=30)`: Capture the current scene as a GIF frame; optionally wait for completion.
-- `StopGif(self, timeout=30)`: Finish GIF recording and write the animation.
 - `Circle(self, rad, color, x, y, z=None)`: Add a circle primitive to the current frame.
 - `Box(self, xLen, color, x, y, z=None, yLen=None, zLen=None)`: Add a box primitive to the current frame; side lengths may be specified independently.
 - `BoxSQ(self, color, x, y, z=None)`: Add a unit box centered on the lattice site (x, y, z).
