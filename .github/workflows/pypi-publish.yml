@@ -75,6 +75,8 @@ jobs:
               assert sum('manylinux' in wheel.name for wheel in matches) == 1, matches
               assert sum('win_amd64' in wheel.name for wheel in matches) == 1, matches
               assert sum('macosx' in wheel.name for wheel in matches) == 2, matches
+              assert sum('macosx' in wheel.name and wheel.name.endswith('_arm64.whl') for wheel in matches) == 1, matches
+              assert sum('macosx' in wheel.name and wheel.name.endswith('_x86_64.whl') for wheel in matches) == 1, matches
           checksums = Path('SHA256SUMS.txt').read_text().splitlines()
           listed = [line.split('  ', 1)[1] for line in checksums]
           actual = sorted(path.name for path in [*wheels, *sources])
