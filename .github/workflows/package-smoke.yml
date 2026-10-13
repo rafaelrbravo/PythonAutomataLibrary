@@ -55,6 +55,7 @@ jobs:
           python -m venv ../pal-install-check
           if [ -f ../pal-install-check/bin/python ]; then PY=../pal-install-check/bin/python; else PY=../pal-install-check/Scripts/python.exe; fi
           "$PY" -m pip install dist/*.whl
+          "$PY" -m pip check
           PY="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"
           cd "$RUNNER_TEMP"
           "$PY" -c "import PythonAutomataLibrary as pal; assert 'pal-install-check' in pal.__file__"
@@ -69,6 +70,7 @@ jobs:
           python -m venv "$RUNNER_TEMP/pal-sdist-install"
           if [ -f "$RUNNER_TEMP/pal-sdist-install/bin/python" ]; then SPY="$RUNNER_TEMP/pal-sdist-install/bin/python"; else SPY="$RUNNER_TEMP/pal-sdist-install/Scripts/python.exe"; fi
           "$SPY" -m pip install dist/*.whl
+          "$SPY" -m pip check
           cd "$RUNNER_TEMP"
           "$SPY" "$GITHUB_WORKSPACE/packaging/smoke_install.py"
       - uses: actions/upload-artifact@v4
