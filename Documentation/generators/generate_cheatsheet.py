@@ -30,7 +30,6 @@ SECTIONS = [
 ("i = linear site index · SQ = lattice site · a = agent ID", "Coordinates are integer sites or continuous positions."),
 ("grid[i] / grid[x,y,z] · slices copy", "Index by site or coordinates; slicing returns a copy."),
 ("Add(...) then Update() · Reset()", "Queued changes apply synchronously."),
-("SafeMode default · pal.FastMode() before construction", "Compile kernels with @pal.njit(cache=True)."),
 ]),
 ("SHARED GRID API · NewGrid(dims,dtype)", [
 ("dims=(nx,ny,nz); negative size = wrap", "1–3 dimensions; unused axes omitted."),
@@ -51,6 +50,13 @@ SECTIONS = [
 ("agents.AgentsInRadius(rad,x,y,z,exclude=None)", "Nearby agents; periodic-aware."),
 ("agents.All(shuffle=False)", "Snapshot of living agent IDs."),
 ("agents.InWrapSQX...(x) · DispWrapX...(p1,p2)", "Wrap lattice coordinate; shortest displacement."),
+]),
+("START / UTILITIES", [
+("pal.FastMode() · pal.njit(cache=True)", "Select fast mode before object creation; compile model kernels."),
+("pal.Seed(s) · Random() · RandInt(n)", "Shared PAL RNG; seed for reproducibility."),
+("pal.MooreHood(dim,excludeCenter=False) · VonNeumannHood(...) · CircleHood(dim,rad,...)", "Relative neighbor offsets."),
+("pal.RGB(r,g,b) · GetR/G/B(c) · ColorScale(colors,value)", "Pack, extract, interpolate colors."),
+("pal.AwaitWindows(timeout=30)", "Wait for rendering windows."),
 ]),
 ("PDE GRID · NewPDEgrid(dims)", [
 ("field.Add(v,x,y,z) · Update() · Reset()", "Queue field deltas, apply, clear."),
@@ -81,18 +87,10 @@ SECTIONS = [
 ("draw.Clear() · win.Clear() · win.Background(color)", "Reset primitives / scene / background."),
 ("win.Borders(width,color) · win.Camera(x,y,z,yaw=None,pitch=None)", "Domain border and 3D camera."),
 ]),
-("START / UTILITIES", [
-("pal.FastMode() · pal.njit(cache=True)", "Select fast mode before object creation; compile model kernels."),
-("pal.Seed(s) · Random() · RandInt(n)", "Shared PAL RNG; seed for reproducibility."),
-("pal.MooreHood(dim,excludeCenter=False) · VonNeumannHood(...) · CircleHood(dim,rad,...)", "Relative neighbor offsets."),
-("pal.RGB(r,g,b) · GetR/G/B(c) · ColorScale(colors,value)", "Pack, extract, interpolate colors."),
-("pal.AwaitWindows(timeout=30)", "Wait for rendering windows."),
-]),
 ("SHARED WINDOW API", [
 ("win.IsOpen() · Update() · Save(path,block=False) · Close()", "Window lifecycle / image output."),
 ("win.StartGif(path,delay=100) · AddGifFrame(block=False) · StopGif()", "GIF recording; OpenGL supports timeout options."),
 ]),
-
 ]
 
 def _api_entries():
