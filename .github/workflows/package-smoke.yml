@@ -35,12 +35,16 @@ jobs:
       - name: Check wheel tags and native library
         shell: python {0}
         run: |
-          import glob, zipfile, tarfile
+          import glob, os, zipfile, tarfile
           wheel, = glob.glob('dist/*.whl')
+          expected = {'Windows': 'pal_native.dll', 'Linux': 'libpal_native.so', 'macOS': 'libpal_native.dylib'}[os.environ['RUNNER_OS']]
           with zipfile.ZipFile(wheel) as z:
               names = z.namelist()
-              assert any(n.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib')) for n in names), names
+              native = [n for n in names if n.endswith(('pal_native.dll', 'libpal_native.so', 'libpal_native.dylib'))]
+              assert len(native) == 1 and native[0].endswith('/' + expected), f'Wrong native payload: {native}'
               assert '-none-any.whl' not in wheel, wheel
+              wheel_info, = [n for n in names if n.endswith('.dist-info/WHEEL')]
+              assert 'Root-Is-Purelib: false' in z.read(wheel_info).decode(), 'Wheel marked pure'
           with tarfile.open(glob.glob('dist/*.tar.gz')[0], 'r:gz') as t:
               names = t.getnames()
               assert any(n.endswith('/pal_native.c') for n in names), 'C source missing from sdist'
