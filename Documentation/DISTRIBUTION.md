@@ -40,4 +40,6 @@ conda install conda-forge::pythonautomatalibrary
 
 ## Release blockers
 
-The CI workflows have not yet been confirmed passing, release assets have not been verified or published, PyPI Trusted Publishing is not confirmed configured, and the conda-forge feedstock has not been submitted. The local conda recipe is a starting point, not a published feedstock.
+**Verified:** The package-smoke workflow passed on Windows, Linux, and macOS for commit `a2852eac` ([run 38346812005](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38346812005)). The corrected conda-smoke workflow passed on macOS and Linux for commit `e5acc72f` ([run 38346917628](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38346917628)); Windows was still running at the last check. These results are specific to those commits, not blanket guarantees for subsequent changes.
+
+**Still blocked:** Complete and verify the Windows conda build, verify the full CPython 3.10–3.13 release-wheel matrix, review and publish GitHub Release assets, configure PyPI Trusted Publishing, and submit a source-archive-based conda-forge recipe. The local conda recipe is a starting point, not a published feedstock.
