@@ -36,12 +36,13 @@ SECTIONS = [
 ("Indexing", "`grid[i]` reads/writes by linear index; `grid[x...]` uses dimensional coordinates."), ("Slices", "Return detached NumPy copies, not views; write back explicitly to change the grid."),
 ("`Box(x1,x2,...)`", "Select a rectangular region: `(xLow,xHigh,yLow,yHigh,...)`, with exclusive upper bounds."),
 ]),
+("Shared window API", [
+("GIF recording", "`win.StartGif(path,delay=100)` starts recording; `win.AddGifFrame(...)` appends a frame; `win.StopGif(...)` finishes. Supported by PixWindow and OpenGLWindow; optional frame arguments differ."),]),
 ("Draw / output", [
 ("`pal.StartPixWindow(...)`", "Create a pixel buffer and display window; `headless=True` supports noninteractive rendering."),
 ("`pix[x,y] = RGB`", "Set a pixel color in the shared pixel buffer."),
 ("Color utilities", "`pal.RGB(r,g,b)` packs red, green, and blue channels into a color; `pal.GetR(color)`, `pal.GetG(color)`, and `pal.GetB(color)` extract channels; `pal.ColorScale(...)` maps values to colors."),
 ("PixWindow controls", "`win.Update()` refreshes the display; `win.Save(path,block=True)` saves an image; `win.Close()` releases the window."),
-("PixWindow GIF", "`win.StartGif(path,delay=100)` starts recording; `win.AddGifFrame(block=False)` appends a frame; `win.StopGif()` finishes."),
 ("`pal.StartOpenGLWindow(xDim,yDim,zDim=None,width=800,height=800,...)`", "Create the renderer and return `(draw, win)`: `draw` collects primitives; `win` handles display, updates, and output. Omit `zDim` for 2D; set it for 3D. `headless=True` supports noninteractive rendering."),
 ("`draw.Circle(rad,color,x,y,z=None)`", "Add a circle or sphere-like primitive with the given radius and color."),
 ("`draw.Box(xLen,color,x,y,z=None,yLen=None,zLen=None)`", "Add a box centered at a position; specify axis lengths to control its size."),
@@ -51,7 +52,7 @@ SECTIONS = [
 ("`win.Camera(x,y,z,yaw=None,pitch=None)`", "Set the camera position and optional yaw/pitch angles for a 3D scene."),
 ("OpenGL frame", "`win.Background(color)` sets the background; `draw.Clear()` clears collected primitives; `win.Clear()` clears the scene; `win.Update()` renders."),
 ("OpenGL output", "`win.IsOpen()` checks the window; `win.Save(path,block=False)` saves an image; `win.Close()` releases resources."),
-("OpenGL GIF", "`win.StartGif(...)` begins recording; `win.AddGifFrame(...)` adds a frame; `win.StopGif(...)` finishes."),]),("Lists + randomness", [
+]),("Lists + randomness", [
 ("IList methods", "`Append(i)` adds an integer; `Clear()` empties the list; `Random()` picks an entry; `Shuffle()` reorders entries; `All()` copies the list; `Iter()` traverses without copying."),
 ("RNG methods", "`pal.Seed(seed)` seeds PAL’s RNG; `pal.Random()` draws uniform [0,1); `pal.RandInt(n)` draws an integer in [0,n). PAL’s RNG is separate from NumPy’s."),
 ("Multinomial methods", "`m.Binomial(n,p)` draws a binomial count; `m.Setup(...)` configures multinomial probabilities; `m.Sample(...)` draws counts."),]),
@@ -66,7 +67,7 @@ SECTIONS = [
 ("`AgentsInRadius(...)`", "Find nearby agents, respecting periodic boundaries."),
 ("`counts[x...]`", "Read site occupancy counts without modifying them."),
 ("Iteration", "`agents.All()` returns a detached snapshot, safe for iteration while adding or disposing agents."),
-("`DispWrapX/Y/Z(p1,p2)`", "Compute the shortest displacement along a periodic axis."),]),
+("`DispWrapX...(p1,p2)`", "Compute the shortest displacement along a periodic axis."),]),
 ("PopGrid + PDEgrid", [
 ("Synchronous updates", "`Add(v,...)` queues a change; `Update()` applies queued changes together; `Reset()` clears current and pending values. Indexed assignment changes current state immediately."),
 ("`pop.GetPop()`", "Return total population across all sites."),
@@ -81,136 +82,14 @@ FOOTER = "More detail: Manual · API Guide · API Reference (Documentation/)."
 
 
 def _api_entries():
-    """Read the generated API Reference and keep its public signatures as the source of truth."""
-    reference = (ROOT / "Documentation" / "API_REFERENCE.md").read_text(encoding="utf-8")
-    groups = []
-    title, rows = None, []
-    for line in reference.splitlines():
-        if line.startswith("## "):
-            if title and rows:
-                groups.append((title, rows))
-            title, rows = line[3:], []
-        elif line.startswith("| ") and "`" in line:
-            cells = [part.strip() for part in line.strip().strip("|").split("|")]
-            signature = next((c.strip("`") for c in cells[:-1] if c.startswith("`")), None)
-            if signature and len(cells) >= 2:
-                rows.append((signature, cells[-1].replace("\\\\|", "|")))
-    if title and rows:
-        groups.append((title, rows))
-    if not groups:
-        raise RuntimeError("API Reference has no parseable declarations")
-    # Share a declaration whenever two or more object APIs expose the same
-    # signature. Keep factories/utilities separate from instance methods.
-    object_names = ("AgentGrid", "Grid", "PopGrid", "PDEgrid",
-                    "PixWindow visualization", "OpenGLWindow visualization",
-                    "Pix drawing buffer", "OpenGLDraw primitive collector")
-    objects = {name: rows for name, rows in groups if name in object_names}
-
-    def normalize(sig):
-        sig = sig.replace("(self, ", "(").replace("(self)", "()")
-        # Hide OpenGL-only timeout arguments in the shared GIF API.
-        if sig.startswith("AddGifFrame(") or sig.startswith("StopGif("):
-            sig = sig.replace(", timeout=30", "").replace("(timeout=30)", "()")
-        pix_shared = {
-            "xDim()": "xDim() -> int",
-            "yDim()": "yDim() -> int",
-            "ToI(x, y)": "ToI(x: int, y: int=-1, z: int=-1) -> int",
-            "ItoX(i)": "ItoX(i: int) -> int",
-            "ItoY(i)": "ItoY(i: int) -> int",
-            "__len__()": "__len__() -> int",
-        }
-        return pix_shared.get(sig, sig)
-
-    # Place creation functions beside the objects they construct.
-    factory_sections = {
-        "NewIList": "IList", "NewMultinomial": "Multinomial",
-        "NewGrid": "Grid", "NewAgentGrid": "AgentGrid",
-        "NewPopGrid": "PopGrid", "NewPDEgrid": "PDEgrid",
-        "StartPixWindow": "PixWindow visualization",
-        "StartOpenGLWindow": "OpenGLWindow visualization",
-    }
-    relocated = {name: [] for name in factory_sections.values()}
-    regrouped = []
-    for title, rows in groups:
-        retained = []
-        for sig, desc in rows:
-            function = sig.split("(", 1)[0]
-            if title == "Factories and utilities" and function in factory_sections:
-                relocated[factory_sections[function]].append((sig, desc))
-            else:
-                retained.append((sig, desc))
-        regrouped.append((title, retained))
-    # Window factories are documented as standalone code blocks in the reference.
-    relocated["PixWindow visualization"].insert(0, (
-        "StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False)",
-        "Create a pixel buffer and display window."))
-    relocated["OpenGLWindow visualization"].insert(0, (
-        "StartOpenGLWindow(xDim, yDim, zDim=None, width=800, height=800, title='PAL', headless=False)",
-        "Create an OpenGL drawing collector and window."))
-    groups = [(title, relocated.get(title, []) + rows) for title, rows in regrouped]
-
-    occurrences = {}
-    for name in object_names:
-        for sig, desc in objects.get(name, []):
-            occurrences.setdefault(normalize(sig), []).append((name, desc))
-
-    shared = []
-    for sig, variants in occurrences.items():
-        if len({name for name, _ in variants}) < 2:
-            continue
-        owners = ", ".join(name.replace(" visualization", "").replace(" drawing buffer", "")
-                           .replace(" primitive collector", "") for name, _ in variants)
-        descriptions = {desc for _, desc in variants}
-        desc = (variants[0][1] if len(descriptions) == 1
-                else "Same signature; consult API Reference for type-specific behavior.")
-        shared.append((sig, f"[{owners}] {desc}"))
-
-    consolidated = []
-    inserted = False
-    for title, rows in groups:
-        if title in object_names:
-            if not inserted:
-                consolidated.append(("Shared object API (2+ types)", shared))
-                inserted = True
-            rows = [(sig, desc) for sig, desc in rows
-                    if len({name for name, _ in occurrences.get(normalize(sig), [])}) < 2]
-        if rows:
-            consolidated.append((title, rows))
-
-    # Compact complete axis families, including properties and agent coordinates.
-    # Apply after shared-API relocation so each section is consolidated independently.
-    import re
-    def compact_axes(rows):
-        names = {sig.split("(", 1)[0]: (sig, desc) for sig, desc in rows}
-        skip = set()
-        result = []
-        for sig, desc in rows:
-            name = sig.split("(", 1)[0]
-            if name in skip:
-                continue
-            match = re.fullmatch(r"(.*?)(X|x)(SQ|Dim|)", name)
-            if match:
-                prefix, axis, suffix = match.groups()
-                axes = ("X", "Y", "Z") if axis == "X" else ("x", "y", "z")
-                family = [prefix + a + suffix for a in axes]
-                if all(n in names for n in family):
-                    tails = [names[n][0].split("(", 1)[1] for n in family]
-                    if len(set(tails)) == 1:
-                        skip.update(family[1:])
-                        result.append((sig.replace(name + "(", name + "...(", 1),
-                                       desc.rstrip(".") + " (Y/Z equivalents)."))
-                        continue
-            result.append((sig, desc))
-        return result
-
-    consolidated = [(title, compact_axes(rows)) for title, rows in consolidated]
-    return consolidated
+    """Return the independently curated cheatsheet content."""
+    return SECTIONS
 
 
 def _md():
     lines = ["# PAL Cheatsheet", "", INTRO, "",
              "Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y and Z/z variants.", "",
-             "Condensed from the generated API Reference; see API Guide for examples.", ""]
+             "Curated quick reference; see API Guide and API Reference for details.", ""]
     for title, rows in _api_entries():
         lines += ["## " + title, ""]
         for sig, description in rows:
@@ -269,7 +148,7 @@ def _build_pdf(body_font=8.0):
     intro = ParagraphStyle("intro", fontName="Helvetica", fontSize=body_font,
                            leading=body_font * 1.13, spaceAfter=3)
 
-    # Four columns across two portrait pages. Every public declaration is mandatory.
+    # Four columns across two portrait pages; content is manually curated.
     max_height = usable - 12
     inner_width = col_w - 8
     groups = _api_entries()
@@ -321,9 +200,9 @@ def _build_pdf(body_font=8.0):
         if chosen is not None:
             break
     if chosen is None:
-        raise RuntimeError(f"Full API ({total} declarations) cannot fit on two pages at 8 pt")
+        raise RuntimeError(f"Curated cheatsheet ({total} entries) cannot fit on two pages at 8 pt")
     columns, heights = chosen
-    print(f"PAL cheatsheet includes all {total} API declarations on two pages; "
+    print(f"PAL cheatsheet includes {total} curated entries on two pages; "
           f"description limit {limit}; column heights {[round(h, 1) for h in heights]}.")
     story = []
     for i, column in enumerate(columns):
