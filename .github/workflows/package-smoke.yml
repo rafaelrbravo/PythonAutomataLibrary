@@ -52,7 +52,14 @@ jobs:
           "$PY" -m pip install dist/*.whl
           PY="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"
           cd ..
-          "$PY" -c "import PythonAutomataLibrary as pal; print(pal.__file__); assert 'pal-install-check' in pal.__file__"
+          "$PY" -c "import PythonAutomataLibrary as pal; from pathlib import Path; print(pal.__file__); assert 'pal-install-check' in pal.__file__; p=Path(pal.__file__).parent; assert any((p/n).exists() for n in ('pal_native.dll','libpal_native.so','libpal_native.dylib'))"
+      - name: Build wheel from source archive
+        shell: bash
+        run: |
+          mkdir -p ../pal-sdist-check
+          tar -xzf dist/*.tar.gz -C ../pal-sdist-check --strip-components=1
+          cd ../pal-sdist-check
+          python -m build --wheel
       - uses: actions/upload-artifact@v4
         with:
           name: pal-package-${{ matrix.os }}
