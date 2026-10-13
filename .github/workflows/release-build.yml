@@ -163,7 +163,7 @@ jobs:
     needs: [wheels, sdist]
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -232,8 +232,25 @@ jobs:
           name: verified-release-assets
           path: release-assets/*
           if-no-files-found: error
-      - name: Create draft GitHub Release
+      - name: Upload verified release assets for tagged build
         if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-tagged-release-assets
+          path: release-assets/*
+          if-no-files-found: error
+  github-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: verify-release-assets
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: verified-tagged-release-assets
+          path: release-assets
+      - name: Create draft GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft: true
