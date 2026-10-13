@@ -42,4 +42,6 @@ conda install conda-forge::pythonautomatalibrary
 
 **Verified:** Package-smoke passed on Windows, Linux, and macOS for commit `a2852eac` ([run 38346812005](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38346812005)). Conda-smoke passed on all three platforms for commit `bac272e4` ([run 38346999220](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38346999220)). These checks validate local builds and tests, not public package availability.
 
-**Still blocked:** Verify the full CPython 3.10–3.13 release-wheel matrix, review and publish GitHub Release assets, configure PyPI Trusted Publishing, and submit a source-archive-based conda-forge recipe. The local conda recipe is a starting point, not a published feedstock.
+**Release matrix:** The full CPython 3.10–3.13 matrix passed on Linux, Windows AMD64, macOS ARM64, and macOS Intel in [run 38347630189](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38347630189), and again in [run 38347711431](https://github.com/rafaelrbravo/PythonAutomataLibrary/actions/runs/38347711431). Later validation changes, including per-platform wheel completeness checks, still require a successful current-head run.
+
+**Still blocked:** Confirm the latest stricter release matrix and source-archive validation, review and publish GitHub Release assets, configure PyPI Trusted Publishing, and submit a source-archive-based conda-forge recipe. The local conda recipe is a starting point, not a published feedstock.
