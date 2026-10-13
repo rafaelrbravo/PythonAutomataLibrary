@@ -173,7 +173,7 @@ def _api_entries():
                 consolidated.append(("Shared object API (2+ types)", shared))
                 inserted = True
             rows = [(sig, desc) for sig, desc in rows
-                    if len({name for name, _ in occurrences[normalize(sig)]}) < 2]
+                    if len({name for name, _ in occurrences.get(normalize(sig), [])}) < 2]
         if rows:
             consolidated.append((title, rows))
 
