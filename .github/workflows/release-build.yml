@@ -112,6 +112,9 @@ jobs:
               names = archive.getnames()
               assert any(name.endswith("/pal_native.c") for name in names), "Missing native C source"
               assert any(name.endswith("/setup.py") for name in names), "Missing setup.py"
+              assert any(name.endswith("/pyproject.toml") for name in names), "Missing pyproject.toml"
+              assert any(name.endswith("/README.md") for name in names), "Missing README.md"
+              assert any(name.endswith("/build_native.py") for name in names), "Missing native build helper"
               forbidden = ("pal_native.dll", "libpal_native.so", "libpal_native.dylib")
               assert not any(name.endswith(forbidden) for name in names), "Precompiled native library included in sdist"
       - name: Verify source distribution builds a native wheel
