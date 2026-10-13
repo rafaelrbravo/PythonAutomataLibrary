@@ -36,10 +36,13 @@ Curated one-page API map; see API Guide and API Reference for details.
 - `agents.All(shuffle=False)`: Snapshot of living agent IDs.
 - `agents.InWrapSQX...(x) · DispWrapX...(p1,p2)`: Wrap lattice coordinate; shortest displacement.
 
-## POP GRID · NewPopGrid(dims,capacity=None) / PDE · NewPDEgrid(dims)
+## POP GRID · NewPopGrid(dims,capacity=None)
 
 - `pop.Add(v,x,y,z) · Update() · Reset()`: Queue count deltas, apply, clear.
 - `pop.GetPop() · All()`: Total population; occupied indices.
+
+## PDE GRID · NewPDEgrid(dims)
+
 - `field.Add(v,x,y,z) · Update() · Reset()`: Queue field deltas, apply, clear.
 - `field.SetTimeSpaceStep(dt,dx,dy=1,dz=1) · Dt() · Dx...()`: Numerical spacing.
 - `field.Diffusion(rate,BC...) · DiffusionMask(rate,mask,...)`: Uniform / masked diffusion.
