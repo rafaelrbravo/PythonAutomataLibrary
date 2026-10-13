@@ -48,7 +48,6 @@ jobs:
         shell: bash
         run: |
           python -m venv ../pal-install-check
-          ../pal-install-check/bin/python -m pip install --upgrade pip || ../pal-install-check/Scripts/python.exe -m pip install --upgrade pip
           if [ -f ../pal-install-check/bin/python ]; then PY=../pal-install-check/bin/python; else PY=../pal-install-check/Scripts/python.exe; fi
           "$PY" -m pip install dist/*.whl
           PY="$(cd "$(dirname "$PY")" && pwd)/$(basename "$PY")"
