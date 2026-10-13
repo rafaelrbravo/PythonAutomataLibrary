@@ -2,6 +2,8 @@
 
 `import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under **`@pal.njit(cache=True)`**.
 
+Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y and Z/z variants.
+
 Condensed from the generated API Reference; see API Guide for examples.
 
 ## Factories and utilities
@@ -12,24 +14,20 @@ Condensed from the generated API Reference; see API Guide for examples.
 - `RandInt(max)`: Draw an integer from PAL's random stream in the supported range below the positive bound `max`.
 - `AwaitWindows(timeout=30)`: Wait for PAL windows that are still initializing; raises if a window exits early or initialization times out.
 - `ColorScale(colors, value)`: Map a scalar value to an RGB color by interpolating through the supplied color scale.
-- `NewIList()`: Create an empty PAL integer list usable from Python and supported compiled functions.
 - `MooreHood(dim, excludeCenter=False)`: Build relative integer offsets for a Moore neighborhood in `dim` dimensions; optionally exclude the center offset.
 - `VonNeumannHood(dim, excludeCenter=False)`: Build relative integer offsets for a Von Neumann neighborhood in `dim` dimensions; optionally exclude the center offset.
 - `CircleHood(dim, rad, excludeCenter=False)`: Build relative integer offsets within radius `rad` in `dim` dimensions; optionally exclude the center offset.
-- `NewMultinomial(other=None)`: Create a PAL multinomial/binomial sampler, optionally reusing configuration from `other`.
-- `NewGrid(dimensions, dtype)`: Create a typed lattice grid with the requested dimensions and element dtype.
-- `NewAgentGrid(dimensions, numAgentProps=0, isStackable=False)`: Create a grid for individual agents; `numAgentProps` sets the number of per-agent properties and `isStackable` controls whether multiple agents may occupy a site.
-- `NewPopGrid(dimensions, capacity=None)`: Create a lattice of integer population counts, optionally limiting the count at each site with `capacity`.
-- `NewPDEgrid(dimensions)`: Create a lattice-backed scalar field for numerical transport operations.
 
 ## Multinomial
 
+- `NewMultinomial(other=None)`: Create a PAL multinomial/binomial sampler, optionally reusing configuration from `other`.
 - `Binomial(self, n: int, p: float) -> int`: Draw a binomial sample with n trials and success probability p using this sampler's configured random stream.
 - `Setup(self, n: int)`: Configure the sampler for `n` trials before repeated sampling.
 - `Sample(self, p: float) -> int`: Draw a binomial sample using the sampler's current configuration and success probability p.
 
 ## IList
 
+- `NewIList()`: Create an empty PAL integer list usable from Python and supported compiled functions.
 - `__len__(self) -> int`: Return the number of integers currently stored in the list.
 - `__getitem__(self, index: int) -> int`: Return the integer stored at the given list position.
 - `Append(self, i: int)`: Append integer `i` to the end of the list.
@@ -41,26 +39,18 @@ Condensed from the generated API Reference; see API Guide for examples.
 
 ## Shared object API (2+ types)
 
-- `__len__() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
-- `xDim() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along x.
-- `yDim() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along y; zero when absent.
-- `zDim() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along z; zero when absent.
+- `__len__() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid, Pix] Same signature; consult API Reference for type-specific behavior.
+- `xDim...() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of lattice sites along x; corresponding Y/Z variants use the same contract.
 - `nDims() -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Number of spatial dimensions.
-- `wrapX() -> bool`: [AgentGrid, Grid, PopGrid, PDEgrid] Whether x uses periodic boundary wrapping.
-- `wrapY() -> bool`: [AgentGrid, Grid, PopGrid, PDEgrid] Whether y uses periodic boundary wrapping.
-- `wrapZ() -> bool`: [AgentGrid, Grid, PopGrid, PDEgrid] Whether z uses periodic boundary wrapping.
+- `wrapX...() -> bool`: [AgentGrid, Grid, PopGrid, PDEgrid] Whether x uses periodic boundary wrapping; corresponding Y/Z variants use the same contract.
 - `Box(x1: int, x2: int, y1: int=None, y2: int=None, z1: int=None, z2: int=None)`: [AgentGrid, Grid, PopGrid, PDEgrid] Iterate lattice coordinates in the half-open rectangular region [x1, x2) × [y1, y2) × [z1, z2); omit unused axes in lower dimensions.
 - `Hood(hood, x: int, y: int=None, z: int=None, *, unroll: bool=False)`: [AgentGrid, Grid, PopGrid, PDEgrid] Apply relative neighborhood offsets at a lattice coordinate, respecting wrapped and nonwrapped boundaries. `unroll=True` enables compiled-loop expansion where supported.
 - `GetPop() -> int`: [AgentGrid, PopGrid] Same signature; consult API Reference for type-specific behavior.
 - `__getitem__(key) -> float`: [AgentGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
 - `__setitem__(key, value: float)`: [AgentGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
-- `ToI(x: int, y: int=-1, z: int=-1) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
-- `ItoX(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its x coordinate.
-- `ItoY(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its y coordinate.
-- `ItoZ(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its z coordinate.
-- `InWrapX(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap an x coordinate when x is periodic; otherwise return it unchanged.
-- `InWrapY(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap a y coordinate when y is periodic; otherwise return it unchanged.
-- `InWrapZ(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap a z coordinate when z is periodic; otherwise return it unchanged.
+- `ToI(x: int, y: int=-1, z: int=-1) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid, Pix] Same signature; consult API Reference for type-specific behavior.
+- `ItoX...(i: int) -> int`: [AgentGrid, Grid, PopGrid, PDEgrid] Convert a linear site index to its x coordinate; corresponding Y/Z variants use the same contract.
+- `InWrapX...(value: int) -> int`: [Grid, PopGrid, PDEgrid] Wrap an x coordinate when x is periodic; otherwise return it unchanged; corresponding Y/Z variants use the same contract.
 - `Update()`: [PopGrid, PDEgrid, PixWindow, OpenGLWindow] Same signature; consult API Reference for type-specific behavior.
 - `Reset()`: [PopGrid, PDEgrid] Same signature; consult API Reference for type-specific behavior.
 - `IsOpen() -> bool`: [PixWindow, OpenGLWindow] Return whether the window is currently open.
@@ -72,23 +62,16 @@ Condensed from the generated API Reference; see API Guide for examples.
 
 ## AgentGrid
 
+- `NewAgentGrid(dimensions, numAgentProps=0, isStackable=False)`: Create a grid for individual agents; `numAgentProps` sets the number of per-agent properties and `isStackable` controls whether multiple agents may occupy a site.
 - `Alive(self, agent: int) -> bool`: Return whether agent currently identifies a living agent.
 - `NewAgentSQ(self, x: int, y: int=-1, z: int=-1) -> int`: Create an agent at the center of a lattice site specified by integer coordinates or a supported linear site index.
 - `NewAgent(self, x: float, y: float=-1.0, z: float=-1.0) -> int`: Create an agent at the supplied continuous spatial coordinates.
 - `Dispose(self, agent: int)`: Remove a living agent from the grid; its handle must not be used as a live agent afterward.
 - `I(self, agent: int) -> int`: Return the linear lattice-site index containing the agent.
-- `XSQ(self, agent: int) -> int`: Return the agent's integer x site coordinate.
-- `YSQ(self, agent: int) -> int`: Return the agent's integer y site coordinate.
-- `ZSQ(self, agent: int) -> int`: Return the agent's integer z site coordinate.
-- `X(self, agent: int) -> float`: Return the agent's continuous x coordinate.
-- `Y(self, agent: int) -> float`: Return the agent's continuous y coordinate.
-- `Z(self, agent: int) -> float`: Return the agent's continuous z coordinate.
-- `InWrapSQX(self, value: int) -> int`: Wrap an integer x site coordinate when x is periodic.
-- `InWrapSQY(self, value: int) -> int`: Wrap an integer y site coordinate when y is periodic.
-- `InWrapSQZ(self, value: int) -> int`: Wrap an integer z site coordinate when z is periodic.
-- `InWrapX(self, value: float) -> float`: Wrap a continuous x coordinate when x is periodic.
-- `InWrapY(self, value: float) -> float`: Wrap a continuous y coordinate when y is periodic.
-- `InWrapZ(self, value: float) -> float`: Wrap a continuous z coordinate when z is periodic.
+- `XSQ...(self, agent: int) -> int`: Return the agent's integer x site coordinate; corresponding Y/Z variants use the same contract.
+- `X...(self, agent: int) -> float`: Return the agent's continuous x coordinate; corresponding Y/Z variants use the same contract.
+- `InWrapSQX...(self, value: int) -> int`: Wrap an integer x site coordinate when x is periodic; corresponding Y/Z variants use the same contract.
+- `InWrapX...(self, value: float) -> float`: Wrap a continuous x coordinate when x is periodic; corresponding Y/Z variants use the same contract.
 - `DispWrapX(self, x1: float, x2: float) -> float`: Return the shortest signed x displacement under periodic wrapping.
 - `DispWrapY(self, y1: float, y2: float) -> float`: Return the shortest signed y displacement under periodic wrapping.
 - `DispWrapZ(self, z1: float, z2: float) -> float`: Return the shortest signed z displacement under periodic wrapping.
@@ -102,11 +85,13 @@ Condensed from the generated API Reference; see API Guide for examples.
 
 ## Grid
 
+- `NewGrid(dimensions, dtype)`: Create a typed lattice grid with the requested dimensions and element dtype.
 - `__getitem__(self, key)`: Read the value or state selected by the supported index or coordinate key.
 - `__setitem__(self, key, value)`: Assign the value or state selected by the supported index or coordinate key.
 
 ## PopGrid
 
+- `NewPopGrid(dimensions, capacity=None)`: Create a lattice of integer population counts, optionally limiting the count at each site with `capacity`.
 - `__getitem__(self, key) -> int`: Return the integer population count at the selected site.
 - `__setitem__(self, key, value: int)`: Set the population count at the selected site immediately; this is distinct from queueing a delta with `Add()`.
 - `Add(self, value: int, x: int, y: int=-1, z: int=-1)`: Queue a signed population-count delta at a site; call `Update()` to apply pending deltas.
@@ -114,11 +99,10 @@ Condensed from the generated API Reference; see API Guide for examples.
 
 ## PDEgrid
 
+- `NewPDEgrid(dimensions)`: Create a lattice-backed scalar field for numerical transport operations.
 - `Add(self, value: float, x: int, y: int=-1, z: int=-1)`: Queue a field-value delta at a site; call `Update()` to apply pending changes.
 - `SetTimeSpaceStep(self, dt: float, dx: float, dy: float=1.0, dz: float=1.0)`: Set the temporal step `dt` and spatial steps `dx`, `dy`, and `dz` used by numerical transport methods.
-- `Dx(self) -> float`: Return the configured spatial step along x.
-- `Dy(self) -> float`: Return the configured spatial step along y.
-- `Dz(self) -> float`: Return the configured spatial step along z.
+- `Dx...(self) -> float`: Return the configured spatial step along x; corresponding Y/Z variants use the same contract.
 - `Dt(self) -> float`: Return the configured time step.
 - `Diffusion(self, rateConstant: float, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None)`: Apply scalar-coefficient diffusion using the configured grid spacing and optional per-face boundary conditions.
 - `DiffusionMask(self, rateConstant: float, mask=None)`: Apply diffusion only across interfaces allowed by `mask`.
@@ -133,10 +117,12 @@ Condensed from the generated API Reference; see API Guide for examples.
 
 ## PixWindow visualization
 
+- `StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False)`: Create a pixel buffer and display window.
 - `StartGif(self, path: str, delay=100)`: Start recording frames to a GIF at path with the requested frame delay in milliseconds.
 
 ## OpenGLWindow visualization
 
+- `StartOpenGLWindow(xDim, yDim, zDim=None, width=800, height=800, title='PAL', headless=False)`: Create an OpenGL drawing collector and window.
 - `StartGif(self, path, delay=100)`: Start recording rendered frames to a GIF with the requested frame delay in milliseconds.
 - `Borders(self, width, color)`: Draw persistent outline borders around the model domain.
 - `Camera(self, x, y, z, yaw=None, pitch=None)`: Set the 3D camera position and optional yaw/pitch angles.
@@ -147,10 +133,8 @@ Condensed from the generated API Reference; see API Guide for examples.
 - `__setitem__(self, key, color)`: Write a packed RGB color to a pixel by (x, y) coordinates or a linear pixel index.
 - `xDim(self)`: Return the pixel buffer width.
 - `yDim(self)`: Return the pixel buffer height.
-- `ToI(self, x, y)`: Convert pixel coordinates (x, y) to a linear index.
 - `ItoX(self, i)`: Convert a linear pixel index to its x coordinate.
 - `ItoY(self, i)`: Convert a linear pixel index to its y coordinate.
-- `__len__(self)`: Return the total number of pixels.
 
 ## OpenGLDraw primitive collector
 
