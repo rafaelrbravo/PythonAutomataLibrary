@@ -6,6 +6,16 @@ Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y a
 
 Curated one-page API map; see API Guide and API Reference for details.
 
+## CONVENTIONS
+
+- `dims=(nx[,ny[,nz]]) · negative dimension = wrap`: 1D/2D/3D; omit unused axes. Negative sizes enable periodic boundaries.
+- `hood = array of offset tuples`: Neighborhoods contain relative (dx[,dy[,dz]]) offsets.
+- `x... / X... / ItoX... / DispWrapX...`: X shorthand includes corresponding Y/Z variants.
+- `i = linear site index · SQ = lattice site · a = agent ID`: Coordinates are integer sites or continuous positions.
+- `grid[i] / grid[x,y,z] · slices copy`: Index by site or coordinates; slicing returns a copy.
+- `Add(...) then Update() · Reset()`: Queued changes apply synchronously.
+- `SafeMode default · pal.FastMode() before construction`: Compile kernels with @pal.njit(cache=True).
+
 ## SHARED GRID API · NewGrid(dims,dtype)
 
 - `dims=(nx,ny,nz); negative size = wrap`: 1–3 dimensions; unused axes omitted.
@@ -74,12 +84,3 @@ Curated one-page API map; see API Guide and API Reference for details.
 
 - `win.IsOpen() · Update() · Save(path,block=False) · Close()`: Window lifecycle / image output.
 - `win.StartGif(path,delay=100) · AddGifFrame(block=False) · StopGif()`: GIF recording; OpenGL supports timeout options.
-
-## CONVENTIONS
-
-- `dims=(nx[,ny[,nz]]) · negative axis size = periodic`: 1D/2D/3D; omit unused axes.
-- `x... / X... / ItoX... / DispWrapX...`: X shorthand includes corresponding Y/Z variants.
-- `i = linear site index · SQ = lattice site · a = agent ID`: Coordinates are integer sites or continuous positions.
-- `grid[i] / grid[x,y,z] · slices copy`: Index by site or coordinates; slicing returns a copy.
-- `Add(...) then Update() · Reset()`: Queued changes apply synchronously.
-- `SafeMode default · pal.FastMode() before construction`: Compile kernels with @pal.njit(cache=True).
