@@ -114,6 +114,9 @@ jobs:
           import tarfile
           archives = list(Path("dist").glob("*.tar.gz"))
           assert len(archives) == 1, f"Expected one source archive, found {archives}"
+          import tomllib
+          version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
+          assert archives[0].name == f"pythonautomatalibrary-{version}.tar.gz", f"Source archive version mismatch: {archives[0]}"
           with tarfile.open(archives[0], "r:gz") as archive:
               names = archive.getnames()
               assert any(name.endswith("/pal_native.c") for name in names), "Missing native C source"
