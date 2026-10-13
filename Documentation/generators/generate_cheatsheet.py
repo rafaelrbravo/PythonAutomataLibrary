@@ -26,7 +26,6 @@ SECTIONS = [
 ("CONVENTIONS", [
 ("dims=(nx[,ny[,nz]]) · negative dimension = wrap", "1D/2D/3D; omit unused axes. Negative sizes enable periodic boundaries."),
 ("hood = array of offset tuples", "Neighborhoods contain relative (dx[,dy[,dz]]) offsets."),
-("@pal.njit(cache=True)", "Compile performance-critical model kernels."),
 ("x... / X... / ItoX... / DispWrapX...", "X shorthand includes corresponding Y/Z variants."),
 ("i = linear site index · SQ = lattice site · a = agent ID", "Coordinates are integer sites or continuous positions."),
 ("grid[i] / grid[x,y,z] · slices copy", "Index by site or coordinates; slicing returns a copy."),
