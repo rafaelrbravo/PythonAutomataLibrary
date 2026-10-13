@@ -42,7 +42,7 @@ A useful mental model is to separate PAL into several cooperating layers:
 
 These are responsibilities, not necessarily six separate packages; several may share a source file. Keeping them conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
 
-### 1.3 Why the native core is behind a Python interface
+### 1.3 The native core and Python interface
 
 The native core gives PAL a place to implement low-level operations without requiring users to write C for ordinary model logic. Native-backed objects can hold state in a representation suited to repeated updates, while the Python-facing API offers recognizable constructors, indexing, and methods.
 
@@ -68,7 +68,7 @@ Protocol declarations are part of this contract because users and tools read the
 
 This is why API changes should be made as a coordinated change. When altering an argument name, return type, indexing rule, or safe-mode behavior, check the Python method, the Numba overload, relevant Protocol declaration, documentation generator, examples, and regression tests. A change that works in one path but breaks another is not complete merely because the primary example still runs.
 
-### 1.6 Why PAL has both Python and Numba execution paths
+### 1.6 Python and Numba execution paths
 
 Python execution is useful for interactive exploration, setup code, inspection, and small operations. Numba-compiled execution is useful for repeated loops where Python dispatch would be costly. PAL supports both because a scientific workflow naturally mixes these kinds of work.
 
@@ -76,7 +76,7 @@ Supporting both is not free. Numba imposes typing and compilation constraints th
 
 PAL treats parity as a correctness requirement for supported usage, not as a promise that Python and compiled code have identical internals or performance. Compare observable behavior: return values, mutations, errors where they are part of the contract, boundary handling, and state after the operation. If a difference appears, reduce it to a minimal reproducer and test both paths.
 
-### 1.7 Why `pal.njit` transforms model code
+### 1.7 Model-code transformation with `pal.njit`
 
 PAL's `njit` interface is not simply a spelling alias for Numba's decorator. Before compilation, it can prepare functions that use PAL-specific syntax and diagnostics. In particular, neighborhood and Box iteration are model-friendly abstractions that may need to be expanded into forms that the compiler can type and execute efficiently.
 
@@ -86,7 +86,7 @@ Transformations add a layer that users should understand when debugging. The Pyt
 
 When a failure occurs only under `@pal.njit`, do not immediately rewrite the scientific algorithm. First isolate the smallest function that reproduces it, confirm argument annotations and supported API usage, and compare it with a Python version. Then determine whether the problem lies in the transformation, Numba typing, a wrapper, or the underlying operation.
 
-### 1.8 Why neighborhoods are represented as relative offsets
+### 1.8 Relative-offset neighborhoods
 
 A neighborhood such as Moore or Von Neumann is naturally a pattern around a location. PAL represents it as relative integer offsets, then applies it to a specific grid position with `grid.Hood(...)`. This separates the reusable pattern from the grid location where it is used.
 
@@ -94,7 +94,7 @@ The distinction also makes boundary behavior explicit. Applying a hood must acco
 
 This avoids storing a separate absolute-neighbor list for every cell and lets the compiled path transform high-level neighborhood loops. It does not guarantee unique destinations: small or wrapped domains can map multiple offsets to the same site. Whether to count those repeated contributions or deduplicate them depends on the model, so choose and test the intended behavior.
 
-### 1.9 Why update and commit are separate operations
+### 1.9 Separate update and commit operations
 
 PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits pending changes. This makes the timestep boundary visible in code.
 
@@ -104,7 +104,7 @@ Agent updates have different semantics. `All()` snapshots which handles will be 
 
 PAL does not impose one scheduler because these update schemes represent different models. Choose the intended timing and test it with a small case whose result can be calculated by hand.
 
-### 1.10 Why safe mode and fast mode are process-wide
+### 1.10 Process-wide safe and fast modes
 
 Safe mode performs selected validation and provides diagnostics that are useful while developing a model. Fast mode removes selected checks from performance-sensitive paths. Keeping one mode active for a process makes the execution contract predictable for objects created within that process; PAL locks the choice at first construction.
 
@@ -112,7 +112,7 @@ A process-wide mode also avoids pretending that an individual object can be swit
 
 Fast mode should be treated as a measured optimization, not a correctness mode. It can reduce validation overhead; it cannot repair invalid model assumptions, unsafe numerical parameters, or a wrong update order. Safe mode can catch selected contract violations, but it cannot establish that the biological or physical equations are appropriate.
 
-### 1.11 Why visualization is not part of the simulation kernel
+### 1.11 Separating visualization from simulation
 
 PAL separates simulation state from rendering. The model changes its grids and agents; the drawing layer turns the current state into pixels or geometric primitives. This permits the same model to run headlessly, draw every timestep, draw intermittently, or save output without changing the scientific update rules.
 
@@ -120,7 +120,7 @@ The split is important for performance. Rendering can be expensive and can obscu
 
 The two main window abstractions serve different needs. A pixel window is useful when state maps directly to a pixel lattice; an OpenGL window supports geometric 2D/3D drawing. Headless modes enable automated image/output workflows where supported, but they do not test every interactive display behavior or guarantee that every graphics backend is available on every machine.
 
-### 1.12 Why random-number state is a separate concern
+### 1.12 Random-number state and reproducibility
 
 PAL's random functions expose an explicit stream that model code can seed and consume from Python or compiled functions. This supports repeatable experiments when the initial state, parameters, seed, and order of random calls are held fixed.
 
@@ -128,7 +128,7 @@ The random-call order is part of reproducibility. Adding a draw to one branch ch
 
 Randomness is also separate from model-object state. Saving a grid or agent structure does not automatically preserve every random generator used by the process. Exact stochastic continuation requires explicit treatment of PAL's stream and any external RNG state. Record seeds and configurations for repeatable experiments, and do not promise bit-for-bit continuation from an object checkpoint alone.
 
-### 1.13 Why testing is layered
+### 1.13 Layered testing
 
 No single test style can establish every kind of correctness. PAL uses several complementary forms of evidence:
 
@@ -141,7 +141,7 @@ No single test style can establish every kind of correctness. PAL uses several c
 
 Each layer catches a different class of defect. A focused test localizes a regression; a parity test catches path divergence; an invariant can catch an error shared by multiple implementations; and an integrated model can expose interaction bugs that isolated unit tests miss. Passing these tests still does not prove that a scientific hypothesis is correct, so model validation remains a separate responsibility (§14).
 
-### 1.14 Why performance claims require more than one timing
+### 1.14 Reliable performance measurement
 
 PAL includes compilation, native calls, validation, model logic, and sometimes rendering in one user workflow. A timing that mixes these costs can be misleading. The first call to a compiled function may include compilation and specialization; later calls measure steady-state execution. A benchmark that measures only the first call may primarily be measuring compilation.
 
@@ -256,7 +256,7 @@ PAL exposes explicit state-changing operations such as `Add`, `Update`, `Reset`,
 
 This explicitness requires the model author to understand lifecycle and update order, but it makes the simulation easier to reason about and test. For stateful models, clarity about when state changes is more valuable than hiding those changes behind a convenient-looking abstraction.
 
-### 3.10 Why safe/fast and Python/compiled parity are tested separately
+### 3.10 Safe/fast and Python/compiled parity testing
 
 A model can fail in more than one way: an operation can violate the API contract; the Python and compiled paths can disagree; or both can behave consistently while the scientific model is wrong. PAL's tests try to separate these failure classes.
 
@@ -334,7 +334,7 @@ The transformation layer is also a reason to test examples and edge cases rather
 
 Source-line diagnostics depend on sufficient type information, including annotations for relevant PAL arguments. Unannotated arguments do not promise the same diagnostics. Treat annotations as part of writing clear compiled model code, not as a guarantee that every error can be attributed to an exact source expression.
 
-### 4.10 Why the public API and implementation are tested together
+### 4.10 Public API and implementation consistency
 
 PAL's public API is intended to feel coherent across Python and `@pal.njit`, but the two paths have different execution machinery. The Python wrapper may validate an argument before calling native code, while the compiled wrapper may need a Numba-compatible overload and may use different diagnostics. Both must still agree on the public result and supported inputs.
 
