@@ -65,7 +65,11 @@ jobs:
           for wheel in wheels:
               with ZipFile(wheel) as archive:
                   names = archive.namelist()
-                  assert any(name.endswith(("pal_native.dll", "libpal_native.so", "libpal_native.dylib")) for name in names), wheel
+                  expected = ("pal_native.dll" if "win_amd64" in wheel.name else
+                              "libpal_native.dylib" if "macosx" in wheel.name else
+                              "libpal_native.so")
+                  native = [name for name in names if name.endswith(("pal_native.dll", "libpal_native.so", "libpal_native.dylib"))]
+                  assert len(native) == 1 and native[0].endswith(expected), f"Wrong native payload in {wheel}: {native}"
                   assert not any(".data/purelib/" in name for name in names), f"Binary wheel contains purelib payload: {wheel}"
                   wheel_metadata = next(name for name in names if name.endswith(".dist-info/WHEEL"))
                   metadata = archive.read(wheel_metadata).decode()
