@@ -179,6 +179,10 @@ jobs:
           sources = list(Path('.').glob('*.tar.gz'))
           assert len(wheels) == 16, f'Expected 16 wheels (4 Python versions x 4 platforms), got {len(wheels)}'
           assert len(sources) == 1, 'Expected one source archive'
+          import tomllib
+          version = tomllib.loads(Path('../pyproject.toml').read_text())['project']['version']
+          assert all(wheel.name.startswith(f'pythonautomatalibrary-{version}-') for wheel in wheels), 'Release wheel version mismatch'
+          assert sources[0].name == f'pythonautomatalibrary-{version}.tar.gz', 'Release source version mismatch'
           with tarfile.open(sources[0], 'r:gz') as archive:
               source_names = archive.getnames()
               assert any(name.endswith('/pal_native.c') for name in source_names), 'Missing native C source'
