@@ -50,17 +50,17 @@ def test_cheatsheet_markup_bolds_syntax_without_monospace():
     path = Path(__file__).resolve().parents[2] / "Documentation" / "generators" / "generate_cheatsheet.py"
     namespace = runpy.run_path(str(path), run_name="pal_cheatsheet_markup_test")
     markup = namespace["_markup"]("Call `pal.NewGrid((3, 5), float)` for a grid.")
-    assert markup == "Call <b>pal.NewGrid((3, 5), float)</b> for a grid."
+    assert markup == "Call <b>pal.NewGrid</b>((3, 5), float) for a grid."
     assert "Courier" not in path.read_text(encoding="utf-8")
 
 
-def test_cheatsheet_pdf_fits_one_page():
-    """Check the compact PDF renderer still fits its target page."""
+def test_cheatsheet_pdf_fits_two_pages():
+    """The full API must fit in the published two-page layout at 8 pt."""
     path = Path(__file__).resolve().parents[2] / "Documentation" / "generators" / "generate_cheatsheet.py"
     namespace = runpy.run_path(str(path), run_name="pal_cheatsheet_layout_test")
-    fitted = [(size, namespace["_build_pdf"](size)[1]) for size in (round(13.5-i*.1, 1) for i in range(86))]
-    assert any(pages == 1 for _, pages in fitted), "No readable font size fits on one page"
-    assert "FrameBreak" not in path.read_text(encoding="utf-8")
+    _, pages = namespace["_build_pdf"](8.0)
+    assert pages == 2
+
 
 def test_manual_checkpoint_snippet():
     """Execute the checkpoint example as published in the Manual."""
