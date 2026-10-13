@@ -16,6 +16,15 @@ class BuildWithNative(build_py):
         source = ROOT / "pal_native.c"
         destination = Path(self.build_lib) / "PythonAutomataLibrary"
         destination.mkdir(parents=True, exist_ok=True)
+        # A source checkout can contain binaries from other operating systems.
+        # Never bundle those into a platform-specific wheel.
+        native_names = ("pal_native.dll", "libpal_native.dylib", "libpal_native.so")
+        selected = ("pal_native.dll" if sys.platform == "win32" else
+                    "libpal_native.dylib" if sys.platform == "darwin" else
+                    "libpal_native.so")
+        for name in native_names:
+            if name != selected:
+                (destination / name).unlink(missing_ok=True)
         if sys.platform == "win32":
             output = destination / "pal_native.dll"
             # Use the Visual Studio environment provided by cibuildwheel.
