@@ -27,7 +27,8 @@ jobs:
           CIBW_ARCHS_LINUX: auto
           CIBW_ARCHS_WINDOWS: auto
           CIBW_ARCHS_MACOS: auto
-          CIBW_TEST_COMMAND: 'python -c "import PythonAutomataLibrary as pal; print(pal.__file__)"'
+          CIBW_TEST_SOURCES: packaging/smoke_install.py
+          CIBW_TEST_COMMAND: python {project}/packaging/smoke_install.py
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-${{ matrix.os }}
