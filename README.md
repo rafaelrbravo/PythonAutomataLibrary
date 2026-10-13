@@ -24,9 +24,19 @@ PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL 
 - [API Guide](Documentation/API_GUIDE.md) ([PDF](Documentation/API_GUIDE.pdf)) — first model, worked modeling workflows, and detailed API behavior.
 - [PAL Architecture and Design](Documentation/PAL_ARCHITECTURE_AND_DESIGN.md) ([PDF](Documentation/PAL_ARCHITECTURE_AND_DESIGN.pdf)) — implementation structure, design rationale, subsystem choices, testing, and performance.
 - [API Reference](Documentation/API_REFERENCE.md) ([PDF](Documentation/API_REFERENCE.pdf)) — source-derived public signatures.
-- [Cheatsheet](Documentation/CHEATSHEET.md) ([PDF](Documentation/CHEATSHEET.pdf)) — compact two-page lookup for common operations.
+- [Cheatsheet](Documentation/CHEATSHEET.md) ([PDF](Documentation/CHEATSHEET.pdf)) — compact one-page lookup for common operations.
 - `Examples/` — complete working models.
 - [Testing](Testing/README.md) — correctness, API, integration, and regression tests, with local and CI run instructions.
+
+## Installation
+
+Install PAL with pip once a release is published:
+
+```text
+python -m pip install PythonAutomataLibrary
+```
+
+Prebuilt wheels bundle the native core for supported Windows, Linux, and macOS platforms. For development from a source checkout, build the native library as described below.
 
 ## Build from source
 
