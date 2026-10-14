@@ -206,7 +206,7 @@ def Step(cells: pal.PopGrid, multi: pal.Multinomial):
 def StepNutrient(cells, nutrient):
     for x in range(SIZE):
         for y in range(SIZE):
-            nutrient[x, y] = max(0.0, nutrient[x, y] - 0.01 * cells[x, y])
+            nutrient[x, y] = max(0.0, nutrient[x, y] - 0.01 * cells.counts[x, y])
     nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
     nutrient.Update()
 
@@ -214,14 +214,14 @@ def Draw(cells, pix):
     pix[:] = BLACK
     for x in range(SIZE):
         for y in range(SIZE):
-            if cells[x, y]:
+            if cells.counts[x, y]:
                 pix[x, y] = RED
 
 def main():
     pal.Seed(1234)
     cells = pal.NewPopGrid((SIZE, SIZE))
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
-        cells[x, y] = 1
+        cells.counts[x, y] = 1
     multi = pal.NewMultinomial()
     nutrient = pal.NewPDEgrid((SIZE, SIZE))
     nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
