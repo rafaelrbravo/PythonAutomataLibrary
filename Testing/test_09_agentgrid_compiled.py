@@ -231,3 +231,50 @@ def test_compiled_radius_matches_python_wrapped_geometry_and_exclusion(api):
     assert len(actual) == 2
     for agent, expected_values in expected.items():
         assert actual[agent] == pytest.approx(expected_values, abs=2e-6)
+
+
+@pytest.mark.parametrize("shape,center,radius", [
+    ((-6,), (0.1,), 1.6),
+    ((-6, -7, -8), (0.1, 0.2, 0.3), 1.5),
+])
+def test_compiled_radius_matches_python_in_1d_and_3d(api, shape, center, radius):
+    dim = len(shape)
+    g = api.NewAgentGrid(shape, isStackable=True)
+    sites = [tuple(0.2 for _ in shape), tuple(abs(n) - 0.2 for n in shape), tuple(2.5 for _ in shape)]
+    agents = [g.NewAgent(*coords) for coords in sites]
+    excluded = agents[0]
+    expected = {int(row[0]): tuple(float(v) for v in row[1:]) for row in g.AgentsInRadius(radius, *center, exclude=excluded)}
+
+    if dim == 1:
+        @api.njit
+        def collect(grid, ex):
+            ids = np.empty(8, dtype=np.int64)
+            vals = np.empty((8, 1), dtype=np.float64)
+            count = 0
+            for agent, dx in grid.AgentsInRadius(radius, center[0], exclude=ex):
+                ids[count] = agent
+                vals[count, 0] = dx
+                count += 1
+            return ids[:count], vals[:count]
+    else:
+        @api.njit
+        def collect(grid, ex):
+            ids = np.empty(8, dtype=np.int64)
+            vals = np.empty((8, 4), dtype=np.float64)
+            count = 0
+            for agent, dx, dy, dz, ds in grid.AgentsInRadius(radius, center[0], center[1], center[2], exclude=ex):
+                ids[count] = agent
+                vals[count, 0] = dx
+                vals[count, 1] = dy
+                vals[count, 2] = dz
+                vals[count, 3] = ds
+                count += 1
+            return ids[:count], vals[:count]
+
+    ids, vals = collect(g, excluded)
+    actual = {int(agent): tuple(row) for agent, row in zip(ids, vals)}
+    assert set(actual) == set(expected)
+    assert excluded not in actual
+    assert len(actual) == 1
+    for agent, expected_values in expected.items():
+        assert actual[agent] == pytest.approx(expected_values, abs=2e-6)
