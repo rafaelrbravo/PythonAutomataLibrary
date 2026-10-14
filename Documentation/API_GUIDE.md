@@ -42,6 +42,7 @@ Visual feedback is useful from the first model. `StartPixWindow` gives us a pixe
 **Complete program — place and display cells:**
 
 ```python
+import time
 import PythonAutomataLibrary as pal
 
 SIZE = 30
@@ -66,7 +67,7 @@ def main():
     window.Update()
     pal.AwaitWindows()
     while window.IsOpen():
-        pass
+        time.sleep(0.05)
     window.Close()
 
 if __name__ == "__main__":
@@ -128,6 +129,7 @@ Replace the stationary display loop with:
         Step(cells)
         Draw(cells, pix)
         window.Update()
+        time.sleep(0.05)
     window.Close()
 ```
 
