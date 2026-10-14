@@ -201,3 +201,33 @@ def test_compiled_agents_in_radius_allows_property_updates(api):
     assert update_properties(g) == len(agents)
     assert all(g[agent, 0] == pytest.approx(2.5) for agent in agents)
     assert g.counts[2, 2] == len(agents)
+
+
+def test_compiled_radius_matches_python_wrapped_geometry_and_exclusion(api):
+    g = api.NewAgentGrid((-6, -7), isStackable=True)
+    agents = [g.NewAgent(x, y) for x, y in ((0.2, 0.3), (5.8, 6.8), (1.5, 0.5), (3.5, 3.5))]
+    excluded = agents[0]
+    radius = 2.0
+    cx, cy = 0.1, 0.1
+    expected = {int(a): (float(dx), float(dy), float(ds)) for a, dx, dy, ds in g.AgentsInRadius(radius, cx, cy, exclude=excluded)}
+
+    @api.njit
+    def collect(grid, ex):
+        ids = np.empty(8, dtype=np.int64)
+        values = np.empty((8, 3), dtype=np.float64)
+        n = 0
+        for agent, dx, dy, ds in grid.AgentsInRadius(radius, cx, cy, exclude=ex):
+            ids[n] = agent
+            values[n, 0] = dx
+            values[n, 1] = dy
+            values[n, 2] = ds
+            n += 1
+        return ids[:n], values[:n]
+
+    ids, values = collect(g, excluded)
+    actual = {int(a): tuple(row) for a, row in zip(ids, values)}
+    assert set(actual) == set(expected)
+    assert excluded not in actual
+    assert len(actual) == 2
+    for agent, expected_values in expected.items():
+        assert actual[agent] == pytest.approx(expected_values, abs=2e-6)
