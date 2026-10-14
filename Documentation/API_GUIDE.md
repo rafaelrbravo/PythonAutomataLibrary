@@ -504,6 +504,33 @@ field.Dz()
 
 Transport methods use these spacings. `Dy()` and `Dz()` apply only when those dimensions exist; safe mode rejects missing-dimension access. `dt`, `dx`, `dy`, and `dz` must be finite and positive in safe mode.
 
+### Boundary conditions for transport
+
+A boundary condition specifies what happens at the edge of the modeled region. PAL's Cartesian diffusion and advection methods use the same boundary argument names, but the physical effect depends on the transport process:
+
+| Boundary choice | How to specify it | Meaning |
+| --- | --- | --- |
+| No flux | Omit the boundary argument, or pass `None` | No material crosses that nonwrapped face |
+| Fixed exterior concentration | Pass a scalar, such as `xMinBC=1.0` | Prescribe the concentration just outside that face |
+| Periodic | Construct the grid with a negative dimension on that axis, such as `(-30, 30)` | The two opposite faces connect; do not pass explicit BC values on that axis |
+
+The names identify both the **axis** (`x`, `y`, or `z`) and the **side** (`Min` or `Max`). For example, `xMinBC` controls the left face and `yMaxBC` the top face of a 2D grid. Unspecified nonwrapped faces are closed by default.
+
+For example, on a nonwrapped 2D nutrient field:
+
+```python
+field = pal.NewPDEgrid((30, 30))
+field.SetTimeSpaceStep(1.0, 1.0, 1.0)
+field.Diffusion(0.1, xMinBC=1.0, xMaxBC=0.0)
+field.Update()
+```
+
+This prescribes an exterior concentration of 1 on the left and 0 on the right, with no flux across the top and bottom. The transport operation accumulates changes; `Update()` makes them current. Start with a nonuniform field or run multiple steps to see the resulting spatial profile.
+
+For **diffusion**, the exterior concentration determines the gradient and therefore the boundary flux. For **advection**, it supplies the concentration entering through an inflow face; on an outflow face the upwind calculation uses the interior concentration instead. Thus the same `xMinBC` argument has a different numerical role in the two processes.
+
+For a spatially varying boundary concentration, pass a C-contiguous `float32` array containing one value per site along the face. Scalar values are simpler when the whole face has the same condition. The boundary arguments apply to Cartesian methods; radial diffusion instead uses `outerBC` for its outer radial face and symmetry at the center.
+
 ### Diffusion
 
 ```python
