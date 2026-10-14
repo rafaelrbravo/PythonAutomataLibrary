@@ -598,4 +598,4 @@ PAL native-backed model objects support standard Python pickling. Checkpoints pr
 | Reusable integer query result | `IList` |
 | Binomial/multinomial draws | `Multinomial` |
 
-These structures are designed to be composed inside the same compiled model step. A model can, for example, query agents, accumulate population counts, update a PDE field, and feed the resulting field back into agent behavior without leaving `@pal.njit`.
+These structures can be composed in one `@pal.njit` model step. For example, agents can query a field, queue population changes, and then update the population and field at explicitly chosen points in the timestep. The order of those commits determines which state subsequent operations read.
