@@ -5076,7 +5076,6 @@ def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
 
 def NewPopGrid(dimensions, capacity=None):
     """Create a lattice of integer population counts, optionally limiting the count at each site with `capacity`."""
-    """Create a spatial integer population grid with optional total capacity."""
     dims = _dimensions_array(dimensions)
     if capacity is None: cap=np.iinfo(np.int64).max
     else:
