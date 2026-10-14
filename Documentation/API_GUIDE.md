@@ -145,9 +145,36 @@ def Step(cells: pal.AgentGrid, empty: pal.IList):
 
 The compiled version preserves the rule: choose one empty neighbor uniformly, or stay if none is available. Keep window management in ordinary Python and repeated model operations in compiled functions.
 
-### 6. Replace individual cells with population counts
+### 6. Add a diffusing nutrient
 
-Now relax the **one cell per site** constraint. With multiple occupancy allowed, cells no longer need to search for empty destinations. A `PopGrid` holds counts instead of individual agents, and a `Multinomial` can distribute each site's cells among the eight directions of the same random walk. There is no division or death: the total number of cells remains constant.
+The cells now share a continuous nutrient field, represented by a `PDEgrid` on the same lattice. Nutrient **enters from the four boundaries**, diffuses inward, and is **consumed wherever a cell is present**. This behavior will remain unchanged when we replace individual agents with population counts in the next stage.
+
+Add this alongside the cell-grid construction in `main`:
+
+```python
+nutrient = pal.NewPDEgrid((SIZE, SIZE))
+nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
+nutrient[:] = 1.0
+```
+
+The initial concentration is 1 everywhere. Each timestep, cells remove nutrient locally and the boundaries maintain an exterior concentration of 1:
+
+```python
+def StepNutrient(cells, nutrient):
+    for agent in cells.All():
+        x, y = cells.XSQ(agent), cells.YSQ(agent)
+        nutrient[x, y] = max(0.0, nutrient[x, y] - 0.01)
+    nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
+    nutrient.Update()
+```
+
+Call `StepNutrient(cells, nutrient)` **after** the cell movement step and before drawing each frame. The boundary arguments specify fixed exterior concentrations: unlike the default no-flux boundaries, these permit nutrient to diffuse into the modeled region when cells deplete it. `Diffusion` queues the transport changes and `Update()` commits them. The values are illustrative, not biologically calibrated.
+
+To see nutrient depletion, open a second `PixWindow` and color each site according to `nutrient[x, y]`, for example using `pal.ColorScale`; the cell window can remain unchanged. See [Visualization](#visualization) for rendering and [Boundary conditions for transport](#boundary-conditions-for-transport) for boundary options.
+
+### 7. Replace individual cells with population counts
+
+Now relax the **one cell per site** constraint. With multiple occupancy allowed, cells no longer need to search for empty destinations. A `PopGrid` holds counts instead of individual agents, and a `Multinomial` can distribute each site's cells among the eight directions of the same random walk. There is no division or death: the total number of cells remains constant. The nutrient field from stage 6 is retained, including its boundary supply and cellular consumption.
 
 **Complete program — count-based random movement:**
 
@@ -176,6 +203,13 @@ def Step(cells: pal.PopGrid, multi: pal.Multinomial):
             cells.Add(moved, nx, ny)
     cells.Update()
 
+def StepNutrient(cells, nutrient):
+    for x in range(SIZE):
+        for y in range(SIZE):
+            nutrient[x, y] = max(0.0, nutrient[x, y] - 0.01 * cells[x, y])
+    nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
+    nutrient.Update()
+
 def Draw(cells, pix):
     pix[:] = BLACK
     for x in range(SIZE):
@@ -189,10 +223,14 @@ def main():
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells[x, y] = 1
     multi = pal.NewMultinomial()
+    nutrient = pal.NewPDEgrid((SIZE, SIZE))
+    nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
+    nutrient[:] = 1.0
     pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Population random walk")
     pal.AwaitWindows()
     while window.IsOpen():
         Step(cells, multi)
+        StepNutrient(cells, nutrient)
         Draw(cells, pix)
         window.Update()
         time.sleep(0.05)
@@ -204,34 +242,7 @@ if __name__ == "__main__":
 
 As in the `AgentGrid` version, each cell selects one valid neighboring destination uniformly. `Setup(cells[i])` starts a multinomial allocation for all cells currently at site `i`; `Sample(1.0 / neighbors)` allocates them among the valid directions. Probabilities refer to the **original** site's population, not the remaining unassigned cells. Queued transfers are committed together with `Update()`, so arrivals do not move again in the same timestep.
 
-The two versions implement the same basic random-walk idea, but not the same exclusion process: `AgentGrid` avoids occupied destinations and updates agents sequentially; `PopGrid` permits multiple occupancy and moves all counts synchronously. That distinction matters when comparing results. See [Multinomial](#random-numbers-and-multinomial) for more about sampling and solver reuse.
-
-### 7. Add a diffusing nutrient
-
-Return to the individual-cell model. A `PDEgrid` holds a continuous field on the same lattice. We start with a uniform nutrient concentration, let it diffuse, and let occupied sites consume a small amount. This introduces a second state variable without changing what a cell is.
-
-After constructing `cells`, add:
-
-```python
-nutrient = pal.NewPDEgrid((SIZE, SIZE))
-nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
-for x in range(SIZE):
-    for y in range(SIZE):
-        nutrient[x, y] = 1.0
-```
-
-A simple field update is:
-
-```python
-def StepNutrient(cells, nutrient):
-    for agent in cells.All():
-        x, y = cells.XSQ(agent), cells.YSQ(agent)
-        nutrient[x, y] = max(0.0, nutrient[x, y] - 0.01)
-    nutrient.Diffusion(0.1)
-    nutrient.Update()
-```
-
-Call `StepNutrient(cells, nutrient)` once per timestep, after the cell step. Consumption here changes the current field directly; diffusion queues transport changes that become visible at `Update()`. The chosen rates are illustrative, not a calibrated biological model. You can map nutrient values to colors in a second pixel window using `pal.ColorScale`; see [Visualization](#visualization) for the rendering API and [PDEgrid](#pdegrid) for transport and boundary conditions.
+The nutrient update now consumes 0.01 concentration units per cell at each site, so multiple occupancy increases local consumption. The same fixed-value boundaries replenish nutrient in both representations. The two versions implement the same basic random-walk idea, but not the same exclusion process: `AgentGrid` avoids occupied destinations and updates agents sequentially; `PopGrid` permits multiple occupancy and moves all counts synchronously. That distinction matters when comparing results. See [Multinomial](#random-numbers-and-multinomial) for more about sampling and solver reuse.
 
 ### 8. Reproduce and save a run
 
@@ -260,7 +271,7 @@ Saving object state is not the same as saving every source of randomness or ever
 
 ### Where to go next
 
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, choose a representation, evolve a field, and record experiments. The remainder of this guide gives **subsystem-specific API behavior**, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide gives **subsystem-specific API behavior**, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
 
 ## Core use
 
