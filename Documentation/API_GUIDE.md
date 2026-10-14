@@ -419,7 +419,7 @@ pop.Add(delta, x, y)
 pop.Update()
 ```
 
-`Add` changes the pending delta, not the current value: `GetPop()`, indexing, and `All()` continue to report the current population until `Update()`. `Update()` applies all pending changes simultaneously. This is useful when a timestep should not depend on iteration order.
+`Add` changes only the pending delta. Until `Update()`, `GetPop()`, indexing, and `All()` still reflect the current population. A single `Update()` commits the queued changes together, avoiding order-dependent reads during a synchronous timestep. Direct assignments during that timestep still change current values immediately.
 
 | Operation | Meaning |
 | --- | --- |
