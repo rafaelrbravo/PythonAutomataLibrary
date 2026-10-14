@@ -253,11 +253,11 @@ Integrated examples then exercise combinations of components under realistic con
 
 ## 4. Subsystem design choices
 
-The previous chapter explains cross-cutting principles. This chapter follows those principles into individual subsystems and describes the practical consequences of their contracts.
+This chapter applies the design principles to each subsystem and explains their practical consequences.
 
 ### 4.1 Grid: typed site state and explicit indexing
 
-A `Grid` represents one typed value per lattice site. The element type is chosen at construction, which makes the intended state representation explicit and allows the implementation to use compact native storage rather than a Python object at every site. Use a type that matches the model's meaning: integer labels for categories, Boolean values for masks, and floating-point values for continuous attributes.
+A `Grid` stores one typed value per lattice site. Choosing the element type at construction makes the representation explicit and allows compact native storage. Use a type that matches the model's meaning: integer labels for categories, Boolean values for masks, and floating-point values for continuous attributes.
 
 Indexing supports both linear site indices and coordinate forms, but these are different views of the same lattice. Use coordinate indexing when the equation is naturally spatial; use a linear index when iterating sites or passing a site identifier between APIs. In more than one dimension, coordinate tuples are often easier to review because the axes remain visible. The conversions `ToI` and `ItoX`/`ItoY`/`ItoZ` are explicit so the mapping can be tested rather than guessed.
 
@@ -267,7 +267,7 @@ Grid slices are detached NumPy copies, not live native-backed views. This avoids
 
 An agent handle is distinct from its position. The handle identifies the living agent; position determines where it is located. This separation lets a model retain identity while an agent moves, and lets queries report handles without copying whole Python objects. The model remains responsible for the meaning and lifecycle of any additional per-agent state.
 
-Stackability is an explicit constructor choice because allowing multiple agents at a site changes the model's state space and affects occupancy logic. A nonstackable grid rejects a second occupant in safe mode. Do not enable stackability merely to suppress an error: decide whether multiple occupancy is biologically or physically meaningful.
+Stackability determines whether multiple agents may occupy one site. A nonstackable grid rejects a second occupant in safe mode. Enable stackability only when multiple occupancy is meaningful to the model.
 
 The distinction between `All()` and a live iteration matters for mutation. `All()` returns a snapshot of handles and is therefore the appropriate pattern when the loop can create or dispose agents. A snapshot freezes membership, not agent state or grid occupancy. Each later query observes current occupancy. If newborns must not act until the next timestep, build the snapshot before processing the timestep; if all agents must compute from the same old world, snapshot the required state as well.
 
@@ -275,11 +275,11 @@ The `counts` property is a read-only occupancy query view, not a writable altern
 
 ### 4.3 PopGrid: counts instead of individual objects
 
-A `PopGrid` stores integer population counts per site. It is intended for populations whose members are interchangeable for the questions being asked. That can greatly reduce storage and update overhead compared with representing every individual as an agent, but it removes individual-level history and identity.
+A `PopGrid` stores integer counts per site. For interchangeable individuals, counts can reduce storage and update overhead, at the cost of individual identity and history.
 
 Its `Add` operation queues a delta; `Update` applies pending changes; `Reset` clears current state and pending deltas. The explicit delta buffer makes it possible to compute a set of changes before committing them. For a movement event from site A to site B, queue a negative delta at A and a positive delta at B, then update once. If the model reads current counts during this phase, it sees the pre-commit counts, which helps make the update independent of visitation order.
 
-The `capacity` option is a per-site cap. It is not the total population limit. `All()` returns the indices of nonzero sites, not the counts themselves; read the count at each returned index when the value is needed. Keeping these semantics distinct avoids confusing the set of occupied sites with the population data stored there.
+`capacity` limits each site's count, not the total population. `All()` returns indices of nonzero sites; index the grid to retrieve their counts.
 
 ### 4.4 PDEgrid: numerical operations with explicit assumptions
 
@@ -303,7 +303,7 @@ Use PAL's RNG functions when a model should share one reproducible stream across
 
 ### 4.7 Multinomial sampling: configuration versus sample state
 
-`NewMultinomial` constructs a sampler for repeated multinomial or binomial sampling. Constructing one from another sampler reuses solver configuration, not the other sampler's current sample state. This separation allows a model to share sampling setup without implying that two sampler objects are the same evolving object. The safety mode must match, because PAL's mode is process-wide and sampler behavior belongs to that contract.
+`NewMultinomial` constructs a sampler for repeated multinomial or binomial sampling. Constructing one from another sampler reuses solver configuration, not the other sampler's current sample state. This shares sampler configuration without sharing evolving sample state. Both samplers must use the same process-wide safety mode.
 
 ### 4.8 Visualization: simulation state versus presentation
 
@@ -325,7 +325,7 @@ Source-line diagnostics depend on sufficient type information, including annotat
 
 PAL's public API is intended to feel coherent across Python and `@pal.njit`, but the two paths have different execution machinery. The Python wrapper may validate an argument before calling native code, while the compiled wrapper may need a Numba-compatible overload and may use different diagnostics. Both must still agree on the public result and supported inputs.
 
-This is why the project uses API coverage inventories, Python/compiled parity tests, integrated examples, and safe/fast test runs. A type declaration or docstring is not sufficient evidence if runtime behavior disagrees. Conversely, a one-off implementation detail should not be elevated to a public promise unless the tests and documentation support it. When changing a contract, update the implementation, declarations, generated reference, manual, examples, and tests as one coherent change.
+API coverage inventories, Python/compiled parity tests, integrated examples, and safe/fast runs check these contracts. Neither a declaration nor a docstring overrides runtime behavior. When a contract changes, update the implementation, declarations, reference, manual, examples, and tests together.
 
 ## 5. Performance: measure the right thing
 
