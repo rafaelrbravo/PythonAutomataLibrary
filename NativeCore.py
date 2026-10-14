@@ -4983,8 +4983,7 @@ def _UseFastMode():
     return _FAST_MODE
 
 def NewIList():
-    """Create an empty PAL integer list usable from Python and supported compiled functions."""
-    """Create an empty native-backed integer list in the selected safety mode."""
+    """Create an empty native-backed integer list for Python and compiled code."""
     fast=_UseFastMode()
     ptr=_q_new(0)
     if not ptr: raise MemoryError("unable to allocate IList")
@@ -5021,8 +5020,7 @@ def CircleHood(dim,rad,excludeCenter=False):
     return _HoodTuple(off for off in itertools.product(range(-r,r+1),repeat=dim) if sum(v*v for v in off)<=r2 and (not excludeCenter or any(off)))
 
 def NewMultinomial(other=None):
-    """Create a PAL multinomial/binomial sampler, optionally reusing configuration from `other`."""
-    """Create a sampler; other reuses solver configuration, not sampling state."""
+    """Create a multinomial/binomial sampler; `other` copies configuration, not sample state."""
     if other is not None and not isinstance(other,(_MultinomialSafe,_MultinomialFast)):
         raise TypeError("other must be a PAL Multinomial or None")
     fast=_UseFastMode()
@@ -5035,7 +5033,6 @@ def NewMultinomial(other=None):
 
 
 def NewGrid(dimensions,dtype):
-    """Create a typed lattice grid with the requested dimensions and element dtype."""
     """Create a typed 1D–3D lattice; negative axis lengths enable wrapping."""
     dims=_dimensions_array(dimensions);dt=np.dtype(dtype)
     if dt not in _GRID_TYPE_CODES:raise ValueError("Grid dtype must be bool, int8/16/32/64, uint8/16/32/64, or float32/64")
