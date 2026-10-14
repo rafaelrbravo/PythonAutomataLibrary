@@ -131,3 +131,21 @@ def test_compiled_agents_at_detects_structural_change_in_safe_mode(api, safe_mod
         clear_site(g)
         assert g.GetPop() == 0
         assert g.counts[2, 2] == 0
+
+
+def test_compiled_agents_at_detects_same_site_move_in_safe_mode(api, safe_mode):
+    if not safe_mode:
+        pytest.skip("Fast mode omits direct-iteration mutation checks")
+    g = api.NewAgentGrid((4, 4), isStackable=True)
+    g.NewAgent(2.2, 2.2)
+    g.NewAgent(2.4, 2.4)
+
+    @api.njit
+    def move_during_iteration(grid):
+        for agent in grid.AgentsAt(2, 2):
+            grid.Move(agent, 2.7, 2.7)
+
+    with pytest.raises(RuntimeError, match="structurally modified"):
+        move_during_iteration(g)
+    assert g.GetPop() == 2
+    assert g.counts[2, 2] == 2
