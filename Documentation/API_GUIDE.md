@@ -1,10 +1,10 @@
 # PAL API Guide
 
-This guide combines a first working model and practical modeling workflows with the detailed behavioral contracts of PAL's public API. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the generated [API Reference](API_REFERENCE.pdf). For quick syntax, use the [Cheatsheet](CHEATSHEET.pdf). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
+This guide starts with a working model and practical workflows, then documents the public API's behavior and constraints. Read the worked sections to learn PAL's modeling patterns; consult the API sections for exact behavior. For current public signatures and method descriptions, use the generated [API Reference](API_REFERENCE.pdf). For quick syntax, use the [Cheatsheet](CHEATSHEET.pdf). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
 
 ## Getting started and worked modeling patterns
 
-The sections below walk from the model loop through representation choices, neighborhoods, agent updates, synchronous population/field updates, compiled code, visualization, and reproducibility. These examples make the API contracts concrete; the detailed API sections that follow are the reference for exact behavior.
+The worked sections cover the model loop, state representations, neighborhoods, update timing, compiled code, visualization, and reproducibility. The API sections that follow specify exact behavior.
 
 ### 1. The model loop
 
@@ -598,4 +598,4 @@ PAL native-backed model objects support standard Python pickling. Checkpoints pr
 | Reusable integer query result | `IList` |
 | Binomial/multinomial draws | `Multinomial` |
 
-These structures are designed to be composed inside the same compiled model step. A model can, for example, query agents, accumulate population counts, update a PDE field, and feed the resulting field back into agent behavior without leaving `@pal.njit`.
+These structures can work together inside a compiled model step. For example, a model can query agents, accumulate population counts, update a PDE field, and use that field to influence agent behavior without leaving `@pal.njit`.
