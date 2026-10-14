@@ -107,6 +107,21 @@ def test_safe_nonstackable_rejects_collision(api, safe_mode):
     assert g.counts[1, 1] == 1 and g.counts[2, 2] == 1
 
 
+def test_safe_nonstackable_continuous_collision_preserves_position(api, safe_mode):
+    if not safe_mode:
+        pytest.skip("Fast mode requires caller to honor nonstackable occupancy precondition")
+    g = api.NewAgentGrid((4, 4), isStackable=False)
+    a = g.NewAgent(1.25, 1.75)
+    b = g.NewAgent(2.25, 2.75)
+    before = (g.X(b), g.Y(b), g.I(b), g.GetPop())
+    with pytest.raises(ValueError):
+        g.Move(b, 1.8, 1.2)
+    assert (g.X(b), g.Y(b), g.I(b), g.GetPop()) == pytest.approx(before)
+    assert g.LastAgent(1, 1) == a
+    assert g.LastAgent(2, 2) == b
+    assert g.counts[1, 1] == g.counts[2, 2] == 1
+
+
 def test_safe_rejects_dead_agent_operations(api, safe_mode):
     if not safe_mode:
         pytest.skip("Unchecked mode intentionally does not promise dead-agent validation")
