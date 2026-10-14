@@ -278,3 +278,21 @@ def test_compiled_radius_matches_python_in_1d_and_3d(api, shape, center, radius)
     assert len(actual) == 1
     for agent, expected_values in expected.items():
         assert actual[agent] == pytest.approx(expected_values, abs=2e-6)
+
+
+@pytest.mark.parametrize("radius,center", [(-1.0, 1.5), (np.nan, 1.5), (1.0, np.inf)])
+def test_compiled_radius_rejects_invalid_geometry_in_safe_mode(api, safe_mode, radius, center):
+    if not safe_mode:
+        pytest.skip("Fast mode omits radius input validation")
+    g = api.NewAgentGrid((5,), isStackable=True)
+    g.NewAgent(1.5)
+
+    @api.njit
+    def count_radius(grid, rad, x):
+        count = 0
+        for agent, dx in grid.AgentsInRadius(rad, x):
+            count += 1
+        return count
+
+    with pytest.raises(ValueError, match="radius and coordinates must be finite"):
+        count_radius(g, radius, center)
