@@ -2,193 +2,240 @@
 
 This guide combines a first working model and practical modeling workflows with the detailed behavioral contracts of PAL's public API. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
 
-## Learning path
+## Build a cell model, one feature at a time
 
-Read **The model loop** first, then **Choose the right representation** and **Coordinates and neighborhoods**. Continue through agents, synchronous updates, compilation, and visualization as needed. These worked examples introduce concepts; the later sections are organized by object and provide the detailed behavior to consult while building a model. If you already know PAL, jump directly to the relevant subsystem heading.
+This tutorial follows **one simple model**: cells occupy sites on a two-dimensional lattice. First we place and draw them. Then we let them move, divide, and die. Finally we compare a count-based representation, add nutrient diffusion, compile the timestep, and save the state. Each stage reuses the same biological idea, so the new material is about PAL rather than new biology.
 
-The essential distinction throughout this guide is between **where state is stored**, **when changes become visible**, and **which execution path runs the model**. Choosing a representation, an update schedule, and a Python or compiled loop are separate decisions.
+Use the examples in order. The code blocks marked **complete program** can be saved as separate Python files and run independently. Later snippets show focused modifications to the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
 
-## Getting started and worked modeling patterns
+### 1. Place cells on a lattice
 
-The sections below walk from the model loop through representation choices, neighborhoods, agent updates, synchronous population/field updates, compiled code, visualization, and reproducibility. These examples make the API contracts concrete; the detailed API sections that follow are the reference for exact behavior.
+An `AgentGrid` stores identifiable cells and their positions. We choose a nonstackable 30 × 30 lattice: at most one cell can occupy each site. A `Grid`, by contrast, stores one typed value per site and does not create individual cell identities.
 
-### 1. The model loop
-
-A PAL model commonly has three parts: **Setup** creates the initial state, **Step** updates it, and **Draw** renders it. PAL does not require a model class or impose a scheduler; you choose the update order and when to render.
+**Complete program — initial cells:**
 
 ```python
 import PythonAutomataLibrary as pal
 
-@pal.njit(cache=True)
-def Step(pop: pal.PopGrid):
-    # Apply a synchronous increment to every site.
-    for i in range(len(pop)):
-        pop.Add(1, i)
-    pop.Update()
+SIZE = 30
+
+def Setup():
+    cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
+    for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
+        cells.NewAgentSQ(x, y)
+    return cells
 
 def main():
-    pop = pal.NewPopGrid((40, 40))
-    for _ in range(10):
-        Step(pop)
-    print(pop.GetPop())
+    cells = Setup()
+    print("Initial cells:", len(cells.All()))
 
 if __name__ == "__main__":
     main()
 ```
 
-The grid contains 1,600 sites. Each site receives one increment per timestep for 10 timesteps, so every site ends at 10 and `GetPop()` returns `16000`. `Add` queues changes; `Update` commits them together. This separation prevents an update at one site from changing the state read at another site during the same timestep.
+`NewAgentSQ(x, y)` places a cell at lattice coordinates `(x, y)`. An agent has an identity (its handle) as well as a position. The lattice dimensions are not the number of cells: most sites are initially empty.
 
-PAL uses **safe mode** by default. Develop and validate your model in this mode. If profiling shows that validation overhead matters, call `pal.FastMode()` before creating any PAL objects to remove selected performance-sensitive checks.
+### 2. Draw the cells immediately
 
-### 2. Choose the right representation
+Visual feedback is useful from the first model. `StartPixWindow` gives us a pixel grid and a window. Each site becomes one pixel, enlarged by `scale`. We draw black background pixels and red occupied sites.
 
-Choose the representation that matches the state your model needs to preserve. A `Grid` stores one typed value per site; an `AgentGrid` stores identifiable agents and can hold per-agent properties; a `PopGrid` stores integer counts without individual identities; and a `PDEgrid` stores a scalar field with transport operations. A model can combine them—for example, agents can consume a `PDEgrid` field while a separate `PopGrid` tracks counts.
-
-Use a tuple of dimensions when constructing a spatial grid. Negative dimensions mean periodic wrapping on that axis, so `(-40, 40)` wraps x but not y. `AgentGrid` also supports an empty dimension tuple for a nonspatial population.
-
-#### Choosing a representation by scale
-
-Use individual agents when identity, history, or per-agent properties affect behavior. If individuals are interchangeable within each site, a `PopGrid` can replace many agent handles with one integer count per site, often reducing update cost. Its optional `capacity` limits each site, not the total population. Use a `Grid` for nonpopulation site attributes such as terrain or a fixed mask, and a `PDEgrid` for a scalar field that changes through diffusion or advection. A hybrid model can combine representations, but must define how they exchange state.
-
-Choose a representation according to what the model must preserve, not just the number of sites. Replacing agents with counts discards individual identity and history; replacing counts with a continuous field can discard integer and stochastic behavior. These are modeling assumptions, not merely implementation details.
-
-### 3. Coordinates and neighborhoods
-
-A grid has integer lattice sites and may also store agents at continuous positions. A **site index** `i` is an integer identifying a lattice cell; lattice coordinates such as `(x, y)` identify that cell on each axis. An agent's continuous coordinates are different: lattice site `(x, y)` spans continuous positions `[x, x+1) × [y, y+1)`, and its center is `(x+0.5, y+0.5)`. Thus an agent created or moved with `NewAgentSQ(x, y)` or `MoveSQ(..., x, y)` has integer site coordinates `XSQ=x`, `YSQ=y`, but continuous coordinates `X=x+0.5`, `Y=y+0.5`. An agent placed with `NewAgent` or `Move` instead keeps the supplied continuous coordinates while its `XSQ`/`YSQ` values identify the containing lattice site. In 2D, `ToI(x, y)` converts lattice coordinates to a linear site index, and `ItoX(i)` and `ItoY(i)` convert that index back to lattice coordinates. Do not confuse the linear site index, lattice coordinates, and continuous agent coordinates. Grid geometry is exposed as attributes such as `xDim`, `yDim`, `nDims`, and `wrapX`, not methods.
-
-PAL provides `MooreHood`, `VonNeumannHood`, and `CircleHood`. They return relative integer offsets. `grid.Hood(hood, x, y)` maps those offsets to **lattice coordinates** (a scalar x in 1D, coordinate tuples in 2D/3D), wrapping periodic axes and omitting sites outside nonperiodic axes. It preserves the order and duplicates of the supplied offsets. `grid.Box(...)` instead iterates coordinates in a half-open rectangular region; in 2D it also yields `(x, y)` tuples, not linear indices. A box wider than a wrapped axis can also visit a site more than once. This distinction matters when using the results for indexing versus coordinate-based operations.
-
-### 4. Individual agents
-
-An agent is an integer handle owned by an `AgentGrid`, distinct from both its lattice site and its continuous position. Create it with `NewAgentSQ` for a lattice site or `NewAgent` for a continuous position. `NewAgentSQ` and `MoveSQ` accept either a linear site index or lattice coordinates; `NewAgent` and `Move` use continuous coordinates. An agent can move within a site without changing its lattice site. Remove it with `Dispose`.
-
-`agents.All()` returns a snapshot of living handles, so creating or disposing agents does not change which handles are in that snapshot. On a nonstackable grid, safe mode rejects attempts to place two agents at the same site. Use `isStackable=True` only when multiple occupancy is part of the model.
-
-#### Iterating nearby agents
-
-Use `AgentsAt(x, y)` to visit the agents occupying one lattice site. For a continuous search around a point, `AgentsInRadius(rad, x, y)` yields `(agent, dx, dy, distSq)` in 2D. The displacement components account for periodic wrapping and `distSq` is squared distance. In 1D the tuple is `(agent, dx)`; in 3D it is `(agent, dx, dy, dz, distSq)`. Pass `exclude=agent` to omit an agent from its own neighborhood search.
-
-Both iterators work in Python and inside `@pal.njit` loops. Python iteration materializes matching handles first, but the grid must not be structurally modified during that iteration. Safe mode checks for structural changes; fast mode omits this check. If the loop creates or disposes agents, iterate over a snapshot from `agents.All()` instead.
-
-For example, this Python-side search finds the agent across a periodic x boundary:
+**Complete program — place and display cells:**
 
 ```python
 import PythonAutomataLibrary as pal
 
-agents = pal.NewAgentGrid((-10, 10))
-agent = agents.NewAgent(9.0, 2.0)
-nearby = list(agents.AgentsInRadius(1.5, 0.0, 2.0))
-assert len(nearby) == 1
-found, dx, dy, distSq = nearby[0]
-assert found == agent
-assert dx == -1.0 and dy == 0.0 and distSq == 1.0
-assert list(agents.AgentsInRadius(1.5, 0.0, 2.0, exclude=agent)) == []
+SIZE = 30
+BLACK = pal.RGB(0, 0, 0)
+RED = pal.RGB(255, 0, 0)
+
+def Setup():
+    cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
+    for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
+        cells.NewAgentSQ(x, y)
+    return cells
+
+def Draw(cells, pix):
+    pix[:] = BLACK
+    for agent in cells.All():
+        pix[cells.XSQ(agent), cells.YSQ(agent)] = RED
+
+def main():
+    cells = Setup()
+    pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Cells")
+    Draw(cells, pix)
+    window.Update()
+    pal.AwaitWindows()
+    while window.IsOpen():
+        pass
+    window.Close()
+
+if __name__ == "__main__":
+    main()
 ```
 
-#### Agent birth/death timestep
+You should see four red cells near the center. If you change their initial coordinates, the drawing changes accordingly. `window.Update()` publishes the pixels you wrote; drawing into `pix` alone does not refresh the display. Later we will call `Draw` after every timestep.
 
-`Examples/Agents/SaveLoadModel.py` is a complete agent-based model using a nonstackable 2D `AgentGrid`. Its compiled `Step` iterates `grid.All(shuffle=True)`, removes an agent on a death draw, and otherwise attempts reproduction on a second draw. To reproduce, it scans the Moore neighborhood, stores empty site indices in a reusable `IList`, and creates an agent at a randomly selected empty site.
+### 3. Find neighbors and empty sites
 
-The distinction between **snapshot membership** and **current occupancy** is important. `All()` determines which agents get a turn at the start of the step, so newborns do not act until the next step. However, each parent's neighborhood query sees the current grid; births and deaths earlier in the step can therefore change later agents' options. Shuffling changes the update order and can change outcomes even from the same initial occupancy. This is a sequential stochastic update, unlike the queued, simultaneous `PopGrid.Add`/`Update` pattern described below.
+Cells divide only into empty neighboring sites. `pal.MooreHood(2, excludeCenter=True)` describes the eight relative offsets around a 2D site. `cells.Hood(..., x, y)` converts those offsets to valid lattice coordinates. This is different from a cell's continuous position: `XSQ` and `YSQ` give its lattice site.
 
-The example's `Setup`, `Step`, and `Draw` functions are `@pal.njit(cache=True)` functions. The Python `main` loop owns the window, timestep, and checkpoints; compiled functions handle repeated model operations. Use the source example for the complete runnable program rather than duplicating its graphics and checkpoint lifecycle here.
+Add this near the constants in the preceding program:
 
-### 5. Simultaneous population and field updates
+```python
+MOORE = pal.MooreHood(2, excludeCenter=True)
 
-`PopGrid` and `PDEgrid` distinguish current state from pending changes. Direct indexing changes the current state immediately; `Add` queues a delta, and `Update` applies pending changes. `Reset` clears both current state and pending changes.
+def EmptyNeighbors(cells, agent):
+    sites = []
+    for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
+        if cells.counts[x, y] == 0:
+            sites.append((x, y))
+    return sites
+```
 
-A `PDEgrid` also provides diffusion and advection. Set the timestep and spatial spacings with `SetTimeSpaceStep(dt, dx, dy, dz)` before transport operations. Cartesian, interface-based, masked, ADI, and radial diffusion variants are available; choose the method that matches the model's geometry and numerical assumptions. Cartesian boundaries may be uniform or vary across a face; wrapped axes are periodic instead. Validate timestep stability and boundary behavior in safe mode before optimizing.
+Try printing `EmptyNeighbors(cells, cells.All()[0])` after setup. The exact result depends on the occupied sites. At a nonperiodic boundary, `Hood` omits offsets that leave the grid.
 
-#### Advection versus diffusion example
+### 4. Let cells move, divide, and die
 
-`Examples/Diffusibles/ReactionDiffusion2D.py` compares two `PDEgrid` fields on the same 20 × 10 lattice. Each timestep sets a short vertical source at `x=10` in both fields. One field then calls `Advection(vx=0.01, vy=0.01, xMaxBC=0, yMaxBC=0)`; the other calls `DiffusionADI(0.01, xMaxBC=0, xMinBC=0)`. Each transport call is followed by its own `Update()`.
+We now introduce one stochastic rule per timestep. Each existing cell may die; otherwise it may divide into an empty Moore neighbor, or move into one. We use a snapshot from `All(shuffle=True)`: newborn cells wait until the next timestep to act. Occupancy changes during the current step, so later cells may see sites vacated or filled by earlier cells.
 
-The example illustrates two different processes: advection transports the field with a velocity, whereas diffusion spreads it down concentration gradients. Boundary values also enter the two methods differently. Diffusion uses the boundary gradient; advection uses a boundary value only for inflow and uses the interior upwind value for outflow. The explicit boundary arguments are part of the model, not cosmetic rendering settings. `Draw` maps each field's current values through `ColorScale` into separate pixel windows. As in the agent example, `Step` and `Draw` are compiled, while `main` manages windows and iteration.
+Add the following constants and function to the program from stage 2, along with `MOORE` and `EmptyNeighbors` from stage 3:
 
-This example is qualitative, **not** a convergence or mass-conservation test. It continually resets source cells and uses different boundary conditions for the two fields. For quantitative validation, remove the source, use equivalent boundary conditions, and check mass balance and convergence across grid spacings and timesteps.
+```python
+DEATH_PROB = 0.01
+BIRTH_PROB = 0.20
+MOVE_PROB = 0.10
 
-#### A hand-checkable field gradient
+def Step(cells):
+    for agent in cells.All(shuffle=True):
+        if pal.Random() < DEATH_PROB:
+            cells.Dispose(agent)
+            continue
+        empty = EmptyNeighbors(cells, agent)
+        if not empty:
+            continue
+        x, y = empty[pal.RandInt(len(empty))]
+        if pal.Random() < BIRTH_PROB:
+            cells.NewAgentSQ(x, y)
+        elif pal.Random() < MOVE_PROB:
+            cells.MoveSQ(agent, x, y)
+```
 
-`Examples/Diffusibles/Gradient2D.py` provides a simpler numerical check than a transport simulation. It assigns `grid[x, y] = y / grid.yDim` on a 10 × 10 `PDEgrid`. The centered finite differences at `(5, 5)` are therefore
+Replace the stationary display loop with:
+
+```python
+    pal.AwaitWindows()
+    while window.IsOpen():
+        Step(cells)
+        Draw(cells, pix)
+        window.Update()
+    window.Close()
+```
+
+Now the cells should spread, move, and occasionally disappear. This is a **sequential** agent update, not a simultaneous population update. For longer simulations, add a frame delay or render only every few steps.
+
+### 5. Compile the timestep
+
+The model behavior does not need to change to run its repeated operations through PAL's Numba integration. A compiled function must use PAL-compatible operations and types. Rather than building a Python list of neighbor coordinates, use a reusable `IList` of linear site indices.
+
+Replace `Step` with this compiled version and construct `empty = pal.NewIList()` once in `main`. Call `Step(cells, empty)` in the display loop.
+
+```python
+@pal.njit(cache=True)
+def Step(cells: pal.AgentGrid, empty: pal.IList):
+    for agent in cells.All(shuffle=True):
+        if pal.Random() < DEATH_PROB:
+            cells.Dispose(agent)
+            continue
+        empty.Clear()
+        for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
+            if cells.counts[x, y] == 0:
+                empty.Append(cells.ToI(x, y))
+        if len(empty) == 0:
+            continue
+        site = empty.Random()
+        if pal.Random() < BIRTH_PROB:
+            cells.NewAgentSQ(site)
+        elif pal.Random() < MOVE_PROB:
+            cells.MoveSQ(agent, cells.ItoX(site), cells.ItoY(site))
+```
+
+The `@pal.njit(cache=True)` decorator prepares supported PAL constructs for Numba. Keep the window lifecycle in ordinary Python; compile repeated model calculations. Develop in PAL's default safe mode before benchmarking fast mode.
+
+### 6. Represent cells as counts instead
+
+Not every model needs individual cell identities. A `PopGrid` stores an integer count at each site. This is an **alternative** to the `AgentGrid` model, not a second copy of the same cells. It cannot track individual cell histories or movement decisions without additional modeling rules.
+
+**Complete program — a count-based comparison:**
 
 ```python
 import PythonAutomataLibrary as pal
 
-field = pal.NewPDEgrid((10, 10))
-for x in range(10):
-    for y in range(10):
-        field[x, y] = y / 10
-
-dx = (field[6, 5] - field[4, 5]) / 2
-dy = (field[5, 6] - field[5, 4]) / 2
-assert abs(dx) < 1e-6
-assert abs(dy - 0.1) < 1e-6
+pop = pal.NewPopGrid((30, 30))
+pop.Add(1, 14, 14)
+pop.Add(1, 15, 14)
+pop.Add(1, 14, 15)
+pop.Add(1, 15, 15)
+pop.Update()
+print("Cells represented as counts:", pop.GetPop())
 ```
 
-The field is constant in x and linear in y, so its expected discrete gradients are 0 and 0.1. The assertions allow floating-point storage and arithmetic error. This verifies indexing and a finite-difference calculation without introducing boundary conditions or timestep integration. `Examples/Diffusibles/Gradient2D.py` performs the same calculation inside `@pal.njit`.
+`Add` queues count changes; `Update` commits them. That explicit commit supports synchronous count updates, unlike the immediate agent births and moves above. Choosing between `AgentGrid` and `PopGrid` is a scientific representation decision, not merely a speed setting.
 
-#### Numerical update order
+### 7. Add a diffusing nutrient
 
-Update order is part of the model. If births and deaths in a `PopGrid` must be simultaneous, queue all changes before calling `Update()`. Reads during this phase see the same starting population. Direct assignment to `pop[x, y]`, by contrast, changes what later calculations read. Mixing immediate assignments and queued changes is valid, but the order then affects the model.
+Return to the individual-cell model. A `PDEgrid` holds a continuous field on the same lattice. We start with a uniform nutrient concentration, let it diffuse, and let occupied sites consume a small amount. This introduces a second state variable without changing what a cell is.
 
-For a `PDEgrid`, transport routines accumulate changes that become current at `Update()`. Check timestep stability and convergence by varying the timestep and grid spacing. Safe-mode checks do not replace numerical validation.
+After constructing `cells`, add:
 
-Consider two sites with populations 10 and 0. If a transfer moves 5 from site 0 to site 1, queue -5 and +5 before a single `Update()`; the result is (5, 5) and total population remains 10. Applying one change immediately would alter what later calculations read and can make an intended simultaneous update order-dependent.
+```python
+nutrient = pal.NewPDEgrid((SIZE, SIZE))
+nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
+for x in range(SIZE):
+    for y in range(SIZE):
+        nutrient[x, y] = 1.0
+```
 
-For a hand-calculable timestep, check the required invariants: counts remain nonnegative; internal transfers conserve total population; totals change only through explicit births, deaths, or boundary flux; and a supposedly simultaneous update is independent of site visitation order.
+A simple field update is:
 
-### 6. Compiled model code
+```python
+def StepNutrient(cells, nutrient):
+    for agent in cells.All():
+        x, y = cells.XSQ(agent), cells.YSQ(agent)
+        nutrient[x, y] = max(0.0, nutrient[x, y] - 0.01)
+    nutrient.Diffusion(0.1)
+    nutrient.Update()
+```
 
-Decorate substantive computational functions with `@pal.njit(cache=True)` so compiled code can be reused across runs. PAL expands some model constructs before passing the function to Numba, including neighborhood iteration and source-aware safe-mode diagnostics. Annotate PAL arguments with their public types, such as `pal.AgentGrid` or `pal.PDEgrid`, for clarity and compiler support.
+Call `StepNutrient(cells, nutrient)` once per timestep, after the cell step. Consumption here changes the current field directly; diffusion queues transport changes that become visible at `Update()`. The chosen rates are illustrative, not a calibrated biological model. You can map nutrient values to colors in a second pixel window using `pal.ColorScale`; see [Visualization](#visualization) for the rendering API and [PDEgrid](#pdegrid) for transport and boundary conditions.
 
-Keep model state in PAL objects and use `pal.Seed`, `pal.Random`, `pal.RandInt`, and `NewMultinomial` for reproducible PAL random sampling. Run a model in safe mode first. Fast mode removes selected checks; it does not make invalid indices, dead handles, or unstable numerical steps valid.
+### 8. Reproduce and save a run
 
-#### Testing a timestep
+Seed PAL's random stream **before** the first stochastic operation:
 
-Test a model's update function on a grid small enough to inspect by hand, including an edge or wrapped boundary rather than only interior sites. Use invariants appropriate to the object: closed diffusion conserves mass within floating-point tolerance; agent moves preserve valid live handles and occupancy rules; population updates satisfy the conservation and nonnegativity checks from §5.
+```python
+pal.Seed(1234)
+```
 
-When a model uses both Python orchestration and compiled `@pal.njit` updates, test both paths; passing in Python does not establish compiled behavior. Include safe and fast runs in regression testing, but use safe-mode exceptions to diagnose invalid operations rather than expecting fast mode to detect them.
-
-#### Random streams and repeatability
-
-`pal.Seed(seed)` initializes PAL's random stream. `pal.Random()` draws a uniform value and `pal.RandInt(max)` draws an integer from `[0, max)`. PAL random draws from Python and compiled PAL code consume the same stream, so **the order of calls matters**. Repeating a run requires the same seed, initial state, model parameters, and random-call order; merely reseeding halfway through a simulation does not reconstruct the prior model state.
-
-For comparisons between two algorithms, seed each run separately and record the seed. If one implementation makes additional random draws, subsequent results can diverge even when both start from the same seed. External random libraries (such as NumPy's generators) have independent state and must be seeded or checkpointed separately.
-
-### 7. Drawing and output
-
-`StartPixWindow(xDim, yDim, scale=1, title='PAL', headless=False)` returns `(pix, window)`. Write packed RGB colors such as `0xFF0000` to `pix[x, y]`, then call `window.Update()` to publish the frame. `window.Save(path, block=True)` waits for the image to be written; use `window.Close()` to release resources. The pixel buffer also supports linear indices, slices, and writes from compiled code. For off-screen images, use `headless=True` (requires the relevant output dependencies). GIF recording uses `window.StartGif(path, delay=100)`, `window.AddGifFrame(block=False)`, and `window.StopGif()`; update the window before capturing each frame.
-
-`StartOpenGLWindow` provides geometric 2D/3D drawing rather than a writable pixel lattice. Use its drawing object for shapes and scene controls; its window uses the same update, image/GIF output, and close lifecycle described above. `headless=True` is available for off-screen rendering but still requires a working OpenGL backend. See the [API Reference](API_REFERENCE.md) for the drawing-method inventory.
-
-Rendering and simulation are separate. A model can run without a window, draw every timestep, or draw only selected checkpoints.
-
-### 8. Checkpointing and reproducibility
-
-PAL's native-backed model objects support Python pickling, so a long-running model can save its state and resume without retaining native pointers from the original process. A checkpoint must include **all** state needed for continuation: every grid, relevant parameters, the current timestep, and any additional state managed by the model. Saving only one grid does not preserve a coupled simulation. Keep the code version and parameter configuration alongside the checkpoint so that results can be interpreted later.
-
-A PAL object checkpoint does **not** serialize PAL's random stream. If exact stochastic continuation matters, the model must reconstruct the intended random state separately; external RNGs such as NumPy's are independent as well. Verify checkpoint behavior with a short uninterrupted run and a checkpoint-and-resume run rather than assuming object state alone reproduces the same future random draws.
-
-A minimal checkpoint can be saved and resumed without opening a window:
+The same seed reproduces the same random stream when the initial state and order of random calls also match. For a checkpoint, Python's `pickle` can save PAL-backed objects together with ordinary model metadata:
 
 ```python
 import pickle
-import PythonAutomataLibrary as pal
 
-pop = pal.NewPopGrid((5,))
-pop[1] = 10
-pop.Add(7, 1)  # Pending change is part of the checkpoint.
-state = {"pop": pop, "step": 3}
-checkpoint = pickle.dumps(state)
+with open("cells.pkl", "wb") as f:
+    pickle.dump({"cells": cells, "nutrient": nutrient, "step": step}, f)
 
-restored = pickle.loads(checkpoint)
-restored["pop"].Update()
-assert restored["step"] == 3
-assert restored["pop"][1] == 17
+with open("cells.pkl", "rb") as f:
+    state = pickle.load(f)
+cells = state["cells"]
+nutrient = state["nutrient"]
+step = state["step"]
 ```
 
-`Examples/Agents/SaveLoadModel.py` serializes a dictionary containing an `AgentGrid`, an `IList`, and the timestep, then restores all three before continuing. PAL object checkpoints do not include unrelated Python state or external RNG streams.
+Saving object state is not the same as saving every source of randomness or every external resource. To resume a stochastic trajectory exactly, also preserve the relevant random state and any other model state your experiment uses. A fixed seed is sufficient for replaying a run from its beginning under the same call sequence, not necessarily for resuming halfway through it.
 
+### Where to go next
+
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, update cells, compile repeated work, choose a representation, evolve a field, and record experiments. The remainder of this guide gives **subsystem-specific API behavior**, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
 
 ## Core use
 
