@@ -155,6 +155,33 @@ When an operation behaves unexpectedly, follow the layers in order:
 
 This sequence moves from observable contract to minimal evidence before diving into implementation details. It reduces the risk of "fixing" a wrapper symptom by changing the model's scientific behavior.
 
+### 1.16 A concrete execution trace
+
+Consider a model step that reads a field value, changes an agent, and queues a population delta. At the **model layer**, the author chooses the order of those operations. The **public PAL API** resolves coordinates, handles, and arguments. In ordinary Python execution, Python-facing wrappers perform the supported operations; in a compiled step, PAL's preparation and Numba-compatible call path must preserve their observable meaning. Both paths ultimately work with the relevant native-backed state. A later `Update()` on the population grid commits the queued delta; it is not implied by a field read or an agent movement.
+
+This trace exposes three independent questions during debugging: **Was the right site or handle selected? Was the right operation dispatched? Was the state committed at the intended point?** A failure in any one can produce a scientifically wrong timestep despite apparently reasonable model code.
+
+The execution path is conceptual rather than a promise that every call crosses every layer. Some operations are resolved in wrappers or compiled code; consult the actual implementation when profiling call overhead or changing a kernel.
+
+### 1.17 Maintaining state and ownership boundaries
+
+A PAL object's public lifetime is managed through its Python-facing object, while native-backed state may have its own allocation and representation. The important contract is not a presumed pointer layout: it is that supported operations preserve the object's invariants and that serialized state is reconstructed without relying on process-local addresses.
+
+For a new operation, identify which layer owns each invariant before editing it. An agent move affects both position and occupancy. A disposal affects liveness and future handle validity. A population update must reconcile queued deltas with current counts and any capacity constraints. A PDE transport operation must respect the field's configured geometry, boundary treatment, and commit semantics. Bypassing the public mutation path may leave those related pieces inconsistent.
+
+Do not expose a mutable native buffer as a convenience API without defining its ownership, lifetime, invalidation, and synchronization rules. In particular, a detached NumPy copy and a live native-backed view have different mutation contracts.
+
+### 1.18 How to extend a public operation
+
+1. Define the intended model-facing behavior, including dimensions, positional and keyword arguments, return type, mutation timing, and failure cases.
+2. Identify the owning implementation and any native state invariants; decide whether the operation belongs in an existing wrapper or requires a native kernel.
+3. Make the supported Python and `@pal.njit` paths agree. If neighborhood or Box syntax is involved, inspect PAL's transformation rules rather than assuming Numba can compile an arbitrary Python iterator.
+4. Add a hand-checkable regression case, including boundaries and invalid inputs where safe-mode validation applies. Compare Python and compiled results, and run safe and fast tests in separate processes.
+5. Update public Protocol declarations and source docstrings, regenerate the API Reference, and update the API Guide if user-visible behavior changed.
+6. Benchmark cold compilation and steady-state runtime only when performance is part of the change.
+
+This order prevents documentation from becoming an unsupported promise and keeps low-level implementation choices subordinate to the user-visible contract.
+
 ## 2. Testing PAL
 
 PAL's `Testing/` suite exercises public behavior across geometry and wrapping, Grid/IList/Multinomial/RNG operations, AgentGrid and PopGrid state changes, PDE transport and boundaries, compiled Python/Numba parity, visualization, integrated models, and historical regressions. Many tests use independent invariants or small reference calculations rather than reproducing PAL's implementation.
