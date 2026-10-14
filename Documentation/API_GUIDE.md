@@ -204,9 +204,8 @@ def Step(cells: pal.PopGrid, multi: pal.Multinomial):
     cells.Update()
 
 def StepNutrient(cells, nutrient):
-    for x in range(SIZE):
-        for y in range(SIZE):
-            nutrient[x, y] = max(0.0, nutrient[x, y] - 0.01 * cells.counts[x, y])
+    for i in range(len(cells)):
+        nutrient[i] = max(0.0, nutrient[i] - 0.01 * cells.counts[i])
     nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
     nutrient.Update()
 
