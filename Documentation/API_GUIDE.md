@@ -1,6 +1,12 @@
 # PAL API Guide
 
-This guide combines a first working model and practical modeling workflows with the detailed behavioral contracts of PAL's public API. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md) for signatures and method descriptions. For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
+This guide combines a first working model and practical modeling workflows with the detailed behavioral contracts of PAL's public API. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
+
+## Learning path
+
+Read **The model loop** first, then **Choose the right representation** and **Coordinates and neighborhoods**. Continue through agents, synchronous updates, compilation, and visualization as needed. These worked examples introduce concepts; the later sections are organized by object and provide the detailed behavior to consult while building a model. If you already know PAL, jump directly to the relevant subsystem heading.
+
+The essential distinction throughout this guide is between **where state is stored**, **when changes become visible**, and **which execution path runs the model**. Choosing a representation, an update schedule, and a Python or compiled loop are separate decisions.
 
 ## Getting started and worked modeling patterns
 
