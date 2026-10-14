@@ -78,36 +78,36 @@ You should see four red cells near the center. If you change their initial coord
 
 ### 3. Find neighbors and empty sites
 
-In this model, cells move only into empty neighboring sites. `pal.MooreHood(2, excludeCenter=True)` describes the eight relative offsets around a 2D site. `cells.Hood(..., x, y)` converts those offsets to valid lattice coordinates. This is different from a cell's continuous position: `XSQ` and `YSQ` give its lattice site.
+In this model, cells move only into empty neighboring sites. `pal.MooreHood(2, excludeCenter=True)` describes the eight relative offsets around a 2D site. `cells.Hood(..., x, y)` converts those offsets to valid lattice coordinates. `XSQ` and `YSQ` give an agent's lattice site.
 
-Add this near the constants in the preceding program:
+An `IList` is PAL's reusable integer list, designed for efficient neighborhood queries. Store **linear site indices** rather than Python coordinate tuples. Add this near the constants in the preceding program:
 
 ```python
 MOORE = pal.MooreHood(2, excludeCenter=True)
 
-def EmptyNeighbors(cells, agent):
-    sites = []
+def EmptyNeighbors(cells, agent, empty):
+    empty.Clear()
     for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
         if cells.counts[x, y] == 0:
-            sites.append((x, y))
-    return sites
+            empty.Append(cells.ToI(x, y))
+    return empty
 ```
 
-Try printing `EmptyNeighbors(cells, cells.All()[0])` after setup. The exact result depends on the occupied sites. At a nonperiodic boundary, `Hood` omits offsets that leave the grid.
+Create `empty = pal.NewIList()` once in `main`, after creating the grid. You can inspect `EmptyNeighbors(cells, cells.All()[0], empty).All()` after setup. The returned indices identify available lattice sites; `ItoX` and `ItoY` recover their coordinates. At a nonperiodic boundary, `Hood` omits offsets outside the grid.
 
 ### 4. Move cells to empty neighboring sites
 
 Each cell takes a random walk: at every timestep, it chooses one available empty neighboring site and moves there. No cells are created or removed. We iterate a shuffled snapshot of existing agents; moves update occupancy immediately, so later cells see the new positions.
 
-Add `MOORE` and `EmptyNeighbors` from stage 3 to the program from stage 2, then add:
+Add `MOORE` and `EmptyNeighbors` from stage 3 to the program from stage 2. Construct `empty = pal.NewIList()` once in `main`, and call `Step(cells, empty)`:
 
 ```python
-def Step(cells):
+def Step(cells, empty):
     for agent in cells.All(shuffle=True):
-        empty = EmptyNeighbors(cells, agent)
-        if empty:
-            x, y = empty[pal.RandInt(len(empty))]
-            cells.MoveSQ(agent, x, y)
+        EmptyNeighbors(cells, agent, empty)
+        if len(empty):
+            site = empty.Random()
+            cells.MoveSQ(agent, cells.ItoX(site), cells.ItoY(site))
 ```
 
 Replace the stationary display loop with:
@@ -115,7 +115,7 @@ Replace the stationary display loop with:
 ```python
     pal.AwaitWindows()
     while window.IsOpen():
-        Step(cells)
+        Step(cells, empty)
         Draw(cells, pix)
         window.Update()
         time.sleep(0.05)
@@ -126,24 +126,19 @@ The cells wander without overlapping. A cell with no empty neighbors stays put. 
 
 ### 5. Compile the timestep
 
-We can compile the same movement rule with `@pal.njit(cache=True)`. Instead of allocating Python lists of empty neighbors, use a reusable `IList` of linear site indices.
-
-Replace `Step` with this compiled version. Construct `empty = pal.NewIList()` once in `main`, and call `Step(cells, empty)` in the display loop.
+Because the neighborhood results already use `IList`, compiling the movement rule requires no change in data representation. Add `@pal.njit(cache=True)` to the same `Step` function and annotate its PAL arguments:
 
 ```python
 @pal.njit(cache=True)
 def Step(cells: pal.AgentGrid, empty: pal.IList):
     for agent in cells.All(shuffle=True):
-        empty.Clear()
-        for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
-            if cells.counts[x, y] == 0:
-                empty.Append(cells.ToI(x, y))
+        EmptyNeighbors(cells, agent, empty)
         if len(empty):
             site = empty.Random()
             cells.MoveSQ(agent, cells.ItoX(site), cells.ItoY(site))
 ```
 
-The compiled version preserves the rule: choose one empty neighbor uniformly, or stay if none is available. Keep window management in ordinary Python and repeated model operations in compiled functions.
+Also decorate `EmptyNeighbors` with `@pal.njit(cache=True)` and annotate `cells: pal.AgentGrid` and `empty: pal.IList` so it can be called from compiled `Step`. The simulation rule is unchanged; only the repeated computation is compiled. Keep window management in ordinary Python.
 
 ### 6. Add a diffusing nutrient
 
