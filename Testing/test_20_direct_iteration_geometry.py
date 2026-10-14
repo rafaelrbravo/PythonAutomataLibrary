@@ -57,6 +57,19 @@ def test_python_agents_at_stack_and_dispose_current(api):
     assert g.GetPop() == 1
 
 
+def test_python_agents_at_detects_structural_mutation_in_safe_mode(api, safe_mode):
+    if not safe_mode:
+        pytest.skip("Fast mode omits direct-iteration mutation checks")
+    g = api.NewAgentGrid((4, 4), isStackable=True)
+    first = g.NewAgentSQ(2, 3)
+    g.NewAgentSQ(2, 3)
+    iterator = iter(g.AgentsAt(2, 3))
+    assert next(iterator) in set(g.All())
+    g.Dispose(first)
+    with pytest.raises(RuntimeError, match="structurally modified"):
+        next(iterator)
+
+
 @pytest.mark.parametrize("shape,point,rad", [
     ((-10,), (0.2,), 1.7),
     ((-10, -11), (0.2, 10.7), 2.1),
