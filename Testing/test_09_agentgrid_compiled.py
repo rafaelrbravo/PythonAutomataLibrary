@@ -296,3 +296,32 @@ def test_compiled_radius_rejects_invalid_geometry_in_safe_mode(api, safe_mode, r
 
     with pytest.raises(ValueError, match="radius and coordinates must be finite"):
         count_radius(g, radius, center)
+
+
+def test_compiled_radius_matches_python_near_nonwrapped_boundary(api):
+    g = api.NewAgentGrid((6, 7), isStackable=True)
+    positions = ((0.2, 0.2), (0.8, 1.0), (5.8, 6.8), (1.6, 0.4))
+    for x, y in positions:
+        g.NewAgent(x, y)
+    cx, cy, radius = 0.1, 0.1, 2.0
+    expected = {int(agent): (float(dx), float(dy), float(ds)) for agent, dx, dy, ds in g.AgentsInRadius(radius, cx, cy)}
+
+    @api.njit
+    def collect(grid):
+        ids = np.empty(8, dtype=np.int64)
+        vals = np.empty((8, 3), dtype=np.float64)
+        count = 0
+        for agent, dx, dy, ds in grid.AgentsInRadius(radius, cx, cy):
+            ids[count] = agent
+            vals[count, 0] = dx
+            vals[count, 1] = dy
+            vals[count, 2] = ds
+            count += 1
+        return ids[:count], vals[:count]
+
+    ids, vals = collect(g)
+    actual = {int(agent): tuple(row) for agent, row in zip(ids, vals)}
+    assert set(actual) == set(expected)
+    assert len(actual) == 3
+    for agent, expected_values in expected.items():
+        assert actual[agent] == pytest.approx(expected_values, abs=2e-6)
