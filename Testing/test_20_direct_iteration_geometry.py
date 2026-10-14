@@ -70,6 +70,18 @@ def test_python_agents_at_detects_structural_mutation_in_safe_mode(api, safe_mod
         next(iterator)
 
 
+def test_python_agent_generation_check_handles_zero_snapshot(api, safe_mode):
+    if not safe_mode:
+        pytest.skip("Fast mode omits direct-iteration mutation checks")
+    import importlib
+    core = importlib.import_module("PythonAutomataLibrary.NativeCore")
+    g = api.NewAgentGrid((3, 3), isStackable=True)
+    g.NewAgentSQ(1, 1)
+    # A saved generation of zero must not disable safe-mode validation.
+    with pytest.raises(RuntimeError, match="structurally modified"):
+        core._PythonAgentCheck(g, 0)
+
+
 def test_python_agents_at_detects_same_site_move_in_safe_mode(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode omits direct-iteration mutation checks")
