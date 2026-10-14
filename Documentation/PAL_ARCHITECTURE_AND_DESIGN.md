@@ -311,15 +311,15 @@ Headless rendering exists so output can be generated and tested without a visibl
 
 ### 4.9 Source-aware diagnostics and AST transformation
 
-PAL's `njit` interface transforms selected PAL constructs before Numba compiles the function. For example, neighborhood and Box iteration can be expanded in compiled code, and annotated arguments can receive source-aware diagnostics in safe mode. This helps preserve a modeler's high-level expression of a neighborhood loop while making the repeated operations suitable for compilation.
+PAL's `njit` wrapper transforms selected constructs, including neighborhood and Box iteration, before Numba compilation. Type annotations on PAL arguments also support source-aware safe-mode diagnostics.
 
-The transformation layer is also a reason to test examples and edge cases rather than assuming that valid Python syntax guarantees identical compiled semantics. The AST transformation, wrapper signatures, native core, and Numba typing rules all participate in the final behavior. When an error appears only in compiled mode, reduce it to a minimal function and compare the public behavior in Python and compiled execution.
+Python syntax alone does not guarantee matching compiled behavior: AST rewriting, wrappers, native code, and Numba typing all contribute. When a problem appears only under compilation, reduce it to a minimal function and compare Python and compiled execution.
 
 Source-line diagnostics depend on sufficient type information, including annotations for relevant PAL arguments. Unannotated arguments do not promise the same diagnostics. Treat annotations as part of writing clear compiled model code, not as a guarantee that every error can be attributed to an exact source expression.
 
 ### 4.10 Public API and implementation consistency
 
-PAL's public API is intended to feel coherent across Python and `@pal.njit`, but the two paths have different execution machinery. The Python wrapper may validate an argument before calling native code, while the compiled wrapper may need a Numba-compatible overload and may use different diagnostics. Both must still agree on the public result and supported inputs.
+Python and `@pal.njit` use different wrappers and diagnostics, but must agree on supported inputs and public results. Python validation and Numba overloads are implementation details, not separate user-facing contracts.
 
 This is why the project uses API coverage inventories, Python/compiled parity tests, integrated examples, and safe/fast test runs. A type declaration or docstring is not sufficient evidence if runtime behavior disagrees. Conversely, a one-off implementation detail should not be elevated to a public promise unless the tests and documentation support it. When changing a contract, update the implementation, declarations, generated reference, manual, examples, and tests as one coherent change.
 
