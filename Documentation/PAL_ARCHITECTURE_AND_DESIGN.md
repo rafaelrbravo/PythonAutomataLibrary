@@ -168,26 +168,22 @@ When adding or changing model code, start with the smallest test that expresses 
 
 ## 3. Design principles
 
-This chapter makes explicit the tradeoffs that are easy to miss when reading the API as a list of methods. Some choices are direct consequences of the implementation; others are engineering priorities reflected in the public contract. They should not be mistaken for claims that every alternative was exhaustively benchmarked.
+The architecture above explains PAL's layers. This chapter draws out their modeling consequences; Section 4 then examines subsystem-specific contracts. These choices reflect engineering priorities, not exhaustive comparisons with every alternative.
 
 ### 3.1 Keep model logic in Python, put repeated work in compiled kernels
 
-PAL is designed for models whose timestep performs many small operations: inspect a neighborhood, update state, move agents, accumulate a field, or sample a random event. Python is productive for configuring experiments, loading data, controlling the simulation loop, and drawing. But calling Python for every cell or agent can dominate the cost of a large model.
-
-PAL therefore separates orchestration from the inner loop. A normal Python function can create objects, open a window, choose parameters, and decide how many timesteps to run. Functions decorated with `@pal.njit(cache=True)` express the repeated computation. The cache can avoid recompiling the same specialization on later runs, while the first call may still pay a compilation cost.
-
-This division is a recommendation, not a requirement that every function be compiled. Start with clear Python code, identify the repeated work, and move the computational kernel into compiled code when that is useful. Keep file I/O, interactive controls, and other orchestration outside compiled functions unless the public API explicitly supports them.
+Use Python to configure experiments, load data, and control simulation execution. Put frequently repeated site- and agent-level operations in `@pal.njit(cache=True)` functions when profiling justifies compilation. The first call may incur compilation overhead; caching can reduce that cost on later runs. Keep I/O and interactive controls outside compiled kernels unless PAL explicitly supports them.
 
 ### 3.2 Use a small set of representations with distinct meanings
 
-PAL deliberately distinguishes a typed `Grid`, an `AgentGrid`, a `PopGrid`, and a `PDEgrid`. These are not interchangeable containers with different names. Each representation encodes assumptions about what the model needs to remember:
+The four principal spatial representations preserve different kinds of state:
 
 - A `Grid` stores a value at each lattice site. Use it for attributes such as terrain, occupancy masks, or local state that is not itself a collection of individuals.
 - An `AgentGrid` preserves individual identity. Agents can have different positions, histories, properties, and fates.
 - A `PopGrid` stores integer counts. It is suited to interchangeable individuals when the model needs the number at each site, but not a handle for each one.
 - A `PDEgrid` stores a scalar field and supplies numerical transport operations such as diffusion and advection.
 
-The point is not to force every model into one abstraction. It is to make the meaning of state explicit. A count grid avoids per-individual bookkeeping, but cannot answer which individual moved or what its personal history was. A continuous field can represent concentration smoothly, but it does not preserve integer identity or discrete events. A hybrid model is often appropriate, provided the conversions between representations are part of the scientific model rather than accidental implementation details.
+Combine representations when needed, but define how information passes between them. Converting agents to counts loses identity and history; converting counts to a continuous field changes the meaning of discrete events. Those losses are modeling assumptions.
 
 ### 3.3 Make update timing visible
 
@@ -253,7 +249,7 @@ Integrated examples then exercise combinations of components under realistic con
 
 ## 4. Subsystem design choices
 
-The previous chapter explains cross-cutting principles. This chapter follows those principles into individual subsystems and describes the practical consequences of their contracts.
+The following sections examine subsystem-specific contracts and the implementation tradeoffs behind them. For complete call signatures and usage examples, see the API Reference and API Guide.
 
 ### 4.1 Grid: typed site state and explicit indexing
 
