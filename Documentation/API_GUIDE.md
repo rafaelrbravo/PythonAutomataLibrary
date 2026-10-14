@@ -19,10 +19,14 @@ import PythonAutomataLibrary as pal
 
 SIZE = 30
 
-def main():
+def Setup():
     cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
+    return cells
+
+def main():
+    cells = Setup()
     print("Initial cells:", len(cells.All()))
 
 if __name__ == "__main__":
@@ -50,10 +54,14 @@ def Draw(cells, pix):
     for agent in cells.All():
         pix[cells.XSQ(agent), cells.YSQ(agent)] = RED
 
-def main():
+def Setup():
     cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
+    return cells
+
+def main():
+    cells = Setup()
     pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Cells")
     Draw(cells, pix)
     window.Update()
