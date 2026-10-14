@@ -184,3 +184,20 @@ def test_compiled_agents_in_radius_detects_same_site_move_in_safe_mode(api, safe
         move_during_radius_iteration(g)
     assert g.GetPop() == 2
     assert g.counts[2, 2] == 2
+
+
+def test_compiled_agents_in_radius_allows_property_updates(api):
+    g = api.NewAgentGrid((4, 4), numAgentProps=1, isStackable=True)
+    agents = [g.NewAgent(2.2, 2.2), g.NewAgent(2.4, 2.4)]
+
+    @api.njit
+    def update_properties(grid):
+        count = 0
+        for agent, dx, dy, dist_sq in grid.AgentsInRadius(1.0, 2.5, 2.5):
+            grid[agent, 0] = 2.5
+            count += 1
+        return count
+
+    assert update_properties(g) == len(agents)
+    assert all(g[agent, 0] == pytest.approx(2.5) for agent in agents)
+    assert g.counts[2, 2] == len(agents)
