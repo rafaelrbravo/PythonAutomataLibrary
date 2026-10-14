@@ -287,13 +287,13 @@ Transport routines accumulate changes for `Update()` to commit. That separation 
 
 ### 4.5 IList: reusable collections for compiled workflows
 
-`IList` is a PAL-managed integer list for workflows that need to retain, shuffle, or compose collections of indices or handles, including inside compiled code. It can be useful when building a list of empty neighboring sites before choosing one for reproduction, or when a query result needs to survive beyond a single iteration.
+`IList` stores reusable integer collections in Python and compiled code. For example, a model can collect empty neighboring sites and choose one for reproduction without allocating a new collection at every step.
 
-`All()` returns a detached copy; `Iter()` avoids creating that copy when the caller only needs to traverse the current list. That is a deliberate distinction between a convenient independent result and a lower-overhead traversal. Do not assume a returned copy is a live view. Clear and reuse a list when repeated allocation would otherwise become part of the timestep cost, while ensuring its contents are reset at the right point in the model.
+`All()` returns a detached copy; `Iter()` traverses the current list without copying. Use the former when results must survive later mutations and the latter for one-pass traversal. Clear reused lists before repopulating them.
 
 ### 4.6 Randomness: one explicit PAL stream
 
-PAL exposes `Seed`, `Random`, and `RandInt` and provides a multinomial sampler so model code can use a consistent PAL random stream in Python and compiled code. The stream is call-order dependent: each draw advances the shared stream, so adding a draw in one branch can change all later random outcomes. Reproducibility therefore requires more than choosing a seed; it requires matching initial state, parameters, and random-call order.
+`Seed`, `Random`, and `RandInt` share PAL's random stream across Python and compiled code. Each draw advances the stream, so even one additional draw changes subsequent outcomes. Reproducibility requires matching the seed, initial state, parameters, and draw order.
 
 Use PAL's RNG functions when a model should share one reproducible stream across PAL calls. External RNGs have independent state and need their own seed or checkpoint handling. A PAL object checkpoint does not by itself serialize the random stream, so exact stochastic continuation requires separately preserving or reconstructing random state. Do not claim that a seed alone guarantees identical outcomes after changing the algorithm.
 
