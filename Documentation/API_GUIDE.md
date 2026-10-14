@@ -1,6 +1,6 @@
 # PAL API Guide
 
-This guide combines a first working model and practical modeling workflows with the detailed behavioral contracts of PAL's public API. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the generated [API Reference](API_REFERENCE.pdf). For quick syntax, use the [Cheatsheet](CHEATSHEET.pdf). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
+This guide combines a first working model and practical modeling workflows with the detailed behavioral contracts of PAL's public API. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md) for signatures and method descriptions. For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
 
 ## Getting started and worked modeling patterns
 
