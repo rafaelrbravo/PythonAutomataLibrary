@@ -156,3 +156,15 @@ def test_all_shuffle_preserves_membership(api):
     expected = set(agents)
     for _ in range(8):
         assert set(map(int, g.All(shuffle=True))) == expected
+
+
+def test_all_snapshot_is_stable_across_agent_lifecycle_changes(api):
+    g = api.NewAgentGrid((8,), isStackable=False)
+    original = [g.NewAgentSQ(i) for i in range(4)]
+    snapshot = g.All()
+    g.Dispose(original[1])
+    replacement = g.NewAgentSQ(6)
+    g.MoveSQ(original[0], 7)
+    assert set(map(int, snapshot)) == set(original)
+    assert set(map(int, g.All())) == set(original) - {original[1]} | {replacement}
+    assert g.GetPop() == 4
