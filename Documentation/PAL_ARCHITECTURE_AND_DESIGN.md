@@ -187,15 +187,15 @@ Combine representations when needed, but define how information passes between t
 
 ### 3.3 Make update timing visible
 
-A simulation's update order is part of its mathematics. PAL does not hide every update behind an automatic scheduler because different models need different timing semantics. A synchronous cellular update, a sequential agent sweep, and a numerical field solve are not the same operation.
+Update order is part of the model, not a scheduling detail. PAL leaves scheduling explicit because synchronous site updates, sequential agent sweeps, and field solves have different semantics.
 
-For `PopGrid` and `PDEgrid`, queued changes and `Update()` provide a transaction-like boundary: calls that accumulate deltas do not immediately become the current state. This lets a model calculate changes from one shared starting state and then commit them together. Direct indexing, by contrast, changes current state immediately. Mixing the two is permitted, but the order then matters and must be deliberate.
+`PopGrid` and `PDEgrid` can queue deltas and apply them together with `Update()`. Direct assignment changes current state immediately. Mixing queued and immediate changes is possible, but their order must be deliberate.
 
-An `AgentGrid` has a different contract. `All()` returns a snapshot of the living handles at the time it is called, so adding or removing agents does not change which handles are in that snapshot. It does not freeze the entire world: occupancy queries performed later still see the current grid, including births and deaths that have already happened. This is useful for a sequential agent update, but it is not a synchronous update. If all agents must act from the same old state, store the necessary old values separately and commit changes in a second phase.
+`AgentGrid.All()` snapshots handle membership, not world state. Later occupancy queries observe births, deaths, and moves already applied. For a genuinely synchronous agent update, snapshot the relevant old state and apply changes in a separate phase.
 
 ### 3.4 Make dimensionality explicit but keep the API unified
 
-Most model concepts—grids, neighborhoods, movement, and fields—exist in one, two, or three spatial dimensions. Requiring a separate class and method family for every dimension would multiply the API surface and make examples harder to transfer between models. PAL instead uses dimension-aware objects and coordinate tuples, with shared geometry metadata such as `nDims`, `xDim`, `yDim`, `zDim`, and wrapping flags.
+PAL uses dimension-aware objects rather than separate APIs for every spatial dimension. Geometry metadata (`nDims`, `xDim`, `yDim`, `zDim`, and wrapping flags) makes each object's shape explicit.
 
 The coordinate shape still matters. In one dimension a site can be represented by one integer; in two and three dimensions, coordinate tuples identify the axes. PAL retains explicit site-index operations where they are useful, but APIs that mean continuous position remain distinct from APIs that mean lattice position. This prevents a linear index, a lattice coordinate, and a continuous location from being silently treated as the same thing.
 
@@ -207,7 +207,7 @@ A lattice site is discrete; an off-lattice agent position is continuous. PAL kee
 
 For a lattice site `(x, y)`, the associated unit cell occupies `[x, x+1) × [y, y+1)`. Its center is `(x+0.5, y+0.5)`. Creating an agent with `NewAgentSQ(x, y)` places it at the site center; creating it with `NewAgent(x, y)` uses the continuous coordinates supplied. The resulting `XSQ`/`YSQ` values identify the containing site, while `X`/`Y` retain continuous position.
 
-This distinction affects neighborhood searches, visualization, coupling to fields, and boundary behavior. Use site-based movement when the model is lattice-based. Use continuous movement when sub-site displacement matters. Do not round continuous positions manually unless that rounding is part of the model; use the documented conversion or site properties.
+Use site-based movement for lattice models and continuous movement when sub-site displacement matters. For field coupling or neighborhood queries, use PAL's site properties or conversion methods rather than introducing an unintended rounding rule.
 
 ### 3.6 Separate relative neighborhoods from their application
 
@@ -229,7 +229,7 @@ This is an explicit tradeoff: predictable diagnostics during development, with a
 
 PAL's public Python API is designed to remain readable and usable from Numba-compiled model code. The native C core provides storage and kernels; Python and Numba-facing wrappers expose them to both execution paths. The wrappers connect the API to the implementation rather than maintaining a separate copy of model state.
 
-This separation lets PAL combine Python usability with native-backed data structures and compiled loops. It also creates obligations: wrapper signatures, argument names, indexing behavior, safe-mode checks, and Python/compiled behavior must agree. A mismatch between a Python path and a compiled path is a correctness defect even if each path appears plausible in isolation.
+This boundary requires consistent signatures, argument binding, indexing, validation, and results across Python and compiled execution. A disagreement is a correctness defect even if each path appears plausible alone.
 
 The public Protocol declarations provide the annotation and autocomplete surface. They should describe the supported public contract, but a declaration alone is not proof of runtime behavior. The implementation and executable tests must agree with the published contract. When changing an API, update its behavior, type-facing declarations, reference material, examples, and regression tests together.
 
