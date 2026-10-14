@@ -435,7 +435,7 @@ pop.Update()
 field = pal.NewPDEgrid((xDim, yDim))
 ```
 
-`PDEgrid` stores a continuous `float32` scalar field. Direct indexing/assignment changes the current field immediately. Slice reads return detached `float32` NumPy arrays; array slice assignment writes to the field, but editing a previously read slice does not. Linear (`field[:]`) and spatial (`field[:, :]`) slices are supported. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
+`PDEgrid` stores a `float32` scalar field. Direct assignment changes the current field immediately. Linear (`field[:]`) and spatial (`field[:, :]`) slice reads return detached `float32` NumPy arrays; slice assignment writes to the field, but editing a previously read slice does not. `Add(value, ...)` queues a delta, `Update()` commits pending changes together, and `Reset()` clears both current and pending values.
 
 ### Space and time
 
@@ -461,7 +461,7 @@ field.DiffusionRadialCircle(rateConstant, outerBC=None)
 field.DiffusionRadialSphere(rateConstant, outerBC=None)
 ```
 
-`Diffusion` uses one constant diffusion rate. `DiffusionField` uses spatially varying cell-centered rates; each interior face uses the harmonic mean of its two adjacent cell rates, so a zero rate on either side blocks diffusion across that face. `DiffusionInterfaces` supplies the positive-face interface rate for each cell and axis directly; the negative face uses the neighboring cell's stored positive-face rate. `DiffusionMask` treats mask values `>= 0` as active and values `< 0` as blocked; diffusion occurs only between adjacent active cells, so the magnitude of a nonnegative mask value is irrelevant. `DiffusionADI` uses Crank-Nicolson in 1D, Peaceman-Rachford ADI in 2D, and Douglas-Gunn directional solves in 3D. `DiffusionRadialCircle` and `DiffusionRadialSphere` use radial shell finite-volume discretizations on a nonwrapped 1D grid with at least two cells. Cell `i` spans radii `i*dx` to `(i+1)*dx`, so cell 0 is the central disk/sphere and symmetry gives zero flux through its inner face. `outerBC` optionally sets the exterior concentration at the outer face.
+`Diffusion` uses a constant rate. `DiffusionField` uses cell-centered rates that may vary by site; each interior face uses the harmonic mean of adjacent rates, so a zero rate on either side blocks flux across that face. `DiffusionInterfaces` supplies the positive-face interface rate for each cell and axis directly; the negative face uses the neighboring cell's stored positive-face rate. `DiffusionMask` treats mask values `>= 0` as active and values `< 0` as blocked; diffusion occurs only between adjacent active cells, so the magnitude of a nonnegative mask value is irrelevant. `DiffusionADI` uses Crank-Nicolson in 1D, Peaceman-Rachford ADI in 2D, and Douglas-Gunn directional solves in 3D. `DiffusionRadialCircle` and `DiffusionRadialSphere` use radial shell finite-volume discretizations on a nonwrapped 1D grid with at least two cells. Cell `i` spans radii `i*dx` to `(i+1)*dx`, so cell 0 is the central disk/sphere and symmetry gives zero flux through its inner face. `outerBC` optionally sets the exterior concentration at the outer face.
 
 Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxBC`, `zMinBC`, and `zMaxBC` fixed boundary values. A boundary may be a scalar applied uniformly across the face or a C-contiguous `float32` array with one value per site on that face; for example, an x-face array has `yDim*zDim` values in 3D. On a nonwrapped face, `None` means no flux through that face; wrapped axes are periodic and do not accept explicit boundary conditions. Field/interface arrays must match the grid geometry and dimensionality. Safe mode validates boundary size/type/finite values, explicit-scheme stability, and other inputs before changing pending state.
 
@@ -493,7 +493,7 @@ items = pal.NewIList()
 | `Iter()` | Return a no-copy/live iterable view. |
 | `len(items)`, `items[i]` | Length/index access. |
 
-Use `Iter()` for one-pass iteration when a copy is unnecessary. Use `All()` when the returned values must remain independent of subsequent IList changes.
+Use `Iter()` to traverse the current list without copying. Use `All()` when the result must remain independent of later changes.
 
 ## Random numbers and Multinomial
 
@@ -521,7 +521,7 @@ b = multi.Sample(pB)
 
 ## Visualization
 
-PAL provides a pixel renderer for lattice models and an OpenGL renderer for 2D/3D geometry. Rendering runs separately from model computation.
+PAL provides a pixel renderer for lattice models and an OpenGL renderer for 2D/3D geometry. Simulation and rendering are separate.
 
 ### PixWindow
 
