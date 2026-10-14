@@ -168,7 +168,7 @@ When adding or changing model code, start with the smallest test that expresses 
 
 ## 3. Design principles
 
-This chapter makes explicit the tradeoffs that are easy to miss when reading the API as a list of methods. Some choices are direct consequences of the implementation; others are engineering priorities reflected in the public contract. They should not be mistaken for claims that every alternative was exhaustively benchmarked.
+These principles connect PAL's public behavior to the engineering trade-offs behind it.
 
 ### 3.1 Keep model logic in Python, put repeated work in compiled kernels
 
@@ -176,7 +176,7 @@ PAL is designed for models whose timestep performs many small operations: inspec
 
 PAL therefore separates orchestration from the inner loop. A normal Python function can create objects, open a window, choose parameters, and decide how many timesteps to run. Functions decorated with `@pal.njit(cache=True)` express the repeated computation. The cache can avoid recompiling the same specialization on later runs, while the first call may still pay a compilation cost.
 
-This division is a recommendation, not a requirement that every function be compiled. Start with clear Python code, identify the repeated work, and move the computational kernel into compiled code when that is useful. Keep file I/O, interactive controls, and other orchestration outside compiled functions unless the public API explicitly supports them.
+Compile repeated computation when profiling justifies it. Keep file I/O, interactive controls, and other orchestration in Python unless PAL explicitly supports them in compiled code.
 
 ### 3.2 Use a small set of representations with distinct meanings
 
@@ -187,7 +187,7 @@ PAL deliberately distinguishes a typed `Grid`, an `AgentGrid`, a `PopGrid`, and 
 - A `PopGrid` stores integer counts. It is suited to interchangeable individuals when the model needs the number at each site, but not a handle for each one.
 - A `PDEgrid` stores a scalar field and supplies numerical transport operations such as diffusion and advection.
 
-The point is not to force every model into one abstraction. It is to make the meaning of state explicit. A count grid avoids per-individual bookkeeping, but cannot answer which individual moved or what its personal history was. A continuous field can represent concentration smoothly, but it does not preserve integer identity or discrete events. A hybrid model is often appropriate, provided the conversions between representations are part of the scientific model rather than accidental implementation details.
+The representation determines what information survives. A count grid avoids individual bookkeeping but cannot recover personal histories; a continuous field cannot preserve discrete events. Hybrid models can combine representations, provided their interactions are defined explicitly.
 
 ### 3.3 Make update timing visible
 
@@ -227,13 +227,13 @@ PAL's safe mode is the default. It adds validation and diagnostics around select
 
 Fast mode removes selected checks for performance-sensitive paths. It does not turn invalid operations into valid ones, and it does not make a numerically unstable scheme stable. PAL locks the process-wide mode when the first PAL model or window is constructed; call `pal.FastMode()` before any such construction. Because the choice is process-wide, compare safe and fast behavior in separate processes rather than trying to switch modes midway through a run.
 
-This is an explicit tradeoff: predictable diagnostics during development, with a deliberate route to reduce selected overhead after profiling. Safe mode is not a proof of scientific correctness. A program can use every API correctly and still encode the wrong equations or assumptions.
+Safe mode improves diagnostics, not scientific validity: a model can satisfy every API contract and still use incorrect equations or assumptions.
 
 ### 3.8 Use a native core behind a Python-facing API
 
 PAL's public Python API is designed to remain readable and usable from Numba-compiled model code. The native C core provides storage and kernels; Python and Numba-facing wrappers expose them to both execution paths. The wrappers connect the API to the implementation rather than maintaining a separate copy of model state.
 
-This separation lets PAL combine Python usability with native-backed data structures and compiled loops. It also creates obligations: wrapper signatures, argument names, indexing behavior, safe-mode checks, and Python/compiled behavior must agree. A mismatch between a Python path and a compiled path is a correctness defect even if each path appears plausible in isolation.
+The wrappers must agree on signatures, argument names, indexing, safety checks, and observable behavior across Python and compiled paths. A mismatch is a correctness defect even if each path seems plausible in isolation.
 
 The public Protocol declarations provide the annotation and autocomplete surface. They should describe the supported public contract, but a declaration alone is not proof of runtime behavior. The implementation and executable tests must agree with the published contract. When changing an API, update its behavior, type-facing declarations, reference material, examples, and regression tests together.
 
@@ -241,7 +241,7 @@ The public Protocol declarations provide the annotation and autocomplete surface
 
 PAL exposes explicit state-changing operations such as `Add`, `Update`, `Reset`, `Move`, and `Dispose`. This makes important transitions visible in the model code: a queued delta is not yet part of the committed population, and moving an agent is different from disposing its handle.
 
-This explicitness requires the model author to understand lifecycle and update order, but it makes the simulation easier to reason about and test. For stateful models, clarity about when state changes is more valuable than hiding those changes behind a convenient-looking abstraction.
+Explicit lifecycle and update order make state transitions easier to inspect and test.
 
 ### 3.10 Safe/fast and Python/compiled parity testing
 
