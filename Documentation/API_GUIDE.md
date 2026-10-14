@@ -601,6 +601,56 @@ b = multi.Sample(pB)
 
 `Setup(n)` initializes a multinomial sequence with `n` trials and probability mass 1 and is chainable. Each `Sample(p)` takes that category's probability in the original multinomial distribution, draws from the remaining trials using the corresponding conditional probability, then removes the sampled count and `p` from the remaining state. Thus successive calls such as `Sample(0.2)` and `Sample(0.3)` represent categories with probabilities 0.2 and 0.3, not 0.2 followed by 0.3 of the remainder; any unrequested probability mass remains unsampled. In safe mode cumulative requested probability cannot exceed 1. `Binomial(n, p)` performs an independent binomial draw and does not consume the current multinomial sequence. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
 
+### Moving a PopGrid population with multinomial draws
+
+`Multinomial` is especially useful with `PopGrid`, where a single site may represent thousands of interchangeable cells. Rather than deciding movement for every individual, draw the **number** moving in each direction. For a 2D lattice, the following timestep gives each cell a 10% probability of moving to each available von Neumann neighbor; any remaining cells stay at their starting site.
+
+```python
+import PythonAutomataLibrary as pal
+
+VN = pal.VonNeumannHood(2, excludeCenter=True)
+MOVE_PROB = 0.10
+
+@pal.njit(cache=True)
+def Step(cells: pal.PopGrid, multi: pal.Multinomial):
+    for i in cells.All():
+        multi.Setup(cells[i])
+        for x, y in cells.Hood(VN, cells.ItoX(i), cells.ItoY(i)):
+            moved = multi.Sample(MOVE_PROB)
+            cells.Add(-moved, i)
+            cells.Add(moved, x, y)
+    cells.Update()
+
+pal.Seed(1234)
+cells = pal.NewPopGrid((20, 20))
+multi = pal.NewMultinomial()
+cells[10, 10] = 100
+Step(cells, multi)
+assert cells.GetPop() == 100
+```
+
+`Setup(cells[i])` starts a fresh allocation for each site's **current** population. Each `Sample(0.10)` assigns 10% of the original site's cells, in probability, to one neighboring destination; it does **not** assign 10% of whatever cells remain after the previous draw. At most four neighbors are visited, so the requested probability mass is at most 0.4. Cells not allocated to a neighbor remain in place. Near a nonwrapped edge, fewer neighbors are visited, and the unused probability likewise corresponds to staying.
+
+`Add` queues both sides of every transfer. Calling `Update()` **after all sites have been processed** ensures that incoming cells cannot move again during the same timestep, and conserves the total population. This example is adapted from [`Examples/Agents/PopGridExample.py`](../Examples/Agents/PopGridExample.py).
+
+### Reusing the binomial solver core
+
+If several independent multinomial allocations are needed, construct one sampler and pass it into another constructor:
+
+```python
+movement = pal.NewMultinomial()
+division = pal.NewMultinomial(movement)
+
+movement.Setup(100)
+moved = movement.Sample(0.2)
+
+division.Setup(50)
+dividing = division.Sample(0.1)
+```
+
+`NewMultinomial(movement)` **shares the underlying reusable binomial solver core**, avoiding a separate solver setup, but the two `Multinomial` objects keep **independent remaining-count and remaining-probability state**. The second instance does not inherit the first instance's partially sampled `Setup` sequence. Call `Setup` separately for each allocation. Sharing the solver does not create separate random streams: both samplers use PAL's common RNG, so results still depend on call order.
+
+
 ## Visualization
 
 PAL provides a pixel renderer for lattice models and an OpenGL renderer for 2D/3D geometry. Rendering runs separately from model computation.
