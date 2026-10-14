@@ -299,13 +299,13 @@ Use PAL's RNG functions when a model should share one reproducible stream across
 
 ### 4.7 Multinomial sampling: configuration versus sample state
 
-`NewMultinomial` constructs a sampler for repeated multinomial or binomial sampling. Constructing one from another sampler reuses solver configuration, not the other sampler's current sample state. This separation allows a model to share sampling setup without implying that two sampler objects are the same evolving object. The safety mode must match, because PAL's mode is process-wide and sampler behavior belongs to that contract.
+`NewMultinomial(other)` copies solver configuration, not the source sampler's current multinomial remainder. The new sampler therefore starts with independent sampling state. Both samplers must use the same process-wide safety mode.
 
 ### 4.8 Visualization: simulation state versus presentation
 
-PAL separates model state from rendering. A `PixWindow` gives the model a writable pixel buffer; it is appropriate when the simulation naturally maps one site or quantity to a pixel. An `OpenGLWindow` provides geometric drawing for 2D/3D scenes. These are different presentation abstractions, not two names for the same renderer.
+PAL separates simulation state from rendering. `PixWindow` exposes a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D/3D geometry. They are distinct rendering interfaces.
 
-For pixel rendering, write colors into the buffer and call `Update()` to publish the frame. For OpenGL, use the drawing interface to collect primitives and then update the window. In both cases, drawing frequency is a model-control decision: rendering every timestep is convenient for inspection but can dominate runtime, so long runs may draw only selected steps. Keep drawing outside the computational kernel unless a specific compiled drawing API is intended.
+Write pixel colors or OpenGL primitives, then call the window's `Update()` to publish a frame. Rendering every timestep helps inspection but may dominate runtime; long simulations can render selected steps. Keep drawing separate from the computational kernel unless using an explicitly supported compiled drawing API.
 
 Headless rendering exists so output can be generated and tested without a visible interactive window, but it still depends on the relevant image or graphics backend. A headless test validates the supported off-screen path; it cannot fully validate window placement, user input, or a display server's lifecycle.
 
