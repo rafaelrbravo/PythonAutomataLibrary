@@ -149,3 +149,20 @@ def test_compiled_agents_at_detects_same_site_move_in_safe_mode(api, safe_mode):
         move_during_iteration(g)
     assert g.GetPop() == 2
     assert g.counts[2, 2] == 2
+
+
+def test_compiled_agents_at_allows_property_updates(api):
+    g = api.NewAgentGrid((4, 4), numAgentProps=1, isStackable=True)
+    agents = [g.NewAgentSQ(2, 2) for _ in range(3)]
+
+    @api.njit
+    def update_properties(grid):
+        count = 0
+        for agent in grid.AgentsAt(2, 2):
+            grid[agent, 0] = 1.5
+            count += 1
+        return count
+
+    assert update_properties(g) == len(agents)
+    assert all(g[agent, 0] == pytest.approx(1.5) for agent in agents)
+    assert g.counts[2, 2] == len(agents)
