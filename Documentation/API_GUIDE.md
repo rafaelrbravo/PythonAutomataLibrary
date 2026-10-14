@@ -4,7 +4,7 @@ This guide combines a first working model and practical modeling workflows with 
 
 ## Build a cell model, one feature at a time
 
-This tutorial follows **one simple model**: cells occupy sites on a two-dimensional lattice. First we place and draw them. Then we let them move, divide, and die. Finally we compare a count-based representation, add nutrient diffusion, compile the timestep, and save the state. Each stage reuses the same biological idea, so the new material is about PAL rather than new biology.
+This tutorial follows **one simple model**: cells occupy sites on a two-dimensional lattice. First we place and draw them. Then we let them move to empty neighboring sites. Finally we compare a count-based representation, add nutrient diffusion, compile the timestep, and save the state. Each stage reuses the same biological idea, so the new material is about PAL rather than new biology.
 
 Use the examples in order. The code blocks marked **complete program** can be saved as separate Python files and run independently. Later snippets show focused modifications to the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
 
@@ -78,7 +78,7 @@ You should see four red cells near the center. If you change their initial coord
 
 ### 3. Find neighbors and empty sites
 
-Cells divide only into empty neighboring sites. `pal.MooreHood(2, excludeCenter=True)` describes the eight relative offsets around a 2D site. `cells.Hood(..., x, y)` converts those offsets to valid lattice coordinates. This is different from a cell's continuous position: `XSQ` and `YSQ` give its lattice site.
+In this model, cells move only into empty neighboring sites. `pal.MooreHood(2, excludeCenter=True)` describes the eight relative offsets around a 2D site. `cells.Hood(..., x, y)` converts those offsets to valid lattice coordinates. This is different from a cell's continuous position: `XSQ` and `YSQ` give its lattice site.
 
 Add this near the constants in the preceding program:
 
@@ -95,29 +95,18 @@ def EmptyNeighbors(cells, agent):
 
 Try printing `EmptyNeighbors(cells, cells.All()[0])` after setup. The exact result depends on the occupied sites. At a nonperiodic boundary, `Hood` omits offsets that leave the grid.
 
-### 4. Let cells move, divide, and die
+### 4. Move cells to empty neighboring sites
 
-We now introduce one stochastic rule per timestep. Each existing cell may die; otherwise it may divide into an empty Moore neighbor, or move into one. We use a snapshot from `All(shuffle=True)`: newborn cells wait until the next timestep to act. Occupancy changes during the current step, so later cells may see sites vacated or filled by earlier cells.
+Each cell takes a random walk: at every timestep, it chooses one available empty neighboring site and moves there. No cells are created or removed. We iterate a shuffled snapshot of existing agents; moves update occupancy immediately, so later cells see the new positions.
 
-Add the following constants and function to the program from stage 2, along with `MOORE` and `EmptyNeighbors` from stage 3:
+Add `MOORE` and `EmptyNeighbors` from stage 3 to the program from stage 2, then add:
 
 ```python
-DEATH_PROB = 0.01
-BIRTH_PROB = 0.20
-MOVE_PROB = 0.10
-
 def Step(cells):
     for agent in cells.All(shuffle=True):
-        if pal.Random() < DEATH_PROB:
-            cells.Dispose(agent)
-            continue
         empty = EmptyNeighbors(cells, agent)
-        if not empty:
-            continue
-        x, y = empty[pal.RandInt(len(empty))]
-        if pal.Random() < BIRTH_PROB:
-            cells.NewAgentSQ(x, y)
-        elif pal.Random() < MOVE_PROB:
+        if empty:
+            x, y = empty[pal.RandInt(len(empty))]
             cells.MoveSQ(agent, x, y)
 ```
 
@@ -133,85 +122,66 @@ Replace the stationary display loop with:
     window.Close()
 ```
 
-Now the cells should spread, move, and occasionally disappear. This is a **sequential** agent update, not a simultaneous population update. For longer simulations, add a frame delay or render only every few steps.
+The cells wander without overlapping. A cell with no empty neighbors stays put. Selecting uniformly among *available* sites means the probability of each direction depends on occupancy.
 
 ### 5. Compile the timestep
 
-The model behavior does not need to change to run its repeated operations through PAL's Numba integration. A compiled function must use PAL-compatible operations and types. Rather than building a Python list of neighbor coordinates, use a reusable `IList` of linear site indices.
+We can compile the same movement rule with `@pal.njit(cache=True)`. Instead of allocating Python lists of empty neighbors, use a reusable `IList` of linear site indices.
 
-Replace `Step` with this compiled version and construct `empty = pal.NewIList()` once in `main`. Call `Step(cells, empty)` in the display loop.
+Replace `Step` with this compiled version. Construct `empty = pal.NewIList()` once in `main`, and call `Step(cells, empty)` in the display loop.
 
 ```python
 @pal.njit(cache=True)
 def Step(cells: pal.AgentGrid, empty: pal.IList):
     for agent in cells.All(shuffle=True):
-        if pal.Random() < DEATH_PROB:
-            cells.Dispose(agent)
-            continue
         empty.Clear()
         for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
             if cells.counts[x, y] == 0:
                 empty.Append(cells.ToI(x, y))
-        if len(empty) == 0:
-            continue
-        site = empty.Random()
-        if pal.Random() < BIRTH_PROB:
-            cells.NewAgentSQ(site)
-        elif pal.Random() < MOVE_PROB:
+        if len(empty):
+            site = empty.Random()
             cells.MoveSQ(agent, cells.ItoX(site), cells.ItoY(site))
 ```
 
-The `@pal.njit(cache=True)` decorator prepares supported PAL constructs for Numba. Keep the window lifecycle in ordinary Python; compile repeated model calculations. Develop in PAL's default safe mode before benchmarking fast mode.
+The compiled version preserves the rule: choose one empty neighbor uniformly, or stay if none is available. Keep window management in ordinary Python and repeated model operations in compiled functions.
 
 ### 6. Replace individual cells with population counts
 
-The same biological processes—movement, division, and death—can be modeled without tracking individual cell identities. A `PopGrid` stores an integer count at each site, while a `Multinomial` distributes the cells at a site among competing outcomes. This is a **count-based alternative** to the preceding `AgentGrid` simulation, not an additional population.
+Now relax the **one cell per site** constraint. With multiple occupancy allowed, cells no longer need to search for empty destinations. A `PopGrid` holds counts instead of individual agents, and a `Multinomial` can distribute each site's cells among the eight directions of the same random walk. There is no division or death: the total number of cells remains constant.
 
-There is one important modeling difference: `PopGrid` permits multiple cells at a site. To preserve the earlier model's one-cell-per-site rule, we would need extra rules for resolving competing arrivals and births. The example below deliberately allows multiple occupancy so that the count-based update stays simple. It uses the same movement, birth, and death probabilities, but its updates are synchronous rather than sequential; therefore the two models need not produce identical trajectories.
-
-**Complete program — count-based cells with movement, division, death, and visualization:**
+**Complete program — count-based random movement:**
 
 ```python
 import time
 import PythonAutomataLibrary as pal
 
 SIZE = 30
-DEATH_PROB = 0.01
-BIRTH_PROB = 0.20
-MOVE_PROB = 0.10
 MOORE = pal.MooreHood(2, excludeCenter=True)
-COLORS = (pal.RGB(0, 0, 0), pal.RGB(255, 0, 0), pal.RGB(255, 255, 0))
+BLACK = pal.RGB(0, 0, 0)
+RED = pal.RGB(255, 0, 0)
 
 @pal.njit(cache=True)
 def Step(cells: pal.PopGrid, multi: pal.Multinomial):
     for i in cells.All():
-        n = cells[i]
-        if n == 0:
+        multi.Setup(cells[i])
+        x, y = cells.ItoX(i), cells.ItoY(i)
+        neighbors = 0
+        for nx, ny in cells.Hood(MOORE, x, y):
+            neighbors += 1
+        if neighbors == 0:
             continue
-
-        deaths = multi.Binomial(n, DEATH_PROB)
-        cells.Add(-deaths, i)
-        survivors = n - deaths
-
-        # Each survivor may divide; new cells remain at the parent site.
-        births = multi.Binomial(survivors, BIRTH_PROB)
-        cells.Add(births, i)
-
-        # Distribute the original survivors among possible destinations.
-        # Probabilities refer to the starting survivor count, not the remainder.
-        multi.Setup(survivors)
-        for x, y in cells.Hood(MOORE, cells.ItoX(i), cells.ItoY(i)):
-            moved = multi.Sample(MOVE_PROB / 8)
+        for nx, ny in cells.Hood(MOORE, x, y):
+            moved = multi.Sample(1.0 / neighbors)
             cells.Add(-moved, i)
-            cells.Add(moved, x, y)
-
-    # Commit every site's changes together: incoming cells wait until next step.
+            cells.Add(moved, nx, ny)
     cells.Update()
 
 def Draw(cells, pix):
+    pix[:] = BLACK
     for x in range(SIZE):
         for y in range(SIZE):
-            pix[x, y] = pal.ColorScale(COLORS, min(cells[x, y] / 8.0, 1.0))
+            if cells[x, y]:
+                pix[x, y] = RED
 
 def main():
     pal.Seed(1234)
@@ -219,7 +189,7 @@ def main():
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells[x, y] = 1
     multi = pal.NewMultinomial()
-    pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Population counts")
+    pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Population random walk")
     pal.AwaitWindows()
     while window.IsOpen():
         Step(cells, multi)
@@ -232,11 +202,9 @@ if __name__ == "__main__":
     main()
 ```
 
-The sampler's `Binomial(n, p)` independently draws the number of deaths or divisions. For movement, `Setup(survivors)` starts an allocation of the surviving cells. Each `Sample(MOVE_PROB / 8)` assigns cells to one of the eight neighboring directions, and unassigned cells stay in place. At a boundary, invalid directions are omitted, so those cells also stay. The two `Add` calls queue the removal and arrival for each transfer; `Update()` applies all queued births, deaths, and moves simultaneously. Unlike the individual-agent model, arrivals do not take another turn in the same timestep.
+As in the `AgentGrid` version, each cell selects one valid neighboring destination uniformly. `Setup(cells[i])` starts a multinomial allocation for all cells currently at site `i`; `Sample(1.0 / neighbors)` allocates them among the valid directions. Probabilities refer to the **original** site's population, not the remaining unassigned cells. Queued transfers are committed together with `Update()`, so arrivals do not move again in the same timestep.
 
-The example intentionally uses a **per-direction** movement probability of `MOVE_PROB / 8` rather than `MOVE_PROB` for every direction; otherwise eight neighbors would imply an 80% total movement probability when `MOVE_PROB = 0.10`. It also allows division without an empty neighboring site. These choices make the population-count model simple and demonstrate what is gained—and what individual occupancy detail is lost—when replacing agents with counts.
-
-The [Multinomial reference](#random-numbers-and-multinomial) explains its probability bookkeeping and how multiple instances can share one solver core.
+The two versions implement the same basic random-walk idea, but not the same exclusion process: `AgentGrid` avoids occupied destinations and updates agents sequentially; `PopGrid` permits multiple occupancy and moves all counts synchronously. That distinction matters when comparing results. See [Multinomial](#random-numbers-and-multinomial) for more about sampling and solver reuse.
 
 ### 7. Add a diffusing nutrient
 
@@ -292,7 +260,7 @@ Saving object state is not the same as saving every source of randomness or ever
 
 ### Where to go next
 
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, update cells, compile repeated work, choose a representation, evolve a field, and record experiments. The remainder of this guide gives **subsystem-specific API behavior**, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, choose a representation, evolve a field, and record experiments. The remainder of this guide gives **subsystem-specific API behavior**, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
 
 ## Core use
 
