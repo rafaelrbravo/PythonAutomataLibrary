@@ -62,6 +62,17 @@ def test_continuous_move_updates_square_and_position(api):
     assert g.counts[4, 5] == 1
 
 
+def test_continuous_move_within_same_site_preserves_occupancy(api):
+    g = api.NewAgentGrid((4, 4), isStackable=False)
+    a = g.NewAgent(1.2, 2.3)
+    g.Move(a, 1.8, 2.9)
+    assert (g.X(a), g.Y(a)) == pytest.approx((1.8, 2.9), abs=1e-5)
+    assert (g.XSQ(a), g.YSQ(a)) == (1, 2)
+    assert g.GetPop() == 1
+    assert g.counts[1, 2] == 1
+    assert g.LastAgent(1, 2) == a
+
+
 def test_stackable_counts_and_last_agent(api):
     g = api.NewAgentGrid((3, 3), isStackable=True)
     agents = [g.NewAgentSQ(1, 1) for _ in range(4)]
