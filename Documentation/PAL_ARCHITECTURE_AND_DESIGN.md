@@ -279,11 +279,11 @@ The `capacity` option is a per-site cap. It is not the total population limit. `
 
 ### 4.4 PDEgrid: numerical operations with explicit assumptions
 
-A `PDEgrid` stores a scalar field on a lattice and supplies numerical operations for changing it. The library provides families of diffusion and advection routines because there is no single transport method that is best for every geometry and numerical regime. Cartesian, interface-based, masked, ADI, and radial methods encode different assumptions about dimensionality, geometry, boundaries, and update strategy. Choose a method because it matches the problem, not because its name sounds more sophisticated.
+A `PDEgrid` stores a lattice scalar field. Its Cartesian, interface-based, masked, ADI, and radial transport methods address different geometries, coefficient representations, boundaries, and numerical schemes. The method is therefore part of the mathematical model, not merely a performance setting.
 
 Call `SetTimeSpaceStep` to specify the time and spatial scales used by transport methods. These values are part of the discretized equation. A timestep that is too large can produce unstable or inaccurate results even if every API call is valid. Boundary conditions likewise belong to the mathematical problem: fixed-value, face-dependent, and periodic boundaries can produce different solutions.
 
-PDE updates use pending changes and `Update()` to separate the calculation from committing the result. This supports a consistent old-state/new-state distinction, but does not automatically prove stability, positivity, or conservation for every scheme and parameter choice. Test the method on a known field, verify the boundary behavior, and check convergence as the timestep and grid spacing change.
+Transport routines accumulate changes for `Update()` to commit. That separation does not guarantee stability, positivity, or conservation. Validate against a known field, check boundary behavior, and test convergence as timestep and grid spacing change.
 
 ### 4.5 IList: reusable collections for compiled workflows
 
