@@ -48,6 +48,7 @@ jobs:
             fi
             git fetch origin "${GITHUB_REF_NAME}"
             git reset --hard FETCH_HEAD
+            export GITHUB_TOKEN="${{ secrets.GITHUB_TOKEN }}"
             python Documentation/generators/markdown_to_pdf.py Documentation/PAL_ARCHITECTURE_AND_DESIGN.md
             python Documentation/generators/markdown_to_pdf.py Documentation/API_GUIDE.md
             python Documentation/generators/markdown_to_pdf.py Documentation/API_REFERENCE.md
