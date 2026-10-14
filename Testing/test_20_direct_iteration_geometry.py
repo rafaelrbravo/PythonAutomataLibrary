@@ -70,6 +70,18 @@ def test_python_agents_at_detects_structural_mutation_in_safe_mode(api, safe_mod
         next(iterator)
 
 
+def test_python_agents_at_allows_property_updates(api):
+    g = api.NewAgentGrid((4, 4), numAgentProps=1, isStackable=True)
+    agents = [g.NewAgentSQ(2, 2) for _ in range(3)]
+    seen = []
+    for agent in g.AgentsAt(2, 2):
+        g[agent, 0] = 1.5
+        seen.append(agent)
+    assert set(seen) == set(agents)
+    assert all(g[agent, 0] == pytest.approx(1.5) for agent in agents)
+    assert g.counts[2, 2] == len(agents)
+
+
 def test_python_agent_generation_check_handles_zero_snapshot(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode omits direct-iteration mutation checks")
