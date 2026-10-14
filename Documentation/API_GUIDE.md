@@ -291,7 +291,7 @@ grid[:] = 0
 region = grid[2:5, 3:8]
 ```
 
-Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. A detached slice copy is not a live view of the Grid.
+Slice reads return detached NumPy copies, not live views. Scalar and slice access works in Python and compiled PAL code. Safe mode checks bounds, dimensionality, and whether assigned values fit the Grid dtype: Boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, or out-of-range values; floating grids reject nonfinite or out-of-range values. Fast mode assumes valid access. Choose a wider dtype when calculations may exceed the current range.
 
 ## AgentGrid
 
@@ -312,7 +312,7 @@ PAL represents an agent by an integer handle. Agent properties are stored on the
 | `Dispose(agent)` | Remove an agent. |
 | `All(shuffle=False)` | Snapshot of all living agents; optionally shuffled. |
 
-`All()` has **snapshot semantics**. The returned collection can be iterated while agents are created or disposed without changing the current iteration. `All(shuffle=True)` returns the same population in randomized order.
+`All()` snapshots living handles, so births and deaths do not change the iteration's membership. `All(shuffle=True)` randomizes their order.
 
 ```python
 for agent in agents.All():
@@ -404,7 +404,7 @@ DispWrapZ(z1, z2)
 pop = pal.NewPopGrid((xDim, yDim), capacity=None)
 ```
 
-`PopGrid` stores integer population counts. Indexing and direct assignment modify the current population immediately.
+`PopGrid` stores integer counts per site. Direct assignment changes the current population immediately.
 
 ```python
 pop[x, y]
@@ -419,7 +419,7 @@ pop.Add(delta, x, y)
 pop.Update()
 ```
 
-`Add` changes the pending delta, not the current value: `GetPop()`, indexing, and `All()` continue to report the current population until `Update()`. `Update()` applies all pending changes simultaneously. This is useful when a timestep should not depend on iteration order.
+`Add` queues a delta without changing current counts. Until `Update()` commits the pending changes together, `GetPop()`, indexing, and `All()` report the old state. This supports order-independent synchronous updates.
 
 | Operation | Meaning |
 | --- | --- |
