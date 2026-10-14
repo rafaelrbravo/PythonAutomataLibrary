@@ -70,6 +70,20 @@ def test_python_agents_at_detects_structural_mutation_in_safe_mode(api, safe_mod
         next(iterator)
 
 
+def test_python_agents_at_detects_same_site_move_in_safe_mode(api, safe_mode):
+    if not safe_mode:
+        pytest.skip("Fast mode omits direct-iteration mutation checks")
+    g = api.NewAgentGrid((4, 4), isStackable=True)
+    a = g.NewAgent(2.2, 3.2)
+    g.NewAgent(2.4, 3.4)
+    iterator = iter(g.AgentsAt(2, 3))
+    next(iterator)
+    g.Move(a, 2.8, 3.8)
+    assert g.counts[2, 3] == 2
+    with pytest.raises(RuntimeError, match="structurally modified"):
+        next(iterator)
+
+
 @pytest.mark.parametrize("shape,point,rad", [
     ((-10,), (0.2,), 1.7),
     ((-10, -11), (0.2, 10.7), 2.1),
