@@ -5054,11 +5054,10 @@ def _StaticGeometry(dims):
     return x,y,z,length,wrapX,wrapY,wrapZ
 
 def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
-    """Create a grid for individual agents; `numAgentProps` sets the number of per-agent properties and `isStackable` controls whether multiple agents may occupy a site."""
-    """Create an agent population, optionally with properties and site stacking.
+    """Create an agent grid with optional per-agent float properties and site stacking.
 
     Empty dimensions select a nonspatial population. Negative axis lengths
-    enable wrapping. numAgentProps counts float properties per agent.
+    enable wrapping. `numAgentProps` counts float properties per agent.
     """
     dims = _dimensions_array(dimensions,allowZero=True)
     try: props=float(numAgentProps)
@@ -5092,8 +5091,7 @@ def NewPopGrid(dimensions, capacity=None):
 
 
 def NewPDEgrid(dimensions):
-    """Create a lattice-backed scalar field for numerical transport operations."""
-    """Create a 1D–3D float32 field supporting diffusion and advection."""
+    """Create a 1D–3D float32 lattice field supporting diffusion and advection."""
     dims = _dimensions_array(dimensions)
     fast=_UseFastMode()
     ptr = _pd_new(dims.ctypes.data_as(_I32_PTR), len(dims))
