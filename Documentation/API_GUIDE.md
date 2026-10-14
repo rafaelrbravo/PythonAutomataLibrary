@@ -1,10 +1,10 @@
 # PAL API Guide
 
-This guide starts with a working model and practical workflows, then documents the public API's behavior and constraints. Read the worked sections to learn PAL's modeling patterns; consult the API sections for exact behavior. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
+This guide combines a first working model and practical modeling workflows with the detailed behavioral contracts of PAL's public API. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the generated [API Reference](API_REFERENCE.pdf). For quick syntax, use the [Cheatsheet](CHEATSHEET.pdf). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
 
 ## Getting started and worked modeling patterns
 
-The worked sections cover the model loop, state representations, neighborhoods, update timing, compiled code, visualization, and reproducibility. The API sections that follow specify exact behavior.
+The sections below walk from the model loop through representation choices, neighborhoods, agent updates, synchronous population/field updates, compiled code, visualization, and reproducibility. These examples make the API contracts concrete; the detailed API sections that follow are the reference for exact behavior.
 
 ### 1. The model loop
 
@@ -227,7 +227,7 @@ grid = pal.NewAgentGrid((-100, 100))   # x wraps, y does not
 grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
 ```
 
-`numAgentProps` is the number of per-agent floating-point properties. It must be a nonnegative integer fitting AgentGrid's int32 metadata budget (which also reserves entries for spatial dimensions); fractional, nonfinite, negative, or oversized values raise `ValueError`. `isStackable` accepts booleans or `0`/`1`; other values raise `ValueError`. When false, at most one agent occupies each lattice site. `PopGrid.capacity` is an optional nonnegative per-site population limit.
+`numAgentProps` is the number of per-agent floating-point properties. It must be a nonnegative integer fitting AgentGrid's int32 metadata budget (which also reserves entries for spatial dimensions); fractional, nonfinite, negative, or oversized values raise `ValueError`. `isStackable` accepts booleans or `0`/`1`; other values raise `ValueError`. When false, at most one agent occupies each lattice site. `PopGrid.capacity` is an optional nonnegative total-population limit.
 
 `NewMultinomial(other)` accepts another PAL Multinomial in the **same safety mode** and copies its solver configuration, not its current sampling state. An unrelated object raises `TypeError`; mixing safe and fast samplers raises `ValueError`. Create a new sampler without `other` to use the default solver.
 
@@ -291,7 +291,7 @@ grid[:] = 0
 region = grid[2:5, 3:8]
 ```
 
-Slice reads return detached NumPy copies, not live views. Scalar and slice access works in Python and compiled PAL code. Safe mode checks bounds, dimensionality, and whether assigned values fit the Grid dtype: Boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, or out-of-range values; floating grids reject nonfinite or out-of-range values. Fast mode assumes valid access. Choose a wider dtype when calculations may exceed the current range.
+Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. A detached slice copy is not a live view of the Grid.
 
 ## AgentGrid
 
@@ -312,7 +312,7 @@ PAL represents an agent by an integer handle. Agent properties are stored on the
 | `Dispose(agent)` | Remove an agent. |
 | `All(shuffle=False)` | Snapshot of all living agents; optionally shuffled. |
 
-`All()` snapshots living handles, so births and deaths do not change the iteration's membership. `All(shuffle=True)` randomizes their order.
+`All()` has **snapshot semantics**. The returned collection can be iterated while agents are created or disposed without changing the current iteration. `All(shuffle=True)` returns the same population in randomized order.
 
 ```python
 for agent in agents.All():
@@ -404,7 +404,7 @@ DispWrapZ(z1, z2)
 pop = pal.NewPopGrid((xDim, yDim), capacity=None)
 ```
 
-`PopGrid` stores integer counts per site. Direct assignment changes the current population immediately.
+`PopGrid` stores integer population counts. Indexing and direct assignment modify the current population immediately.
 
 ```python
 pop[x, y]
@@ -419,7 +419,7 @@ pop.Add(delta, x, y)
 pop.Update()
 ```
 
-`Add` queues a delta without changing current counts. Until `Update()` commits the pending changes together, `GetPop()`, indexing, and `All()` report the old state. This supports order-independent synchronous updates.
+`Add` changes the pending delta, not the current value: `GetPop()`, indexing, and `All()` continue to report the current population until `Update()`. `Update()` applies all pending changes simultaneously. This is useful when a timestep should not depend on iteration order.
 
 | Operation | Meaning |
 | --- | --- |
@@ -435,7 +435,7 @@ pop.Update()
 field = pal.NewPDEgrid((xDim, yDim))
 ```
 
-`PDEgrid` stores a `float32` scalar field. Direct assignment changes the current field immediately. Linear (`field[:]`) and spatial (`field[:, :]`) slice reads return detached `float32` NumPy arrays; slice assignment writes to the field, but editing a previously read slice does not. `Add(value, ...)` queues a delta, `Update()` commits pending changes together, and `Reset()` clears both current and pending values.
+`PDEgrid` stores a continuous `float32` scalar field. Direct indexing/assignment changes the current field immediately. Slice reads return detached `float32` NumPy arrays; array slice assignment writes to the field, but editing a previously read slice does not. Linear (`field[:]`) and spatial (`field[:, :]`) slices are supported. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
 
 ### Space and time
 
@@ -461,7 +461,7 @@ field.DiffusionRadialCircle(rateConstant, outerBC=None)
 field.DiffusionRadialSphere(rateConstant, outerBC=None)
 ```
 
-`Diffusion` uses a constant rate. `DiffusionField` uses cell-centered rates that may vary by site; each interior face uses the harmonic mean of adjacent rates, so a zero rate on either side blocks flux across that face. `DiffusionInterfaces` supplies the positive-face interface rate for each cell and axis directly; the negative face uses the neighboring cell's stored positive-face rate. `DiffusionMask` treats mask values `>= 0` as active and values `< 0` as blocked; diffusion occurs only between adjacent active cells, so the magnitude of a nonnegative mask value is irrelevant. `DiffusionADI` uses Crank-Nicolson in 1D, Peaceman-Rachford ADI in 2D, and Douglas-Gunn directional solves in 3D. `DiffusionRadialCircle` and `DiffusionRadialSphere` use radial shell finite-volume discretizations on a nonwrapped 1D grid with at least two cells. Cell `i` spans radii `i*dx` to `(i+1)*dx`, so cell 0 is the central disk/sphere and symmetry gives zero flux through its inner face. `outerBC` optionally sets the exterior concentration at the outer face.
+`Diffusion` uses one constant diffusion rate. `DiffusionField` uses spatially varying cell-centered rates; each interior face uses the harmonic mean of its two adjacent cell rates, so a zero rate on either side blocks diffusion across that face. `DiffusionInterfaces` supplies the positive-face interface rate for each cell and axis directly; the negative face uses the neighboring cell's stored positive-face rate. `DiffusionMask` treats mask values `>= 0` as active and values `< 0` as blocked; diffusion occurs only between adjacent active cells, so the magnitude of a nonnegative mask value is irrelevant. `DiffusionADI` uses Crank-Nicolson in 1D, Peaceman-Rachford ADI in 2D, and Douglas-Gunn directional solves in 3D. `DiffusionRadialCircle` and `DiffusionRadialSphere` use radial shell finite-volume discretizations on a nonwrapped 1D grid with at least two cells. Cell `i` spans radii `i*dx` to `(i+1)*dx`, so cell 0 is the central disk/sphere and symmetry gives zero flux through its inner face. `outerBC` optionally sets the exterior concentration at the outer face.
 
 Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxBC`, `zMinBC`, and `zMaxBC` fixed boundary values. A boundary may be a scalar applied uniformly across the face or a C-contiguous `float32` array with one value per site on that face; for example, an x-face array has `yDim*zDim` values in 3D. On a nonwrapped face, `None` means no flux through that face; wrapped axes are periodic and do not accept explicit boundary conditions. Field/interface arrays must match the grid geometry and dimensionality. Safe mode validates boundary size/type/finite values, explicit-scheme stability, and other inputs before changing pending state.
 
@@ -493,7 +493,7 @@ items = pal.NewIList()
 | `Iter()` | Return a no-copy/live iterable view. |
 | `len(items)`, `items[i]` | Length/index access. |
 
-Use `Iter()` to traverse the current list without copying. Use `All()` when the result must remain independent of later changes.
+Use `Iter()` for one-pass iteration when a copy is unnecessary. Use `All()` when the returned values must remain independent of subsequent IList changes.
 
 ## Random numbers and Multinomial
 
@@ -521,7 +521,7 @@ b = multi.Sample(pB)
 
 ## Visualization
 
-PAL provides a pixel renderer for lattice models and an OpenGL renderer for 2D/3D geometry. Simulation and rendering are separate.
+PAL provides a pixel renderer for lattice models and an OpenGL renderer for 2D/3D geometry. Rendering runs separately from model computation.
 
 ### PixWindow
 
@@ -598,4 +598,4 @@ PAL native-backed model objects support standard Python pickling. Checkpoints pr
 | Reusable integer query result | `IList` |
 | Binomial/multinomial draws | `Multinomial` |
 
-These structures can work together inside a compiled model step. For example, a model can query agents, accumulate population counts, update a PDE field, and use that field to influence agent behavior without leaving `@pal.njit`.
+These structures are designed to be composed inside the same compiled model step. A model can, for example, query agents, accumulate population counts, update a PDE field, and feed the resulting field back into agent behavior without leaving `@pal.njit`.

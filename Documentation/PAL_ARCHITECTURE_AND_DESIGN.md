@@ -1,12 +1,12 @@
 # PAL Architecture and Design
 
-This document explains PAL's architecture, subsystem responsibilities, design trade-offs, testing strategy, and performance considerations. It assumes familiarity with basic PAL usage. For runnable modeling workflows and public API behavior, use the [API Guide](API_GUIDE.md). For exact source-derived method signatures and descriptions, use the [API Reference](API_REFERENCE.md). The [Cheatsheet](CHEATSHEET.md) is the quick lookup.
+This document explains how PAL is organized and why its major interfaces and implementation choices exist. It focuses on architecture, subsystem responsibilities, trade-offs, validation strategy, and performance reasoning—not on teaching the API from the beginning. For runnable modeling workflows and public API behavior, use the [API Guide](API_GUIDE.md). For exact source-derived method signatures and descriptions, use the [API Reference](API_REFERENCE.md). The [Cheatsheet](CHEATSHEET.md) is the quick lookup.
 
 ## 1. Architecture and design rationale
 
-This chapter traces a model operation through PAL's layers and explains how their boundaries affect debugging, extension, and benchmarking.
+This chapter explains the path from a line of model code to a state change in PAL. It is intentionally more architectural than the API chapters: the goal is to explain the responsibilities of each layer, why the boundaries exist, and what those boundaries mean when debugging, extending, or benchmarking a model.
 
-The public API and tests establish supported behavior. Design rationale explains the trade-offs behind that behavior, without claiming undocumented historical motivations.
+The discussion distinguishes documented contracts from engineering rationale. The public API and tests establish what users can rely on. A rationale explains the tradeoff a design serves; it does not claim an undocumented historical motivation or that no alternative design is possible.
 
 ### 1.1 The design problem PAL is solving
 
@@ -14,7 +14,7 @@ PAL targets models that repeatedly update many small pieces of state. A timestep
 
 PAL's architecture splits the problem by frequency and responsibility. Python remains the control language for constructing the model, selecting parameters, loading inputs, managing experiments, and deciding when to draw or checkpoint. Repeated computation is expressed in functions that PAL can prepare for Numba compilation. The native core supplies low-level state and kernels behind that interface.
 
-Not every function needs compilation. Setup code that runs once is usually less important to optimize than a site-level loop repeated over many timesteps. Start with clear code, identify repeated work, and benchmark before moving logic into compiled kernels.
+This split does not mean that all Python code is slow or that every model function should be compiled. It puts optimization effort where repeated work makes it worthwhile. A function called once during setup usually needs less attention than a loop executed at every site over millions of timesteps. Start with clear model code, identify the repeated work, and benchmark before moving more logic into compiled kernels.
 
 ### 1.2 The layers and their responsibilities
 
@@ -27,7 +27,7 @@ A useful mental model is to separate PAL into several cooperating layers:
 5. **The native C core.** This provides low-level storage and computational routines used by the Python/Numba-facing layer.
 6. **Tests, examples, and generated documentation.** These act as executable and written statements of the public contract, checking that the layers agree.
 
-These are conceptual layers, not necessarily separate packages. Distinguishing them helps locate defects: constructor errors, Numba typing failures, native-state bugs, and stale API declarations require different fixes.
+These are responsibilities, not necessarily six separate packages; several may share a source file. Keeping them conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
 
 ### 1.3 The native core and Python interface
 
@@ -168,7 +168,7 @@ When adding or changing model code, start with the smallest test that expresses 
 
 ## 3. Design principles
 
-These principles connect PAL's public behavior to the engineering trade-offs behind it.
+This chapter makes explicit the tradeoffs that are easy to miss when reading the API as a list of methods. Some choices are direct consequences of the implementation; others are engineering priorities reflected in the public contract. They should not be mistaken for claims that every alternative was exhaustively benchmarked.
 
 ### 3.1 Keep model logic in Python, put repeated work in compiled kernels
 
@@ -176,7 +176,7 @@ PAL is designed for models whose timestep performs many small operations: inspec
 
 PAL therefore separates orchestration from the inner loop. A normal Python function can create objects, open a window, choose parameters, and decide how many timesteps to run. Functions decorated with `@pal.njit(cache=True)` express the repeated computation. The cache can avoid recompiling the same specialization on later runs, while the first call may still pay a compilation cost.
 
-Compile repeated computation when profiling justifies it. Keep file I/O, interactive controls, and other orchestration in Python unless PAL explicitly supports them in compiled code.
+This division is a recommendation, not a requirement that every function be compiled. Start with clear Python code, identify the repeated work, and move the computational kernel into compiled code when that is useful. Keep file I/O, interactive controls, and other orchestration outside compiled functions unless the public API explicitly supports them.
 
 ### 3.2 Use a small set of representations with distinct meanings
 
@@ -187,7 +187,7 @@ PAL deliberately distinguishes a typed `Grid`, an `AgentGrid`, a `PopGrid`, and 
 - A `PopGrid` stores integer counts. It is suited to interchangeable individuals when the model needs the number at each site, but not a handle for each one.
 - A `PDEgrid` stores a scalar field and supplies numerical transport operations such as diffusion and advection.
 
-The representation determines what information survives. A count grid avoids individual bookkeeping but cannot recover personal histories; a continuous field cannot preserve discrete events. Hybrid models can combine representations, provided their interactions are defined explicitly.
+The point is not to force every model into one abstraction. It is to make the meaning of state explicit. A count grid avoids per-individual bookkeeping, but cannot answer which individual moved or what its personal history was. A continuous field can represent concentration smoothly, but it does not preserve integer identity or discrete events. A hybrid model is often appropriate, provided the conversions between representations are part of the scientific model rather than accidental implementation details.
 
 ### 3.3 Make update timing visible
 
@@ -227,13 +227,13 @@ PAL's safe mode is the default. It adds validation and diagnostics around select
 
 Fast mode removes selected checks for performance-sensitive paths. It does not turn invalid operations into valid ones, and it does not make a numerically unstable scheme stable. PAL locks the process-wide mode when the first PAL model or window is constructed; call `pal.FastMode()` before any such construction. Because the choice is process-wide, compare safe and fast behavior in separate processes rather than trying to switch modes midway through a run.
 
-Safe mode improves diagnostics, not scientific validity: a model can satisfy every API contract and still use incorrect equations or assumptions.
+This is an explicit tradeoff: predictable diagnostics during development, with a deliberate route to reduce selected overhead after profiling. Safe mode is not a proof of scientific correctness. A program can use every API correctly and still encode the wrong equations or assumptions.
 
 ### 3.8 Use a native core behind a Python-facing API
 
 PAL's public Python API is designed to remain readable and usable from Numba-compiled model code. The native C core provides storage and kernels; Python and Numba-facing wrappers expose them to both execution paths. The wrappers connect the API to the implementation rather than maintaining a separate copy of model state.
 
-The wrappers must agree on signatures, argument names, indexing, safety checks, and observable behavior across Python and compiled paths. A mismatch is a correctness defect even if each path seems plausible in isolation.
+This separation lets PAL combine Python usability with native-backed data structures and compiled loops. It also creates obligations: wrapper signatures, argument names, indexing behavior, safe-mode checks, and Python/compiled behavior must agree. A mismatch between a Python path and a compiled path is a correctness defect even if each path appears plausible in isolation.
 
 The public Protocol declarations provide the annotation and autocomplete surface. They should describe the supported public contract, but a declaration alone is not proof of runtime behavior. The implementation and executable tests must agree with the published contract. When changing an API, update its behavior, type-facing declarations, reference material, examples, and regression tests together.
 
@@ -241,7 +241,7 @@ The public Protocol declarations provide the annotation and autocomplete surface
 
 PAL exposes explicit state-changing operations such as `Add`, `Update`, `Reset`, `Move`, and `Dispose`. This makes important transitions visible in the model code: a queued delta is not yet part of the committed population, and moving an agent is different from disposing its handle.
 
-Explicit lifecycle and update order make state transitions easier to inspect and test.
+This explicitness requires the model author to understand lifecycle and update order, but it makes the simulation easier to reason about and test. For stateful models, clarity about when state changes is more valuable than hiding those changes behind a convenient-looking abstraction.
 
 ### 3.10 Safe/fast and Python/compiled parity testing
 
@@ -253,11 +253,11 @@ Integrated examples then exercise combinations of components under realistic con
 
 ## 4. Subsystem design choices
 
-This chapter applies the design principles to each subsystem and explains their practical consequences.
+The previous chapter explains cross-cutting principles. This chapter follows those principles into individual subsystems and describes the practical consequences of their contracts.
 
 ### 4.1 Grid: typed site state and explicit indexing
 
-A `Grid` stores one typed value per lattice site. Choosing the element type at construction makes the representation explicit and allows compact native storage. Use a type that matches the model's meaning: integer labels for categories, Boolean values for masks, and floating-point values for continuous attributes.
+A `Grid` represents one typed value per lattice site. The element type is chosen at construction, which makes the intended state representation explicit and allows the implementation to use compact native storage rather than a Python object at every site. Use a type that matches the model's meaning: integer labels for categories, Boolean values for masks, and floating-point values for continuous attributes.
 
 Indexing supports both linear site indices and coordinate forms, but these are different views of the same lattice. Use coordinate indexing when the equation is naturally spatial; use a linear index when iterating sites or passing a site identifier between APIs. In more than one dimension, coordinate tuples are often easier to review because the axes remain visible. The conversions `ToI` and `ItoX`/`ItoY`/`ItoZ` are explicit so the mapping can be tested rather than guessed.
 
@@ -267,7 +267,7 @@ Grid slices are detached NumPy copies, not live native-backed views. This avoids
 
 An agent handle is distinct from its position. The handle identifies the living agent; position determines where it is located. This separation lets a model retain identity while an agent moves, and lets queries report handles without copying whole Python objects. The model remains responsible for the meaning and lifecycle of any additional per-agent state.
 
-Stackability determines whether multiple agents may occupy one site. A nonstackable grid rejects a second occupant in safe mode. Enable stackability only when multiple occupancy is meaningful to the model.
+Stackability is an explicit constructor choice because allowing multiple agents at a site changes the model's state space and affects occupancy logic. A nonstackable grid rejects a second occupant in safe mode. Do not enable stackability merely to suppress an error: decide whether multiple occupancy is biologically or physically meaningful.
 
 The distinction between `All()` and a live iteration matters for mutation. `All()` returns a snapshot of handles and is therefore the appropriate pattern when the loop can create or dispose agents. A snapshot freezes membership, not agent state or grid occupancy. Each later query observes current occupancy. If newborns must not act until the next timestep, build the snapshot before processing the timestep; if all agents must compute from the same old world, snapshot the required state as well.
 
@@ -275,11 +275,11 @@ The `counts` property is a read-only occupancy query view, not a writable altern
 
 ### 4.3 PopGrid: counts instead of individual objects
 
-A `PopGrid` stores integer counts per site. For interchangeable individuals, counts can reduce storage and update overhead, at the cost of individual identity and history.
+A `PopGrid` stores integer population counts per site. It is intended for populations whose members are interchangeable for the questions being asked. That can greatly reduce storage and update overhead compared with representing every individual as an agent, but it removes individual-level history and identity.
 
 Its `Add` operation queues a delta; `Update` applies pending changes; `Reset` clears current state and pending deltas. The explicit delta buffer makes it possible to compute a set of changes before committing them. For a movement event from site A to site B, queue a negative delta at A and a positive delta at B, then update once. If the model reads current counts during this phase, it sees the pre-commit counts, which helps make the update independent of visitation order.
 
-`capacity` limits each site's count, not the total population. `All()` returns indices of nonzero sites; index the grid to retrieve their counts.
+The `capacity` option is a per-site cap. It is not the total population limit. `All()` returns the indices of nonzero sites, not the counts themselves; read the count at each returned index when the value is needed. Keeping these semantics distinct avoids confusing the set of occupied sites with the population data stored there.
 
 ### 4.4 PDEgrid: numerical operations with explicit assumptions
 
@@ -303,7 +303,7 @@ Use PAL's RNG functions when a model should share one reproducible stream across
 
 ### 4.7 Multinomial sampling: configuration versus sample state
 
-`NewMultinomial` constructs a sampler for repeated multinomial or binomial sampling. Constructing one from another sampler reuses solver configuration, not the other sampler's current sample state. This shares sampler configuration without sharing evolving sample state. Both samplers must use the same process-wide safety mode.
+`NewMultinomial` constructs a sampler for repeated multinomial or binomial sampling. Constructing one from another sampler reuses solver configuration, not the other sampler's current sample state. This separation allows a model to share sampling setup without implying that two sampler objects are the same evolving object. The safety mode must match, because PAL's mode is process-wide and sampler behavior belongs to that contract.
 
 ### 4.8 Visualization: simulation state versus presentation
 
@@ -325,7 +325,7 @@ Source-line diagnostics depend on sufficient type information, including annotat
 
 PAL's public API is intended to feel coherent across Python and `@pal.njit`, but the two paths have different execution machinery. The Python wrapper may validate an argument before calling native code, while the compiled wrapper may need a Numba-compatible overload and may use different diagnostics. Both must still agree on the public result and supported inputs.
 
-API coverage inventories, Python/compiled parity tests, integrated examples, and safe/fast runs check these contracts. Neither a declaration nor a docstring overrides runtime behavior. When a contract changes, update the implementation, declarations, reference, manual, examples, and tests together.
+This is why the project uses API coverage inventories, Python/compiled parity tests, integrated examples, and safe/fast test runs. A type declaration or docstring is not sufficient evidence if runtime behavior disagrees. Conversely, a one-off implementation detail should not be elevated to a public promise unless the tests and documentation support it. When changing a contract, update the implementation, declarations, generated reference, manual, examples, and tests as one coherent change.
 
 ## 5. Performance: measure the right thing
 
