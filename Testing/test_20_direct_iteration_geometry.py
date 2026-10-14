@@ -108,6 +108,18 @@ def test_python_agents_at_detects_same_site_move_in_safe_mode(api, safe_mode):
         next(iterator)
 
 
+def test_python_agents_in_radius_allows_property_updates(api):
+    g = api.NewAgentGrid((4, 4), numAgentProps=1, isStackable=True)
+    agents = [g.NewAgent(2.2, 2.2), g.NewAgent(2.4, 2.4)]
+    seen = []
+    for agent, dx, dy, dist_sq in g.AgentsInRadius(1.0, 2.5, 2.5):
+        g[agent, 0] = 2.5
+        seen.append(agent)
+    assert set(seen) == set(agents)
+    assert all(g[agent, 0] == pytest.approx(2.5) for agent in agents)
+    assert g.counts[2, 2] == len(agents)
+
+
 def test_python_agents_in_radius_detects_same_site_move_in_safe_mode(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode omits direct-iteration mutation checks")
