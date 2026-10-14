@@ -163,25 +163,80 @@ def Step(cells: pal.AgentGrid, empty: pal.IList):
 
 The `@pal.njit(cache=True)` decorator prepares supported PAL constructs for Numba. Keep the window lifecycle in ordinary Python; compile repeated model calculations. Develop in PAL's default safe mode before benchmarking fast mode.
 
-### 6. Represent cells as counts instead
+### 6. Replace individual cells with population counts
 
-Not every model needs individual cell identities. A `PopGrid` stores an integer count at each site. This is an **alternative** to the `AgentGrid` model, not a second copy of the same cells. It cannot track individual cell histories or movement decisions without additional modeling rules.
+The same biological processes—movement, division, and death—can be modeled without tracking individual cell identities. A `PopGrid` stores an integer count at each site, while a `Multinomial` distributes the cells at a site among competing outcomes. This is a **count-based alternative** to the preceding `AgentGrid` simulation, not an additional population.
 
-**Complete program — a count-based comparison:**
+There is one important modeling difference: `PopGrid` permits multiple cells at a site. To preserve the earlier model's one-cell-per-site rule, we would need extra rules for resolving competing arrivals and births. The example below deliberately allows multiple occupancy so that the count-based update stays simple. It uses the same movement, birth, and death probabilities, but its updates are synchronous rather than sequential; therefore the two models need not produce identical trajectories.
+
+**Complete program — count-based cells with movement, division, death, and visualization:**
 
 ```python
+import time
 import PythonAutomataLibrary as pal
 
-pop = pal.NewPopGrid((30, 30))
-pop.Add(1, 14, 14)
-pop.Add(1, 15, 14)
-pop.Add(1, 14, 15)
-pop.Add(1, 15, 15)
-pop.Update()
-print("Cells represented as counts:", pop.GetPop())
+SIZE = 30
+DEATH_PROB = 0.01
+BIRTH_PROB = 0.20
+MOVE_PROB = 0.10
+MOORE = pal.MooreHood(2, excludeCenter=True)
+COLORS = (pal.RGB(0, 0, 0), pal.RGB(255, 0, 0), pal.RGB(255, 255, 0))
+
+@pal.njit(cache=True)
+def Step(cells: pal.PopGrid, multi: pal.Multinomial):
+    for i in cells.All():
+        n = cells[i]
+        if n == 0:
+            continue
+
+        deaths = multi.Binomial(n, DEATH_PROB)
+        cells.Add(-deaths, i)
+        survivors = n - deaths
+
+        # Each survivor may divide; new cells remain at the parent site.
+        births = multi.Binomial(survivors, BIRTH_PROB)
+        cells.Add(births, i)
+
+        # Distribute the original survivors among possible destinations.
+        # Probabilities refer to the starting survivor count, not the remainder.
+        multi.Setup(survivors)
+        for x, y in cells.Hood(MOORE, cells.ItoX(i), cells.ItoY(i)):
+            moved = multi.Sample(MOVE_PROB / 8)
+            cells.Add(-moved, i)
+            cells.Add(moved, x, y)
+
+    # Commit every site's changes together: incoming cells wait until next step.
+    cells.Update()
+
+def Draw(cells, pix):
+    for x in range(SIZE):
+        for y in range(SIZE):
+            pix[x, y] = pal.ColorScale(COLORS, min(cells[x, y] / 8.0, 1.0))
+
+def main():
+    pal.Seed(1234)
+    cells = pal.NewPopGrid((SIZE, SIZE))
+    for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
+        cells[x, y] = 1
+    multi = pal.NewMultinomial()
+    pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Population counts")
+    pal.AwaitWindows()
+    while window.IsOpen():
+        Step(cells, multi)
+        Draw(cells, pix)
+        window.Update()
+        time.sleep(0.05)
+    window.Close()
+
+if __name__ == "__main__":
+    main()
 ```
 
-`Add` queues count changes; `Update` commits them. That explicit commit supports synchronous count updates, unlike the immediate agent births and moves above. Choosing between `AgentGrid` and `PopGrid` is a scientific representation decision, not merely a speed setting.
+The sampler's `Binomial(n, p)` independently draws the number of deaths or divisions. For movement, `Setup(survivors)` starts an allocation of the surviving cells. Each `Sample(MOVE_PROB / 8)` assigns cells to one of the eight neighboring directions, and unassigned cells stay in place. At a boundary, invalid directions are omitted, so those cells also stay. The two `Add` calls queue the removal and arrival for each transfer; `Update()` applies all queued births, deaths, and moves simultaneously. Unlike the individual-agent model, arrivals do not take another turn in the same timestep.
+
+The example intentionally uses a **per-direction** movement probability of `MOVE_PROB / 8` rather than `MOVE_PROB` for every direction; otherwise eight neighbors would imply an 80% total movement probability when `MOVE_PROB = 0.10`. It also allows division without an empty neighboring site. These choices make the population-count model simple and demonstrate what is gained—and what individual occupancy detail is lost—when replacing agents with counts.
+
+The [Multinomial reference](#random-numbers-and-multinomial) explains its probability bookkeeping and how multiple instances can share one solver core.
 
 ### 7. Add a diffusing nutrient
 
@@ -600,38 +655,6 @@ b = multi.Sample(pB)
 ```
 
 `Setup(n)` initializes a multinomial sequence with `n` trials and probability mass 1 and is chainable. Each `Sample(p)` takes that category's probability in the original multinomial distribution, draws from the remaining trials using the corresponding conditional probability, then removes the sampled count and `p` from the remaining state. Thus successive calls such as `Sample(0.2)` and `Sample(0.3)` represent categories with probabilities 0.2 and 0.3, not 0.2 followed by 0.3 of the remainder; any unrequested probability mass remains unsampled. In safe mode cumulative requested probability cannot exceed 1. `Binomial(n, p)` performs an independent binomial draw and does not consume the current multinomial sequence. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
-
-### Moving a PopGrid population with multinomial draws
-
-`Multinomial` is especially useful with `PopGrid`, where a single site may represent thousands of interchangeable cells. Rather than deciding movement for every individual, draw the **number** moving in each direction. For a 2D lattice, the following timestep gives each cell a 10% probability of moving to each available von Neumann neighbor; any remaining cells stay at their starting site.
-
-```python
-import PythonAutomataLibrary as pal
-
-VN = pal.VonNeumannHood(2, excludeCenter=True)
-MOVE_PROB = 0.10
-
-@pal.njit(cache=True)
-def Step(cells: pal.PopGrid, multi: pal.Multinomial):
-    for i in cells.All():
-        multi.Setup(cells[i])
-        for x, y in cells.Hood(VN, cells.ItoX(i), cells.ItoY(i)):
-            moved = multi.Sample(MOVE_PROB)
-            cells.Add(-moved, i)
-            cells.Add(moved, x, y)
-    cells.Update()
-
-pal.Seed(1234)
-cells = pal.NewPopGrid((20, 20))
-multi = pal.NewMultinomial()
-cells[10, 10] = 100
-Step(cells, multi)
-assert cells.GetPop() == 100
-```
-
-`Setup(cells[i])` starts a fresh allocation for each site's **current** population. Each `Sample(0.10)` assigns 10% of the original site's cells, in probability, to one neighboring destination; it does **not** assign 10% of whatever cells remain after the previous draw. At most four neighbors are visited, so the requested probability mass is at most 0.4. Cells not allocated to a neighbor remain in place. Near a nonwrapped edge, fewer neighbors are visited, and the unused probability likewise corresponds to staying.
-
-`Add` queues both sides of every transfer. Calling `Update()` **after all sites have been processed** ensures that incoming cells cannot move again during the same timestep, and conserves the total population. This example is adapted from [`Examples/Agents/PopGridExample.py`](../Examples/Agents/PopGridExample.py).
 
 ### Reusing the binomial solver core
 
