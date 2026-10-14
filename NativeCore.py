@@ -5334,7 +5334,7 @@ def _PythonAgentGeneration(grid):
     return int(_ag_generation(grid._ptr)) if hasattr(grid,"_nProps") else 0
 
 def _PythonAgentCheck(grid,generation):
-    if generation and int(_ag_generation(grid._ptr))!=generation:
+    if hasattr(grid,"_nProps") and int(_ag_generation(grid._ptr))!=generation:
         raise RuntimeError("AgentGrid cannot be structurally modified during direct agent iteration")
 
 def _PythonAgentsAtIter(grid,original,*coords):
