@@ -1,12 +1,12 @@
 # PAL Architecture and Design
 
-This document explains how PAL is organized and why its major interfaces and implementation choices exist. It focuses on architecture, subsystem responsibilities, trade-offs, validation strategy, and performance reasoning—not on teaching the API from the beginning. For runnable modeling workflows and public API behavior, use the [API Guide](API_GUIDE.md). For exact source-derived method signatures and descriptions, use the [API Reference](API_REFERENCE.md). The [Cheatsheet](CHEATSHEET.md) is the quick lookup.
+This document explains PAL's architecture, subsystem responsibilities, design trade-offs, testing strategy, and performance considerations. It assumes familiarity with basic PAL usage. For runnable modeling workflows and public API behavior, use the [API Guide](API_GUIDE.md). For exact source-derived method signatures and descriptions, use the [API Reference](API_REFERENCE.md). The [Cheatsheet](CHEATSHEET.md) is the quick lookup.
 
 ## 1. Architecture and design rationale
 
-This chapter explains the path from a line of model code to a state change in PAL. It is intentionally more architectural than the API chapters: the goal is to explain the responsibilities of each layer, why the boundaries exist, and what those boundaries mean when debugging, extending, or benchmarking a model.
+This chapter traces a model operation through PAL's layers and explains how their boundaries affect debugging, extension, and benchmarking.
 
-The discussion distinguishes documented contracts from engineering rationale. The public API and tests establish what users can rely on. A rationale explains the tradeoff a design serves; it does not claim an undocumented historical motivation or that no alternative design is possible.
+The public API and tests establish supported behavior. Design rationale explains the trade-offs behind that behavior, without claiming undocumented historical motivations.
 
 ### 1.1 The design problem PAL is solving
 
@@ -14,7 +14,7 @@ PAL targets models that repeatedly update many small pieces of state. A timestep
 
 PAL's architecture splits the problem by frequency and responsibility. Python remains the control language for constructing the model, selecting parameters, loading inputs, managing experiments, and deciding when to draw or checkpoint. Repeated computation is expressed in functions that PAL can prepare for Numba compilation. The native core supplies low-level state and kernels behind that interface.
 
-This split does not mean that all Python code is slow or that every model function should be compiled. It puts optimization effort where repeated work makes it worthwhile. A function called once during setup usually needs less attention than a loop executed at every site over millions of timesteps. Start with clear model code, identify the repeated work, and benchmark before moving more logic into compiled kernels.
+Not every function needs compilation. Setup code that runs once is usually less important to optimize than a site-level loop repeated over many timesteps. Start with clear code, identify repeated work, and benchmark before moving logic into compiled kernels.
 
 ### 1.2 The layers and their responsibilities
 
@@ -27,7 +27,7 @@ A useful mental model is to separate PAL into several cooperating layers:
 5. **The native C core.** This provides low-level storage and computational routines used by the Python/Numba-facing layer.
 6. **Tests, examples, and generated documentation.** These act as executable and written statements of the public contract, checking that the layers agree.
 
-These are responsibilities, not necessarily six separate packages; several may share a source file. Keeping them conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
+These are conceptual layers, not necessarily separate packages. Distinguishing them helps locate defects: constructor errors, Numba typing failures, native-state bugs, and stale API declarations require different fixes.
 
 ### 1.3 The native core and Python interface
 
