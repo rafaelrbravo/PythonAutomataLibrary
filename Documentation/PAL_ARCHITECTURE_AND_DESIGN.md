@@ -37,7 +37,7 @@ These are responsibilities rather than necessarily separate packages; several ma
 
 ### 1.3 The native core and Python interface
 
-The native core gives PAL a place to implement low-level operations without requiring users to write C for ordinary model logic. Native-backed objects can hold state in a representation suited to repeated updates, while the Python-facing API offers recognizable constructors, indexing, and methods.
+PAL implements low-level operations in its native core without requiring users to write C for ordinary model logic. Native-backed objects can hold state in a representation suited to repeated updates, while the Python-facing API offers recognizable constructors, indexing, and methods.
 
 The native implementation is not itself the public contract. A C function may accept a particular pointer or integer layout internally, but the Python API should expose a stable and understandable operation. The wrapper layer is where public arguments, supported types, safe-mode validation, and implementation details meet.
 
@@ -47,9 +47,9 @@ This separation creates a maintenance obligation: behavior must remain coherent 
 
 PAL's public names and signatures are designed around modeler-facing concepts: a grid site, an agent handle, a population count, a neighborhood, a field, or a random draw. The native core may use lower-level representations that do not resemble those concepts directly. That is acceptable as long as the public behavior remains consistent.
 
-Protocol declarations are part of this contract because users and tools read them for annotations and autocomplete. But a declaration is not executable proof. Likewise, a docstring or manual paragraph cannot make unsupported runtime behavior valid. The actual implementation, declarations, tests, and generated references need to describe the same public surface.
+Protocol declarations are part of this contract because users and tools read them for annotations and autocomplete. But a declaration is not executable proof. Likewise, a docstring or manual paragraph cannot make unsupported runtime behavior valid. The implementation, declarations, tests, and generated references must describe the same public API.
 
-This is why API changes should be made as a coordinated change. When altering an argument name, return type, indexing rule, or safe-mode behavior, check the Python method, the Numba overload, relevant Protocol declaration, documentation generator, examples, and regression tests. A change that works in one path but breaks another is not complete merely because the primary example still runs.
+API changes therefore require coordination across layers. When altering an argument name, return type, indexing rule, or safe-mode behavior, check the Python method, the Numba overload, relevant Protocol declaration, documentation generator, examples, and regression tests. A change that works in one path but breaks another is not complete merely because the primary example still runs.
 
 ### 1.5 Python and Numba execution paths
 
@@ -89,7 +89,7 @@ Native-backed objects can support pickling, but pickling an object is not equiva
 
 ### 2.2 Preserving invariants across layers
 
-The public contract is about behavior, not a presumed pointer layout: supported operations must preserve invariants, and serialized state must be reconstructed without relying on process-local addresses. A wrapper can reject an invalid operation before it reaches native code, but a compiled path may reach the same underlying state through a different route. Invariants therefore need protection and tests at the boundaries where state can actually change.
+The public contract specifies behavior rather than pointer layout: operations must preserve invariants, and serialized state must be reconstructed without relying on process-local addresses. A wrapper can reject an invalid operation before it reaches native code, but a compiled path may reach the same underlying state through a different route. Invariants therefore need protection and tests at the boundaries where state can actually change.
 
 When adding an operation, identify which layer owns each invariant. A population update must reconcile queued deltas with current counts and capacity constraints; a PDE transport operation must respect configured geometry, boundary treatment, and commit semantics. Do not expose a mutable native buffer without defining its ownership, lifetime, invalidation, and synchronization rules.
 
@@ -99,7 +99,7 @@ A neighborhood such as Moore or Von Neumann is naturally a pattern around a loca
 
 Applying a neighborhood also makes boundary behavior explicit. Applying a hood must account for grid dimensions and wrapping flags; the relative pattern alone does not know whether a particular neighbor falls outside a nonperiodic domain. PAL's application step can translate offsets into coordinates, wrap periodic axes, and omit out-of-domain sites according to the public contract.
 
-This avoids storing a separate absolute-neighbor list for every cell and lets the compiled path transform high-level neighborhood loops. It does not guarantee unique destinations: small or wrapped domains can map multiple offsets to the same site. Whether to count those repeated contributions or deduplicate them depends on the model, so choose and test the intended behavior.
+This avoids storing a separate absolute-neighbor list for every cell and lets the compiled path transform high-level neighborhood loops. Neighborhood destinations are not necessarily unique: small or wrapped domains can map multiple offsets to the same site. Whether to count those repeated contributions or deduplicate them depends on the model, so choose and test the intended behavior.
 
 ### 2.4 Separate update and commit operations
 
@@ -153,7 +153,7 @@ The `capacity` option sets a per-site population cap, not a limit on the sum acr
 
 ### 3.4 PDEgrid: numerical operations with explicit assumptions
 
-A `PDEgrid` stores a lattice scalar field. Unlike an AgentGrid, its state is a spatially distributed quantity rather than a collection of individually tracked entities. This makes field-level transport and source terms natural, but it also means the modeler must choose a discretization and interpret the units of stored values and coefficients consistently. Its transport methods represent different mathematical choices: scalar-coefficient diffusion, spatially varying or interface-defined coefficients, masked interfaces, alternating-direction implicit diffusion, radial diffusion on circular or spherical domains, and constant or spatially varying advection. Choose a method based on the equation and geometry being modeled, not simply on which method is fastest.
+A `PDEgrid` stores a lattice scalar field. Unlike an AgentGrid, its state is a spatially distributed quantity rather than a collection of individually tracked entities. This representation supports field-level transport and source terms, but the modeler must choose a discretization and use consistent units for stored values and coefficients. Its transport methods represent different mathematical choices: scalar-coefficient diffusion, spatially varying or interface-defined coefficients, masked interfaces, alternating-direction implicit diffusion, radial diffusion on circular or spherical domains, and constant or spatially varying advection. Choose a method based on the equation and geometry being modeled, not simply on which method is fastest.
 
 `SetTimeSpaceStep` configures the temporal step `dt` and spatial steps `dx`, `dy`, and `dz` used by transport methods. These values are part of the discretized equation. A timestep that is too large can produce unstable or inaccurate results even when every API call is valid. Boundary conditions likewise belong to the mathematical problem: face-specific values and periodic wrapping can produce different solutions.
 
