@@ -10,7 +10,7 @@ def test_capacity_is_not_a_strict_limit():
     grid = pal.NewPopGrid((2,), capacity=100)  # uint8: 0..255
     grid[0] = 150
     assert grid[0] == 150
-    grid.Add(0, 50)
+    grid.Add(50, 0)
     grid.Update()
     assert grid[0] == 200
     assert grid.GetPop() == 200
@@ -30,14 +30,14 @@ def test_direct_write_rejects_storage_overflow():
 def test_update_overflow_is_atomic_and_preserves_deltas():
     grid = pal.NewPopGrid((2,), capacity=100)
     grid[0] = 250
-    grid.Add(0, 10)
-    grid.Add(1, 5)
+    grid.Add(10, 0)
+    grid.Add(5, 1)
     with pytest.raises(ValueError):
         grid.Update()
     assert grid[0] == 250
     assert grid[1] == 0
     assert grid.GetPop() == 250
-    grid.Add(0, -10)  # cancel the invalid pending change
+    grid.Add(-10, 0)  # cancel the invalid pending change
     grid.Update()
     assert grid[0] == 250
     assert grid[1] == 5
@@ -48,7 +48,7 @@ def test_update_overflow_is_atomic_and_preserves_deltas():
 def test_final_total_checked_without_intermediate_overflow():
     grid = pal.NewPopGrid((2,), capacity=2**40)  # int64
     grid[0] = 2**63 - 1
-    grid.Add(0, -(2**63 - 1))
+    grid.Add(-(2**63 - 1), 0)
     grid.Add(1, 1)
     grid.Update()
     assert grid[0] == 0
