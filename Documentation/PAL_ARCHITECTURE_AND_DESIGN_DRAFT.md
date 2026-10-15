@@ -1,8 +1,6 @@
 # PAL Architecture and Design — Draft
 
-This draft reorganizes the architecture document for review. The published document remains `PAL_ARCHITECTURE_AND_DESIGN.md` until this revision is approved.
-
-This document explains how PAL is organized and why its major interfaces and implementation choices exist. It focuses on architecture, subsystem responsibilities, trade-offs, validation strategy, and performance reasoning—not on teaching the API from the beginning. For runnable modeling workflows and public API behavior, use the [API Guide](API_GUIDE.md). For method signatures and descriptions, use the [API Reference](API_REFERENCE.md). The [Cheatsheet](CHEATSHEET.md) is the quick lookup.
+This document explains how PAL is organized, why its major interfaces and implementation choices exist, and how to maintain them. It focuses on architecture, subsystem responsibilities, trade-offs, testing, and performance—not on teaching the API from the beginning. Use the [API Guide](API_GUIDE.md) for runnable modeling workflows and public API behavior, the [API Reference](API_REFERENCE.md) for exact signatures, and the [Cheatsheet](CHEATSHEET.md) for quick lookup.
 
 ## Reading map
 
@@ -255,7 +253,7 @@ PAL_TEST_MODE=safe python -m pytest -q Testing
 PAL_TEST_MODE=fast python -m pytest -q Testing
 ```
 
-PAL locks its process-wide mode at first construction, so safe and fast should not be combined in one Python process. Fast mode intentionally skips some validation tests. The CI workflow runs both modes on Linux, verifies all generated documentation artifacts are current, runs the API benchmark after successful tests, and separately runs representative examples in safe and fast modes on Windows. Headless OpenGL tests require the relevant graphics backend.
+PAL locks its process-wide mode at first construction, so safe and fast should not be combined in one Python process. Fast mode intentionally skips some validation tests. The CI workflow runs both modes on Linux, checks generated documentation artifacts, runs the API benchmark after successful tests, and separately runs representative examples in safe and fast modes on Windows. Headless OpenGL tests require the relevant graphics backend.
 
 When adding or changing model code, start with the smallest test that expresses the intended public behavior, then run the affected test file before the full suite. Prefer conservation laws, coordinate identities, exact small examples, and Python/compiled agreement over tests that duplicate PAL's internal formulas.
 
