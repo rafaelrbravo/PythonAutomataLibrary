@@ -285,7 +285,7 @@ The nutrient update now consumes 0.01 concentration units per cell at each site,
 
 ### Where to go next
 
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, and switch cell representations while keeping that field. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. For compilation and execution options, see [Performance](#performance-fastmode-njitcachetrue-and-unrolltrue). Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [IList](#ilist), [PopGrid](#popgrid), [PDEgrid](#pdegrid), or [Random numbers and Multinomial](#random-numbers-and-multinomial). The later sections cover [saving PAL objects](#saving-pal-objects), [organizing larger models](#organizing-larger-models), and [visualization](#visualization). You do not need to use every feature in the tutorial model.
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, and switch cell representations while keeping that field. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. For compilation and execution options, see [Performance](#performance-fastmode-njitcachetrue-and-unrolltrue). Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [IList](#ilist), [PopGrid](#popgrid), [Random numbers and Multinomial](#random-numbers-and-multinomial), or [PDEgrid](#pdegrid). The later sections cover [saving PAL objects](#saving-pal-objects), [organizing larger models](#organizing-larger-models), and [visualization](#visualization). You do not need to use every feature in the tutorial model.
 
 ## Core use
 
@@ -665,6 +665,56 @@ print(pop[10, 12])    # 17
 
 `capacity=None` uses the int64 maximum as the per-site population cap. An explicit `capacity` must be a nonnegative int64 integer; invalid, fractional, nonfinite, or out-of-range values raise `ValueError` during construction. Capacity constrains each site independently; total population is tracked separately and must remain representable as a nonnegative int64. In safe mode, direct writes enforce these bounds immediately. `Add()` queues signed changes without applying them to the current counts; a queued change may exceed a site's remaining capacity until it is checked at `Update()`. `Update()` validates every resulting site count and the total population before applying any pending delta; if validation fails, current populations and pending deltas are unchanged. Fast mode assumes these constraints are satisfied.
 
+## Random numbers and Multinomial
+
+Use PAL's random-number functions for stochastic decisions such as selecting agents or destinations. Use `Multinomial` when a count of individuals or events must be distributed among several possible outcomes without sampling each one separately.
+
+```python
+import PythonAutomataLibrary as pal
+
+pal.Seed(1234)
+u = pal.Random()     # uniform float in [0, 1)
+i = pal.RandInt(10)  # integer from 0 through 9
+```
+
+This example seeds PAL's random-number generator before drawing two values. The seed fixes the random stream for reproducible runs; `Random()` and `RandInt()` each advance that stream.
+
+`Seed` accepts integral seeds in the uint64 domain (`0` through `2**64 - 1`); invalid or nonfinite inputs raise `ValueError`. `RandInt(max)` requires a positive integer in the int64 domain and returns an integer in `[0, max)`; zero, negative, fractional, nonfinite, or out-of-range bounds raise `ValueError`. `Random()` returns a uniform floating-point draw. PAL random functions share one seeded stream across Python and compiled PAL calls, so reseeding reproduces the same call sequence across that boundary. The stream is call-order dependent: adding or removing a random draw changes later results. This does not seed NumPy's separate RNG.
+
+### Multinomial allocations
+
+A binomial draw counts how many of `n` trials have one outcome. A multinomial allocation extends this to several mutually exclusive outcomes, such as moving left, moving right, or staying put. In the example below, each of 100 individuals independently has a 20% chance of moving left, a 30% chance of moving right, and a 50% chance of staying. The resulting counts vary from run to run, but always sum to 100.
+
+```python
+multi = pal.NewMultinomial()
+multi.Setup(100)
+left = multi.Sample(0.2)
+right = multi.Sample(0.3)
+stay = 100 - left - right  # unallocated individuals
+
+independent = multi.Binomial(100, 0.2)  # separate binomial draw
+```
+
+`Setup(n)` initializes a multinomial sequence with `n` trials and probability mass 1 and is chainable. Each `Sample(p)` takes that category's probability in the original multinomial distribution, draws from the remaining trials using the corresponding conditional probability, then removes the sampled count and `p` from the remaining state. Thus successive calls such as `Sample(0.2)` and `Sample(0.3)` represent categories with probabilities 0.2 and 0.3, not 0.2 followed by 0.3 of the remainder. In the example, the remaining probability is 0.5, and `stay` accounts for individuals not allocated to either sampled category. In safe mode cumulative requested probability cannot exceed 1. `Binomial(n, p)` performs an independent binomial draw and does not consume the current multinomial sequence. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
+
+### Reusing the binomial solver core
+
+If several independent multinomial allocations are needed, construct one sampler and pass it into another constructor:
+
+```python
+movement = pal.NewMultinomial()
+division = pal.NewMultinomial(movement)
+
+movement.Setup(100)
+moved = movement.Sample(0.2)
+
+division.Setup(50)
+dividing = division.Sample(0.1)
+```
+
+`NewMultinomial(movement)` **shares the underlying reusable binomial solver core**, avoiding a separate solver setup, but the two `Multinomial` objects keep **independent remaining-count and remaining-probability state**. The second instance does not inherit the first instance's partially sampled `Setup` sequence. Call `Setup` separately for each allocation. Sharing the solver does not create separate random streams: both samplers use PAL's common RNG, so results still depend on call order.
+
+
 ## PDEgrid
 
 Use `PDEgrid` for spatially varying continuous quantities that evolve through transport, such as nutrients, oxygen, signaling molecules, or temperature. It combines a scalar field with diffusion and advection operations, so it is preferable to a plain `Grid` when those dynamics are needed.
@@ -783,56 +833,6 @@ field.AdvectionInterfaces(xVels, yVels=None, zVels=None, ...)
 ```
 
 Advection uses a conservative first-order upwind discretization. `Advection` uses constant velocity components. `AdvectionField` uses cell-centered velocity fields and averages adjacent values at interior faces. `AdvectionInterfaces` supplies positive-face velocities directly; the negative face uses the neighboring cell's stored positive-face velocity. Supply velocity components only for dimensions that exist. The same scalar-or-face-array Cartesian boundary arguments used by diffusion are available: `None` closes a nonwrapped face to advective flux, while supplied values provide the exterior concentration used for inflow. Safe mode checks the CFL condition before accumulating changes.
-
-## Random numbers and Multinomial
-
-Use PAL's random-number functions for stochastic decisions such as selecting agents or destinations. Use `Multinomial` when a count of individuals or events must be distributed among several possible outcomes without sampling each one separately.
-
-```python
-import PythonAutomataLibrary as pal
-
-pal.Seed(1234)
-u = pal.Random()     # uniform float in [0, 1)
-i = pal.RandInt(10)  # integer from 0 through 9
-```
-
-This example seeds PAL's random-number generator before drawing two values. The seed fixes the random stream for reproducible runs; `Random()` and `RandInt()` each advance that stream.
-
-`Seed` accepts integral seeds in the uint64 domain (`0` through `2**64 - 1`); invalid or nonfinite inputs raise `ValueError`. `RandInt(max)` requires a positive integer in the int64 domain and returns an integer in `[0, max)`; zero, negative, fractional, nonfinite, or out-of-range bounds raise `ValueError`. `Random()` returns a uniform floating-point draw. PAL random functions share one seeded stream across Python and compiled PAL calls, so reseeding reproduces the same call sequence across that boundary. The stream is call-order dependent: adding or removing a random draw changes later results. This does not seed NumPy's separate RNG.
-
-### Multinomial allocations
-
-A binomial draw counts how many of `n` trials have one outcome. A multinomial allocation extends this to several mutually exclusive outcomes, such as moving left, moving right, or staying put. In the example below, each of 100 individuals independently has a 20% chance of moving left, a 30% chance of moving right, and a 50% chance of staying. The resulting counts vary from run to run, but always sum to 100.
-
-```python
-multi = pal.NewMultinomial()
-multi.Setup(100)
-left = multi.Sample(0.2)
-right = multi.Sample(0.3)
-stay = 100 - left - right  # unallocated individuals
-
-independent = multi.Binomial(100, 0.2)  # separate binomial draw
-```
-
-`Setup(n)` initializes a multinomial sequence with `n` trials and probability mass 1 and is chainable. Each `Sample(p)` takes that category's probability in the original multinomial distribution, draws from the remaining trials using the corresponding conditional probability, then removes the sampled count and `p` from the remaining state. Thus successive calls such as `Sample(0.2)` and `Sample(0.3)` represent categories with probabilities 0.2 and 0.3, not 0.2 followed by 0.3 of the remainder. In the example, the remaining probability is 0.5, and `stay` accounts for individuals not allocated to either sampled category. In safe mode cumulative requested probability cannot exceed 1. `Binomial(n, p)` performs an independent binomial draw and does not consume the current multinomial sequence. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
-
-### Reusing the binomial solver core
-
-If several independent multinomial allocations are needed, construct one sampler and pass it into another constructor:
-
-```python
-movement = pal.NewMultinomial()
-division = pal.NewMultinomial(movement)
-
-movement.Setup(100)
-moved = movement.Sample(0.2)
-
-division.Setup(50)
-dividing = division.Sample(0.1)
-```
-
-`NewMultinomial(movement)` **shares the underlying reusable binomial solver core**, avoiding a separate solver setup, but the two `Multinomial` objects keep **independent remaining-count and remaining-probability state**. The second instance does not inherit the first instance's partially sampled `Setup` sequence. Call `Setup` separately for each allocation. Sharing the solver does not create separate random streams: both samplers use PAL's common RNG, so results still depend on call order.
-
 
 ## Saving PAL objects
 
