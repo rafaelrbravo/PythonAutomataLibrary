@@ -167,7 +167,7 @@ The mutation contract is especially important here. `Add()` queues a field delta
 
 `IList` stores reusable integer collections in Python and compiled code. For example, a model can collect empty neighboring sites and choose one for reproduction without allocating a new collection at every step.
 
-`All()` returns a detached copy; `Iter()` traverses the current list without copying. Use the former when results must survive later mutations and the latter for one-pass traversal. Clear reused lists before repopulating them.
+`All()` returns a detached NumPy copy; `Iter()` traverses the current values without making that detached copy. Use `All()` when the result must remain independent of later list mutations and `Iter()` for one-pass traversal. Clear reused lists before repopulating them, and check that a list is nonempty before calling `Random()`.
 
 ### 3.6 Randomness: one explicit PAL stream
 
@@ -177,7 +177,7 @@ Use PAL's RNG functions when a model should share one reproducible stream across
 
 ### 3.7 Multinomial sampling: configuration versus sample state
 
-`NewMultinomial(other)` copies solver configuration, not the source sampler's current multinomial remainder. The new sampler therefore starts with independent sampling state. Both samplers must use the same process-wide safety mode.
+A `Multinomial` sampler separates configuration from the state accumulated while sampling. `Setup(n)` configures the number of trials for repeated `Sample(p)` calls; `Binomial(n, p)` performs a draw with an explicit trial count. `NewMultinomial(other)` copies the sampler's configuration, but not its current multinomial remainder, so the new sampler starts with independent sampling state. Both samplers must use the same process-wide safety mode. This distinction matters when cloning a configured sampler: configuration can be shared without continuing the same partially consumed sample state.
 
 ### 3.8 Visualization: simulation state versus presentation
 
