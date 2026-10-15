@@ -830,12 +830,12 @@ A binomial draw counts how many of `n` trials have one outcome. A multinomial al
 
 ```python
 multi = pal.NewMultinomial()
-x = multi.Binomial(100, 0.2)  # independent binomial draw
-
 multi.Setup(100)
 left = multi.Sample(0.2)
 right = multi.Sample(0.3)
 stay = 100 - left - right  # unallocated individuals
+
+independent = multi.Binomial(100, 0.2)  # separate binomial draw
 ```
 
 `Setup(n)` initializes a multinomial sequence with `n` trials and probability mass 1 and is chainable. Each `Sample(p)` takes that category's probability in the original multinomial distribution, draws from the remaining trials using the corresponding conditional probability, then removes the sampled count and `p` from the remaining state. Thus successive calls such as `Sample(0.2)` and `Sample(0.3)` represent categories with probabilities 0.2 and 0.3, not 0.2 followed by 0.3 of the remainder. In the example, the remaining probability is 0.5, and `stay` accounts for individuals not allocated to either sampled category. In safe mode cumulative requested probability cannot exceed 1. `Binomial(n, p)` performs an independent binomial draw and does not consume the current multinomial sequence. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
