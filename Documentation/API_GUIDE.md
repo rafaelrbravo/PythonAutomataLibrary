@@ -745,7 +745,20 @@ For a spatially varying boundary concentration, pass a C-contiguous `float32` ar
 
 ### Diffusion
 
-Diffusion spreads a quantity from regions of higher concentration toward regions of lower concentration. Use the diffusion methods to model processes such as nutrients or signaling molecules spreading through space; the variants below differ in how the diffusion rate is specified.
+Diffusion spreads a quantity from regions of higher concentration toward regions of lower concentration. For a first example, put a concentration of 1 at the center of an otherwise empty field, then diffuse it for one timestep:
+
+```python
+field = pal.NewPDEgrid((30, 30))
+field.SetTimeSpaceStep(0.1, 1.0, 1.0)
+field[15, 15] = 1.0
+field.Diffusion(0.1)
+field.Update()
+print(field[15, 15])  # less than 1.0: concentration spreads outward
+```
+
+Here `0.1` in `SetTimeSpaceStep` is the timestep, whereas `0.1` in `Diffusion` is the diffusion rate. The first call to `Diffusion` queues changes; `Update()` applies them. With no boundary arguments, the nonwrapped edges have no flux.
+
+Choose a diffusion method based on how the rate varies across space. The following are **reference signatures**, not a sequence of calls to run together:
 
 ```python
 field.Diffusion(rateConstant, ...)
