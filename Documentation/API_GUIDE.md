@@ -273,13 +273,15 @@ The nutrient update now consumes 0.01 concentration units per cell at each site,
 
 ### 8. Reproduce and save a run
 
-Seed PAL's random stream **before** the first stochastic operation:
+For reproducible runs, call `pal.Seed` near the beginning of `main`, **before** any stochastic operation (including movement or multinomial sampling):
 
 ```python
 pal.Seed(1234)
 ```
 
-The same seed reproduces the same random stream when the initial state and order of random calls also match. For a checkpoint, Python's `pickle` can save PAL-backed objects together with ordinary model metadata:
+The same seed reproduces the same random stream when the initial state and order of random calls also match. Stage 7 already seeds its complete program; earlier stages can add the same call.
+
+To save the state at a chosen timestep, use Python's `pickle` to store the population grid, nutrient field, and current step number together. The following snippet belongs in ordinary Python code (for example, inside `main` after the simulation state exists), not inside an `@pal.njit` function:
 
 ```python
 import pickle
@@ -295,7 +297,7 @@ nutrient = state["nutrient"]
 step = state["step"]
 ```
 
-Saving object state is not the same as saving every source of randomness or every external resource. To resume a stochastic trajectory exactly, also preserve the relevant random state and any other model state your experiment uses. A fixed seed is sufficient for replaying a run from its beginning under the same call sequence, not necessarily for resuming halfway through it.
+Only load pickle files you trust: loading a malicious pickle can execute arbitrary Python code. Saving object state is not the same as saving every source of randomness or every external resource. To resume a stochastic trajectory exactly, also preserve the relevant random state and any other model state your experiment uses. A fixed seed is sufficient for replaying a run from its beginning under the same call sequence, not necessarily for resuming halfway through it.
 
 ### Where to go next
 
