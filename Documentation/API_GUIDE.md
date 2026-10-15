@@ -896,13 +896,15 @@ window.IsOpen()
 window.Close()
 ```
 
-For example, to record two frames to a GIF after drawing the first frame, use a sequence such as:
+For example, after creating `pix` and `window` as above, record two differently colored frames:
 
 ```python
 window.StartGif("frames.gif")
+pix[:] = pal.RGB(0, 0, 0)
+pix[10, 12] = pal.RGB(255, 0, 0)
 window.Update()
 window.AddGifFrame()
-# Change pix here to draw the next frame.
+pix[10, 12] = pal.RGB(0, 0, 255)
 window.Update()
 window.AddGifFrame()
 window.StopGif()
