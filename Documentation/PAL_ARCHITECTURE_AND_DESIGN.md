@@ -4,7 +4,7 @@ This document explains how PAL is organized, why its major interfaces and implem
 
 ## Reading map
 
-Chapter 1 explains the design problem and traces execution through the public API, Python wrappers, Numba, and native code. Chapter 2 explains state ownership, neighborhood interpretation, update timing, execution modes, rendering, and random-number state. Chapter 3 applies those principles to each subsystem. Chapters 4 and 5 cover maintenance, testing, and performance; Chapter 6 distinguishes software correctness from scientific validation. Chapter 7 points to the complementary user-facing references.
+Chapter 1 explains the design problem and traces execution through the public API, Python wrappers, Numba, and native code. Chapter 2 explains state ownership, neighborhood interpretation, update timing, execution modes, and rendering; Chapter 3 covers random-number state alongside the other subsystems. Chapter 3 applies those principles to each subsystem. Chapters 4 and 5 cover maintenance, testing, and performance; Chapter 6 distinguishes software correctness from scientific validation. Chapter 7 points to the complementary user-facing references.
 
 ## 1. Foundations: responsibilities and execution
 
@@ -117,10 +117,6 @@ Fast mode should be treated as a measured optimization, not a correctness mode. 
 
 Keep rendering separate from the simulation's state transitions. This separation allows headless execution and intermittent rendering, and it prevents display costs from obscuring the cost of the model itself. Benchmark the update kernel separately from drawing, then measure end-to-end runtime if that reflects the user's actual workload. A plausible-looking image is not proof that the underlying state transitions are correct.
 
-### 2.7 Random-number state and reproducibility
-
-Randomness is part of execution state, not just a parameter. Reproducibility depends on the initial state, parameters, seed, and order of random calls; adding a draw can change all subsequent outcomes. Random-stream state is distinct from model-object state, so saving grids or agents alone does not guarantee exact stochastic continuation. The subsystem chapter describes PAL's shared stream and checkpoint implications.
-
 ## 3. Subsystem design choices
 
 The previous chapters explain the common execution path and state semantics. This chapter applies those ideas to each subsystem: what it stores, which operations define its contract, and which trade-offs follow from that representation. For complete call signatures and usage examples, see the API Reference and API Guide.
@@ -190,12 +186,6 @@ PAL's `njit` wrapper transforms selected constructs, including neighborhood and 
 Python syntax alone does not guarantee matching compiled behavior: AST rewriting, wrappers, native code, and Numba typing all contribute. When a problem appears only under compilation, reduce it to a minimal function and compare Python and compiled execution.
 
 Source-line diagnostics depend on sufficient type information, including annotations for relevant PAL arguments. Unannotated arguments do not promise the same diagnostics. Treat annotations as part of writing clear compiled model code, not as a guarantee that every error can be attributed to an exact source expression.
-
-### 3.10 Keeping implementations and declarations consistent
-
-Python and `@pal.njit` use different wrappers and diagnostics, but must agree on supported inputs and public results. Python validation and Numba overloads are implementation details, not separate user-facing contracts.
-
-This is why the project uses API coverage inventories, Python/compiled parity tests, integrated examples, and safe/fast test runs. A type declaration or docstring is not sufficient evidence if runtime behavior disagrees. Conversely, a one-off implementation detail should not be elevated to a public promise unless the tests and documentation support it. When changing a contract, update the implementation, declarations, generated reference, manual, examples, and tests as one coherent change.
 
 ## 4. Maintaining and extending PAL
 
