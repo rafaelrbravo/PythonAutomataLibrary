@@ -638,7 +638,7 @@ Advection uses a conservative first-order upwind discretization. `Advection` use
 items = pal.NewIList()
 ```
 
-`IList` is PAL's reusable integer query/list container. Stored values are nonnegative int32 integers in the supported contract.
+`IList` collects integer identifiers for later use. These can be **grid-site indices** (such as `cells.ToI(x, y)`) or **agent handles**, letting you save a selection of sites or agents and subsequently iterate over it, shuffle it, or sample a random entry. For example, collect empty neighboring sites and choose one with `Random()`, or collect selected agents and process them later with `Iter()`. It stores identifiers, not copies of the sites or agents themselves. Stored values are nonnegative int32 integers in the supported contract.
 
 | Operation | Meaning |
 | --- | --- |
