@@ -4,13 +4,13 @@ This document explains how PAL is organized, why its major interfaces and implem
 
 ## Contents
 
-1. [Foundations: responsibilities and execution](#1-foundations-responsibilities-and-execution)
-2. [State, ownership, and execution semantics](#2-state-ownership-and-execution-semantics)
-3. [Subsystem design choices](#3-subsystem-design-choices)
-4. [Maintaining and extending PAL](#4-maintaining-and-extending-pal)
-5. [Measuring performance](#5-measuring-performance)
-6. [Validation: prove the model, not just the program](#6-validation-prove-the-model-not-just-the-program)
-7. [Using the rest of the documentation](#7-using-the-rest-of-the-documentation)
+1. [Foundations: responsibilities and execution](#1-foundations-responsibilities-and-execution) — How PAL's Python, compiled, and native parts work together to run a model.
+2. [State, ownership, and execution semantics](#2-state-ownership-and-execution-semantics) — Where model data lives, how changes take effect, and what safe and fast modes mean.
+3. [Subsystem design choices](#3-subsystem-design-choices) — Why PAL uses different kinds of grids, agent collections, random sampling, and visualization tools.
+4. [Maintaining and extending PAL](#4-maintaining-and-extending-pal) — How to investigate problems, add features, and check that changes work.
+5. [Measuring performance](#5-measuring-performance) — How to measure speed fairly and decide which optimizations are worthwhile.
+6. [Validation: prove the model, not just the program](#6-validation-prove-the-model-not-just-the-program) — How to check both that the software works and that the model produces meaningful results.
+7. [Using the rest of the documentation](#7-using-the-rest-of-the-documentation) — Where to find examples, exact API details, and quick-reference material.
 
 ## 1. Foundations: responsibilities and execution
 
