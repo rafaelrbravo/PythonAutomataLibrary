@@ -4,7 +4,7 @@
 
 Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y and Z/z variants.
 
-Curated one-page API map; see API Guide and API Reference for details.
+Curated one-page API map; see PAL Guide and API Reference for details.
 
 ## CONVENTIONS
 
