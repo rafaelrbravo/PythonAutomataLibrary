@@ -251,7 +251,7 @@ When adding or changing model code, start with the smallest test that expresses 
 
 ## 5. Measuring performance
 
-A PAL workflow can include compilation, native calls, validation, model logic, and rendering. A timing that mixes these costs can be misleading. Compilation time matters for short exploratory runs, while steady-state time often dominates long simulations; optimizing one can worsen the other. Measure them separately rather than treating either as the universal definition of performance.
+A PAL workflow includes model logic and may also include compilation, native calls, validation, and rendering. A timing that mixes these costs can be misleading. Compilation time matters for short exploratory runs, while steady-state time often dominates long simulations; optimizing one can worsen the other. Measure them separately rather than treating either as the universal definition of performance.
 
 ### 5.1 Cold compilation is not steady-state runtime
 
