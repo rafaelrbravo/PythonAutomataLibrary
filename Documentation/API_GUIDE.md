@@ -449,7 +449,7 @@ total += grid[x, y + 1]
 
 The offset order does not affect this sum. The example illustrates four operations, not the generated machine code. At boundaries, `Hood` still handles valid coordinates and wrapping according to the grid's configuration.
 
-**Why this is fast:** The neighborhood has a fixed number of offsets known at compilation time. With `unroll=True`, Numba can specialize each operation, eliminating the ordinary neighborhood-loop control and making the resulting code easier to optimize. This can substantially improve performance when an agent-based model repeatedly visits the same small neighborhood. It preserves PAL's compact neighborhood syntax rather than requiring manually expanded code.
+**Why this is fast:** The neighborhood has a fixed number of offsets known at compilation time. With `unroll=True`, Numba can specialize each operation, eliminating the ordinary neighborhood-loop control and making the resulting code easier to optimize. This can improve performance when an agent-based model repeatedly visits the same small neighborhood, although the benefit depends on the workload. It preserves PAL's compact neighborhood syntax rather than requiring manually expanded code.
 
 The option changes how the loop is compiled, not which neighbors are visited. For large neighborhoods or substantial loop bodies, the duplicated operations can outweigh the runtime benefit; compare against ordinary iteration before enabling it.
 
@@ -581,7 +581,7 @@ print(wrapped.InWrapSQY(-1))  # -1 (outside the nonwrapped axis)
 
 ## IList
 
-Use `IList` to collect integer identifiers, such as site indices or agent handles, for iteration, shuffling, or random selection. Typical uses include neighborhood queries, candidate destinations, and subsets of agents. Unlike a mathematical set, it preserves insertion order and can contain repeated identifiers; `Append()` does not enforce uniqueness.
+Use `IList` as a reusable collection of integer identifiers, such as site indices or agent handles, for iteration, shuffling, or random selection. Typical uses include neighborhood queries, candidate destinations, and subsets of agents. Unlike a mathematical set, it preserves insertion order and can contain repeated identifiers; `Append()` does not enforce uniqueness.
 
 ```python
 items = pal.NewIList()
