@@ -79,19 +79,15 @@ The execution path is conceptual rather than a promise that every call crosses e
 
 A PAL object is more than a Python container. Its public methods operate on state managed through PAL's native-backed implementation. The Python object is the user's handle to that state; it is not safe to assume that every internal value is an ordinary Python list or NumPy array that can be edited freely.
 
-This matters for lifetime and mutation. Operations such as creating, moving, or disposing an agent must update the grid's internal structures consistently. Writing directly into an internal count or pointer-like representation could bypass the rules that keep occupancy and agent handles aligned. PAL exposes explicit methods for state changes so the implementation can preserve those invariants.
-
-The same distinction explains why a returned array or slice must be interpreted according to its documented contract. A detached copy is a snapshot, not a live view into native memory. Editing it changes the copy until the result is explicitly assigned back. This is less magical than pretending every slice is a mutable view and makes ownership clearer at the Python boundary.
+This matters for lifetime and mutation. Creating, moving, or disposing an agent must keep position, occupancy, and handle validity consistent. Writing directly into an internal count or pointer-like representation could bypass those invariants, so PAL exposes explicit state-changing methods. Likewise, a returned array or slice must be interpreted according to its contract: a detached copy is a snapshot, not a live view into native memory, and editing it changes the copy until the result is explicitly assigned back.
 
 Native-backed objects can support pickling, but pickling an object is not equivalent to serializing the entire simulation process. A model's complete checkpoint may also need parameters, timestep, other coupled objects, external state, and random-number state. See the [API Guide's saving section](API_GUIDE.md#saving-pal-objects) for the checkpoint contract and its limitations.
 
 ### 2.2 Maintaining state and ownership boundaries
 
-A PAL object's public lifetime is managed through its Python-facing object, while native-backed state may have its own allocation and representation. The important contract is not a presumed pointer layout: it is that supported operations preserve the object's invariants and that serialized state is reconstructed without relying on process-local addresses.
+The public contract is about behavior, not a presumed pointer layout: supported operations must preserve invariants, and serialized state must be reconstructed without relying on process-local addresses.
 
-For a new operation, identify which layer owns each invariant before editing it. An agent move affects both position and occupancy. A disposal affects liveness and future handle validity. A population update must reconcile queued deltas with current counts and any capacity constraints. A PDE transport operation must respect the field's configured geometry, boundary treatment, and commit semantics. Bypassing the public mutation path may leave those related pieces inconsistent.
-
-Do not expose a mutable native buffer as a convenience API without defining its ownership, lifetime, invalidation, and synchronization rules. In particular, a detached NumPy copy and a live native-backed view have different mutation contracts.
+When adding an operation, identify which layer owns each invariant. A population update must reconcile queued deltas with current counts and capacity constraints; a PDE transport operation must respect configured geometry, boundary treatment, and commit semantics. Do not expose a mutable native buffer without defining its ownership, lifetime, invalidation, and synchronization rules.
 
 ### 2.3 Relative-offset neighborhoods
 
