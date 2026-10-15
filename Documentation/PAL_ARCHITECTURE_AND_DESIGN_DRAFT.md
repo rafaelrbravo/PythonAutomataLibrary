@@ -241,7 +241,7 @@ This sequence moves from observable contract to minimal evidence before diving i
 
 This order prevents documentation from becoming an unsupported promise and keeps low-level implementation choices subordinate to the user-visible contract.
 
-### 4.3 Layered testing
+### 4.3 Testing strategy
 
 No single test style can establish every kind of correctness. PAL uses several complementary forms of evidence:
 
@@ -254,7 +254,66 @@ No single test style can establish every kind of correctness. PAL uses several c
 
 Each layer catches a different class of defect. A focused test localizes a regression; a parity test catches path divergence; an invariant can catch an error shared by multiple implementations; and an integrated model can expose interaction bugs that isolated unit tests miss. Passing these tests still does not prove that a scientific hypothesis is correct, so model validation remains a separate responsibility (see the validation chapter below).
 
-## 5. Testing PAL
+## 5. Measuring performance
+
+### 5.1 Reliable performance measurement
+
+PAL includes compilation, native calls, validation, model logic, and sometimes rendering in one user workflow. A timing that mixes these costs can be misleading. The first call to a compiled function may include compilation and specialization; later calls measure steady-state execution. A benchmark that measures only the first call may primarily be measuring compilation.
+
+For useful comparisons, separate cold compilation from hot runtime, use the same workload and state, repeat measurements, and check outputs for equivalence. Test the safe and fast modes in separate processes. Include the dimensions, population size, neighborhood size, number of timesteps, and whether rendering is enabled. A microbenchmark can reveal a local cost, but the actual model workload decides whether that cost matters.
+
+The design goal is not to maximize every isolated benchmark at the expense of a comprehensible API. A performance change should be accepted when it is reproducible, preserves behavior, and improves a representative workload. Prefer algorithmic reductions in unnecessary work before complicating code for a tiny or noisy gain.
+
+### 5.2 Performance: measure the right thing
+
+For maintainers, a change is complete only when its observable behavior agrees in Python and compiled code, in safe and fast modes where applicable, and in the public declarations, tests, and generated documentation. A practical extension sequence is: define the user-visible contract; implement the native and wrapper behavior; update Numba overloads or transformations if needed; add focused and parity tests; update Protocol declarations and docstrings; regenerate documentation; then benchmark representative workloads. Do not infer implementation details from this high-level sequence: inspect the current source and tests before changing ownership or compilation machinery.
+
+
+
+#### 5.2.1 Cold compilation is not steady-state runtime
+
+The first call to a compiled function may include Numba compilation and specialization. Later calls can be much faster, particularly when caching is enabled. Timing one first call and reporting it as the simulation's runtime mixes two different costs.
+
+For a useful benchmark, measure cold compilation in a fresh process and steady-state runtime over repeated timesteps separately. Use the same model state, workload, seed, and operation count for each comparison. Report medians over repeated runs rather than relying on one timing. If comparing safe and fast modes, use separate processes because the mode is fixed at construction.
+
+#### 5.2.2 Optimize the actual workload
+
+A faster microbenchmark does not guarantee a faster full model. An optimization may help a large agent sweep but hurt a small grid, or reduce steady-state time while increasing compilation cost. Before changing implementation, define the workload that matters: number of sites or agents, number of timesteps, neighborhood size, mutation rate, transport method, and mode.
+
+Use a before/after benchmark with fresh-process cold compilation and repeated hot runtime. Keep workload sizes identical, check outputs for equivalence, and investigate any reproducible regression. Treat tiny differences as noise until repeated measurements show otherwise. Prefer simpler correct code when a performance gain is not robust.
+
+#### 5.2.3 Know what fast mode cannot fix
+
+Fast mode can reduce selected validation overhead; it cannot eliminate the fundamental cost of updating millions of state elements, choosing an inefficient representation, doing unnecessary neighborhood work, or solving an unstable numerical scheme. Before optimizing low-level code, ask whether the model's algorithm is doing unnecessary work. Replacing individually represented interchangeable agents with counts, reusing a neighborhood list, reducing repeated conversions, or drawing less often can have a larger impact than a local kernel tweak.
+
+Do not optimize by removing a check merely because it appears in a profile. First establish that the check is responsible for a meaningful fraction of runtime, that the faster behavior is safe for the intended workload, and that tests cover the affected contract.
+
+## 6. Validation: prove the model, not just the program
+
+### 6.1 Start with a hand-calculable case
+
+Before running a large simulation, reduce the domain and timestep count until the expected answer can be computed manually. A two-site transfer can establish whether queued population changes conserve the total. A linear field can establish whether indexing and finite differences produce the expected gradient. A tiny periodic grid can show exactly which neighbor lies across a boundary.
+
+Small examples are powerful because they turn vague visual plausibility into an assertion with a known answer. Keep such examples as regression tests after the model grows.
+
+### 6.2 Test invariants and edge cases
+
+Choose invariants from the scientific model. For a closed diffusion problem, total mass should be conserved within a stated numerical tolerance. For an internal population transfer, the total should remain constant and counts should stay nonnegative. For an agent model, every live handle should refer to a living agent and occupancy should obey the stacking rule. For geometry, conversions should round-trip and wrapping should return the expected coordinates.
+
+Test the cases most likely to break assumptions: the first and last site, wrapped and nonwrapped axes, empty neighborhoods, a single agent, zero or maximal allowed counts, and updates that add and remove state in the same timestep. A model that works only away from boundaries has not yet validated its geometry.
+
+### 6.3 Separate API correctness from scientific validity
+
+Safe-mode checks and passing unit tests show that operations respect tested contracts. They do not establish that the chosen growth law, diffusion coefficient, update schedule, stochastic distribution, or boundary condition is scientifically justified. Validate the numerical method against known solutions where possible; test convergence as grid spacing and timestep change; and compare stochastic results across independent seeds.
+
+Document assumptions alongside the model: whether agents update sequentially or synchronously, whether boundaries are reflecting, fixed, or periodic, whether rates are per unit time or per step, and whether counts or fields represent densities or totals. These assumptions determine what the simulation means.
+
+
+## 7. Using the rest of the documentation
+
+Use the [API Guide](API_GUIDE.md) for the first model, worked workflows, and public API behavior. Use the [API Reference](API_REFERENCE.md) for exact signatures and method descriptions, and the [Cheatsheet](CHEATSHEET.md) for common patterns. The `Examples/` directory contains complete models. The [Testing guide](../Testing/README.md) describes regression coverage and how to run the test suite.
+
+#### Running the test suite
 
 PAL's `Testing/` suite exercises public behavior across geometry and wrapping, Grid/IList/Multinomial/RNG operations, AgentGrid and PopGrid state changes, PDE transport and boundaries, compiled Python/Numba parity, visualization, integrated models, and historical regressions. Many tests use independent invariants or small reference calculations rather than reproducing PAL's implementation.
 
@@ -269,61 +328,3 @@ PAL locks its process-wide mode at first construction, so safe and fast should n
 
 When adding or changing model code, start with the smallest test that expresses the intended public behavior, then run the affected test file before the full suite. Prefer conservation laws, coordinate identities, exact small examples, and Python/compiled agreement over tests that duplicate PAL's internal formulas.
 
-## 6. Measuring performance
-
-### 6.1 Reliable performance measurement
-
-PAL includes compilation, native calls, validation, model logic, and sometimes rendering in one user workflow. A timing that mixes these costs can be misleading. The first call to a compiled function may include compilation and specialization; later calls measure steady-state execution. A benchmark that measures only the first call may primarily be measuring compilation.
-
-For useful comparisons, separate cold compilation from hot runtime, use the same workload and state, repeat measurements, and check outputs for equivalence. Test the safe and fast modes in separate processes. Include the dimensions, population size, neighborhood size, number of timesteps, and whether rendering is enabled. A microbenchmark can reveal a local cost, but the actual model workload decides whether that cost matters.
-
-The design goal is not to maximize every isolated benchmark at the expense of a comprehensible API. A performance change should be accepted when it is reproducible, preserves behavior, and improves a representative workload. Prefer algorithmic reductions in unnecessary work before complicating code for a tiny or noisy gain.
-
-### 6.2 Performance: measure the right thing
-
-For maintainers, a change is complete only when its observable behavior agrees in Python and compiled code, in safe and fast modes where applicable, and in the public declarations, tests, and generated documentation. A practical extension sequence is: define the user-visible contract; implement the native and wrapper behavior; update Numba overloads or transformations if needed; add focused and parity tests; update Protocol declarations and docstrings; regenerate documentation; then benchmark representative workloads. Do not infer implementation details from this high-level sequence: inspect the current source and tests before changing ownership or compilation machinery.
-
-
-
-#### 6.2.1 Cold compilation is not steady-state runtime
-
-The first call to a compiled function may include Numba compilation and specialization. Later calls can be much faster, particularly when caching is enabled. Timing one first call and reporting it as the simulation's runtime mixes two different costs.
-
-For a useful benchmark, measure cold compilation in a fresh process and steady-state runtime over repeated timesteps separately. Use the same model state, workload, seed, and operation count for each comparison. Report medians over repeated runs rather than relying on one timing. If comparing safe and fast modes, use separate processes because the mode is fixed at construction.
-
-#### 6.2.2 Optimize the actual workload
-
-A faster microbenchmark does not guarantee a faster full model. An optimization may help a large agent sweep but hurt a small grid, or reduce steady-state time while increasing compilation cost. Before changing implementation, define the workload that matters: number of sites or agents, number of timesteps, neighborhood size, mutation rate, transport method, and mode.
-
-Use a before/after benchmark with fresh-process cold compilation and repeated hot runtime. Keep workload sizes identical, check outputs for equivalence, and investigate any reproducible regression. Treat tiny differences as noise until repeated measurements show otherwise. Prefer simpler correct code when a performance gain is not robust.
-
-#### 6.2.3 Know what fast mode cannot fix
-
-Fast mode can reduce selected validation overhead; it cannot eliminate the fundamental cost of updating millions of state elements, choosing an inefficient representation, doing unnecessary neighborhood work, or solving an unstable numerical scheme. Before optimizing low-level code, ask whether the model's algorithm is doing unnecessary work. Replacing individually represented interchangeable agents with counts, reusing a neighborhood list, reducing repeated conversions, or drawing less often can have a larger impact than a local kernel tweak.
-
-Do not optimize by removing a check merely because it appears in a profile. First establish that the check is responsible for a meaningful fraction of runtime, that the faster behavior is safe for the intended workload, and that tests cover the affected contract.
-
-## 7. Validation: prove the model, not just the program
-
-### 7.1 Start with a hand-calculable case
-
-Before running a large simulation, reduce the domain and timestep count until the expected answer can be computed manually. A two-site transfer can establish whether queued population changes conserve the total. A linear field can establish whether indexing and finite differences produce the expected gradient. A tiny periodic grid can show exactly which neighbor lies across a boundary.
-
-Small examples are powerful because they turn vague visual plausibility into an assertion with a known answer. Keep such examples as regression tests after the model grows.
-
-### 7.2 Test invariants and edge cases
-
-Choose invariants from the scientific model. For a closed diffusion problem, total mass should be conserved within a stated numerical tolerance. For an internal population transfer, the total should remain constant and counts should stay nonnegative. For an agent model, every live handle should refer to a living agent and occupancy should obey the stacking rule. For geometry, conversions should round-trip and wrapping should return the expected coordinates.
-
-Test the cases most likely to break assumptions: the first and last site, wrapped and nonwrapped axes, empty neighborhoods, a single agent, zero or maximal allowed counts, and updates that add and remove state in the same timestep. A model that works only away from boundaries has not yet validated its geometry.
-
-### 7.3 Separate API correctness from scientific validity
-
-Safe-mode checks and passing unit tests show that operations respect tested contracts. They do not establish that the chosen growth law, diffusion coefficient, update schedule, stochastic distribution, or boundary condition is scientifically justified. Validate the numerical method against known solutions where possible; test convergence as grid spacing and timestep change; and compare stochastic results across independent seeds.
-
-Document assumptions alongside the model: whether agents update sequentially or synchronously, whether boundaries are reflecting, fixed, or periodic, whether rates are per unit time or per step, and whether counts or fields represent densities or totals. These assumptions determine what the simulation means.
-
-
-## 8. Using the rest of the documentation
-
-Use the [API Guide](API_GUIDE.md) for the first model, worked workflows, and public API behavior. Use the [API Reference](API_REFERENCE.md) for exact signatures and method descriptions, and the [Cheatsheet](CHEATSHEET.md) for common patterns. The `Examples/` directory contains complete models. The [Testing guide](../Testing/README.md) describes regression coverage and how to run the test suite.
