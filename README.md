@@ -21,7 +21,7 @@ PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL 
 
 ## Documentation
 
-- [PAL Guide](Documentation/PAL_GUIDE.md) ([PDF](Documentation/API_GUIDE.pdf)) — first model, worked modeling workflows, and detailed API behavior.
+- [PAL Guide](Documentation/PAL_GUIDE.md) ([PDF](Documentation/PAL_GUIDE.pdf)) — first model, worked modeling workflows, and detailed API behavior.
 - [PAL Architecture and Design](Documentation/PAL_ARCHITECTURE_AND_DESIGN.md) ([PDF](Documentation/PAL_ARCHITECTURE_AND_DESIGN.pdf)) — implementation structure, design rationale, subsystem choices, testing, and performance.
 - [API Reference](Documentation/API_REFERENCE.md) ([PDF](Documentation/API_REFERENCE.pdf)) — source-derived public signatures.
 - [Cheatsheet](Documentation/CHEATSHEET.md) ([PDF](Documentation/CHEATSHEET.pdf)) — compact one-page lookup for common operations.
