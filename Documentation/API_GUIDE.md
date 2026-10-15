@@ -108,13 +108,13 @@ def EmptyNeighbors(cells, agent, empty):
     return empty
 ```
 
-Create `empty = pal.NewIList()` once in `main`, after creating the grid. You can inspect `EmptyNeighbors(cells, cells.All()[0], empty).All()` after setup. The returned indices identify available lattice sites; `ItoX` and `ItoY` recover their coordinates. At a nonperiodic boundary, `Hood` omits offsets outside the grid.
+Create `empty = pal.NewIList()` once in `main`, immediately after `cells = Setup()`. To inspect the result before adding movement, insert `print(EmptyNeighbors(cells, cells.All()[0], empty).All())` immediately afterward. The printed indices identify available lattice sites; `ItoX` and `ItoY` recover their coordinates. At a nonperiodic boundary, `Hood` omits offsets outside the grid.
 
 ### 4. Move cells to empty neighboring sites
 
 Each cell takes a random walk: at every timestep, it chooses one available empty neighboring site and moves there. No cells are created or removed. We iterate a shuffled snapshot of existing agents; moves update occupancy immediately, so later cells see the new positions.
 
-Add `MOORE` and `EmptyNeighbors` from stage 3 to the program from stage 2. Construct `empty = pal.NewIList()` once in `main`, and call `Step(cells, empty)`:
+Continue with the program modified in stage 3, retaining `MOORE`, `EmptyNeighbors`, and the reusable `empty` list. Remove the optional diagnostic `print` if you added it. Define the following `Step` function alongside `Draw` and `Setup`:
 
 ```python
 def Step(cells, empty):
