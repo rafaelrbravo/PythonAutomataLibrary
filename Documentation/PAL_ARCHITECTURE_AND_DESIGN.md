@@ -227,7 +227,7 @@ This order prevents documentation from becoming an unsupported promise and keeps
 
 ### 4.3 Testing strategy
 
-No single test style can establish every kind of correctness. PAL uses several complementary forms of evidence:
+PAL's architecture creates several distinct failure boundaries: the public wrapper may bind arguments incorrectly, a compiled overload may diverge from Python, a native kernel may corrupt state, and an integrated model may expose incorrect update ordering. Testing must cross those boundaries rather than only exercising each component in isolation. No single test style can establish every kind of correctness. PAL uses several complementary forms of evidence:
 
 - **Focused API tests** check individual public operations, argument forms, boundary cases, and error behavior.
 - **Python/Numba parity tests** check that supported calls agree across execution paths.
@@ -255,17 +255,17 @@ When adding or changing model code, start with the smallest test that expresses 
 
 ## 5. Measuring performance
 
-PAL includes compilation, native calls, validation, model logic, and sometimes rendering in one user workflow. A timing that mixes these costs can be misleading. The first call to a compiled function may include compilation and specialization; later calls measure steady-state execution. A benchmark that measures only the first call may primarily be measuring compilation.
+PAL includes compilation, native calls, validation, model logic, and sometimes rendering in one user workflow. A timing that mixes these costs can be misleading. Compilation time matters for short exploratory runs, while steady-state time often dominates long simulations; optimizing one can worsen the other. Measure them separately rather than treating either as the universal definition of performance.
 
 ### 5.1 Cold compilation is not steady-state runtime
 
-The first call to a compiled function may include Numba compilation and specialization. Later calls can be much faster, particularly when caching is enabled. Timing one first call and reporting it as the simulation's runtime mixes two different costs.
+The first call to a compiled function may include Numba compilation and specialization. Later calls can be much faster, particularly when caching is enabled. Cache hits also depend on code and environment, so a cached restart is not a substitute for a controlled cold-compilation measurement.
 
 For a useful benchmark, measure cold compilation in a fresh process and steady-state runtime over repeated timesteps separately. Use the same model state, workload, seed, and operation count for each comparison. Report medians over repeated runs rather than relying on one timing. If comparing safe and fast modes, use separate processes because the mode is fixed at construction.
 
 ### 5.2 Optimize the actual workload
 
-A faster microbenchmark does not guarantee a faster full model. An optimization may help a large agent sweep but hurt a small grid, or reduce steady-state time while increasing compilation cost. Before changing implementation, define the workload that matters: number of sites or agents, number of timesteps, neighborhood size, mutation rate, transport method, and mode.
+PAL's layered implementation makes the benchmark boundary important: measuring only a native routine excludes wrapper dispatch, validation, and model-loop costs; measuring an entire rendered simulation may hide improvements in the computational kernel. Select the boundary that answers the performance question. A faster microbenchmark does not guarantee a faster full model. An optimization may help a large agent sweep but hurt a small grid, or reduce steady-state time while increasing compilation cost. Before changing implementation, define the workload that matters: number of sites or agents, number of timesteps, neighborhood size, mutation rate, transport method, and mode.
 
 Use a before/after benchmark with fresh-process cold compilation and repeated hot runtime. Keep workload sizes identical, check outputs for equivalence, and investigate any reproducible regression. Treat tiny differences as noise until repeated measurements show otherwise. Prefer simpler correct code when a performance gain is not robust.
 
@@ -287,7 +287,7 @@ Small examples are powerful because they turn vague visual plausibility into an 
 
 Choose invariants from the scientific model. For a closed diffusion problem, total mass should be conserved within a stated numerical tolerance. For an internal population transfer, the total should remain constant and counts should stay nonnegative. For an agent model, every live handle should refer to a living agent and occupancy should obey the stacking rule. For geometry, conversions should round-trip and wrapping should return the expected coordinates.
 
-Test the cases most likely to break assumptions: the first and last site, wrapped and nonwrapped axes, empty neighborhoods, a single agent, zero or maximal allowed counts, and updates that add and remove state in the same timestep. A model that works only away from boundaries has not yet validated its geometry.
+Test the cases most likely to break assumptions: the first and last site, wrapped and nonwrapped axes, empty neighborhoods, a single agent, zero or maximal allowed counts, and updates that add and remove state in the same timestep. A model that works only away from boundaries has not yet validated its geometry. An invariant test should also state its assumptions: conservation can fail legitimately when sources, sinks, flux boundaries, or numerical truncation are present. Test the expected balance equation rather than demanding conservation unconditionally.
 
 ### 6.3 Separate API correctness from scientific validity
 
