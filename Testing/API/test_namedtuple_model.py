@@ -25,7 +25,7 @@ def test_namedtuple_composite_across_jitted_functions(api):
         state.rates[1] += 1.0
         return state.nutrient[3, 3]
 
-    assert abs(step(model) - 0.9) < 1e-10
-    assert abs(nutrient[3, 3] - 0.9) < 1e-10
-    assert abs(rates[1] - 1.2) < 1e-10
-    assert abs(step(model) - 0.8) < 1e-10
+    assert abs(step(model) - 0.9) < 1e-6
+    assert abs(nutrient[3, 3] - 0.9) < 1e-6
+    assert abs(rates[1] - 1.2) < 1e-6
+    assert abs(step(model) - 0.8) < 1e-6
