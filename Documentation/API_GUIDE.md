@@ -309,6 +309,12 @@ step = state["step"]
 # Recreate helpers not included in this checkpoint before resuming:
 multi = pal.NewMultinomial()
 initialPop = cells.GetPop()
+
+# Continue one timestep with the functions from stage 7:
+Step(cells, multi)
+assert cells.GetPop() == initialPop
+StepNutrient(cells, nutrient)
+step += 1
 ```
 
 This restores the simulation fields and recreates the sampler and conservation baseline used in stage 7. A display window is not part of this checkpoint: create a new `PixWindow` if the resumed run should render. The example does **not** restore the random generator's state, so it demonstrates state restoration rather than an identical continuation of the original stochastic trajectory.
