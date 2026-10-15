@@ -149,7 +149,7 @@ A `PopGrid` stores integer population counts per site. It is intended for popula
 
 Its `Add` operation queues a delta; `Update` applies pending changes; `Reset` clears current state and pending deltas. The explicit delta buffer makes it possible to compute a set of changes before committing them. For a movement event from site A to site B, queue a negative delta at A and a positive delta at B, then update once. If the model reads current counts during this phase, it sees the pre-commit counts, which helps make the update independent of visitation order.
 
-The `capacity` option is a per-site cap. It is not the total population limit. `All()` returns the indices of nonzero sites, not the counts themselves; read the count at each returned index when the value is needed. Keeping these semantics distinct avoids confusing the set of occupied sites with the population data stored there.
+The `capacity` option limits the total population represented by the grid, not the population at each site. This is a storage and aggregate-capacity constraint, not a local carrying-capacity rule; implement site-specific limits in the model's update logic. `All()` returns the indices of nonzero sites, not the counts themselves; read the count at each returned index when the value is needed. Keeping these semantics distinct avoids confusing the set of occupied sites with the population data stored there.
 
 ### 3.4 PDEgrid: numerical operations with explicit assumptions
 
