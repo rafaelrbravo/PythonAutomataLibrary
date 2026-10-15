@@ -595,31 +595,15 @@ The radius is inclusive: agents with distance exactly `rad` are included. Return
 
 ### Wrapping
 
-Discrete coordinates:
+Wrapping makes opposite edges of a lattice neighbors. As described in [Construction](#construction), a negative dimension enables wrapping along that axis. For example, create a 30 × 30 agent grid whose x-axis wraps while its y-axis does not:
 
 ```python
-InWrapSQX(value)
-InWrapSQY(value)
-InWrapSQZ(value)
+wrapped = pal.NewAgentGrid((-30, 30))
+print(wrapped.InWrapSQX(-1))  # 29
+print(wrapped.InWrapSQY(-1))  # -1 (outside the nonwrapped axis)
 ```
 
-Continuous coordinates:
-
-```python
-InWrapX(value)
-InWrapY(value)
-InWrapZ(value)
-```
-
-Wrapped displacement:
-
-```python
-DispWrapX(x1, x2)
-DispWrapY(y1, y2)
-DispWrapZ(z1, z2)
-```
-
-`InWrapSQ*` maps integer lattice coordinates into the corresponding axis; `InWrap*` does the same for continuous coordinates. On a nonwrapped axis, an out-of-range coordinate returns `-1`. `DispWrap*(x1, x2)` returns the shortest signed displacement from `x1` to `x2`, accounting for periodic boundaries.
+`InWrapSQX/Y/Z(value)` handles **integer lattice coordinates**; `InWrapX/Y/Z(value)` handles **continuous positions**. On a nonwrapped axis, an out-of-range coordinate returns `-1`. `DispWrapX/Y/Z(start, end)` returns the shortest signed displacement from `start` to `end` across a periodic boundary. The suffix (`X`, `Y`, or `Z`) selects an axis present in the grid; it is not necessary to supply all three axes for a 2D model.
 
 ## IList
 
