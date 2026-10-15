@@ -725,7 +725,7 @@ print(field.Dt(), field.Dx(), field.Dy())
 
 For this two-dimensional field, each transport step represents `0.1` units of simulated time, and adjacent lattice sites are `1.0` spatial unit apart in either direction. The same API supports `dz` and `Dz()` for three-dimensional fields.
 
-Transport methods use these spacings. `Dy()` and `Dz()` apply only when those dimensions exist; safe mode rejects missing-dimension access. `dt`, `dx`, `dy`, and `dz` must be finite and positive in safe mode.
+Transport methods use these spacings. Choose consistent units: if time is measured in hours and distance in millimeters, diffusion rates have units of mm²/hour and advection velocities have units of mm/hour. For explicit diffusion, the size of the change depends on combinations such as `rate * dt / dx**2`; for advection, it depends on combinations such as `velocity * dt / dx`. This is why changing the timestep or grid spacing can change both the numerical result and whether a transport step is stable. `Dy()` and `Dz()` apply only when those dimensions exist; safe mode rejects missing-dimension access. `dt`, `dx`, `dy`, and `dz` must be finite and positive in safe mode.
 
 ### Boundary conditions for transport
 
