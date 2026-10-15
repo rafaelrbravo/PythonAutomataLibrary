@@ -67,7 +67,7 @@ When a failure occurs only under `@pal.njit`, do not immediately rewrite the sci
 
 Consider a model step that reads a field value, changes an agent, and queues a population delta. At the **model layer**, the author chooses the order of those operations. The **public PAL API** resolves coordinates, handles, and arguments. In ordinary Python execution, Python-facing wrappers perform the supported operations; in a compiled step, PAL's preparation and Numba-compatible call path must preserve their observable meaning. Both paths ultimately work with the relevant native-backed state. A later `Update()` on the population grid commits the queued delta; it is not implied by a field read or an agent movement.
 
-This trace exposes three independent questions during debugging: **Was the right site or handle selected? Was the right operation dispatched? Was the state committed at the intended point?** A failure in any one can produce a scientifically wrong timestep despite apparently reasonable model code.
+The trace also explains why an apparently successful API call does not establish a correct model step: dispatch, location, and update timing are independent responsibilities. This trace exposes three independent questions during debugging: **Was the right site or handle selected? Was the right operation dispatched? Was the state committed at the intended point?** A failure in any one can produce a scientifically wrong timestep despite apparently reasonable model code.
 
 The execution path is conceptual rather than a promise that every call crosses every layer. Some operations are resolved in wrappers or compiled code; consult the actual implementation when profiling call overhead or changing a kernel.
 
@@ -141,7 +141,7 @@ Stackability is an explicit constructor choice because allowing multiple agents 
 
 The distinction between `All()` and a live iteration matters for mutation. `All()` returns a snapshot of handles and is therefore the appropriate pattern when the loop can create or dispose agents. A snapshot freezes membership, not agent state or grid occupancy. Each later query observes current occupancy. If newborns must not act until the next timestep, build the snapshot before processing the timestep; if all agents must compute from the same old world, snapshot the required state as well.
 
-The `counts` property is a read-only occupancy query view, not a writable alternate path to agent state. Changing a count directly would bypass agent handles, placement rules, and lifecycle bookkeeping. Query occupancy through this view; create, move, and dispose agents through the AgentGrid API.
+The `counts` property is a read-only occupancy query view, not a writable alternate path to agent state. This is a deliberate consistency boundary: occupancy is derived from agent placement and lifecycle, not a second independently editable source of truth. Changing a count directly would bypass agent handles, placement rules, and lifecycle bookkeeping. Query occupancy through this view; create, move, and dispose agents through the AgentGrid API.
 
 ### 3.3 PopGrid: counts instead of individual objects
 
@@ -169,7 +169,7 @@ The mutation contract is especially important here. `Add()` queues a field delta
 
 `Seed`, `Random`, and `RandInt` share PAL's random stream across Python and compiled code. Each draw advances the stream, so even one additional draw changes subsequent outcomes. Reproducibility requires matching the seed, initial state, parameters, and draw order.
 
-Use PAL's RNG functions when a model should share one reproducible stream across PAL calls. External RNGs have independent state and need their own seed or checkpoint handling. A PAL object checkpoint does not by itself serialize the random stream, so exact stochastic continuation requires separately preserving or reconstructing random state. Do not claim that a seed alone guarantees identical outcomes after changing the algorithm.
+A shared stream simplifies reproducing a particular execution order across Python and compiled calls, but it also couples otherwise separate components through draw order. Changing when one component samples can change the outcomes of later components even when their own code is unchanged. Use PAL's RNG functions when a model should share one reproducible stream across PAL calls. External RNGs have independent state and need their own seed or checkpoint handling. A PAL object checkpoint does not by itself serialize the random stream, so exact stochastic continuation requires separately preserving or reconstructing random state. Do not claim that a seed alone guarantees identical outcomes after changing the algorithm.
 
 ### 3.7 Multinomial sampling: configuration versus sample state
 
