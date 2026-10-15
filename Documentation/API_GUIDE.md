@@ -327,15 +327,18 @@ pal.FastMode()
 
 Call `FastMode()` before constructing any PAL model or window object. The first such construction locks the process-wide mode. Fast mode removes safety checks from performance-sensitive paths; it is intended for models already validated in safe mode.
 
-Use `@pal.njit` for model computation:
+Use `@pal.njit(cache=True)` for repeated model computations. For example, this function counts the agents currently on a grid:
 
 ```python
-@pal.njit
-def Step(grid: pal.AgentGrid):
-    ...
+@pal.njit(cache=True)
+def CountAgents(grid: pal.AgentGrid):
+    count = 0
+    for agent in grid.All():
+        count += 1
+    return count
 ```
 
-`pal.njit` wraps Numba `njit` and additionally transforms PAL model code. Among other PAL-specific compilation behavior, annotated PAL arguments allow safe-mode errors in compiled model code to report the model source line.
+This function can be called with an `AgentGrid` created in ordinary Python code. `pal.njit` wraps Numba `njit` and additionally transforms PAL model code. Among other PAL-specific compilation behavior, annotated PAL arguments allow safe-mode errors in compiled model code to report the model source line.
 
 ## Construction
 
