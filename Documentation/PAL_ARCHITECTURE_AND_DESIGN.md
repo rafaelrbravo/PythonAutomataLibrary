@@ -117,7 +117,7 @@ Fast mode should be treated as a measured optimization, not a correctness mode. 
 
 ## 3. Subsystem design choices
 
-Chapter 1 describes how a model operation reaches its implementation; Chapter 2 describes the state and timing rules that must hold regardless of execution path. This chapter examines the concrete representations that enforce those rules. For each subsystem, the key questions are what its representation makes easy and what it leaves to the modeler. For complete call signatures and usage examples, see the API Reference and API Guide.
+Chapter 1 describes how a model operation reaches its implementation; Chapter 2 describes the state and timing rules that must hold regardless of execution path. This chapter examines the concrete representations that enforce those rules. For each subsystem, the key questions are what its representation makes easy and what it leaves to the modeler. For complete call signatures and usage examples, see the API Reference and API Guide. The API Guide also covers performance options, safety-mode selection, and checkpointing. Those usage instructions complement the design rationale here; they do not replace tests of implementation behavior or scientific validity.
 
 ### 3.1 Grid: typed site state and explicit indexing
 
