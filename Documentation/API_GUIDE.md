@@ -625,7 +625,20 @@ Use `IList` to collect a reusable set of integer identifiers—such as grid indi
 items = pal.NewIList()
 ```
 
-`IList` collects integer identifiers for later use. These can be **grid-site indices** (such as `cells.ToI(x, y)`) or **agent handles**, letting you save a selection of sites or agents and subsequently iterate over it, shuffle it, or sample a random entry. For example, collect empty neighboring sites and choose one with `Random()`, or collect selected agents and process them later with `Iter()`. It stores identifiers, not copies of the sites or agents themselves. Stored values are nonnegative int32 integers in the supported contract.
+For example, use an `IList` to save two lattice-site indices from a grid and revisit them later:
+
+```python
+import PythonAutomataLibrary as pal
+
+grid = pal.NewAgentGrid((30, 30))
+sites = pal.NewIList()
+sites.Append(grid.ToI(10, 12))
+sites.Append(grid.ToI(11, 12))
+for i in sites.Iter():
+    print(grid.ItoX(i), grid.ItoY(i))
+```
+
+The list stores integer identifiers, **not copies of grid sites or agents**. You can also store agent handles, but do not confuse those with site indices: a handle identifies an individual agent, while a site index identifies a lattice location. Stored values must be nonnegative int32 integers. Use `Random()` to choose one stored identifier at random, or `Shuffle()` to randomize their order.
 
 | Operation | Meaning |
 | --- | --- |
