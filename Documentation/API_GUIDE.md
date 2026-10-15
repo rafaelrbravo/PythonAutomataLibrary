@@ -391,7 +391,7 @@ grid.Hood(hood, x, y)
 grid.Hood(hood, x, y, z)
 ```
 
-`Box` iterates coordinates in the half-open rectangular region `[x1, x2)`, `[y1, y2)`, `[z1, z2)` for the dimensions supplied. It yields an integer in 1D, `(x, y)` in 2D, and `(x, y, z)` in 3D. Bounds must be int32 integers, and the number of bound pairs must match grid dimensionality. On wrapped axes, out-of-range coordinates are wrapped; on nonwrapped axes, they are skipped. A box wider than a wrapped axis can therefore yield repeated sites. `Hood` maps relative offsets around a lattice position to the same coordinate forms, preserving offset order and duplicates; wrapped coordinates are mapped into the grid and nonwrapped out-of-range coordinates are omitted. Offset tuple lengths must match grid dimensionality. Inside `@pal.njit`, `unroll=True` unrolls the neighborhood iteration at compile time, allowing Numba to generate specialized code for each offset rather than running a conventional loop. **For small, fixed neighborhoods, this pattern can be extremely performant**: the neighborhood traversal becomes straight-line compiled code while retaining the readable `Hood` syntax. It does not change the returned coordinates. Unrolling can increase compiled code size and compilation time, so benchmark larger neighborhoods. `Box` and `Hood` are direct-iteration constructs in compiled code: top-level `break` or `continue` from their loop body is unsupported; use explicit `range` loops when that control flow is needed.
+`Box` iterates coordinates in the half-open rectangular region `[x1, x2)`, `[y1, y2)`, `[z1, z2)` for the dimensions supplied. It yields an integer in 1D, `(x, y)` in 2D, and `(x, y, z)` in 3D. Bounds must be int32 integers, and the number of bound pairs must match grid dimensionality. On wrapped axes, out-of-range coordinates are wrapped; on nonwrapped axes, they are skipped. A box wider than a wrapped axis can therefore yield repeated sites. `Hood` maps relative offsets around a lattice position to the same coordinate forms, preserving offset order and duplicates; wrapped coordinates are mapped into the grid and nonwrapped out-of-range coordinates are omitted. Offset tuple lengths must match grid dimensionality. `Box` and `Hood` are direct-iteration constructs in compiled code: top-level `break` or `continue` from their loop body is unsupported; use explicit `range` loops when that control flow is needed.
 
 Built-in neighborhoods:
 
@@ -400,6 +400,37 @@ pal.MooreHood(dim, excludeCenter=False)
 pal.VonNeumannHood(dim, excludeCenter=False)
 pal.CircleHood(dim, rad, excludeCenter=False)
 ```
+
+### Fast neighborhood iteration with `unroll=True`
+
+For a small, fixed neighborhood, PAL can compile each neighbor operation directly into the function instead of executing a conventional loop. Consider summing values in the four cardinal directions around `(x, y)`:
+
+```python
+VON_NEUMANN = pal.VonNeumannHood(2, excludeCenter=True)
+
+@pal.njit(cache=True)
+def NeighborSum(grid: pal.Grid, x: int, y: int):
+    total = 0.0
+    for nx, ny in grid.Hood(VON_NEUMANN, x, y, unroll=True):
+        total += grid[nx, ny]
+    return total
+```
+
+Conceptually, on an interior site of a nonwrapping grid, this is equivalent to:
+
+```python
+total = 0.0
+total += grid[x - 1, y]
+total += grid[x + 1, y]
+total += grid[x, y - 1]
+total += grid[x, y + 1]
+```
+
+The exact offset order is not important for this sum; the example above illustrates the four operations, not the generated machine code. At boundaries, `Hood` still handles valid coordinates and wrapping according to the grid's configuration.
+
+**Why this is fast:** The neighborhood has a fixed number of offsets known at compilation time. With `unroll=True`, Numba can specialize each operation, eliminating the ordinary neighborhood-loop control and making the resulting code easier to optimize. This can be **extremely performant** in the inner loop of an agent-based model, where the same small neighborhood is visited millions of times. It preserves PAL's compact neighborhood syntax rather than requiring manually expanded code.
+
+Unrolling increases generated code size and may increase compilation time. It is most attractive for small, fixed neighborhoods; benchmark larger ones. The option changes how the loop is compiled, not which neighbors are visited.
 
 `MooreHood` contains offsets with each coordinate in `[-1, 1]`. `VonNeumannHood` contains the center and axis-adjacent offsets. `CircleHood` contains integer offsets whose Euclidean distance from the center is at most `rad`; `rad` may be noninteger, but must be finite and nonnegative. Set `excludeCenter=True` to omit the zero offset. All three constructors support dimensions 1–3 and reject other dimension counts with `ValueError`. Each returns a tuple of integer offset tuples; these describe relative positions, not site indices, until mapped through `grid.Hood(...)`.
 
