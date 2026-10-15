@@ -235,6 +235,47 @@ Each of the eight Moore-neighborhood directions has probability `1/8`. `Setup(ce
 
 The nutrient update now consumes 0.01 concentration units per cell at each site, so multiple occupancy increases local consumption. The same fixed-value boundaries replenish nutrient in both representations. The two versions implement the same basic random-walk idea, but not the same exclusion process: `AgentGrid` avoids occupied destinations and updates agents sequentially; `PopGrid` permits multiple occupancy and moves all counts synchronously. That distinction matters when comparing results. See [Multinomial](#random-numbers-and-multinomial) for more about sampling and solver reuse.
 
+### Package model components with a named tuple
+
+As models grow, passing every grid and parameter separately can make function signatures difficult to read. Python's `collections.namedtuple` groups related objects under descriptive field names, and Numba supports accessing those fields inside compiled functions.
+
+For example, package an agent grid, a nutrient field, and a NumPy array of rates:
+
+```python
+from collections import namedtuple
+import numpy as np
+import PythonAutomataLibrary as pal
+
+Model = namedtuple("Model", "cells nutrient rates")
+
+@pal.njit(cache=True)
+def Consume(model):
+    for agent in model.cells.All():
+        x, y = model.cells.XSQ(agent), model.cells.YSQ(agent)
+        model.nutrient[x, y] -= model.rates[0]
+
+@pal.njit(cache=True)
+def Step(model):
+    Consume(model)
+    model.rates[1] += 1.0
+
+def main():
+    cells = pal.NewAgentGrid((8, 8), isStackable=False)
+    cells.NewAgentSQ(3, 3)
+    nutrient = pal.NewPDEgrid((8, 8))
+    nutrient[:] = 1.0
+    model = Model(cells, nutrient, np.array([0.1, 0.0]))
+    Step(model)
+    print(model.nutrient[3, 3], model.rates[1])
+
+if __name__ == "__main__":
+    main()
+```
+
+Both `Step` and `Consume` receive the same named model, and changes to the contained grids and arrays persist. The named tuple itself is immutable: `model.cells = other_cells` is not allowed. For a changing scalar, use a mutable array as shown with `rates[1]`, or return an updated value.
+
+**Performance:** Numba compiles named-field access, but passing a composite from Python into a compiled function can have conversion overhead. Prefer calling multiple compiled functions from a compiled timestep, as above, rather than repeatedly entering compiled code for tiny operations. Whether the composite is faster than separate arguments depends on the workload; benchmark performance-sensitive applications. See [Numba's supported Python features](https://numba.readthedocs.io/en/stable/reference/pysupported.html).
+
 ### 8. Reproduce and save a run
 
 Seed PAL's random stream **before** the first stochastic operation:
