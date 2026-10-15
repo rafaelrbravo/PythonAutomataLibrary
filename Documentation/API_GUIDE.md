@@ -367,6 +367,8 @@ grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
 
 ### Geometry
 
+PAL identifies lattice sites either by their spatial coordinates, such as `(x, y)`, or by a single integer index. Coordinates are convenient for spatial rules; linear indices are useful for storing or sampling sites in integer collections. The conversion methods let you move between these representations.
+
 | Member | Meaning |
 | --- | --- |
 | `len(grid)` | Number of lattice sites. |
@@ -380,6 +382,8 @@ grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
 The same geometry names are used in 1D, 2D, and 3D. Supply only coordinates/axes that exist for the grid. `Grid`, `PopGrid`, and `PDEgrid` use `InWrapX/Y/Z` for lattice coordinates; `AgentGrid` distinguishes lattice `InWrapSQX/Y/Z` from continuous `InWrapX/Y/Z`.
 
 ### Regions and neighborhoods
+
+Use `Box` to visit sites in a rectangular region, and `Hood` to visit sites at specified offsets around a particular location. Both yield coordinates, so they can be used directly in spatial loops.
 
 ```python
 grid.Box(x1, x2)
@@ -618,6 +622,8 @@ field = pal.NewPDEgrid((xDim, yDim))
 
 ### Space and time
 
+The time step `dt` specifies how much simulated time a transport update represents, while `dx`, `dy`, and `dz` specify the physical spacing between lattice sites along each axis. These values determine how diffusion and advection rates translate into changes on the grid.
+
 ```python
 field.SetTimeSpaceStep(dt, dx, dy=1.0, dz=1.0)
 field.Dt()
@@ -657,6 +663,8 @@ For a spatially varying boundary concentration, pass a C-contiguous `float32` ar
 
 ### Diffusion
 
+Diffusion spreads a quantity from regions of higher concentration toward regions of lower concentration. Use the diffusion methods to model processes such as nutrients or signaling molecules spreading through space; the variants below differ in how the diffusion rate is specified.
+
 ```python
 field.Diffusion(rateConstant, ...)
 field.DiffusionMask(rateConstant, mask)
@@ -672,6 +680,8 @@ field.DiffusionRadialSphere(rateConstant, outerBC=None)
 Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxBC`, `zMinBC`, and `zMaxBC` fixed boundary values. A boundary may be a scalar applied uniformly across the face or a C-contiguous `float32` array with one value per site on that face; for example, an x-face array has `yDim*zDim` values in 3D. On a nonwrapped face, `None` means no flux through that face; wrapped axes are periodic and do not accept explicit boundary conditions. Field/interface arrays must match the grid geometry and dimensionality. Safe mode validates boundary size/type/finite values, explicit-scheme stability, and other inputs before changing pending state.
 
 ### Advection
+
+Advection transports a quantity through directed flow, such as a chemical carried by moving fluid. Unlike diffusion, which responds to concentration differences, advection follows a specified velocity field. The variants below differ in how velocity is represented.
 
 ```python
 field.Advection(vx, vy=0.0, vz=0.0, ...)
@@ -751,9 +761,9 @@ dividing = division.Sample(0.1)
 
 Use PAL's visualization components to inspect spatial model state while a simulation runs. `PixWindow` is suited to pixel-based lattice views, while the OpenGL windows support 2D and 3D geometry; rendering and simulation computation remain separate.
 
-PAL provides a pixel renderer for lattice models and an OpenGL renderer for 2D/3D geometry. Rendering runs separately from model computation.
-
 ### PixWindow
+
+Choose `PixWindow` for a two-dimensional lattice view where each site or pixel is assigned a color. It is well suited to displaying cell occupancy, population counts, and scalar fields without drawing individual geometric shapes.
 
 ```python
 pix, window = pal.StartPixWindow(xDim, yDim, scale=1, title="PAL", headless=False)
@@ -783,6 +793,8 @@ window.Close()
 `Update()` publishes the current pixel buffer to the renderer. `StartGif()` begins a GIF recording, each `AddGifFrame()` appends the currently rendered frame, and `StopGif()` finalizes the file. `block=True` on asynchronous output operations waits for that requested output to complete before returning; call `StopGif()` before relying on the GIF file as complete.
 
 ### OpenGLWindow
+
+Choose `OpenGLWindow` when you want to draw geometric objects such as circles, boxes, and lines, including in three dimensions. Unlike `PixWindow`, it renders shapes rather than requiring you to color individual pixels.
 
 ```python
 draw, window = pal.StartOpenGLWindow(xDim, yDim, zDim=None,
