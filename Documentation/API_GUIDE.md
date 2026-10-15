@@ -656,7 +656,7 @@ pop.Add(3, 11, 12)   # queue their arrival at the next site
 pop.Update()         # apply both changes together
 ```
 
-`Add` changes only the pending delta. Until `Update()`, `GetPop()`, indexing, and `All()` still reflect the current population. A single `Update()` commits the queued changes together, avoiding order-dependent reads during a synchronous timestep. Direct assignments during that timestep still change current values immediately.
+`Add` changes only the pending delta. In this example, the source site remains at 20 and the destination remains unchanged until `Update()`; afterward, the source contains 17 and the destination has increased by 3. More generally, until `Update()`, `GetPop()`, indexing, and `All()` still reflect the current population. A single `Update()` commits the queued changes together, avoiding order-dependent reads during a synchronous timestep. Direct assignments during that timestep still change current values immediately.
 
 | Operation | Meaning |
 | --- | --- |
