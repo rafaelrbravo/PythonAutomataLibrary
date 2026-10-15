@@ -1,6 +1,6 @@
 # PAL API Reference
 
-Generated from public `Protocol` declarations and source docstrings. Each description is maintained beside its source signature. Regenerate with `python Documentation/generators/generate_api_reference.py`; use `--check` to detect drift. Consult the API Guide for worked usage and Architecture and Design for implementation rationale.
+Generated from public `Protocol` declarations and source docstrings. Each description is maintained beside its source signature. Regenerate with `python Documentation/generators/generate_api_reference.py`; use `--check` to detect drift. Consult the PAL Guide for worked usage and Architecture and Design for implementation rationale.
 
 Axis shorthand: `...` after an X/x-specific name includes its Y/y and Z/z variants. Each variant remains a separate callable or property.
 
@@ -189,7 +189,7 @@ Create an OpenGL visualization window for 2D or 3D drawing.
 | method | `Save(self, path: str, block=False)` | Save the currently published scene to an image file; block controls whether to wait for completion. |
 | method | `Close(self)` | Close the window and release rendering resources. |
 
-The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [API Guide](API_GUIDE.pdf) for which object to use in Python and compiled drawing code.
+The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [PAL Guide](PAL_GUIDE.pdf) for which object to use in Python and compiled drawing code.
 
 ## Pix drawing buffer
 
@@ -215,4 +215,4 @@ The `OpenGLWindow` table follows its source Protocol, which also contains method
 
 ## Scope and validation
 
-This reference lists public Protocol signatures, not internal safe/fast jitclass methods. A signature does not capture every runtime overload, indexing form, or validation rule. See the API Guide and executable tests. Visualization constructors and window Protocol methods are included; Pix buffer and OpenGLDraw method signatures are also included; consult the API Guide for behavior.
+This reference lists public Protocol signatures, not internal safe/fast jitclass methods. A signature does not capture every runtime overload, indexing form, or validation rule. See the PAL Guide and executable tests. Visualization constructors and window Protocol methods are included; Pix buffer and OpenGLDraw method signatures are also included; consult the PAL Guide for behavior.
