@@ -333,6 +333,8 @@ def Step(grid: pal.AgentGrid):
 
 ## Construction
 
+PAL uses `New...` functions to create its grids and helper objects. Choose the constructor for the kind of state you need; the table below summarizes the options before the individual component sections explain their operations.
+
 | Function | Purpose |
 | --- | --- |
 | `NewGrid(dimensions, dtype)` | Typed lattice values. |
