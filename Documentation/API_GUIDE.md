@@ -193,13 +193,15 @@ def Step(cells: pal.PopGrid, multi: pal.Multinomial):
             cells.Add(moved, nx, ny)
     cells.Update()
 
-def StepNutrient(cells, nutrient):
+@pal.njit(cache=True)
+def StepNutrient(cells: pal.PopGrid, nutrient: pal.PDEgrid):
     for i in range(len(cells)):
         nutrient[i] = max(0.0, nutrient[i] - 0.01 * cells[i])
     nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
     nutrient.Update()
 
-def Draw(cells, pix):
+@pal.njit(cache=True)
+def Draw(cells: pal.PopGrid, pix: pal.Pix):
     pix[:] = BLACK
     for x in range(SIZE):
         for y in range(SIZE):
