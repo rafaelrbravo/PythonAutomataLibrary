@@ -93,7 +93,7 @@ When adding an operation, identify which layer owns each invariant. A population
 
 A neighborhood such as Moore or Von Neumann is naturally a pattern around a location. PAL represents it as relative integer offsets, then applies it to a specific grid position with `grid.Hood(...)`. This separates the reusable pattern from the grid location where it is used.
 
-Applying a neighborhood makes boundary behavior explicit: the hood application must account for grid dimensions and wrapping flags; the relative pattern alone does not know whether a particular neighbor falls outside a nonperiodic domain. PAL's application step can translate offsets into coordinates, wrap periodic axes, and omit out-of-domain sites according to the public contract.
+Applying a hood must account for grid dimensions and wrapping flags; the relative pattern alone does not know whether a particular neighbor falls outside a nonperiodic domain. PAL's application step can translate offsets into coordinates, wrap periodic axes, and omit out-of-domain sites according to the public contract.
 
 Relative offsets avoid storing absolute-neighbor lists for every cell and allow the compiled path to transform high-level neighborhood loops. Neighborhood destinations are not necessarily unique: small or wrapped domains can map multiple offsets to the same site. Whether to count those repeated contributions or deduplicate them depends on the model, so choose and test the intended behavior.
 
@@ -117,7 +117,7 @@ Fast mode should be treated as a measured optimization, not a correctness mode. 
 
 ## 3. Subsystem design choices
 
-Chapter 1 describes how a model operation reaches its implementation; Chapter 2 describes the state and timing rules that must hold regardless of execution path. This chapter examines the concrete representations that enforce those rules. The central question for each subsystem is not only what it stores, but what information or behavior its representation makes easy—and what it deliberately leaves to the modeler. For complete call signatures and usage examples, see the API Reference and API Guide.
+Chapter 1 describes how a model operation reaches its implementation; Chapter 2 describes the state and timing rules that must hold regardless of execution path. This chapter examines the concrete representations that enforce those rules. For each subsystem, the key questions are what its representation makes easy and what it leaves to the modeler. For complete call signatures and usage examples, see the API Reference and API Guide.
 
 ### 3.1 Grid: typed site state and explicit indexing
 
@@ -141,7 +141,7 @@ The `counts` property is a read-only occupancy query view, not a writable altern
 
 ### 3.3 PopGrid: counts instead of individual objects
 
-A `PopGrid` stores integer population counts per site. It is intended for populations whose members are interchangeable for the questions being asked. The choice is a modeling assumption, not just a memory optimization: two populations with equal site counts are indistinguishable to this representation even if their individual histories differ. That can greatly reduce storage and update overhead compared with representing every individual as an agent, but it removes individual-level history and identity.
+A `PopGrid` stores integer population counts per site. It is intended for populations whose members are interchangeable for the questions being asked. This is a modeling assumption, not just a memory optimization: populations with equal site counts are indistinguishable even when their individual histories differ. That can greatly reduce storage and update overhead compared with representing every individual as an agent, but it removes individual-level history and identity.
 
 Its `Add` operation queues a delta; `Update` applies pending changes; `Reset` clears current state and pending deltas. The explicit delta buffer makes it possible to compute a set of changes before committing them. For a movement event from site A to site B, queue a negative delta at A and a positive delta at B, then update once. If the model reads current counts during this phase, it sees the pre-commit counts, which helps make the update independent of visitation order.
 
@@ -159,13 +159,13 @@ The distinction between queued and immediate mutations is especially important f
 
 `IList` stores reusable integer collections in Python and compiled code. For example, a model can collect empty neighboring sites and choose one for reproduction without allocating a new collection at every step.
 
-`All()` returns a detached NumPy copy; `Iter()` exposes the current native-backed values without making that detached copy. This avoids an allocation in tight compiled loops, but it is not a snapshot: changing the list while consuming an `Iter()` result can change the values being traversed or invalidate assumptions about its storage. Use `All()` when iteration must be insulated from later mutations, and `Iter()` only while the underlying list remains unchanged. Clear reused lists before repopulating them, and check that a list is nonempty before calling `Random()`.
+`All()` returns a detached NumPy copy; `Iter()` exposes the current native-backed values without making that detached copy. This avoids allocations in tight compiled loops, but it is not a snapshot: changing the list while consuming an `Iter()` result can alter the values being traversed or invalidate assumptions about its storage. Use `All()` when iteration must be insulated from later mutations, and `Iter()` only while the underlying list remains unchanged. Clear reused lists before repopulating them, and check that a list is nonempty before calling `Random()`.
 
 ### 3.6 Randomness: one explicit PAL stream
 
 `Seed`, `Random`, and `RandInt` share PAL's random stream across Python and compiled code. Each draw advances the stream, so even one additional draw changes subsequent outcomes. Reproducibility requires matching the seed, initial state, parameters, and draw order.
 
-A shared stream simplifies reproducing a particular execution order across Python and compiled calls, but it also couples otherwise separate components through draw order. Changing when one component samples can change the outcomes of later components even when their own code is unchanged. Use PAL's RNG functions when a model should share one reproducible stream across PAL calls. External RNGs have independent state and need their own seed or checkpoint handling. A PAL object checkpoint does not by itself serialize the random stream, so exact stochastic continuation requires separately preserving or reconstructing random state. Do not claim that a seed alone guarantees identical outcomes after changing the algorithm.
+A shared stream helps reproduce a fixed execution order across Python and compiled calls, but also couples components through draw order. Changing when one component samples can change the outcomes of later components even when their own code is unchanged. Use PAL's RNG functions when a model should share one reproducible stream across PAL calls. External RNGs have independent state and need their own seed or checkpoint handling. A PAL object checkpoint does not by itself serialize the random stream, so exact stochastic continuation requires separately preserving or reconstructing random state. Do not claim that a seed alone guarantees identical outcomes after changing the algorithm.
 
 ### 3.7 Multinomial sampling: configuration versus sample state
 
@@ -175,7 +175,7 @@ A `Multinomial` sampler separates configuration from the state accumulated while
 
 Rendering is deliberately separate from simulation state transitions. That separation permits headless runs and intermittent drawing, and it keeps visualization costs from being mistaken for model-update costs. Benchmark simulation and rendering separately before measuring end-to-end performance. A plausible-looking image does not establish that the state transitions are correct.
 
-`PixWindow` exposes a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D/3D geometry. These are distinct rendering interfaces with different presentation workflows.
+`PixWindow` exposes a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D/3D geometry. They serve different rendering workflows.
 
 Write pixel colors or OpenGL primitives, then call the window's `Update()` to publish a frame. Rendering every timestep helps inspection but may dominate runtime; long simulations can render selected steps. Keep drawing separate from the computational kernel unless using an explicitly supported compiled drawing API.
 
@@ -183,7 +183,7 @@ Headless rendering exists so output can be generated and tested without a visibl
 
 ### 3.9 Compiled-loop specialization and diagnostics
 
-PAL's `njit` wrapper transforms selected constructs, including neighborhood and Box iteration, before Numba compilation. The neighborhood pattern must be a compile-time tuple of integer-offset tuples, supplied literally or through a resolvable module or closure constant. This restriction lets PAL specialize the loop before Numba compilation rather than interpreting an arbitrary runtime collection. The `unroll=True` option is meaningful in this compiled path: it lets PAL expand a fixed neighborhood loop so each neighbor operation is exposed to compilation. Because the loop body is duplicated into separate statements, Hood-level `break` and `continue` are unsupported with `unroll=True`; use the ordinary Hood loop when those control-flow semantics are required. Unrolling can remove loop-control overhead, but it duplicates the loop body in generated code; use it for small stencils, not large neighborhoods, where compile time and code size can outweigh runtime gains. In ordinary Python iteration, `unroll=True` does not provide this compilation-time optimization.
+PAL's `njit` wrapper transforms selected constructs, including neighborhood and Box iteration, before Numba compilation. The neighborhood pattern must be a compile-time tuple of integer-offset tuples, supplied literally or through a resolvable module or closure constant. This lets PAL specialize the loop before Numba compilation instead of interpreting an arbitrary runtime collection. The `unroll=True` option is meaningful in this compiled path: it lets PAL expand a fixed neighborhood loop so each neighbor operation is exposed to compilation. Because the loop body is duplicated into separate statements, Hood-level `break` and `continue` are unsupported with `unroll=True`; use the ordinary Hood loop when those control-flow semantics are required. Unrolling can remove loop-control overhead, but it duplicates the loop body in generated code; use it for small stencils, not large neighborhoods, where compile time and code size can outweigh runtime gains. In ordinary Python iteration, `unroll=True` does not provide this compilation-time optimization.
 
 Python syntax alone does not guarantee matching compiled behavior: AST rewriting, wrappers, native code, and Numba typing all contribute. When a problem appears only under compilation, reduce it to a minimal function and compare Python and compiled execution.
 
