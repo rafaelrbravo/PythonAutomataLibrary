@@ -374,7 +374,15 @@ For validation, `numAgentProps` must be a nonnegative integer fitting AgentGrid'
 
 ### Geometry
 
-PAL identifies lattice sites either by their spatial coordinates, such as `(x, y)`, or by a single integer index. Coordinates are convenient for spatial rules; linear indices are useful for storing or sampling sites in integer collections. The conversion methods let you move between these representations.
+PAL identifies lattice sites either by their spatial coordinates, such as `(x, y)`, or by a single integer index. Coordinates are convenient for spatial rules; linear indices are useful for storing or sampling sites in integer collections. The conversion methods let you move between these representations. For example, on a 30 × 30 grid:
+
+```python
+grid = pal.NewGrid((30, 30), int)
+site = grid.ToI(10, 12)
+print(grid.ItoX(site), grid.ItoY(site))  # 10 12
+```
+
+The integer `site` identifies the same lattice location as the coordinate pair `(10, 12)`; it is not an agent handle. The following members expose this geometry and conversion behavior:
 
 | Member | Meaning |
 | --- | --- |
