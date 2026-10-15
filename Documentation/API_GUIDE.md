@@ -640,9 +640,9 @@ pop[10, 12] = 20
 `PopGrid` stores integer population counts. Indexing and direct assignment modify the current population immediately.
 
 ```python
-pop[x, y]
-pop[x, y] = 10
-pop[:] = 0
+print(pop[10, 12])  # read the count at a site
+pop[10, 12] = 10   # replace that site's count
+pop[:] = 0        # clear counts at all sites
 ```
 
 Linear (`pop[:]`) and spatial (`pop[:, :]`) slice reads return detached `int64` NumPy arrays; slice assignment writes to the population. Population changes can instead be accumulated and applied together:
