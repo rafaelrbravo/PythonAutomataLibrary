@@ -21,7 +21,7 @@ Axis shorthand: `...` after an X/x-specific name includes its Y/y and Z/z varian
 | `NewMultinomial(other=None)` | Create a PAL multinomial/binomial sampler, optionally reusing configuration from `other`. |
 | `NewGrid(dimensions, dtype)` | Create a typed lattice grid with the requested dimensions and element dtype. |
 | `NewAgentGrid(dimensions, numAgentProps=0, isStackable=False)` | Create a grid for individual agents; `numAgentProps` sets the number of per-agent properties and `isStackable` controls whether multiple agents may occupy a site. |
-| `NewPopGrid(dimensions, capacity=None)` | Create a lattice of integer population counts, optionally limiting the count at each site with `capacity`. |
+| `NewPopGrid(dimensions, capacity=None)` | Create a lattice of integer population counts; `capacity` selects the smallest integer storage type that accommodates the requested per-site count, without enforcing it as a limit. |
 | `NewPDEgrid(dimensions)` | Create a lattice-backed scalar field for numerical transport operations. |
 
 ## Multinomial
