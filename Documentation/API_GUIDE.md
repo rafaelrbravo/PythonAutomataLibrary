@@ -456,10 +456,13 @@ Use safe mode until the model is correct, then benchmark fast mode. Do not rely 
 Use `Grid` when each lattice site needs a value, such as terrain type, occupancy flags, environmental measurements, or a precomputed spatial map. It is a general-purpose typed array on PAL's spatial lattice; unlike `AgentGrid`, it does not track individual agents, and unlike `PDEgrid`, it does not provide a transport solver.
 
 ```python
-grid = pal.NewGrid((xDim, yDim), dtype)
+import numpy as np
+
+grid = pal.NewGrid((30, 30), np.float32)
+grid[10, 12] = 2.5
 ```
 
-Supported dtypes are `bool`, signed/unsigned 8/16/32/64-bit integers, and 32/64-bit floats.
+The two dimensions specify the lattice size; the dtype specifies the type of value stored at each site. Use `np.float32` for a floating-point field, for example, or an integer dtype for categories or counts. Supported dtypes are `bool`, signed/unsigned 8/16/32/64-bit integers, and 32/64-bit floats.
 
 `Grid` supports linear indexing, coordinate indexing, and NumPy-like slices:
 
