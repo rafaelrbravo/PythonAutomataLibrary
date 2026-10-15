@@ -437,7 +437,7 @@ The exact offset order is not important for this sum; the example above illustra
 
 **Why this is fast:** The neighborhood has a fixed number of offsets known at compilation time. With `unroll=True`, Numba can specialize each operation, eliminating the ordinary neighborhood-loop control and making the resulting code easier to optimize. This can be **extremely performant** in the inner loop of an agent-based model, where the same small neighborhood is visited millions of times. It preserves PAL's compact neighborhood syntax rather than requiring manually expanded code.
 
-Unrolling increases generated code size and may increase compilation time. It is most attractive for small, fixed neighborhoods; benchmark larger ones. The option changes how the loop is compiled, not which neighbors are visited.
+The option changes how the loop is compiled, not which neighbors are visited. For large neighborhoods or substantial loop bodies, the duplicated operations can outweigh the runtime benefit; compare against ordinary iteration before enabling it.
 
 ### Safety contracts and mode selection
 
