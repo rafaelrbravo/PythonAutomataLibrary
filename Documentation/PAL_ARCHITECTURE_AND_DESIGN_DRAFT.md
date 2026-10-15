@@ -29,7 +29,7 @@ A useful mental model is to separate PAL into several cooperating layers:
 5. **The native C core.** This provides low-level storage and computational routines used by the Python/Numba-facing layer.
 6. **Tests, examples, and generated documentation.** These act as executable and written statements of the public contract, checking that the layers agree.
 
-These are responsibilities, not necessarily six separate packages; several may share a source file. The usual path is: model code calls the public wrapper; the wrapper selects a Python or Numba-compatible implementation; `pal.njit` may transform supported PAL-specific loop syntax before Numba compiles it; and the compiled operation reaches native-backed state or a native kernel where appropriate. Not every operation passes through every layer. Keeping the responsibilities conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
+These are responsibilities, not necessarily six separate packages; several may share a source file. The usual path is: model code calls the public wrapper; the wrapper selects a Python or Numba-compatible implementation; `pal.njit` may transform supported PAL-specific loop syntax before Numba compiles it; and the compiled operation reaches native-backed state or a native kernel where appropriate. Not every operation passes through every layer. For example, `pal.njit` is relevant to compiled model functions that use PAL's supported syntax; it is not a mandatory step for ordinary Python calls. Keeping the responsibilities conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
 
 ### 1.3 The native core and Python interface
 
@@ -318,4 +318,4 @@ Document assumptions alongside the model: whether agents update sequentially or 
 
 ## 7. Using the rest of the documentation
 
-Use the [API Guide](API_GUIDE.md) for the first model, worked workflows, and public API behavior. Use the [API Reference](API_REFERENCE.md) for exact signatures and method descriptions, and the [Cheatsheet](CHEATSHEET.md) for common patterns. The `Examples/` directory contains complete models. The [Testing guide](../Testing/README.md) describes regression coverage and how to run the test suite.
+Use the [API Guide](API_GUIDE.md) for the first model, worked workflows, and public API behavior. Use the [API Reference](API_REFERENCE.md) for exact signatures and method descriptions, and the [Cheatsheet](CHEATSHEET.md) for common patterns. The `Examples/` directory contains complete models. The [Testing guide](../Testing/README.md) describes regression coverage and how to run the test suite. Treat this architecture document as an explanation of design and maintenance reasoning, not as a substitute for checking the current implementation, tests, and public API contract.
