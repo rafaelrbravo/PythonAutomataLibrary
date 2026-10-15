@@ -278,55 +278,7 @@ Saving object state is not the same as saving every source of randomness or ever
 
 ### Where to go next
 
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide first shows how to organize larger models, then gives **subsystem-specific API behavior**, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
-
-## Organizing larger models
-
-Once a model uses several grids and parameter arrays, it can be useful to group them into a single object. This is an optional organizational technique, not a requirement for using PAL.
-
-### Package model components with a named tuple
-
-As models grow, passing every grid and parameter separately can make function signatures difficult to read. Python's `typing.NamedTuple` groups related objects under descriptive field names, and Numba supports accessing those fields inside compiled functions.
-
-For example, package an agent grid, a nutrient field, and a NumPy array of rates. The three named-tuple fields hold references to those objects; the grids and array allocate their own storage. The named tuple does not need to reserve space for every cell or nutrient value:
-
-```python
-from typing import NamedTuple
-import numpy as np
-import PythonAutomataLibrary as pal
-
-class Model(NamedTuple):
-    cells: pal.AgentGrid
-    nutrient: pal.PDEgrid
-    rates: np.ndarray
-
-@pal.njit(cache=True)
-def Consume(model: Model):
-    for agent in model.cells.All():
-        x, y = model.cells.XSQ(agent), model.cells.YSQ(agent)
-        model.nutrient[x, y] -= model.rates[0]
-
-@pal.njit(cache=True)
-def Step(model: Model):
-    Consume(model)
-    model.rates[1] += 1.0
-
-def main():
-    cells = pal.NewAgentGrid((8, 8), isStackable=False)
-    cells.NewAgentSQ(3, 3)
-    nutrient = pal.NewPDEgrid((8, 8))
-    nutrient[:] = 1.0
-    model = Model(cells=cells, nutrient=nutrient, rates=np.array([0.1, 0.0]))
-    Step(model)
-    print(model.nutrient[3, 3], model.rates[1])
-
-if __name__ == "__main__":
-    main()
-```
-
-The `NamedTuple` class gives editors field names and type information for autocomplete, including `model.cells` and `model.nutrient`. Both `Step` and `Consume` receive the same named model, and changes to the contained grids and arrays persist. The named tuple itself is immutable: `model.cells = other_cells` is not allowed. For a changing scalar, use a mutable array as shown with `rates[1]`, or return an updated value.
-
-**Performance:** Numba compiles named-field access, but passing a composite from Python into a compiled function can have conversion overhead. Prefer calling multiple compiled functions from a compiled timestep, as above, rather than repeatedly entering compiled code for tiny operations. Whether the composite is faster than separate arguments depends on the workload; benchmark performance-sensitive applications. See [Numba's supported Python features](https://numba.readthedocs.io/en/stable/reference/pysupported.html).
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide explains **subsystem-specific API behavior**, followed by techniques for organizing larger models, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
 
 ## Core use
 
@@ -776,6 +728,54 @@ dividing = division.Sample(0.1)
 
 `NewMultinomial(movement)` **shares the underlying reusable binomial solver core**, avoiding a separate solver setup, but the two `Multinomial` objects keep **independent remaining-count and remaining-probability state**. The second instance does not inherit the first instance's partially sampled `Setup` sequence. Call `Setup` separately for each allocation. Sharing the solver does not create separate random streams: both samplers use PAL's common RNG, so results still depend on call order.
 
+
+## Organizing larger models
+
+Once a model uses several grids and parameter arrays, it can be useful to group them into a single object. This is an optional organizational technique, not a requirement for using PAL.
+
+### Package model components with a named tuple
+
+As models grow, passing every grid and parameter separately can make function signatures difficult to read. Python's `typing.NamedTuple` groups related objects under descriptive field names, and Numba supports accessing those fields inside compiled functions.
+
+For example, package an agent grid, a nutrient field, and a NumPy array of rates. The three named-tuple fields hold references to those objects; the grids and array allocate their own storage. The named tuple does not need to reserve space for every cell or nutrient value:
+
+```python
+from typing import NamedTuple
+import numpy as np
+import PythonAutomataLibrary as pal
+
+class Model(NamedTuple):
+    cells: pal.AgentGrid
+    nutrient: pal.PDEgrid
+    rates: np.ndarray
+
+@pal.njit(cache=True)
+def Consume(model: Model):
+    for agent in model.cells.All():
+        x, y = model.cells.XSQ(agent), model.cells.YSQ(agent)
+        model.nutrient[x, y] -= model.rates[0]
+
+@pal.njit(cache=True)
+def Step(model: Model):
+    Consume(model)
+    model.rates[1] += 1.0
+
+def main():
+    cells = pal.NewAgentGrid((8, 8), isStackable=False)
+    cells.NewAgentSQ(3, 3)
+    nutrient = pal.NewPDEgrid((8, 8))
+    nutrient[:] = 1.0
+    model = Model(cells=cells, nutrient=nutrient, rates=np.array([0.1, 0.0]))
+    Step(model)
+    print(model.nutrient[3, 3], model.rates[1])
+
+if __name__ == "__main__":
+    main()
+```
+
+The `NamedTuple` class gives editors field names and type information for autocomplete, including `model.cells` and `model.nutrient`. Both `Step` and `Consume` receive the same named model, and changes to the contained grids and arrays persist. The named tuple itself is immutable: `model.cells = other_cells` is not allowed. For a changing scalar, use a mutable array as shown with `rates[1]`, or return an updated value.
+
+**Performance:** Numba compiles named-field access, but passing a composite from Python into a compiled function can have conversion overhead. Prefer calling multiple compiled functions from a compiled timestep, as above, rather than repeatedly entering compiled code for tiny operations. Whether the composite is faster than separate arguments depends on the workload; benchmark performance-sensitive applications. See [Numba's supported Python features](https://numba.readthedocs.io/en/stable/reference/pysupported.html).
 
 ## Visualization
 
