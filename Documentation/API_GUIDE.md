@@ -498,6 +498,7 @@ Use `Grid` when each lattice site needs a value, such as terrain type, occupancy
 
 ```python
 import numpy as np
+import PythonAutomataLibrary as pal
 
 grid = pal.NewGrid((30, 30), np.float32)
 grid[10, 12] = 2.5
@@ -505,17 +506,18 @@ grid[10, 12] = 2.5
 
 The two dimensions specify the lattice size; the dtype specifies the type of value stored at each site. Use `np.float32` for a floating-point field, for example, or an integer dtype for categories or counts. Supported dtypes are `bool`, signed/unsigned 8/16/32/64-bit integers, and 32/64-bit floats.
 
-`Grid` supports linear indexing, coordinate indexing, and NumPy-like slices:
+`Grid` supports both coordinate indexing (`grid[x, y]` on this 2D grid) and linear indexing (`grid[i]`, where `i` is a single site index). Slices select rectangular regions. Continuing the example above:
 
 ```python
-grid[i]
-grid[x, y]
-grid[x, y, z]
-grid[:] = 0
-region = grid[2:5, 3:8]
+print(grid[10, 12])             # 2.5
+site = grid.ToI(10, 12)
+print(grid[site])               # 2.5, accessed by linear index
+region = grid[2:5, 3:8]       # a 3-by-5 NumPy array
+region[:] = 7.0                # modifies the copy, not grid
+print(grid[10, 12])             # still 2.5
 ```
 
-Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. A detached slice copy is not a live view of the Grid.
+To change the PAL grid itself, assign to `grid[x, y]` or a grid slice such as `grid[:] = 0`. Three-dimensional grids additionally accept `grid[x, y, z]`. Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. A detached slice copy is not a live view of the Grid.
 
 ## AgentGrid
 
