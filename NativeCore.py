@@ -1732,7 +1732,7 @@ def _SetRegionPython(grid,key,value,safe,isPop):
             flat=np.ascontiguousarray(arr).reshape(-1)
             fn=_pg_linear_set_array if isinstance(key,slice) and safe else _pg_linear_set_array_fast if isinstance(key,slice) else _pg_region_set_array if safe else _pg_region_set_array_fast
             ok=fn(grid._ptr,bounds[0],bounds[1],flat.ctypes.data_as(_I64_PTR)) if isinstance(key,slice) else fn(grid._ptr,*bounds,flat.ctypes.data_as(_I64_PTR))
-        if safe and not ok: raise ValueError("PopGrid slice assignment value is outside capacity or population overflowed")
+        if safe and not ok: raise ValueError("PopGrid slice assignment exceeds storage range or total population overflowed")
     else:
         if scalar:
             if safe and not np.isfinite(value): raise ValueError("value must be finite")
@@ -1811,12 +1811,12 @@ def _olPopSetSlice(grid,key,value,safe):
             def impl(grid,key,value,safe):
                 if safe and (not np.isfinite(value) or value!=int(value) or value<0 or value>np.iinfo(np.int64).max): raise ValueError("PopGrid values must be nonnegative int64 integers")
                 a,b,_,_,_,_=_Bounds6(grid,key,safe);ok=_pg_linear_set_scalar(grid._ptr,a,b,value) if safe else _pg_linear_set_scalar_fast(grid._ptr,a,b,value)
-                if safe and not ok: raise ValueError("PopGrid slice assignment value is outside capacity or population overflowed")
+                if safe and not ok: raise ValueError("PopGrid slice assignment exceeds storage range or total population overflowed")
         else:
             def impl(grid,key,value,safe):
                 if safe and (not np.isfinite(value) or value!=int(value) or value<0 or value>np.iinfo(np.int64).max): raise ValueError("PopGrid values must be nonnegative int64 integers")
                 a,b,c,d,e,f=_Bounds6(grid,key,safe);ok=_pg_region_set_scalar(grid._ptr,a,b,c,d,e,f,value) if safe else _pg_region_set_scalar_fast(grid._ptr,a,b,c,d,e,f,value)
-                if safe and not ok: raise ValueError("PopGrid slice assignment value is outside capacity or population overflowed")
+                if safe and not ok: raise ValueError("PopGrid slice assignment exceeds storage range or total population overflowed")
         return impl
     if isinstance(value,types.Array):
         if linear:
@@ -1825,14 +1825,14 @@ def _olPopSetSlice(grid,key,value,safe):
                 if value.size!=b-a: raise ValueError("assigned array shape must match slice shape")
                 if safe and (np.any(~np.isfinite(value)) or np.any(value!=np.floor(value)) or np.any(value<0) or np.any(value>np.iinfo(np.int64).max)): raise ValueError("PopGrid values must be nonnegative int64 integers")
                 arr=value.astype(np.int64).reshape(value.size);ok=_pg_linear_set_array(grid._ptr,a,b,arr.ctypes) if safe else _pg_linear_set_array_fast(grid._ptr,a,b,arr.ctypes)
-                if safe and not ok: raise ValueError("PopGrid slice assignment value is outside capacity or population overflowed")
+                if safe and not ok: raise ValueError("PopGrid slice assignment exceeds storage range or total population overflowed")
         else:
             def impl(grid,key,value,safe):
                 a,b,c,d,e,f=_Bounds6(grid,key,safe);n=(b-a)*(d-c)*(f-e)
                 if value.size!=n: raise ValueError("assigned array shape must match slice shape")
                 if safe and (np.any(~np.isfinite(value)) or np.any(value!=np.floor(value)) or np.any(value<0) or np.any(value>np.iinfo(np.int64).max)): raise ValueError("PopGrid values must be nonnegative int64 integers")
                 arr=value.astype(np.int64).reshape(value.size);ok=_pg_region_set_array(grid._ptr,a,b,c,d,e,f,arr.ctypes) if safe else _pg_region_set_array_fast(grid._ptr,a,b,c,d,e,f,arr.ctypes)
-                if safe and not ok: raise ValueError("PopGrid slice assignment value is outside capacity or population overflowed")
+                if safe and not ok: raise ValueError("PopGrid slice assignment exceeds storage range or total population overflowed")
         return impl
 
 
@@ -1931,7 +1931,7 @@ def _olPopSetItemAt(grid,key,value,sourceLine):
         badShape="PopGrid expects i, x,y, x,y,z, or slices"+suffix
         badIndex="index must be a valid integer"+suffix
         badValue="population must be a nonnegative int64 integer"+suffix
-        badSet="invalid index or population outside capacity"+suffix
+        badSet="invalid index or population outside storage range"+suffix
         if isinstance(key,types.BaseTuple):
             if len(key.types)==2:
                 def impl(grid,key,value,sourceLine):
@@ -1968,7 +1968,7 @@ def _PopSetItem(grid,key,value,safe):
         if safe: grid._CheckI(key)
         i=key
     ok=_pg_seti(grid._ptr,i,value) if safe else _pg_seti_fast(grid._ptr,i,value)
-    if safe and not ok: raise ValueError("population must be between 0 and capacity")
+    if safe and not ok: raise ValueError("population must fit the selected storage type")
 
 @overload(_PopSetItem)
 def _olPopSetItem(grid,key,value,safe):
@@ -1980,12 +1980,12 @@ def _olPopSetItem(grid,key,value,safe):
             def impl(grid,key,value,safe):
                 if safe and (not np.isfinite(value) or value!=int(value) or value<0 or value>np.iinfo(np.int64).max): raise ValueError("population must be a nonnegative int64 integer")
                 i=grid.ToI(key[0],key[1]);ok=_pg_seti(grid._ptr,i,value) if safe else _pg_seti_fast(grid._ptr,i,value)
-                if safe and not ok: raise ValueError("population must be between 0 and capacity")
+                if safe and not ok: raise ValueError("population must fit the selected storage type")
         else:
             def impl(grid,key,value,safe):
                 if safe and (not np.isfinite(value) or value!=int(value) or value<0 or value>np.iinfo(np.int64).max): raise ValueError("population must be a nonnegative int64 integer")
                 i=grid.ToI(key[0],key[1],key[2]);ok=_pg_seti(grid._ptr,i,value) if safe else _pg_seti_fast(grid._ptr,i,value)
-                if safe and not ok: raise ValueError("population must be between 0 and capacity")
+                if safe and not ok: raise ValueError("population must fit the selected storage type")
         return impl
     if isinstance(safe,types.BooleanLiteral) and not safe.literal_value:
         def impl(grid,key,value,safe): _pg_seti_fast(grid._ptr,key,value)
@@ -1994,7 +1994,7 @@ def _olPopSetItem(grid,key,value,safe):
         if not np.isfinite(key) or key!=int(key) or key<0 or key>=len(grid): raise IndexError("index must be a valid integer")
         if not np.isfinite(value) or value!=int(value) or value<0 or value>np.iinfo(np.int64).max: raise ValueError("population must be a nonnegative int64 integer")
         ok=_pg_seti(grid._ptr,key,value)
-        if not ok: raise ValueError("invalid index or population outside capacity")
+        if not ok: raise ValueError("invalid index or population outside storage range")
     return impl
 
 
@@ -5071,7 +5071,7 @@ def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
 
 
 def NewPopGrid(dimensions, capacity=None):
-    """Create a lattice of integer population counts, optionally limiting the count at each site with `capacity`."""
+    """Create integer population counts; `capacity` selects the smallest suitable per-site storage type."""
     dims = _dimensions_array(dimensions)
     if capacity is None: cap=np.iinfo(np.int64).max
     else:
