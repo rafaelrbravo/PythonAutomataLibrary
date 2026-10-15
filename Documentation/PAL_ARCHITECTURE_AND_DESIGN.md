@@ -129,11 +129,13 @@ The distinction between queued and immediate mutations is especially important f
 
 `All()` returns a detached NumPy copy; `Iter()` exposes the current native-backed values without making that detached copy. This avoids allocations in tight compiled loops, but it is not a snapshot: changing the list while consuming an `Iter()` result can alter the values being traversed or invalidate assumptions about its storage. Use `All()` when iteration must be insulated from later mutations, and `Iter()` only while the underlying list remains unchanged. Clear reused lists before repopulating them, and check that a list is nonempty before calling `Random()`.
 
-### 3.6 Randomness: one explicit PAL stream
+### 3.6 Randomness: thread-local PAL streams
 
-`Seed`, `Random`, and `RandInt` share PAL's random stream across Python and compiled code. Each draw advances the stream, so even one additional draw changes subsequent outcomes. Reproducibility requires matching the seed, initial state, parameters, and draw order.
+`Seed`, `Random`, and `RandInt` use the same PAL random stream within an execution thread, including across Python and compiled calls. Each draw advances that thread's stream, so an additional draw changes its subsequent outcomes. PAL gives each thread its own PCG32 stream derived from a master seed, avoiding contention over a single shared RNG state. In multithreaded runs, reproducing results also requires consistent assignment of streams and work to threads.
 
-A shared stream helps reproduce a fixed execution order across Python and compiled calls, but also couples components through draw order. Changing when one component samples can change the outcomes of later components even when their own code is unchanged. Use PAL's RNG functions when a model should share one reproducible stream across PAL calls. External RNGs have independent state and need their own seed or checkpoint handling. A PAL object checkpoint does not serialize the random stream. To reproduce a run from a checkpoint, call `pal.Seed(checkpointSeed)` immediately after saving the model and before continuing it. After loading that checkpoint in a later run, call `pal.Seed(checkpointSeed)` again before any random draws. This starts the same new random sequence from the saved model state without restoring the RNG's previous internal state. Reproduction still requires identical model state, parameters, execution order, and subsequent draws; changing the algorithm or draw order can change outcomes.
+Draw order matters: changing when one component samples can change later outcomes, even if the later component is unchanged. External RNGs have independent state and require separate seeding or checkpoint handling.
+
+PAL object checkpoints do not save RNG state. For reproducible continuation, call `pal.Seed(checkpointSeed)` immediately after saving the model, before continuing. After loading the checkpoint in another run, call `pal.Seed(checkpointSeed)` again before any random draws. Both runs then start a new random sequence from the same model state. This requires identical parameters, execution order, and subsequent draws; the convention is most reliable in single-threaded runs and does not guarantee identical multithreaded outcomes when thread assignment changes.
 
 ### 3.7 Multinomial sampling: configuration versus sample state
 
