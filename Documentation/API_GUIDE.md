@@ -673,10 +673,12 @@ These lines illustrate separate operations; the final assignment clears the popu
 Linear (`pop[:]`) and spatial (`pop[:, :]`) slice reads return detached `int64` NumPy arrays; slice assignment writes to the population. Population changes can instead be accumulated and applied together:
 
 ```python
-pop[10, 12] = 20    # establish the starting population
-pop.Add(-3, 10, 12)  # queue removal of three individuals
-pop.Add(3, 11, 12)   # queue their arrival at the next site
-pop.Update()         # apply both changes together
+pop[10, 12] = 20     # establish the starting population
+pop.Add(-3, 10, 12)   # queue removal of three individuals
+pop.Add(3, 11, 12)    # queue their arrival at the next site
+print(pop[10, 12])    # 20: pending changes are not yet visible
+pop.Update()          # apply both changes together
+print(pop[10, 12])    # 17
 ```
 
 `Add` changes only the pending delta. In this example, the source site remains at 20 and the destination remains unchanged until `Update()`; afterward, the source contains 17 and the destination has increased by 3. More generally, until `Update()`, `GetPop()`, indexing, and `All()` still reflect the current population. A single `Update()` commits the queued changes together, avoiding order-dependent reads during a synchronous timestep. Direct assignments during that timestep still change current values immediately.
