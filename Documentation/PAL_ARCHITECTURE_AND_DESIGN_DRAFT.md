@@ -189,7 +189,7 @@ Headless rendering exists so output can be generated and tested without a visibl
 
 ### 3.9 Source-aware diagnostics and AST transformation
 
-PAL's `njit` wrapper transforms selected constructs, including neighborhood and Box iteration, before Numba compilation. Type annotations on PAL arguments also support source-aware safe-mode diagnostics.
+PAL's `njit` wrapper transforms selected constructs, including neighborhood and Box iteration, before Numba compilation. The `unroll=True` option is meaningful in this compiled path: it lets PAL expand a fixed neighborhood loop so each neighbor operation is exposed to compilation. Unrolling can remove loop-control overhead, but it duplicates the loop body in generated code; use it for small stencils, not large neighborhoods, where compile time and code size can outweigh runtime gains. In ordinary Python iteration, `unroll=True` does not provide this compilation-time optimization.
 
 Python syntax alone does not guarantee matching compiled behavior: AST rewriting, wrappers, native code, and Numba typing all contribute. When a problem appears only under compilation, reduce it to a minimal function and compare Python and compiled execution.
 
