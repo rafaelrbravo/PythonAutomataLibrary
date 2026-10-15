@@ -19,14 +19,25 @@ def test_stage_1_setup(model):
     assert len(model.All()) == 4
 
 
-def test_stage_2_draw_data(api, model):
-    # Test the Draw routine's pixel operations without opening a GUI window.
-    pix = np.zeros((SIZE, SIZE), dtype=np.int32)
+def test_stage_2_draw_window(api, model, tmp_path):
+    # Run the tutorial's real PixWindow drawing path with a headless backend.
+    pix, window = api.StartPixWindow(SIZE, SIZE, scale=12, title="Cells", headless=True)
     black, red = api.RGB(0, 0, 0), api.RGB(255, 0, 0)
-    pix[:] = black
-    for agent in model.All():
-        pix[model.XSQ(agent), model.YSQ(agent)] = red
-    assert np.count_nonzero(pix == red) == 4
+    try:
+        pix[:] = black
+        for agent in model.All():
+            pix[model.XSQ(agent), model.YSQ(agent)] = red
+        window.Update()
+        api.AwaitWindows(timeout=5)
+        assert window.IsOpen()
+        output = tmp_path / "cells.png"
+        window.Save(str(output), block=True)
+        image = pytest.importorskip("PIL.Image").open(output).convert("RGB")
+        pixels = np.asarray(image)
+        assert np.any(pixels[:, :, 0] > 0)
+        assert np.any(np.all(pixels[:, :, :3] == 0, axis=2))
+    finally:
+        window.Close()
 
 
 def test_stages_3_and_4_empty_neighbors_and_movement(api, model):
