@@ -903,10 +903,10 @@ window.Close()
 Choose `OpenGLWindow` when you want to draw geometric objects such as circles, boxes, and lines, including in three dimensions. Unlike `PixWindow`, it renders shapes rather than requiring you to color individual pixels.
 
 ```python
-draw, window = pal.StartOpenGLWindow(xDim, yDim, zDim=None,
-                                     width=800, height=800,
-                                     title="PAL", headless=False)
+draw, window = pal.StartOpenGLWindow(30, 30, width=800, height=800, title="PAL")
 ```
+
+This opens a two-dimensional drawing area spanning 30 × 30 model units in an 800 × 800 window. Supply `zDim` for a three-dimensional scene; `headless=True` requests off-screen rendering.
 
 Draw geometry with:
 
