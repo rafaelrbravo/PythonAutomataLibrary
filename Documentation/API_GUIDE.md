@@ -283,7 +283,7 @@ pal.Seed(1234)
 
 The same seed reproduces the same random stream when the initial state and order of random calls also match. Stage 7 already seeds its complete program; earlier stages can add the same call.
 
-To save the state at a chosen timestep, use Python's `pickle` to store the population grid, nutrient field, and current step number together. The following snippet belongs in ordinary Python code (for example, inside `main` after the simulation state exists), not inside an `@pal.njit` function:
+To save the state at a chosen timestep, use Python's `pickle` to store the population grid, nutrient field, and current step number together. The following snippet demonstrates **saving and immediately reloading a checkpoint**; it is not meant to run on every iteration of the simulation loop. Place it in ordinary Python code (for example, inside `main` after the simulation state exists), not inside an `@pal.njit` function. In a real simulation, save at the desired checkpoint and load later when starting a resumed run:
 
 ```python
 import pickle
