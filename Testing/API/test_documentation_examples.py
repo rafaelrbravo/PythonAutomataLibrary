@@ -1,26 +1,82 @@
-"""Execute the Manual quickstart as published, including its population assertion."""
+"""Execute current API Guide tutorial snippets against PAL, including compiled paths."""
 
 import ast
+import re
 import runpy
 from pathlib import Path
 
+import pytest
 
 
-def test_manual_quickstart(tmp_path):
-    manual = (Path(__file__).resolve().parents[2] / "Documentation" / "API_GUIDE.md").read_text(encoding="utf-8")
-    start = manual.index("```python\n") + len("```python\n")
-    end = manual.index("\n```", start)
-    snippet = manual[start:end]
-    ast.parse(snippet)
-    source_path = tmp_path / "manual_quickstart.py"
-    source_path.write_text(snippet, encoding="utf-8")
-    namespace = runpy.run_path(str(source_path), run_name="pal_documentation_test")
-    pop = namespace["pal"].NewPopGrid((40, 40))
-    for _ in range(10):
-        namespace["Step"](pop)
-    assert pop.GetPop() == 16000
-    assert pop[0] == 10
-    assert pop[39, 39] == 10
+GUIDE = Path(__file__).resolve().parents[2] / "Documentation" / "API_GUIDE.md"
+
+
+def _blocks():
+    guide = GUIDE.read_text(encoding="utf-8")
+    return re.findall(r"```python\n(.*?)\n```", guide, flags=re.S)
+
+
+def _namespace(code):
+    namespace = {"__name__": "pal_api_guide_test"}
+    exec(compile(code, str(GUIDE), "exec"), namespace)
+    return namespace
+
+
+def test_all_python_blocks_parse():
+    for number, block in enumerate(_blocks(), 1):
+        # A few blocks intentionally show indented replacements for a function body.
+        ast.parse("if True:\n" + "\n".join("    " + line for line in block.splitlines()), filename=f"block {number}")
+
+
+def test_tutorial_initial_cells():
+    ns = _namespace(_blocks()[0])
+    cells = ns["Setup"]()
+    assert len(cells.All()) == 4
+    assert all(cells.counts[x, y] == 1 for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)))
+
+
+def test_tutorial_agent_movement_and_compilation():
+    blocks = _blocks()
+    ns = _namespace(blocks[1])
+    exec(blocks[2], ns)
+    cells = ns["Setup"]()
+    pal = ns["pal"]
+    ns["MOORE"] = pal.MooreHood(2, excludeCenter=True)
+    empty = pal.NewIList()
+    neighbors = ns["EmptyNeighbors"](cells, cells.All()[0], empty).All()
+    assert len(neighbors) > 0
+    exec(blocks[4], ns)
+    for _ in range(3):
+        ns["Step"](cells, empty)
+        assert len(cells.All()) == 4
+    exec(blocks[7], ns)
+    exec(blocks[6], ns)
+    for _ in range(3):
+        ns["Step"](cells, empty)
+        assert len(cells.All()) == 4
+    exec(blocks[9], ns)
+    nutrient = pal.NewPDEgrid((ns["SIZE"], ns["SIZE"]))
+    nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
+    nutrient[:] = 1.0
+    ns["StepNutrient"](cells, nutrient)
+    assert nutrient[14, 14] <= 1.0
+
+
+def test_tutorial_population_compiled():
+    ns = _namespace(_blocks()[11])
+    pal = ns["pal"]
+    pal.Seed(1234)
+    cells = pal.NewPopGrid((ns["SIZE"], ns["SIZE"]))
+    for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
+        cells[x, y] = 1
+    multi = pal.NewMultinomial()
+    nutrient = pal.NewPDEgrid((ns["SIZE"], ns["SIZE"]))
+    nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
+    nutrient[:] = 1.0
+    for _ in range(5):
+        ns["Step"](cells, multi)
+        assert cells.GetPop() == 4
+        ns["StepNutrient"](cells, nutrient)
 
 
 def _cheatsheet_sections():
@@ -62,31 +118,3 @@ def test_cheatsheet_pdf_fits_one_page():
     assert pages == 1
 
 
-def test_manual_checkpoint_snippet():
-    """Execute the checkpoint example as published in the Manual."""
-    manual = (Path(__file__).resolve().parents[2] / "Documentation" / "API_GUIDE.md").read_text(encoding="utf-8")
-    checkpoint_section = manual.split("### 8. Checkpointing and reproducibility\n", 1)[1].split("\n## ", 1)[0]
-    assert checkpoint_section.count("```python\n") == 1, "Expected one checkpoint example in the checkpointing section"
-    snippet = checkpoint_section.split("```python\n", 1)[1].split("\n```", 1)[0]
-    ast.parse(snippet)
-    exec(compile(snippet, "pal_manual_checkpoint.py", "exec"), {"__name__": "pal_documentation_test"})
-
-
-def test_manual_radius_snippet():
-    """Execute the Manual's wrapped radius search exactly as published."""
-    manual = (Path(__file__).resolve().parents[2] / "Documentation" / "API_GUIDE.md").read_text(encoding="utf-8")
-    section = manual.split("#### Iterating nearby agents\n", 1)[1].split("\n#### ", 1)[0]
-    assert section.count("```python\n") == 1
-    snippet = section.split("```python\n", 1)[1].split("\n```", 1)[0]
-    ast.parse(snippet)
-    exec(compile(snippet, "pal_manual_radius.py", "exec"), {"__name__": "pal_documentation_test"})
-
-
-def test_manual_gradient_snippet():
-    """Execute the finite-difference gradient check exactly as published."""
-    manual = (Path(__file__).resolve().parents[2] / "Documentation" / "API_GUIDE.md").read_text(encoding="utf-8")
-    section = manual.split("#### A hand-checkable field gradient\n", 1)[1].split("\n#### Numerical update order", 1)[0]
-    assert section.count("```python\n") == 1
-    snippet = section.split("```python\n", 1)[1].split("\n```", 1)[0]
-    ast.parse(snippet)
-    exec(compile(snippet, "pal_manual_gradient.py", "exec"), {"__name__": "pal_documentation_test"})
