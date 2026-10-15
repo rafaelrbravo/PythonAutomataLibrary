@@ -31,23 +31,15 @@ PAL has five implementation layers, supported by tests and documentation:
 
 **The central idea is that users work with the same PAL objects and methods whether their code runs in Python or is compiled with Numba.** PAL handles the different implementations behind the scenes. Not every operation passes through every layer.
 
-### 1.3 The native core and Python interface
+### 1.3 Python, Numba, and the native core
 
-PAL implements low-level operations in its native core without requiring users to write C for ordinary model logic. Native-backed objects can hold state in a representation suited to repeated updates, while the Python-facing API offers recognizable constructors, indexing, and methods.
+PAL uses Python for constructing models, configuring experiments, inspecting results, and other work that does not need to run millions of times. Repeated model calculations can instead run in functions compiled by Numba, avoiding much of the overhead of executing Python loops. Both paths operate on PAL objects, with the C core providing storage and selected lower-level operations.
 
-The native implementation is not itself the public contract. A C function may accept a particular pointer or integer layout internally, but the Python API should expose a stable and understandable operation. The wrapper layer is where public arguments, supported types, safe-mode validation, and implementation details meet.
+PAL exposes the same supported methods in ordinary Python and compiled functions, but they do not necessarily use the same implementation. Python wrappers handle ordinary calls, while Numba overloads provide compiled versions of supported operations. This is necessary because Numba cannot compile arbitrary Python code and requires operations and argument types it understands.
 
-This separation creates a maintenance obligation: behavior must remain coherent across the wrapper and native layers. If the Python method accepts a keyword argument but its Numba overload silently binds that keyword differently, the layers disagree. If a native routine handles a one-dimensional coordinate differently from the safe wrapper, a mode-specific defect can result. PAL's parity tests therefore compare outcomes across paths rather than assuming that one layer automatically inherits the correctness of another.
+For supported operations, the two paths should have the same observable behavior, including returned values and changes to model state. Their internal code and performance may differ. Not every operation reaches the C core; some work is handled directly by Python or Numba.
 
-### 1.4 Python and Numba execution paths
-
-Python execution is useful for interactive exploration, setup code, inspection, and small operations. Numba-compiled execution is useful for repeated loops where Python dispatch would be costly. PAL supports both because a scientific workflow naturally mixes these kinds of work.
-
-Supporting both introduces complexity. Numba imposes typing and compilation constraints that ordinary Python does not. Native-backed objects need compatible wrappers or overloads; argument types and names must be represented in forms Numba understands; and code transformations must produce valid compilable functions. An operation can therefore work in Python and fail at compile time, or compile successfully but behave differently in an edge case.
-
-PAL treats parity as a correctness requirement for supported usage, not as a promise that Python and compiled code have identical internals or performance. Compare observable behavior: return values, mutations, errors where they are part of the contract, boundary handling, and state after the operation. If a difference appears, reduce it to a minimal reproducer and test both paths.
-
-### 1.5 Model-code transformation with `pal.njit`
+### 1.4 Model-code transformation with `pal.njit`
 
 PAL's `njit` interface is not simply a spelling alias for Numba's decorator. Before compilation, it can prepare functions that use PAL-specific syntax and diagnostics. In particular, neighborhood and Box iteration are model-friendly abstractions that may need to be expanded into forms that the compiler can type and execute efficiently.
 
@@ -57,7 +49,7 @@ This approach keeps spatial loops readable while allowing their compiled form to
 
 When a failure occurs under `@pal.njit`, first reproduce it in safe mode, without calling `pal.FastMode()`. If the additional checks do not identify the problem, temporarily remove `@pal.njit` from the functions involved, starting with the ones closest to the failure, and use a Python debugger to follow the execution. Once the error is understood, restore compilation and verify the fix in both Python and compiled execution. If the failure occurs only when compiled, reduce it to a small example and check PAL's transformation requirements, argument annotations, and supported API usage before changing the scientific algorithm.
 
-### 1.6 A concrete execution trace
+### 1.5 A concrete execution trace
 
 Consider a model step that reads a field value, changes an agent, and queues a population delta. At the **model layer**, the author chooses the order of those operations. The **public PAL API** resolves coordinates, handles, and arguments. In ordinary Python execution, Python-facing wrappers perform the supported operations; in a compiled step, PAL's preparation and Numba-compatible call path must preserve their observable meaning. Both paths ultimately work with the relevant native-backed state. A later `Update()` on the population grid commits the queued delta; it is not implied by a field read or an agent movement.
 
