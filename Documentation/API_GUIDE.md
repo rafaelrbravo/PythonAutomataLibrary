@@ -285,7 +285,7 @@ The nutrient update now consumes 0.01 concentration units per cell at each site,
 
 ### Where to go next
 
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, and switch cell representations while keeping that field. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. For compilation and execution options, see [Performance](#performance-fastmode-njitcachetrue-and-unrolltrue). Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [IList](#ilist), [PopGrid](#popgrid), [Random numbers and Multinomial](#random-numbers-and-multinomial), or [PDEgrid](#pdegrid). The later sections cover [saving PAL objects](#saving-pal-objects), [organizing larger models](#organizing-larger-models), and [visualization](#visualization). You do not need to use every feature in the tutorial model.
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, and switch cell representations while keeping that field. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. For compilation and execution options, see [Performance](#performance-fastmode-njitcachetrue-and-unrolltrue). Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [IList](#ilist), [PopGrid](#popgrid), [Random numbers and Multinomial](#random-numbers-and-multinomial), or [PDEgrid](#pdegrid). The later sections cover [visualization](#visualization), [saving PAL objects](#saving-pal-objects), and [organizing larger models](#organizing-larger-models). You do not need to use every feature in the tutorial model.
 
 ## Core use
 
@@ -834,93 +834,6 @@ field.AdvectionInterfaces(xVels, yVels=None, zVels=None, ...)
 
 Advection uses a conservative first-order upwind discretization. `Advection` uses constant velocity components. `AdvectionField` uses cell-centered velocity fields and averages adjacent values at interior faces. `AdvectionInterfaces` supplies positive-face velocities directly; the negative face uses the neighboring cell's stored positive-face velocity. Supply velocity components only for dimensions that exist. The same scalar-or-face-array Cartesian boundary arguments used by diffusion are available: `None` closes a nonwrapped face to advective flux, while supplied values provide the exterior concentration used for inflow. Safe mode checks the CFL condition before accumulating changes.
 
-## Saving PAL objects
-
-Use Python's standard `pickle` module to save PAL model objects and reload them later. This optional workflow is useful for checkpoints and reproducible experiments. Only load pickle files from sources you trust.
-
-### Example: save and load model state
-
-Python's `pickle` module can save PAL objects and restore them later. For example, after creating `cells` and `nutrient` in the [count-based tutorial](#7-replace-individual-cells-with-population-counts), save them from ordinary Python code (not inside an `@pal.njit` function):
-
-```python
-import pickle
-
-with open("model.pkl", "wb") as f:
-    pickle.dump({"cells": cells, "nutrient": nutrient}, f)
-
-with open("model.pkl", "rb") as f:
-    state = pickle.load(f)
-
-cells = state["cells"]
-nutrient = state["nutrient"]
-```
-
-This restores the saved grids, including their current values. It does **not** restore the random-number generator's state or a display window. To resume a simulation, also save any needed timestep counters and other model state, and recreate external resources such as windows. A fixed seed can reproduce a run from its beginning when the initial state and sequence of random calls match, but it does not by itself resume the same stochastic trajectory halfway through.
-
-Only load pickle files you trust: loading a malicious pickle can execute arbitrary Python code.
-
-### What a checkpoint preserves
-
-PAL saves model state rather than process-local pointers. The saved contents depend on the object:
-
-| Object | Preserved state |
-| --- | --- |
-| `AgentGrid` | Geometry, occupancy, agents, and properties |
-| `PopGrid` | Geometry, capacity, current counts, and pending deltas |
-| `PDEgrid` | Geometry, time/space steps, current field, and pending deltas |
-| `IList` | Stored integer identifiers |
-| `Multinomial` | Current `Setup`/`Sample` remainder |
-
-Safe/fast identity is also restored. In particular, a `PopGrid` or `PDEgrid` can be saved before `Update()` without losing its queued changes.
-
-## Organizing larger models
-
-Once a model uses several grids and parameter arrays, it can be useful to group them into a single object. This is an optional organizational technique, not a requirement for using PAL.
-
-### Package model components with a named tuple
-
-As models grow, passing every grid and parameter separately can make function signatures difficult to read. Python's `typing.NamedTuple` groups related objects under descriptive field names, and Numba supports accessing those fields inside compiled functions.
-
-For example, package an agent grid, a nutrient field, and a NumPy array of rates. The three named-tuple fields hold references to those objects; the grids and array allocate their own storage. The named tuple does not need to reserve space for every cell or nutrient value:
-
-```python
-from typing import NamedTuple
-import numpy as np
-import PythonAutomataLibrary as pal
-
-class Model(NamedTuple):
-    cells: pal.AgentGrid
-    nutrient: pal.PDEgrid
-    rates: np.ndarray
-
-@pal.njit(cache=True)
-def Consume(model: Model):
-    for agent in model.cells.All():
-        x, y = model.cells.XSQ(agent), model.cells.YSQ(agent)
-        model.nutrient[x, y] -= model.rates[0]
-
-@pal.njit(cache=True)
-def Step(model: Model):
-    Consume(model)
-    model.rates[1] += 1.0
-
-def main():
-    cells = pal.NewAgentGrid((8, 8), isStackable=False)
-    cells.NewAgentSQ(3, 3)
-    nutrient = pal.NewPDEgrid((8, 8))
-    nutrient[:] = 1.0
-    model = Model(cells=cells, nutrient=nutrient, rates=np.array([0.1, 0.0]))
-    Step(model)
-    print(model.nutrient[3, 3], model.rates[1])
-
-if __name__ == "__main__":
-    main()
-```
-
-The `NamedTuple` class gives editors field names and type information for autocomplete, including `model.cells` and `model.nutrient`. Both `Step` and `Consume` receive the same named model, and changes to the contained grids and arrays persist. The named tuple itself is immutable: `model.cells = other_cells` is not allowed. For a changing scalar, use a mutable array as shown with `rates[1]`, or return an updated value.
-
-**Performance:** Numba compiles named-field access, but passing a composite from Python into a compiled function can have conversion overhead. Prefer calling multiple compiled functions from a compiled timestep, as above, rather than repeatedly entering compiled code for tiny operations. Whether the composite is faster than separate arguments depends on the workload; benchmark performance-sensitive applications. See [Numba's supported Python features](https://numba.readthedocs.io/en/stable/reference/pysupported.html).
-
 ## Visualization
 
 Use PAL's visualization components to inspect spatial model state while a simulation runs. `PixWindow` is suited to pixel-based lattice views, while the OpenGL windows support 2D and 3D geometry; rendering and simulation computation remain separate.
@@ -1025,4 +938,92 @@ Colors are packed integer RGB values such as `0xFF0000`. `pal.ColorScale(colors,
 Set `headless=True` for off-screen image/GIF generation. OpenGL headless rendering requires a supported standalone backend such as EGL.
 
 Use `pal.AwaitWindows()` when model execution should wait for PAL windows to finish their lifecycle.
+
+
+## Saving PAL objects
+
+Use Python's standard `pickle` module to save PAL model objects and reload them later. This optional workflow is useful for checkpoints and reproducible experiments. Only load pickle files from sources you trust.
+
+### Example: save and load model state
+
+Python's `pickle` module can save PAL objects and restore them later. For example, after creating `cells` and `nutrient` in the [count-based tutorial](#7-replace-individual-cells-with-population-counts), save them from ordinary Python code (not inside an `@pal.njit` function):
+
+```python
+import pickle
+
+with open("model.pkl", "wb") as f:
+    pickle.dump({"cells": cells, "nutrient": nutrient}, f)
+
+with open("model.pkl", "rb") as f:
+    state = pickle.load(f)
+
+cells = state["cells"]
+nutrient = state["nutrient"]
+```
+
+This restores the saved grids, including their current values. It does **not** restore the random-number generator's state or a display window. To resume a simulation, also save any needed timestep counters and other model state, and recreate external resources such as windows. A fixed seed can reproduce a run from its beginning when the initial state and sequence of random calls match, but it does not by itself resume the same stochastic trajectory halfway through.
+
+Only load pickle files you trust: loading a malicious pickle can execute arbitrary Python code.
+
+### What a checkpoint preserves
+
+PAL saves model state rather than process-local pointers. The saved contents depend on the object:
+
+| Object | Preserved state |
+| --- | --- |
+| `AgentGrid` | Geometry, occupancy, agents, and properties |
+| `PopGrid` | Geometry, capacity, current counts, and pending deltas |
+| `PDEgrid` | Geometry, time/space steps, current field, and pending deltas |
+| `IList` | Stored integer identifiers |
+| `Multinomial` | Current `Setup`/`Sample` remainder |
+
+Safe/fast identity is also restored. In particular, a `PopGrid` or `PDEgrid` can be saved before `Update()` without losing its queued changes.
+
+## Organizing larger models
+
+Once a model uses several grids and parameter arrays, it can be useful to group them into a single object. This is an optional organizational technique, not a requirement for using PAL.
+
+### Package model components with a named tuple
+
+As models grow, passing every grid and parameter separately can make function signatures difficult to read. Python's `typing.NamedTuple` groups related objects under descriptive field names, and Numba supports accessing those fields inside compiled functions.
+
+For example, package an agent grid, a nutrient field, and a NumPy array of rates. The three named-tuple fields hold references to those objects; the grids and array allocate their own storage. The named tuple does not need to reserve space for every cell or nutrient value:
+
+```python
+from typing import NamedTuple
+import numpy as np
+import PythonAutomataLibrary as pal
+
+class Model(NamedTuple):
+    cells: pal.AgentGrid
+    nutrient: pal.PDEgrid
+    rates: np.ndarray
+
+@pal.njit(cache=True)
+def Consume(model: Model):
+    for agent in model.cells.All():
+        x, y = model.cells.XSQ(agent), model.cells.YSQ(agent)
+        model.nutrient[x, y] -= model.rates[0]
+
+@pal.njit(cache=True)
+def Step(model: Model):
+    Consume(model)
+    model.rates[1] += 1.0
+
+def main():
+    cells = pal.NewAgentGrid((8, 8), isStackable=False)
+    cells.NewAgentSQ(3, 3)
+    nutrient = pal.NewPDEgrid((8, 8))
+    nutrient[:] = 1.0
+    model = Model(cells=cells, nutrient=nutrient, rates=np.array([0.1, 0.0]))
+    Step(model)
+    print(model.nutrient[3, 3], model.rates[1])
+
+if __name__ == "__main__":
+    main()
+```
+
+The `NamedTuple` class gives editors field names and type information for autocomplete, including `model.cells` and `model.nutrient`. Both `Step` and `Consume` receive the same named model, and changes to the contained grids and arrays persist. The named tuple itself is immutable: `model.cells = other_cells` is not allowed. For a changing scalar, use a mutable array as shown with `rates[1]`, or return an updated value.
+
+**Performance:** Numba compiles named-field access, but passing a composite from Python into a compiled function can have conversion overhead. Prefer calling multiple compiled functions from a compiled timestep, as above, rather than repeatedly entering compiled code for tiny operations. Whether the composite is faster than separate arguments depends on the workload; benchmark performance-sensitive applications. See [Numba's supported Python features](https://numba.readthedocs.io/en/stable/reference/pysupported.html).
 
