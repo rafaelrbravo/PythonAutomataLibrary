@@ -828,7 +828,7 @@ This example seeds PAL's random-number generator before drawing two values. The 
 
 ### Multinomial allocations
 
-A binomial draw counts how many of `n` trials have one outcome. A multinomial allocation extends this to several mutually exclusive outcomes, such as moving left, moving right, or staying put.
+A binomial draw counts how many of `n` trials have one outcome. A multinomial allocation extends this to several mutually exclusive outcomes, such as moving left, moving right, or staying put. In the example below, each of 100 individuals independently has a 20% chance of moving left, a 30% chance of moving right, and a 50% chance of staying. The resulting counts vary from run to run, but always sum to 100.
 
 ```python
 multi = pal.NewMultinomial()
