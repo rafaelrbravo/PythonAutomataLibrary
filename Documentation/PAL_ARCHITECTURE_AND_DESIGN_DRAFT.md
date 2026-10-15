@@ -157,11 +157,11 @@ The `capacity` option is a per-site cap. It is not the total population limit. `
 
 ### 3.4 PDEgrid: numerical operations with explicit assumptions
 
-A `PDEgrid` stores a lattice scalar field. Its Cartesian, interface-based, masked, ADI, and radial transport methods address different geometries, coefficient representations, boundaries, and numerical schemes. The method is therefore part of the mathematical model, not merely a performance setting.
+A `PDEgrid` stores a lattice scalar field. Its transport methods represent different mathematical choices: scalar-coefficient diffusion, spatially varying or interface-defined coefficients, masked interfaces, alternating-direction implicit diffusion, radial diffusion on circular or spherical domains, and constant or spatially varying advection. Choose a method based on the equation and geometry being modeled, not simply on which method is fastest.
 
-Call `SetTimeSpaceStep` to specify the time and spatial scales used by transport methods. These values are part of the discretized equation. A timestep that is too large can produce unstable or inaccurate results even if every API call is valid. Boundary conditions likewise belong to the mathematical problem: fixed-value, face-dependent, and periodic boundaries can produce different solutions.
+`SetTimeSpaceStep` configures the temporal step `dt` and spatial steps `dx`, `dy`, and `dz` used by transport methods. These values are part of the discretized equation. A timestep that is too large can produce unstable or inaccurate results even when every API call is valid. Boundary conditions likewise belong to the mathematical problem: face-specific values and periodic wrapping can produce different solutions.
 
-Transport routines accumulate changes for `Update()` to commit. That separation makes the update schedule explicit, but it does not by itself guarantee stability, positivity, or conservation; those properties depend on the scheme, coefficients, timestep, and boundary conditions. Validate against a known field, check boundary behavior, and test convergence as timestep and grid spacing change.
+The mutation contract is especially important here. `Add()` queues a field delta for `Update()` to apply, whereas direct indexed assignment changes a site immediately. Do not assume every write is queued. Neither queued updates nor an implicit or explicit numerical method guarantees stability, positivity, or conservation on its own; those properties depend on the scheme, coefficients, timestep, and boundaries. Validate against a known field, test boundary behavior, and check convergence as timestep and grid spacing change.
 
 ### 3.5 IList: reusable collections for compiled workflows
 
