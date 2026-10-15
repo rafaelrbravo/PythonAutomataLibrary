@@ -771,7 +771,21 @@ dividing = division.Sample(0.1)
 
 ## Saving PAL objects
 
-PAL native-backed model objects support standard Python pickling. Checkpoints preserve the state needed to resume the object rather than process-local pointers: AgentGrid geometry, occupancy, agents and properties; PopGrid geometry, capacity, current counts and pending deltas; PDEgrid geometry, time/space steps, current field and pending deltas; IList contents; and a Multinomial's current `Setup`/`Sample` remainder. Safe/fast identity is also restored. This means a PopGrid or PDEgrid may be pickled before `Update()` without losing its queued changes.
+Use Python's standard `pickle` module to save PAL model objects and reload them later. This is useful for checkpoints and reproducible experiments; [tutorial stage 8](#8-reproduce-and-save-a-run) shows a complete save-and-reload example. Only load pickle files from sources you trust.
+
+### What a checkpoint preserves
+
+PAL saves model state rather than process-local pointers. The saved contents depend on the object:
+
+| Object | Preserved state |
+| --- | --- |
+| `AgentGrid` | Geometry, occupancy, agents, and properties |
+| `PopGrid` | Geometry, capacity, current counts, and pending deltas |
+| `PDEgrid` | Geometry, time/space steps, current field, and pending deltas |
+| `IList` | Stored integer identifiers |
+| `Multinomial` | Current `Setup`/`Sample` remainder |
+
+Safe/fast identity is also restored. In particular, a `PopGrid` or `PDEgrid` can be saved before `Update()` without losing its queued changes.
 
 ## Organizing larger models
 
