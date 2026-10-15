@@ -305,7 +305,13 @@ with open("cells.pkl", "rb") as f:
 cells = state["cells"]
 nutrient = state["nutrient"]
 step = state["step"]
+
+# Recreate helpers not included in this checkpoint before resuming:
+multi = pal.NewMultinomial()
+initialPop = cells.GetPop()
 ```
+
+This restores the simulation fields and recreates the sampler and conservation baseline used in stage 7. A display window is not part of this checkpoint: create a new `PixWindow` if the resumed run should render. The example does **not** restore the random generator's state, so it demonstrates state restoration rather than an identical continuation of the original stochastic trajectory.
 
 Only load pickle files you trust: loading a malicious pickle can execute arbitrary Python code. Saving object state is not the same as saving every source of randomness or every external resource. To resume a stochastic trajectory exactly, also preserve the relevant random state and any other model state your experiment uses. A fixed seed is sufficient for replaying a run from its beginning under the same call sequence, not necessarily for resuming halfway through it.
 
