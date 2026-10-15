@@ -178,7 +178,16 @@ def StepNutrient(cells, nutrient):
     nutrient.Update()
 ```
 
-Call `StepNutrient(cells, nutrient)` **after** the cell movement step and before drawing each frame. The boundary arguments specify fixed exterior concentrations: unlike the default no-flux boundaries, these permit nutrient to diffuse into the modeled region when cells deplete it. `Diffusion` queues the transport changes and `Update()` commits them. The values are illustrative, not biologically calibrated.
+Keep the movement step from stage 5. In `main`, construct `nutrient` once alongside `cells`, then add the nutrient update to the existing simulation loop in this order:
+
+```python
+Step(cells, empty)                # move cells first
+StepNutrient(cells, nutrient)     # consume and diffuse nutrient
+Draw(cells, pix)                 # display the updated cells
+window.Update()
+```
+
+`StepNutrient` can remain an ordinary Python function for this first version; compiling the cell movement step does not require compiling every other function. The boundary arguments specify fixed exterior concentrations: unlike the default no-flux boundaries, these permit nutrient to diffuse into the modeled region when cells deplete it. `Diffusion` queues the transport changes and `Update()` commits them. The values are illustrative, not biologically calibrated.
 
 To see nutrient depletion, open a second `PixWindow` and color each site according to `nutrient[x, y]`, for example using `pal.ColorScale`; the cell window can remain unchanged. See [Visualization](#visualization) for rendering and [Boundary conditions for transport](#boundary-conditions-for-transport) for boundary options.
 
