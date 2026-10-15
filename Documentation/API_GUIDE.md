@@ -679,12 +679,11 @@ field[10, 12] = 1.0
 The time step `dt` specifies how much simulated time a transport update represents, while `dx`, `dy`, and `dz` specify the physical spacing between lattice sites along each axis. These values determine how diffusion and advection rates translate into changes on the grid.
 
 ```python
-field.SetTimeSpaceStep(dt, dx, dy=1.0, dz=1.0)
-field.Dt()
-field.Dx()
-field.Dy()
-field.Dz()
+field.SetTimeSpaceStep(0.1, 1.0, 1.0)  # dt, dx, dy for a 2D field
+print(field.Dt(), field.Dx(), field.Dy())
 ```
+
+For this two-dimensional field, each transport step represents `0.1` units of simulated time, and adjacent lattice sites are `1.0` spatial unit apart in either direction. The same API supports `dz` and `Dz()` for three-dimensional fields.
 
 Transport methods use these spacings. `Dy()` and `Dz()` apply only when those dimensions exist; safe mode rejects missing-dimension access. `dt`, `dx`, `dy`, and `dz` must be finite and positive in safe mode.
 
