@@ -80,3 +80,14 @@ def test_compiled_path_rejects_storage_overflow():
     with pytest.raises(ValueError):
         _compiled_overflow(grid)
     assert grid[0] == 0
+
+@pytest.mark.parametrize("capacity,maximum", [(100, 255), (300, 65535), (70000, 2**32 - 1)])
+def test_storage_width_boundaries(capacity, maximum):
+    grid = pal.NewPopGrid((1,), capacity=capacity)
+    grid[0] = maximum
+    assert grid[0] == maximum
+    assert grid.GetPop() == maximum
+    if SAFE:
+        with pytest.raises(ValueError):
+            grid[0] = maximum + 1
+        assert grid[0] == maximum
