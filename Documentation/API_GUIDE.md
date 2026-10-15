@@ -461,7 +461,7 @@ Use safe mode until the model is correct, then benchmark fast mode. Do not rely 
 
 ## Grid
 
-Use `Grid` when each lattice site needs a value, such as terrain type, occupancy flags, environmental measurements, or a precomputed spatial map. It is a general-purpose typed array on PAL's spatial lattice; unlike `AgentGrid`, it does not track individual agents, and unlike `PDEgrid`, it does not provide a transport solver.
+Use `Grid` for one typed value per lattice site, such as terrain type, occupancy flags, environmental measurements, or a precomputed spatial map. Unlike `AgentGrid`, it does not track individual agents; unlike `PDEgrid`, it has no transport solver.
 
 ```python
 import numpy as np
@@ -471,7 +471,7 @@ grid = pal.NewGrid((30, 30), np.float32)
 grid[10, 12] = 2.5
 ```
 
-The two dimensions specify the lattice size; the dtype specifies the type of value stored at each site. Use `np.float32` for a floating-point field, for example, or an integer dtype for categories or counts. Supported dtypes are `bool`, signed/unsigned 8/16/32/64-bit integers, and 32/64-bit floats.
+The dimensions set the lattice size, and the dtype determines the value type at each site. For example, use `np.float32` for a floating-point field or an integer dtype for categories or counts. Supported dtypes are `bool`, signed/unsigned 8/16/32/64-bit integers, and 32/64-bit floats.
 
 `Grid` supports both coordinate indexing (`grid[x, y]` on this 2D grid) and linear indexing (`grid[i]`, where `i` is a single site index). Slices select rectangular regions. Continuing the example above:
 
@@ -487,11 +487,11 @@ print(grid[3, 4])               # 7.0
 print(grid[10, 12])             # still 2.5 (outside the region)
 ```
 
-To change the PAL grid itself, assign to `grid[x, y]` or a grid slice such as `grid[:] = 0`. Three-dimensional grids additionally accept `grid[x, y, z]`. Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. A detached slice copy is not a live view of the Grid.
+To modify the PAL grid, assign to `grid[x, y]` or directly to a grid slice such as `grid[:] = 0`. Three-dimensional grids additionally accept `grid[x, y, z]`. Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. A detached slice copy is not a live view of the Grid.
 
 ## AgentGrid
 
-Use `AgentGrid` when individual agents must retain their identities as they move, reproduce, die, or change properties. It manages agent handles and locations, making it suitable for cell-based and other individual-based models where tracking particular entities matters.
+Use `AgentGrid` when individual agents retain their identities while moving, reproducing, dying, or changing properties. It manages agent handles and locations for models that track particular entities.
 
 ```python
 agents = pal.NewAgentGrid((30, 30), numAgentProps=2)
@@ -499,7 +499,7 @@ agent = agents.NewAgentSQ(10, 12)
 agents[agent, 0] = 1.5
 ```
 
-PAL represents an agent by an integer **handle**, returned when the agent is created. The handle identifies the agent even when it moves; it is not a lattice-site index. Here `numAgentProps=2` reserves two floating-point properties per agent, indexed as `0` and `1`. Agent properties are stored on the grid and accessed with `agents[agent, property]`.
+PAL returns an integer **handle** when it creates an agent. The handle continues to identify that agent after movement; it is not a lattice-site index. Here `numAgentProps=2` reserves two floating-point properties per agent, indexed as `0` and `1`. Agent properties are stored on the grid and accessed with `agents[agent, property]`.
 
 ### Population and lifecycle
 
@@ -581,7 +581,7 @@ print(wrapped.InWrapSQY(-1))  # -1 (outside the nonwrapped axis)
 
 ## IList
 
-Use `IList` to collect a reusable list of integer identifiers—such as grid indices or agent handles—for later iteration, shuffling, or random selection. It is useful for neighborhood queries, candidate destinations, and subsets of agents. Unlike a mathematical set, it preserves insertion order and can contain repeated identifiers; `Append()` does not enforce uniqueness.
+Use `IList` to collect integer identifiers, such as site indices or agent handles, for iteration, shuffling, or random selection. Typical uses include neighborhood queries, candidate destinations, and subsets of agents. Unlike a mathematical set, it preserves insertion order and can contain repeated identifiers; `Append()` does not enforce uniqueness.
 
 ```python
 items = pal.NewIList()
@@ -621,11 +621,11 @@ print(len(sites))    # 0
 print(len(saved))    # 2
 ```
 
-Use `Iter()` to read the current contents without copying, but do not assume that an iterator preserves old contents if the list is modified. Use `All()` when you need to retain the identifiers across changes to the list.
+`Iter()` reads current contents without copying; it does not preserve a snapshot if the list changes. Use `All()` to retain identifiers across subsequent modifications.
 
 ## PopGrid
 
-Use `PopGrid` when only the number of individuals at each lattice site matters, not their separate identities. It supports count-based population dynamics and movement, often avoiding the cost of representing every individual as a separate agent.
+Use `PopGrid` when per-site population counts matter but individual identities do not. It supports count-based dynamics and movement without representing each individual as a separate agent.
 
 ```python
 pop = pal.NewPopGrid((30, 30), capacity=100)
@@ -640,7 +640,7 @@ pop[10, 12] = 10   # replace that site's count
 pop[:] = 0        # clear counts at all sites
 ```
 
-These lines illustrate separate operations; the final assignment clears the population. The next example starts with a fresh count of 20 at `(10, 12)`, so it can be followed independently.
+These are separate operations; the last clears the population. The next example independently resets `(10, 12)` to 20.
 
 Linear (`pop[:]`) and spatial (`pop[:, :]`) slice reads return detached `int64` NumPy arrays; slice assignment writes to the population. Population changes can instead be accumulated and applied together:
 
@@ -653,7 +653,7 @@ pop.Update()          # apply both changes together
 print(pop[10, 12])    # 17
 ```
 
-`Add` changes only the pending delta. In this example, the source site remains at 20 and the destination remains unchanged until `Update()`; afterward, the source contains 17 and the destination has increased by 3. More generally, until `Update()`, `GetPop()`, indexing, and `All()` still reflect the current population. A single `Update()` commits the queued changes together, avoiding order-dependent reads during a synchronous timestep. Direct assignments during that timestep still change current values immediately.
+`Add` changes only the pending delta. Until `Update()`, the source stays at 20 and the destination is unchanged. Afterward, the source has 17 and the destination has gained 3. More generally, until `Update()`, `GetPop()`, indexing, and `All()` still reflect the current population. A single `Update()` commits the queued changes together, avoiding order-dependent reads during a synchronous timestep. Direct assignments during that timestep still change current values immediately.
 
 **Population movement with `Multinomial`.** When individuals at a site can move in several directions, `pal.NewMultinomial()` provides a sampler for distributing that site's population among the possible outcomes. Call `Setup(n)` with the site's population, then `Sample(p)` for each outcome, and use `pop.Add()` to queue the resulting transfers. Finally, call `pop.Update()` to apply the transfers together. See the [count-based random walk](#7-replace-individual-cells-with-population-counts) for a complete example.
 
@@ -667,7 +667,7 @@ print(pop[10, 12])    # 17
 
 ## Random numbers and Multinomial
 
-Use PAL's random-number functions for stochastic decisions such as selecting agents or destinations. Use `Multinomial` when a count of individuals or events must be distributed among several possible outcomes without sampling each one separately.
+Use PAL's random-number functions to select agents, destinations, or other stochastic outcomes. Use `Multinomial` to allocate counts among several outcomes without sampling each individual separately.
 
 ```python
 import PythonAutomataLibrary as pal
@@ -717,7 +717,7 @@ dividing = division.Sample(0.1)
 
 ## PDEgrid
 
-Use `PDEgrid` for spatially varying continuous quantities that evolve through transport, such as nutrients, oxygen, signaling molecules, or temperature. It combines a scalar field with diffusion and advection operations, so it is preferable to a plain `Grid` when those dynamics are needed.
+Use `PDEgrid` for continuous spatial fields that evolve through diffusion or advection, such as nutrients, oxygen, signaling molecules, or temperature. Unlike a plain `Grid`, it provides transport operations.
 
 ```python
 field = pal.NewPDEgrid((30, 30))
@@ -734,7 +734,7 @@ field.Update()
 print(field[10, 12])  # 0.75
 ```
 
-This distinction matters when several processes act during the same timestep: accumulate their changes first, then call `Update()` once to apply them together. Transport operations such as `Diffusion` and `Advection` also accumulate changes rather than modifying the current field immediately.
+When several processes act in one timestep, accumulate their changes and call `Update()` once to apply them together. Transport operations such as `Diffusion` and `Advection` also accumulate changes rather than modifying the current field immediately.
 
 Slice reads return detached `float32` NumPy arrays: editing a previously read slice does not modify the field, whereas assigning directly to a field slice does. Both linear (`field[:]`) and spatial (`field[:, :]`) slices are supported. `Reset()` clears the current field and pending changes.
 
@@ -836,7 +836,7 @@ Advection uses a conservative first-order upwind discretization. `Advection` use
 
 ## Visualization
 
-Use PAL's visualization components to inspect spatial model state while a simulation runs. `PixWindow` is suited to pixel-based lattice views, while the OpenGL windows support 2D and 3D geometry; rendering and simulation computation remain separate.
+Use PAL's visualization components to inspect a running model. `PixWindow` displays lattice pixels; OpenGL windows display 2D or 3D geometry. Rendering remains separate from simulation computation.
 
 ### PixWindow
 
@@ -942,11 +942,11 @@ Use `pal.AwaitWindows()` when model execution should wait for PAL windows to fin
 
 ## Saving PAL objects
 
-Use Python's standard `pickle` module to save PAL model objects and reload them later. This optional workflow is useful for checkpoints and reproducible experiments. Only load pickle files from sources you trust.
+Use Python's `pickle` module to save and reload PAL objects for checkpoints or reproducible experiments. Load pickle files only from trusted sources.
 
 ### Example: save and load model state
 
-Python's `pickle` module can save PAL objects and restore them later. For example, after creating `cells` and `nutrient` in the [count-based tutorial](#7-replace-individual-cells-with-population-counts), save them from ordinary Python code (not inside an `@pal.njit` function):
+After creating `cells` and `nutrient` in the [count-based tutorial](#7-replace-individual-cells-with-population-counts), save them from ordinary Python code, not from an `@pal.njit` function:
 
 ```python
 import pickle
@@ -985,7 +985,7 @@ Once a model uses several grids and parameter arrays, it can be useful to group 
 
 ### Package model components with a named tuple
 
-As models grow, passing every grid and parameter separately can make function signatures difficult to read. Python's `typing.NamedTuple` groups related objects under descriptive field names, and Numba supports accessing those fields inside compiled functions.
+Passing every grid and parameter separately can make signatures unwieldy. Python's `typing.NamedTuple` groups related objects under named fields that Numba can access in compiled functions.
 
 For example, package an agent grid, a nutrient field, and a NumPy array of rates. The three named-tuple fields hold references to those objects; the grids and array allocate their own storage. The named tuple does not need to reserve space for every cell or nutrient value:
 
