@@ -1,6 +1,6 @@
 # PAL Architecture and Design
 
-This document explains how PAL is organized, why its major interfaces and implementation choices exist, and how to maintain them. It focuses on architecture, subsystem responsibilities, trade-offs, testing, and performance—not on teaching the API from the beginning. Use the [API Guide](API_GUIDE.md) for runnable modeling workflows and public API behavior, the [API Reference](API_REFERENCE.md) for exact signatures, and the [Cheatsheet](CHEATSHEET.md) for quick lookup.
+This document explains PAL's organization, the reasons behind its interfaces, and its implementation trade-offs. It focuses on execution architecture, state semantics, and subsystem design rather than teaching the API from the beginning. Use the [API Guide](API_GUIDE.md) for runnable modeling workflows and public API behavior, the [API Reference](API_REFERENCE.md) for exact signatures, and the [Cheatsheet](CHEATSHEET.md) for quick lookup.
 
 ## Contents
 
