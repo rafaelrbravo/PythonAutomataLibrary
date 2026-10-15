@@ -49,7 +49,7 @@ When a failure occurs under `@pal.njit`, first reproduce it in safe mode, withou
 
 ## 2. State, ownership, and execution semantics
 
-### 2.0 Native-backed state and object lifetime
+### 2.1 Native-backed state and object lifetime
 
 A PAL object's public methods operate on state managed through PAL's native-backed implementation, not necessarily an ordinary Python container. The Python object is the user's handle to that state; it is not safe to assume that every internal value is an ordinary Python list or NumPy array that can be edited freely.
 
