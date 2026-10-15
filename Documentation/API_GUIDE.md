@@ -868,8 +868,10 @@ Use PAL's visualization components to inspect spatial model state while a simula
 Choose `PixWindow` for a two-dimensional lattice view where each site or pixel is assigned a color. It is well suited to displaying cell occupancy, population counts, and scalar fields without drawing individual geometric shapes.
 
 ```python
-pix, window = pal.StartPixWindow(xDim, yDim, scale=1, title="PAL", headless=False)
+pix, window = pal.StartPixWindow(30, 30, scale=12, title="PAL")
 ```
+
+This creates a 30 × 30 pixel buffer and a display window, with each model pixel enlarged for visibility. Set `headless=True` when generating frames without an on-screen window.
 
 `pix` is a write-oriented pixel buffer, not a general-purpose numeric `Grid`: it supports assignment but does not expose a public pixel-read API. Assign integer RGB colors by coordinate or linear index. For example, to color one site red and then display it:
 
