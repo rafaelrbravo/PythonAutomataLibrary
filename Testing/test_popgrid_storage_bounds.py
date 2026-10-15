@@ -54,3 +54,29 @@ def test_final_total_checked_without_intermediate_overflow():
     assert grid[0] == 0
     assert grid[1] == 1
     assert grid.GetPop() == 1
+
+@pal.njit
+def _compiled_write_and_update(grid):
+    grid[0] = 150
+    grid.Add(50, 0)
+    grid.Update()
+    return grid[0]
+
+
+def test_compiled_path_allows_counts_above_capacity():
+    grid = pal.NewPopGrid((2,), capacity=100)
+    assert _compiled_write_and_update(grid) == 200
+    assert grid.GetPop() == 200
+
+
+@pal.njit
+def _compiled_overflow(grid):
+    grid[0] = 256
+
+
+@pytest.mark.skipif(not SAFE, reason="Fast mode intentionally skips overflow checks")
+def test_compiled_path_rejects_storage_overflow():
+    grid = pal.NewPopGrid((2,), capacity=100)
+    with pytest.raises(ValueError):
+        _compiled_overflow(grid)
+    assert grid[0] == 0
