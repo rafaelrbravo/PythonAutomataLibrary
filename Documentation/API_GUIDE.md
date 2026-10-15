@@ -552,24 +552,15 @@ for agent in agents.All():
 
 ### Position
 
-Discrete/lattice position:
+PAL distinguishes a **lattice site** (integer coordinates) from a **continuous position** (floating-point coordinates). Use lattice positions when agents occupy specific sites; use continuous positions for off-lattice movement. On the two-dimensional `agents` grid created above, the lattice operations look like this:
 
 ```python
-agents.I(agent)
-agents.XSQ(agent)
-agents.YSQ(agent)
-agents.ZSQ(agent)
-agents.MoveSQ(agent, x, y, z)
+print(agents.XSQ(agent), agents.YSQ(agent))  # 10 12
+agents.MoveSQ(agent, 11, 12)
+print(agents.I(agent))  # linear index of the new site
 ```
 
-Continuous position:
-
-```python
-agents.X(agent)
-agents.Y(agent)
-agents.Z(agent)
-agents.Move(agent, x, y, z)
-```
+For continuous positions, use `agents.X(agent)`, `agents.Y(agent)`, and `agents.Move(agent, x, y)`. In three dimensions, the corresponding `ZSQ(agent)`, `Z(agent)`, and third coordinate arguments are available. The snippets here show the 2D forms; the methods also support the appropriate 1D forms.
 
 `NewAgentSQ` and `MoveSQ` accept either a linear lattice index or lattice coordinates in every spatial dimension. SQ placement uses the center of the selected cell: after `NewAgentSQ(x, y)`, for example, `XSQ(agent)==x` and `YSQ(agent)==y`, while `X(agent)==x+0.5` and `Y(agent)==y+0.5`. Continuous `NewAgent` and `Move` instead keep the supplied spatial coordinates, with `XSQ`/`YSQ`/`ZSQ` identifying the containing cell.
 
