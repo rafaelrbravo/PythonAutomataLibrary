@@ -81,9 +81,9 @@ This matters for lifetime and mutation. Creating, moving, or disposing an agent 
 
 Native-backed objects can support pickling, but pickling an object is not equivalent to serializing the entire simulation process. A model's complete checkpoint may also need parameters, timestep, other coupled objects, external state, and random-number state. See the [API Guide's saving section](API_GUIDE.md#saving-pal-objects) for the checkpoint contract and its limitations.
 
-### 2.2 Maintaining state and ownership boundaries
+### 2.2 Preserving invariants across layers
 
-The public contract is about behavior, not a presumed pointer layout: supported operations must preserve invariants, and serialized state must be reconstructed without relying on process-local addresses.
+The public contract is about behavior, not a presumed pointer layout: supported operations must preserve invariants, and serialized state must be reconstructed without relying on process-local addresses. A wrapper can reject an invalid operation before it reaches native code, but a compiled path may reach the same underlying state through a different route. Invariants therefore need protection and tests at the boundaries where state can actually change.
 
 When adding an operation, identify which layer owns each invariant. A population update must reconcile queued deltas with current counts and capacity constraints; a PDE transport operation must respect configured geometry, boundary treatment, and commit semantics. Do not expose a mutable native buffer without defining its ownership, lifetime, invalidation, and synchronization rules.
 
@@ -183,7 +183,7 @@ Write pixel colors or OpenGL primitives, then call the window's `Update()` to pu
 
 Headless rendering exists so output can be generated and tested without a visible interactive window, but it still depends on the relevant image or graphics backend. A headless test validates the supported off-screen path; it cannot fully validate window placement, user input, or a display server's lifecycle.
 
-### 3.9 Source-aware diagnostics and AST transformation
+### 3.9 Compiled-loop specialization and diagnostics
 
 PAL's `njit` wrapper transforms selected constructs, including neighborhood and Box iteration, before Numba compilation. The `unroll=True` option is meaningful in this compiled path: it lets PAL expand a fixed neighborhood loop so each neighbor operation is exposed to compilation. Unrolling can remove loop-control overhead, but it duplicates the loop body in generated code; use it for small stencils, not large neighborhoods, where compile time and code size can outweigh runtime gains. In ordinary Python iteration, `unroll=True` does not provide this compilation-time optimization.
 
@@ -191,7 +191,7 @@ Python syntax alone does not guarantee matching compiled behavior: AST rewriting
 
 Source-line diagnostics depend on sufficient type information, including annotations for relevant PAL arguments. Unannotated arguments do not promise the same diagnostics. Treat annotations as part of writing clear compiled model code, not as a guarantee that every error can be attributed to an exact source expression.
 
-### 3.10 Public API and implementation consistency
+### 3.10 Keeping implementations and declarations consistent
 
 Python and `@pal.njit` use different wrappers and diagnostics, but must agree on supported inputs and public results. Python validation and Numba overloads are implementation details, not separate user-facing contracts.
 
