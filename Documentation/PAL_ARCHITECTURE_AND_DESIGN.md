@@ -157,7 +157,7 @@ A `PDEgrid` stores a lattice scalar field. Unlike an AgentGrid, its state is a s
 
 `SetTimeSpaceStep` configures the temporal step `dt` and spatial steps `dx`, `dy`, and `dz` used by transport methods. These values are part of the discretized equation. A timestep that is too large can produce unstable or inaccurate results even when every API call is valid. Boundary conditions likewise belong to the mathematical problem: face-specific values and periodic wrapping can produce different solutions.
 
-The mutation contract is especially important here. `Add()` queues a field delta for `Update()` to apply, whereas direct indexed assignment changes a site immediately. Do not assume every write is queued. Neither queued updates nor an implicit or explicit numerical method guarantees stability, positivity, or conservation on its own; those properties depend on the scheme, coefficients, timestep, and boundaries. Validate against a known field, test boundary behavior, and check convergence as timestep and grid spacing change.
+The distinction between queued and immediate mutations is especially important for fields. `Add()` queues a field delta for `Update()` to apply, whereas direct indexed assignment changes a site immediately. Do not assume every write is queued. Neither queued updates nor an implicit or explicit numerical method guarantees stability, positivity, or conservation on its own; those properties depend on the scheme, coefficients, timestep, and boundaries. Validate against a known field, test boundary behavior, and check convergence as timestep and grid spacing change.
 
 ### 3.5 IList: reusable collections for compiled workflows
 
@@ -173,7 +173,7 @@ A shared stream simplifies reproducing a particular execution order across Pytho
 
 ### 3.7 Multinomial sampling: configuration versus sample state
 
-A `Multinomial` sampler separates configuration from the state accumulated while sampling. `Setup(n)` configures the number of trials for repeated `Sample(p)` calls; `Binomial(n, p)` performs a draw with an explicit trial count. `NewMultinomial(other)` copies the sampler's configuration, but not its current multinomial remainder, so the new sampler starts with independent sampling state. Both samplers must use the same process-wide safety mode. This distinction matters when cloning a configured sampler: configuration can be shared without continuing the same partially consumed sample state.
+A `Multinomial` sampler separates configuration from the state accumulated while sampling. `Setup(n)` configures the number of trials for repeated `Sample(p)` calls; `Binomial(n, p)` performs a draw with an explicit trial count. `NewMultinomial(other)` copies the sampler's configuration, but not its current multinomial remainder, so the new sampler starts with independent sampling state. Both samplers must use the same process-wide safety mode. Cloning therefore preserves the configuration without continuing a partially consumed sample.
 
 ### 3.8 Visualization: simulation state versus presentation
 
@@ -219,11 +219,11 @@ This sequence checks the observable contract and isolates the failure before exa
 5. Update public Protocol declarations and source docstrings, regenerate the API Reference, and update the API Guide if user-visible behavior changed.
 6. Benchmark cold compilation and steady-state runtime only when performance is part of the change.
 
-This order prevents documentation from becoming an unsupported promise and keeps low-level implementation choices subordinate to the user-visible contract.
+This sequence keeps documentation aligned with implemented behavior and low-level choices subordinate to the public contract.
 
 ### 4.3 Testing strategy
 
-PAL's architecture creates several distinct failure boundaries: the public wrapper may bind arguments incorrectly, a compiled overload may diverge from Python, a native kernel may corrupt state, and an integrated model may expose incorrect update ordering. Testing must cross those boundaries rather than only exercising each component in isolation. No single test style establishes every kind of correctness. PAL therefore uses complementary forms of evidence:
+PAL has several failure boundaries: a public wrapper can bind arguments incorrectly, a compiled overload can diverge from Python, a native kernel can corrupt state, and an integrated model can expose incorrect update ordering. Testing must cross those boundaries rather than only exercising each component in isolation. No single test style establishes every kind of correctness. PAL therefore uses complementary forms of evidence:
 
 - **Focused API tests** check individual public operations, argument forms, boundary cases, and error behavior.
 - **Python/Numba parity tests** check that supported calls agree across execution paths.
@@ -251,11 +251,11 @@ When adding or changing model code, start with the smallest test that expresses 
 
 ## 5. Measuring performance
 
-PAL includes compilation, native calls, validation, model logic, and sometimes rendering in one user workflow. A timing that mixes these costs can be misleading. Compilation time matters for short exploratory runs, while steady-state time often dominates long simulations; optimizing one can worsen the other. Measure them separately rather than treating either as the universal definition of performance.
+A PAL workflow can include compilation, native calls, validation, model logic, and rendering. A timing that mixes these costs can be misleading. Compilation time matters for short exploratory runs, while steady-state time often dominates long simulations; optimizing one can worsen the other. Measure them separately rather than treating either as the universal definition of performance.
 
 ### 5.1 Cold compilation is not steady-state runtime
 
-The first call to a compiled function may include Numba compilation and specialization. Later calls can be much faster, particularly when caching is enabled. Cache hits also depend on code and environment, so a cached restart is not a substitute for a controlled cold-compilation measurement.
+The first call to a compiled function may trigger Numba compilation and specialization. Later calls can be much faster, particularly when caching is enabled. Cache hits also depend on code and environment, so a cached restart is not a substitute for a controlled cold-compilation measurement.
 
 For a useful benchmark, measure cold compilation in a fresh process and steady-state runtime over repeated timesteps separately. Use the same model state, workload, seed, and operation count for each comparison. Report medians over repeated runs rather than relying on one timing. If comparing safe and fast modes, use separate processes because the mode is fixed at construction.
 
