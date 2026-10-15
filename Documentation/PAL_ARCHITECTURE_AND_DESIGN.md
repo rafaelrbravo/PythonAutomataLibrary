@@ -43,7 +43,7 @@ For supported operations, the two paths should have the same observable behavior
 
 PAL's `njit` interface is not simply a spelling alias for Numba's decorator. Before compilation, it can prepare functions that use PAL-specific syntax and diagnostics. In particular, neighborhood and Box iteration are model-friendly abstractions that may need to be expanded into forms that the compiler can type and execute efficiently.
 
-The transformation lets users express spatial operations without manually converting coordinates in every loop. It also gives PAL a place to add source-aware safe-mode diagnostics when argument annotations provide enough type information.
+The transformation lets users express spatial operations without manually converting coordinates in every loop.
 
 This approach keeps spatial loops readable while allowing their compiled form to specialize iteration. It also introduces a translation stage with its own syntax restrictions, type assumptions, and failure modes that matter during debugging. The preparation step uses Python source inspection; if the function's source cannot be retrieved, PAL leaves the function unchanged and passes it to Numba. Consequently, PAL-specific loop rewriting should not be assumed to work for dynamically defined functions whose source is unavailable. The Python source a modeler reads is not necessarily the exact function body Numba receives. Tracebacks and typing errors may refer to transformed code or a synthetic compilation context. Annotations improve the information available to the transformer, but they do not guarantee that every error can be attributed to a perfect source location.
 
