@@ -115,15 +115,11 @@ Fast mode should be treated as a measured optimization, not a correctness mode. 
 
 ### 2.6 Separating visualization from simulation
 
-PAL separates simulation state from rendering. The model changes its grids and agents; the drawing layer presents the current state as pixels or geometric primitives. This permits the same model to run headlessly or render intermittently without changing its scientific update rules. The subsystem chapter describes the window interfaces; here the key architectural point is that drawing should not determine the model's state transitions.
-
-The split is important for performance. Rendering can be expensive and can obscure the cost of the simulation itself. When benchmarking, measure the update kernel separately from drawing, then measure end-to-end runtime if that is what users experience. When validating a model, avoid treating a plausible-looking image as proof of correct state transitions.
-
-The two main window abstractions serve different needs. A pixel window is useful when state maps directly to a pixel lattice; an OpenGL window supports geometric 2D/3D drawing. Headless modes enable automated image/output workflows where supported, but they do not test every interactive display behavior or guarantee that every graphics backend is available on every machine.
+Keep rendering separate from the simulation's state transitions. This separation allows headless execution and intermittent rendering, and it prevents display costs from obscuring the cost of the model itself. Benchmark the update kernel separately from drawing, then measure end-to-end runtime if that reflects the user's actual workload. A plausible-looking image is not proof that the underlying state transitions are correct.
 
 ### 2.7 Random-number state and reproducibility
 
-PAL's random functions expose an explicit stream shared by Python and compiled PAL calls. Reproducibility depends on the initial state, parameters, seed, and order of random calls; adding a draw can change all subsequent outcomes. Random-stream state is also distinct from model-object state, so saving grids or agents alone does not guarantee exact stochastic continuation. The subsystem chapter discusses the stream's role in model execution.
+Randomness is part of execution state, not just a parameter. Reproducibility depends on the initial state, parameters, seed, and order of random calls; adding a draw can change all subsequent outcomes. Random-stream state is distinct from model-object state, so saving grids or agents alone does not guarantee exact stochastic continuation. The subsystem chapter describes PAL's shared stream and checkpoint implications.
 
 ## 3. Subsystem design choices
 
@@ -181,7 +177,7 @@ A `Multinomial` sampler separates configuration from the state accumulated while
 
 ### 3.8 Visualization: simulation state versus presentation
 
-PAL separates simulation state from rendering. `PixWindow` exposes a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D/3D geometry. They are distinct rendering interfaces.
+`PixWindow` exposes a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D/3D geometry. These are distinct rendering interfaces with different presentation workflows.
 
 Write pixel colors or OpenGL primitives, then call the window's `Update()` to publish a frame. Rendering every timestep helps inspection but may dominate runtime; long simulations can render selected steps. Keep drawing separate from the computational kernel unless using an explicitly supported compiled drawing API.
 
