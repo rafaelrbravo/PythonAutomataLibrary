@@ -689,7 +689,19 @@ field = pal.NewPDEgrid((30, 30))
 field[10, 12] = 1.0
 ```
 
-`PDEgrid` stores a continuous `float32` scalar field. Direct indexing/assignment changes the current field immediately. Slice reads return detached `float32` NumPy arrays; array slice assignment writes to the field, but editing a previously read slice does not. Linear (`field[:]`) and spatial (`field[:, :]`) slices are supported. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
+`PDEgrid` stores a continuous `float32` scalar field. As with `PopGrid`, there are two ways to change it: **direct assignment** changes the current field immediately, while **`Add`** queues a change that becomes visible only after `Update()`. Continuing from the field created above:
+
+```python
+print(field[10, 12])  # 1.0
+field.Add(-0.25, 10, 12)
+print(field[10, 12])  # still 1.0: the change is pending
+field.Update()
+print(field[10, 12])  # 0.75
+```
+
+This distinction matters when several processes act during the same timestep: accumulate their changes first, then call `Update()` once to apply them together. Transport operations such as `Diffusion` and `Advection` also accumulate changes rather than modifying the current field immediately.
+
+Slice reads return detached `float32` NumPy arrays: editing a previously read slice does not modify the field, whereas assigning directly to a field slice does. Both linear (`field[:]`) and spatial (`field[:, :]`) slices are supported. `Reset()` clears the current field and pending changes.
 
 ### Space and time
 
