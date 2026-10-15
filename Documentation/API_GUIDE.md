@@ -410,7 +410,7 @@ The same geometry names are used in 1D, 2D, and 3D. Supply only coordinates/axes
 
 ### Regions and neighborhoods
 
-Use `Box` to visit sites in a rectangular region, and `Hood` to visit sites at specified offsets around a particular location. Both yield coordinates, so they can be used directly in spatial loops.
+Use `Box` to visit sites in a rectangular region, and `Hood` to visit sites at specified offsets around a particular location. Both yield coordinates, so they can be used directly in spatial loops. The following are **reference signatures** showing the 1D, 2D, and 3D forms, not executable calls with defined variables:
 
 ```python
 grid.Box(x1, x2)
