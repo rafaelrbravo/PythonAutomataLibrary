@@ -401,7 +401,17 @@ pal.VonNeumannHood(dim, excludeCenter=False)
 pal.CircleHood(dim, rad, excludeCenter=False)
 ```
 
-### Fast neighborhood iteration with `unroll=True`
+### Performance: `FastMode()`, `njit(cache=True)`, and `unroll=True`
+
+PAL provides three complementary performance controls:
+
+- **`pal.FastMode()`** selects PAL's fast implementation, reducing safety-check overhead during execution. Call it once, before constructing any PAL model or window objects; otherwise PAL remains in safe mode. Fast mode is not a substitute for validating model correctness, and its speed advantage depends on the workload.
+- **`@pal.njit(cache=True)`** compiles a Python function to native code, avoiding Python interpreter overhead in repeated numerical loops. The first call for a particular argument-type specialization still incurs compilation cost. `cache=True` saves compiled specializations to disk so later runs can reuse them when compatible; it does not make the first compilation faster, and some changes or environments require recompilation.
+- **`unroll=True`** specializes a fixed neighborhood loop at compile time, removing ordinary loop-control overhead and exposing individual neighbor operations to optimization. It is especially useful for small neighborhoods, although larger unrolled loops can increase compilation time and code size.
+
+These optimizations address different costs: **fast mode reduces runtime checks, JIT compilation reduces interpreter overhead, caching reduces repeated compilation across runs, and unrolling reduces inner-loop overhead**. They can be used together. Benchmark representative models because the benefit of each depends on the operations performed.
+
+#### Example: unrolled Von Neumann neighborhood
 
 For a small, fixed neighborhood, PAL can compile each neighbor operation directly into the function instead of executing a conventional loop. Consider summing values in the four cardinal directions around `(x, y)`:
 
