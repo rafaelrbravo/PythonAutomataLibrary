@@ -121,7 +121,7 @@ Fast mode should be treated as a measured optimization, not a correctness mode. 
 
 ### 2.6 Separating visualization from simulation
 
-PAL separates simulation state from rendering. The model changes its grids and agents; the drawing layer turns the current state into pixels or geometric primitives. This permits the same model to run headlessly, draw every timestep, draw intermittently, or save output without changing the scientific update rules.
+PAL separates simulation state from rendering. The model changes its grids and agents; the drawing layer presents the current state as pixels or geometric primitives. This permits the same model to run headlessly or render intermittently without changing its scientific update rules. The subsystem chapter describes the window interfaces; here the key architectural point is that drawing should not determine the model's state transitions.
 
 The split is important for performance. Rendering can be expensive and can obscure the cost of the simulation itself. When benchmarking, measure the update kernel separately from drawing, then measure end-to-end runtime if that is what users experience. When validating a model, avoid treating a plausible-looking image as proof of correct state transitions.
 
@@ -129,19 +129,11 @@ The two main window abstractions serve different needs. A pixel window is useful
 
 ### 2.7 Random-number state and reproducibility
 
-PAL's random functions expose an explicit stream that model code can seed and consume from Python or compiled functions. This supports repeatable experiments when the initial state, parameters, seed, and order of random calls are held fixed.
-
-The random-call order is part of reproducibility. Adding a draw to one branch changes the state of the stream and may change all subsequent random outcomes. Consequently, two versions of an algorithm can use the same seed but produce different trajectories because they consume random values differently. This is expected, not evidence that seeding failed.
-
-Randomness is also separate from model-object state. Saving a grid or agent structure does not automatically preserve every random generator used by the process. Exact stochastic continuation requires explicit treatment of PAL's stream and any external RNG state. Record seeds and configurations for repeatable experiments, and do not promise bit-for-bit continuation from an object checkpoint alone.
+PAL's random functions expose an explicit stream shared by Python and compiled PAL calls. Reproducibility depends on the initial state, parameters, seed, and order of random calls; adding a draw can change all subsequent outcomes. Random-stream state is also distinct from model-object state, so saving grids or agents alone does not guarantee exact stochastic continuation. The subsystem chapter discusses the stream's role in model execution.
 
 ## 3. Subsystem design choices
 
-The governing design choices are: use distinct representations for distinct state semantics; make coordinate systems and update timing explicit; expose one public contract through Python and compiled paths; and prefer native storage for repeated work without requiring model authors to program in C. The following sections describe how those choices affect each subsystem.
-
-
-
-The following sections examine subsystem-specific contracts and the implementation tradeoffs behind them. For complete call signatures and usage examples, see the API Reference and API Guide.
+The previous chapters explain the common execution path and state semantics. This chapter applies those ideas to each subsystem: what it stores, which operations define its contract, and which trade-offs follow from that representation. For complete call signatures and usage examples, see the API Reference and API Guide.
 
 ### 3.1 Grid: typed site state and explicit indexing
 
@@ -256,7 +248,7 @@ No single test style can establish every kind of correctness. PAL uses several c
 
 Each layer catches a different class of defect. A focused test localizes a regression; a parity test catches path divergence; an invariant can catch an error shared by multiple implementations; and an integrated model can expose interaction bugs that isolated unit tests miss. Passing these tests still does not prove that a scientific hypothesis is correct, so model validation remains a separate responsibility (see the validation chapter below).
 
-#### Running the test suite
+### 4.4 Running the test suite
 
 PAL's `Testing/` suite exercises public behavior across geometry and wrapping, Grid/IList/Multinomial/RNG operations, AgentGrid and PopGrid state changes, PDE transport and boundaries, compiled Python/Numba parity, visualization, integrated models, and historical regressions. Many tests use independent invariants or small reference calculations rather than reproducing PAL's implementation.
 
