@@ -253,6 +253,40 @@ Each of the eight Moore-neighborhood directions has probability `1/8`. `Setup(ce
 
 The nutrient update now consumes 0.01 concentration units per cell at each site, so multiple occupancy increases local consumption. The same fixed-value boundaries replenish nutrient in both representations. The two versions implement the same basic random-walk idea, but not the same exclusion process: `AgentGrid` avoids occupied destinations and updates agents sequentially; `PopGrid` permits multiple occupancy and moves all counts synchronously. That distinction matters when comparing results. See [Multinomial](#random-numbers-and-multinomial) for more about sampling and solver reuse.
 
+### 8. Reproduce and save a run
+
+Seed PAL's random stream **before** the first stochastic operation:
+
+```python
+pal.Seed(1234)
+```
+
+The same seed reproduces the same random stream when the initial state and order of random calls also match. For a checkpoint, Python's `pickle` can save PAL-backed objects together with ordinary model metadata:
+
+```python
+import pickle
+
+step = 0  # replace with the current timestep in your simulation
+with open("cells.pkl", "wb") as f:
+    pickle.dump({"cells": cells, "nutrient": nutrient, "step": step}, f)
+
+with open("cells.pkl", "rb") as f:
+    state = pickle.load(f)
+cells = state["cells"]
+nutrient = state["nutrient"]
+step = state["step"]
+```
+
+Saving object state is not the same as saving every source of randomness or every external resource. To resume a stochastic trajectory exactly, also preserve the relevant random state and any other model state your experiment uses. A fixed seed is sufficient for replaying a run from its beginning under the same call sequence, not necessarily for resuming halfway through it.
+
+### Where to go next
+
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide first shows how to organize larger models, then gives **subsystem-specific API behavior**, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
+
+## Organizing larger models
+
+Once a model uses several grids and parameter arrays, it can be useful to group them into a single object. This is an optional organizational technique, not a requirement for using PAL.
+
 ### Package model components with a named tuple
 
 As models grow, passing every grid and parameter separately can make function signatures difficult to read. Python's `typing.NamedTuple` groups related objects under descriptive field names, and Numba supports accessing those fields inside compiled functions.
@@ -296,36 +330,6 @@ if __name__ == "__main__":
 The `NamedTuple` class gives editors field names and type information for autocomplete, including `model.cells` and `model.nutrient`. Both `Step` and `Consume` receive the same named model, and changes to the contained grids and arrays persist. The named tuple itself is immutable: `model.cells = other_cells` is not allowed. For a changing scalar, use a mutable array as shown with `rates[1]`, or return an updated value.
 
 **Performance:** Numba compiles named-field access, but passing a composite from Python into a compiled function can have conversion overhead. Prefer calling multiple compiled functions from a compiled timestep, as above, rather than repeatedly entering compiled code for tiny operations. Whether the composite is faster than separate arguments depends on the workload; benchmark performance-sensitive applications. See [Numba's supported Python features](https://numba.readthedocs.io/en/stable/reference/pysupported.html).
-
-### 8. Reproduce and save a run
-
-Seed PAL's random stream **before** the first stochastic operation:
-
-```python
-pal.Seed(1234)
-```
-
-The same seed reproduces the same random stream when the initial state and order of random calls also match. For a checkpoint, Python's `pickle` can save PAL-backed objects together with ordinary model metadata:
-
-```python
-import pickle
-
-step = 0  # replace with the current timestep in your simulation
-with open("cells.pkl", "wb") as f:
-    pickle.dump({"cells": cells, "nutrient": nutrient, "step": step}, f)
-
-with open("cells.pkl", "rb") as f:
-    state = pickle.load(f)
-cells = state["cells"]
-nutrient = state["nutrient"]
-step = state["step"]
-```
-
-Saving object state is not the same as saving every source of randomness or every external resource. To resume a stochastic trajectory exactly, also preserve the relevant random state and any other model state your experiment uses. A fixed seed is sufficient for replaying a run from its beginning under the same call sequence, not necessarily for resuming halfway through it.
-
-### Where to go next
-
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide gives **subsystem-specific API behavior**, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
 
 ## Core use
 
