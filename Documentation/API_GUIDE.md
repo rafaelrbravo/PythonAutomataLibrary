@@ -320,7 +320,7 @@ grid.NewAgentSQ(10, 12)
 print(CountAgents(grid))  # 1
 ```
 
-Keep model construction outside compiled functions when it only needs to happen once; compile the work that runs repeatedly. `pal.njit` wraps Numba `njit` and additionally transforms PAL model code. Among other PAL-specific compilation behavior, annotated PAL arguments allow safe-mode errors in compiled model code to report the model source line.
+**PAL objects must be constructed outside `@pal.njit` functions.** Create grids, lists, samplers, and windows in ordinary Python code, then pass them into compiled functions for computation. Methods that create agents within an existing `AgentGrid`, such as `NewAgent`, can still be called inside compiled functions. `pal.njit` wraps Numba `njit` and additionally transforms PAL model code. Among other PAL-specific compilation behavior, annotated PAL arguments allow safe-mode errors in compiled model code to report the model source line.
 
 ## Construction
 
