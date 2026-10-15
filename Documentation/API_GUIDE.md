@@ -776,10 +776,12 @@ Advection uses a conservative first-order upwind discretization. `Advection` use
 Use PAL's random-number functions for stochastic decisions such as selecting agents or destinations. Use `Multinomial` when a count of individuals or events must be distributed among several possible outcomes without sampling each one separately.
 
 ```python
-pal.Seed(seed)
-pal.Random()       # uniform float
-pal.RandInt(max)  # integer in [0, max)
+pal.Seed(1234)
+u = pal.Random()     # uniform float in [0, 1)
+i = pal.RandInt(10)  # integer from 0 through 9
 ```
+
+This is an executable example once `PythonAutomataLibrary` has been imported as `pal`. The seed fixes the random stream for reproducible runs; `Random()` and `RandInt()` each advance that stream.
 
 `Seed` accepts integral seeds in the uint64 domain (`0` through `2**64 - 1`); invalid or nonfinite inputs raise `ValueError`. `RandInt(max)` requires a positive integer in the int64 domain and returns an integer in `[0, max)`; zero, negative, fractional, nonfinite, or out-of-range bounds raise `ValueError`. `Random()` returns a uniform floating-point draw. PAL random functions share one seeded stream across Python and compiled PAL calls, so reseeding reproduces the same call sequence across that boundary. The stream is call-order dependent: adding or removing a random draw changes later results. This does not seed NumPy's separate RNG.
 
