@@ -20,16 +20,16 @@ This division lets a high-level model combine different state representations wi
 
 ### 1.2 The layers and their responsibilities
 
-PAL's architecture can be understood through six cooperating responsibilities:
+PAL's architecture can be understood through six cooperating parts:
 
-1. **Public API and Protocol declarations.** These define the names, signatures, type-facing interface, and expected user-visible operations. They support readable calls, type annotations, and autocomplete.
-2. **Python constructors and wrappers.** These create objects, translate public arguments into implementation calls, and expose native-backed state through a Python-friendly interface.
-3. **Numba-compatible wrappers and overloads.** These let compiled model functions call PAL operations while preserving supported argument forms and return behavior.
-4. **The `pal.njit` preparation step.** This transforms selected PAL-specific constructs before compilation, including neighborhood/box iteration and some source-aware diagnostics.
-5. **The native C core.** This provides low-level storage and computational routines used by the Python/Numba-facing layer.
-6. **Tests, examples, and generated documentation.** These act as executable and written statements of the public contract, checking that the layers agree.
+1. **Public API.** Defines what users can do with PAL: the objects they can create, the methods they can call, and the arguments those methods accept.
+2. **Python layer.** Creates PAL objects and handles operations when code runs normally in Python.
+3. **Numba layer.** Handles those same operations when code is compiled for speed using `@pal.njit`.
+4. **Compilation preparation.** Makes certain PAL features, such as neighborhood loops, work correctly when compiled by Numba.
+5. **C layer.** Provides lower-level code for storing data and performing operations that PAL needs to run efficiently.
+6. **Tests and documentation.** Check that PAL behaves as intended and explain how to use it.
 
-These are responsibilities rather than necessarily separate packages; several may share a source file. Typically, model code calls a public wrapper, which selects a Python or Numba-compatible implementation. For compiled functions, `pal.njit` may transform supported PAL-specific loops before Numba compilation. The resulting operation accesses native-backed state or a native kernel where appropriate. Not every operation passes through every layer. For example, `pal.njit` is relevant to compiled model functions that use PAL's supported syntax; it is not a mandatory step for ordinary Python calls. Keeping the responsibilities conceptually distinct helps localize defects. Constructor bugs, Numba typing errors, native-state problems, and stale API declarations require different fixes.
+**The central idea is that users work with the same PAL objects and methods whether their code runs in Python or is compiled with Numba.** PAL handles the differences behind the scenes. Not every operation passes through every layer, and tests and documentation support the implementation rather than executing as part of a model.
 
 ### 1.3 The native core and Python interface
 
