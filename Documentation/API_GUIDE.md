@@ -278,9 +278,11 @@ Saving object state is not the same as saving every source of randomness or ever
 
 ### Where to go next
 
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide explains **subsystem-specific API behavior**, followed by techniques for organizing larger models, including specialized neighborhood forms, numerical transport methods, random sampling, and rendering options. You do not need to force those features into this simple cell model.
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [PopGrid](#popgrid), [PDEgrid](#pdegrid), [IList](#ilist), or [Random numbers and Multinomial](#random-numbers-and-multinomial). The later sections cover [organizing larger models](#organizing-larger-models), [visualization](#visualization), and [saving PAL objects](#saving-pal-objects). You do not need to use every feature in the tutorial model.
 
 ## Core use
+
+This section collects import, execution-mode, and compilation conventions used throughout the component reference. The tutorial above works in PAL's default safe mode, so you can return to these options when you need them.
 
 ```python
 import PythonAutomataLibrary as pal
