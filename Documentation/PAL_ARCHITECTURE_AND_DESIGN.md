@@ -16,11 +16,11 @@ This document explains how PAL is organized, why its major interfaces and implem
 
 ### 1.1 The design problem PAL is solving
 
-PAL targets models that repeatedly update many small pieces of state. A timestep might inspect thousands of neighborhoods, move individual agents, update a population count at every site, solve a field equation, or combine several of these operations. Writing every inner operation as a Python call is expressive but can impose substantial interpreter overhead. Writing the whole model in C could reduce that overhead, but would make iteration and experimentation less convenient for Python users.
+PAL targets models that repeatedly update many small pieces of state. A timestep might inspect thousands of neighborhoods, move individual agents, update a population count at every site, solve a field equation, or combine several of these operations. Expressing every inner operation as a Python call is flexible but can incur substantial interpreter overhead. Writing the whole model in C could reduce that overhead, but would make iteration and experimentation less convenient for Python users.
 
 PAL's architecture splits the problem by frequency and responsibility. Python remains the control language for constructing the model, selecting parameters, loading inputs, managing experiments, and deciding when to draw or checkpoint. Repeated computation is expressed in functions that PAL can prepare for Numba compilation. The native core supplies low-level state and kernels behind that interface.
 
-The boundary is also a design constraint: a high-level model can combine different state representations without rewriting its timestep in C, while the low-level implementations can evolve without changing the model-facing API. The cost is that wrappers, compiled overloads, and native state must be maintained together. This split does not mean that all Python code is slow or that every model function should be compiled. It puts optimization effort where repeated work makes it worthwhile. A function called once during setup usually needs less attention than a loop executed at every site over millions of timesteps. Start with clear model code, identify the repeated work, and benchmark before moving more logic into compiled kernels.
+This division lets a high-level model combine different state representations without rewriting its timestep in C, while allowing low-level implementations to evolve without changing the model-facing API. The cost is that wrappers, compiled overloads, and native state must be maintained together. This split does not mean that all Python code is slow or that every model function should be compiled. It puts optimization effort where repeated work makes it worthwhile. A function called once during setup usually needs less attention than a loop executed at every site over millions of timesteps. Start with clear model code, identify the repeated work, and benchmark before moving more logic into compiled kernels.
 
 ### 1.2 The layers and their responsibilities
 
@@ -33,13 +33,13 @@ A useful mental model is to separate PAL into several cooperating layers:
 5. **The native C core.** This provides low-level storage and computational routines used by the Python/Numba-facing layer.
 6. **Tests, examples, and generated documentation.** These act as executable and written statements of the public contract, checking that the layers agree.
 
-These are responsibilities, not necessarily six separate packages; several may share a source file. The usual path is: model code calls the public wrapper; the wrapper selects a Python or Numba-compatible implementation; `pal.njit` may transform supported PAL-specific loop syntax before Numba compiles it; and the compiled operation reaches native-backed state or a native kernel where appropriate. Not every operation passes through every layer. For example, `pal.njit` is relevant to compiled model functions that use PAL's supported syntax; it is not a mandatory step for ordinary Python calls. Keeping the responsibilities conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
+These are responsibilities rather than necessarily separate packages; several may share a source file. The usual path is: model code calls the public wrapper; the wrapper selects a Python or Numba-compatible implementation; `pal.njit` may transform supported PAL-specific loop syntax before Numba compiles it; and the compiled operation reaches native-backed state or a native kernel where appropriate. Not every operation passes through every layer. For example, `pal.njit` is relevant to compiled model functions that use PAL's supported syntax; it is not a mandatory step for ordinary Python calls. Keeping the responsibilities conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
 
 ### 1.3 The native core and Python interface
 
 The native core gives PAL a place to implement low-level operations without requiring users to write C for ordinary model logic. Native-backed objects can hold state in a representation suited to repeated updates, while the Python-facing API offers recognizable constructors, indexing, and methods.
 
-The wrapper is important because the native implementation is not itself the public contract. A C function may accept a particular pointer or integer layout internally, but the Python API should expose a stable and understandable operation. The wrapper layer is where public arguments, supported types, safe-mode validation, and implementation details meet.
+The native implementation is not itself the public contract. A C function may accept a particular pointer or integer layout internally, but the Python API should expose a stable and understandable operation. The wrapper layer is where public arguments, supported types, safe-mode validation, and implementation details meet.
 
 This separation creates a maintenance obligation: behavior must remain coherent across the wrapper and native layers. If the Python method accepts a keyword argument but its Numba overload silently binds that keyword differently, the layers disagree. If a native routine handles a one-dimensional coordinate differently from the safe wrapper, a mode-specific defect can result. PAL's parity tests therefore compare outcomes across paths rather than assuming that one layer automatically inherits the correctness of another.
 
@@ -55,7 +55,7 @@ This is why API changes should be made as a coordinated change. When altering an
 
 Python execution is useful for interactive exploration, setup code, inspection, and small operations. Numba-compiled execution is useful for repeated loops where Python dispatch would be costly. PAL supports both because a scientific workflow naturally mixes these kinds of work.
 
-Supporting both is not free. Numba imposes typing and compilation constraints that ordinary Python does not. Native-backed objects need compatible wrappers or overloads; argument types and names must be represented in forms Numba understands; and code transformations must produce valid compilable functions. An operation can therefore work in Python and fail at compile time, or compile successfully but behave differently in an edge case.
+Supporting both introduces complexity. Numba imposes typing and compilation constraints that ordinary Python does not. Native-backed objects need compatible wrappers or overloads; argument types and names must be represented in forms Numba understands; and code transformations must produce valid compilable functions. An operation can therefore work in Python and fail at compile time, or compile successfully but behave differently in an edge case.
 
 PAL treats parity as a correctness requirement for supported usage, not as a promise that Python and compiled code have identical internals or performance. Compare observable behavior: return values, mutations, errors where they are part of the contract, boundary handling, and state after the operation. If a difference appears, reduce it to a minimal reproducer and test both paths.
 
@@ -105,7 +105,7 @@ This avoids storing a separate absolute-neighbor list for every cell and lets th
 
 PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits pending changes. This makes the timestep boundary visible in code.
 
-This distinction matters mathematically. If every new site value must be computed from the same old field, immediate mutation can make results depend on iteration order. Queued deltas let the model calculate changes before committing them. This is not a universal synchronous-update guarantee: reads still observe the current committed state, and direct indexing can mutate state immediately. PAL permits order-dependent algorithms but makes the choice explicit.
+This distinction has mathematical consequences. If every new site value must be computed from the same old field, immediate mutation can make results depend on iteration order. Queued deltas let the model calculate changes before committing them. This is not a universal synchronous-update guarantee: reads still observe the current committed state, and direct indexing can mutate state immediately. PAL permits order-dependent algorithms but makes the choice explicit.
 
 Agent updates have different semantics. `All()` snapshots which handles will be visited, but it does not snapshot the world. If one agent reproduces, later agents may see the newborn's occupancy even though the newborn is not part of the original handle snapshot. This is a deliberate and useful pattern for sequential agent models, but it is not equivalent to a synchronous cellular update.
 
@@ -177,7 +177,7 @@ A `Multinomial` sampler separates configuration from the state accumulated while
 
 ### 3.8 Visualization: simulation state versus presentation
 
-Rendering is deliberately separate from simulation state transitions. That separation permits headless runs and intermittent drawing, and it keeps visualization costs from being mistaken for model-update costs. Benchmark simulation and rendering separately before measuring end-to-end performance. A plausible-looking image is not evidence that the state transitions are correct.
+Rendering is deliberately separate from simulation state transitions. That separation permits headless runs and intermittent drawing, and it keeps visualization costs from being mistaken for model-update costs. Benchmark simulation and rendering separately before measuring end-to-end performance. A plausible-looking image does not establish that the state transitions are correct.
 
 `PixWindow` exposes a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D/3D geometry. These are distinct rendering interfaces with different presentation workflows.
 
@@ -261,7 +261,7 @@ For a useful benchmark, measure cold compilation in a fresh process and steady-s
 
 ### 5.2 Optimize the actual workload
 
-PAL's layered implementation makes the benchmark boundary important: measuring only a native routine excludes wrapper dispatch, validation, and model-loop costs; measuring an entire rendered simulation may hide improvements in the computational kernel. Select the boundary that answers the performance question. A faster microbenchmark does not guarantee a faster full model. An optimization may help a large agent sweep but hurt a small grid, or reduce steady-state time while increasing compilation cost. Before changing implementation, define the workload that matters: number of sites or agents, number of timesteps, neighborhood size, mutation rate, transport method, and mode.
+PAL's layered implementation makes the benchmark boundary important: measuring only a native routine excludes wrapper dispatch, validation, and model-loop costs; measuring an entire rendered simulation may hide improvements in the computational kernel. Select the boundary that answers the performance question. A faster microbenchmark does not necessarily produce a faster full model. An optimization may help a large agent sweep but hurt a small grid, or reduce steady-state time while increasing compilation cost. Before changing implementation, define the workload that matters: number of sites or agents, number of timesteps, neighborhood size, mutation rate, transport method, and mode.
 
 Use a before/after benchmark with fresh-process cold compilation and repeated hot runtime. Keep workload sizes identical, check outputs for equivalence, and investigate any reproducible regression. Treat tiny differences as noise until repeated measurements show otherwise. Prefer simpler correct code when a performance gain is not robust.
 
