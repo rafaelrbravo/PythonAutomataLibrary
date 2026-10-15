@@ -1,6 +1,6 @@
 # PAL API Guide
 
-This guide introduces PAL through a working model, then explains each component and its behavioral contracts. Start by choosing the representation that fits your model, follow the tutorial in order, and consult the detailed component sections as needed. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
+This guide introduces PAL through a working model, then explains each component and its behavioral contracts. Start with the component overview and follow the worked tutorial in order. The later sections document detailed behavior, constraints, and specialized operations. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
 
 ## Choose the right PAL structure
 
@@ -13,7 +13,7 @@ This guide introduces PAL through a working model, then explains each component 
 | Reusable integer query result | `IList` |
 | Binomial/multinomial draws | `Multinomial` |
 
-These structures can be composed in one `@pal.njit` model step. For example, agents can query a field, queue population changes, and then update the population and field at explicitly chosen points in the timestep. The order of those commits determines which state subsequent operations read.
+These components can work together in one model. For example, individual cells in an `AgentGrid` can consume a nutrient represented by a `PDEgrid`. Some components support accumulating changes before applying them together with `Update()`; later sections explain why the timing of those updates matters.
 
 ## Build a cell model, one feature at a time
 
@@ -21,10 +21,7 @@ This tutorial follows **one simple model**: cells occupy sites on a two-dimensio
 
 Use the examples in order. The code blocks marked **complete program** can be saved as separate Python files and run independently. Later snippets show focused modifications to the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
 
-Before building the model, two PAL controls are useful to know:
-
-- **`pal.FastMode()`** selects fast execution instead of PAL's default safe mode. Call it at the start of the program, **before creating any PAL model or window objects**. Mode selection is process-wide and cannot be changed after the first PAL object is constructed. Keep safe mode while learning or debugging; enable fast mode when appropriate for a tested model.
-- **`pal.AwaitWindows()`** waits for PAL's visualization windows to become ready before the program proceeds. We will use it when we introduce a window in stage 2; it is not needed for a model that has no window.
+PAL begins in safe mode, which checks operations for common errors. The tutorial uses this default. Later, the [performance section](#performance-fastmode-njitcachetrue-and-unrolltrue) explains how to select fast mode and compile frequently executed code.
 
 ### 1. Place cells on a lattice
 
@@ -55,7 +52,7 @@ if __name__ == "__main__":
 
 ### 2. Draw the cells immediately
 
-Visual feedback is useful from the first model. `StartPixWindow` gives us a pixel grid and a window. Each site becomes one pixel, enlarged by `scale`. We draw black background pixels and red occupied sites.
+Visual feedback is useful from the first model. `StartPixWindow` gives us a pixel grid and a window. `pal.AwaitWindows()` waits for the windows to be ready before the program continues. Each site becomes one pixel, enlarged by `scale`. We draw black background pixels and red occupied sites.
 
 **Complete program — place and display cells:**
 
