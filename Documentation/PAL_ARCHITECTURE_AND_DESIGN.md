@@ -49,7 +49,7 @@ When a failure occurs under `@pal.njit`, first reproduce it in safe mode, withou
 
 ## 2. State, ownership, and execution semantics
 
-### 2.1 Native-backed state and object lifetime
+### 2.0 Native-backed state and object lifetime
 
 A PAL object's public methods operate on state managed through PAL's native-backed implementation, not necessarily an ordinary Python container. The Python object is the user's handle to that state; it is not safe to assume that every internal value is an ordinary Python list or NumPy array that can be edited freely.
 
@@ -57,13 +57,7 @@ This distinction affects object lifetime and mutation. Creating, moving, or disp
 
 Native-backed objects can support pickling, but pickling an object is not equivalent to serializing the entire simulation process. A model's complete checkpoint may also need parameters, timestep, other coupled objects, external state, and random-number state. See the [API Guide's saving section](API_GUIDE.md#saving-pal-objects) for the checkpoint contract and its limitations.
 
-### 2.2 Preserving invariants across layers
-
-The public contract specifies behavior rather than pointer layout: operations must preserve invariants, and serialized state must be reconstructed without relying on process-local addresses. A wrapper can reject an invalid operation before it reaches native code, but a compiled path may reach the same underlying state through a different route. Invariants therefore need protection and tests at the boundaries where state can actually change.
-
-When adding an operation, identify which layer owns each invariant. A population update must reconcile queued deltas with current counts and capacity constraints; a PDE transport operation must respect configured geometry, boundary treatment, and commit semantics. Do not expose a mutable native buffer without defining its ownership, lifetime, invalidation, and synchronization rules.
-
-### 2.3 Relative-offset neighborhoods
+### 2.2 Relative-offset neighborhoods
 
 A neighborhood such as Moore or Von Neumann is naturally a pattern around a location. PAL represents it as relative integer offsets, then applies it to a specific grid position with `grid.Hood(...)`. This separates the reusable pattern from the grid location where it is used.
 
@@ -71,7 +65,7 @@ Applying a hood must account for grid dimensions and wrapping flags; the relativ
 
 Relative offsets avoid storing absolute-neighbor lists for every cell and allow the compiled path to transform high-level neighborhood loops. Neighborhood destinations are not necessarily unique: small or wrapped domains can map multiple offsets to the same site. Whether to count those repeated contributions or deduplicate them depends on the model, so choose and test the intended behavior.
 
-### 2.4 Separate update and commit operations
+### 2.3 Separate update and commit operations
 
 PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits pending changes. This exposes the timestep boundary in code.
 
@@ -81,7 +75,7 @@ Agent updates have different semantics. `All()` snapshots which handles will be 
 
 PAL does not impose one scheduler because these update schemes represent different models. For example, a two-site population transfer can queue `Add(A, -1)` and `Add(B, 1)`, then call `Update()` once: both changes are calculated against the old committed counts. By contrast, moving an agent immediately changes which site subsequent agents encounter. The two representations can model similar populations but do not automatically implement the same update schedule. Choose the intended timing and test it with a small case whose result can be calculated by hand.
 
-### 2.5 Process-wide safe and fast modes
+### 2.4 Process-wide safe and fast modes
 
 Safe mode performs selected validation and provides diagnostics that are useful while developing a model. Fast mode removes selected checks from performance-sensitive paths. Keeping one mode active for a process makes the execution contract predictable for objects created within that process; PAL locks the choice at first construction.
 
