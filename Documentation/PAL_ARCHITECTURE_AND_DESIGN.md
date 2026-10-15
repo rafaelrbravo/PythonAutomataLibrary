@@ -20,37 +20,16 @@ This division lets a high-level model combine different state representations wi
 
 ### 1.2 The layers and their responsibilities
 
-PAL's architecture can be understood through six cooperating parts:
+PAL has five implementation layers, supported by tests and documentation:
 
-1. **Public API.** Defines what users can do with PAL: the objects they can create, the methods they can call, and the arguments those methods accept.
-2. **Python layer.** Creates PAL objects and handles operations when code runs normally in Python.
-3. **Numba layer.** Handles those same operations when code is compiled for speed using `@pal.njit`.
-4. **Compilation preparation.** Makes certain PAL features, such as neighborhood loops, work correctly when compiled by Numba.
-5. **C layer.** Provides lower-level code for storing data and performing operations that PAL needs to run efficiently.
-6. **Tests and documentation.** Check that PAL behaves as intended and explain how to use it.
+1. **Public API and Protocols.** The public API defines what users can do with PAL: which objects and methods exist and what arguments they accept. **Protocols** describe those interfaces for type checking and autocomplete; they do not implement them.
+2. **Python constructors and wrappers.** **Constructors** create PAL objects. **Wrappers** handle calls made from ordinary Python, translating user-friendly arguments into the operations PAL performs internally.
+3. **Numba implementations and overloads.** Numba **compiles** Python functions into machine code for faster repeated execution. PAL's **overloads** provide versions of supported operations that work inside those compiled functions.
+4. **`pal.njit` source transformation.** Before Numba compiles a function, PAL can **transform** certain Python constructs—such as neighborhood and box loops—into forms Numba can compile.
+5. **Native C core.** **Native** means code compiled from a lower-level language rather than executed by the Python interpreter. PAL uses C for some of its data storage and computational routines; not every operation calls C.
+6. **Tests, examples, and documentation.** These are not an execution layer. They check that the implementations agree and show users what the public API promises.
 
-**The central idea is that users work with the same PAL objects and methods whether their code runs in Python or is compiled with Numba.** PAL handles the differences behind the scenes. Not every operation passes through every layer, and tests and documentation support the implementation rather than executing as part of a model.
-
-
-#### Terms used throughout this document
-
-The following terms have specific meanings here:
-
-- **Model state:** The data describing the simulation at a particular moment, such as agent positions, population counts, and field values.
-- **Public API:** The objects and operations users are meant to call. Its **contract** is the behavior those calls promise, regardless of how PAL implements them.
-- **Python layer:** The code that creates PAL objects and handles calls made from ordinary Python. A **wrapper** is code that presents a simple public operation while handling implementation details behind it.
-- **Numba layer:** The code that makes supported PAL operations work inside **compiled functions**—Python functions converted by Numba into faster machine code. An **overload** is a compiled implementation of a supported call.
-- **Compilation preparation:** PAL's step before Numba compilation that rewrites certain supported patterns, such as neighborhood loops. This is also called **source transformation**.
-- **C layer (native core):** Lower-level compiled code that provides storage and selected operations. **Native-backed state** means data managed through this lower-level implementation; a **kernel** is a routine that performs a specific computation.
-- **Protocol:** A declaration of the methods and properties an object is expected to provide. It helps type checking and autocomplete but does not itself implement the behavior.
-- **Execution path:** The route an operation takes through Python or compiled code. **Dispatch** means choosing the implementation that handles a call. **Parity** means that supported calls produce the same observable behavior on both paths.
-- **Agent handle:** The integer used to identify an agent within an `AgentGrid`. It is not a permanent identity: disposed handles can be reused.
-- **Snapshot and view:** A **snapshot** is a detached copy of data at one moment; changing it does not change the original. A **view** refers to existing data rather than copying it, so its lifetime and mutation rules matter.
-- **Invariant:** A rule PAL must preserve as state changes, such as valid occupancy counts and agent locations. **Ownership** describes which object controls data and when that data remains valid.
-- **Queued change and commit:** A **queued change** records an update without applying it immediately. **Committing** applies pending changes, typically through `Update()` where that operation is supported.
-- **Safe mode and fast mode:** PAL's two process-wide execution modes. **Safe mode** checks supported operations for invalid use; **fast mode** omits some checks to reduce overhead.
-
-These terms describe how PAL works, not extra steps a modeler must perform. In particular, using a compiled function does not require calling each layer manually.
+**The central idea is that users work with the same PAL objects and methods whether their code runs in Python or is compiled with Numba.** PAL handles the different implementations behind the scenes. Not every operation passes through every layer.
 
 ### 1.3 The native core and Python interface
 
