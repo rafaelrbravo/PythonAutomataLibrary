@@ -582,16 +582,14 @@ The count reports how many agents occupy the site, while `AgentsAt` yields their
 
 ### Radius iteration
 
-`AgentsInRadius(rad, x[, y[, z]], exclude=None)` iterates agents near a continuous point in Python or inside `@pal.njit`. The yielded tuple depends on dimensionality:
+`AgentsInRadius` finds agents within a distance of a **continuous position**, rather than restricting a query to one lattice site. Continuing from the earlier 2D example, the agent is centered at `(11.5, 12.5)` after moving to site `(11, 12)`. A radius-2 query around that point finds it:
 
 ```python
-for agent, dx in agents1.AgentsInRadius(rad, x):
-    ...
-for agent, dx, dy, distSq in agents2.AgentsInRadius(rad, x, y):
-    ...
-for agent, dx, dy, dz, distSq in agents3.AgentsInRadius(rad, x, y, z):
-    ...
+for nearby, dx, dy, distSq in agents.AgentsInRadius(2.0, 11.5, 12.5):
+    print(nearby, dx, dy, distSq)
 ```
+
+The returned values are the agent handle, the x/y displacement from the query center, and the squared distance. For this centered query, the existing agent has zero displacement and squared distance. In one dimension, the iterator yields `(agent, dx)`; in three dimensions, it yields `(agent, dx, dy, dz, distSq)`. The general signature is `AgentsInRadius(rad, x[, y[, z]], exclude=None)`, where the number of coordinates matches the grid dimensionality.
 
 The radius is inclusive: agents with distance exactly `rad` are included. Returned displacements point from the query center to the agent and use the shortest periodic displacement on wrapped axes; `distSq` is their squared Euclidean distance in 2D/3D. `exclude` omits a specified agent handle. As with Python-side `AgentsAt`, structural modification during iteration is unsupported, and the generation check is enabled only in safe mode.
 
