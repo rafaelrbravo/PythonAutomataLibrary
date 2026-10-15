@@ -211,7 +211,7 @@ window.Update()
 
 ### 7. Replace individual cells with population counts
 
-Now relax the **one cell per site** constraint. With multiple occupancy allowed, cells no longer need to search for empty destinations. A `PopGrid` holds counts instead of individual agents, and a `Multinomial` can distribute each site's cells among the eight directions of the same random walk. There is no division or death: the total number of cells remains constant. The nutrient field from stage 6 is retained, including its boundary supply and cellular consumption.
+Now relax the **one cell per site** constraint. With multiple occupancy allowed, cells no longer need to search for empty destinations. A `PopGrid` holds counts instead of individual agents, and a `Multinomial` distributes each site's cells among eight possible movement directions. This is a related random walk, **not an exact translation** of the agent model: movement is synchronous, multiple cells can share a site, and a cell at a boundary may stay because some directions lead outside the grid. There is no division or death: the total number of cells remains constant. The nutrient field from stage 6 is retained, including its boundary supply and cellular consumption.
 
 **This stage starts a separate, complete program rather than modifying the stage 6 program in place.** Replace the individual-agent grid and its empty-neighbor movement rule with the count-based implementation below. You can keep the stage 6 version separately to compare their behavior.
 
