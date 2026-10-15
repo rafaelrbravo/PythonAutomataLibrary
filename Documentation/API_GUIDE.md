@@ -776,7 +776,20 @@ Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxB
 
 ### Advection
 
-Advection transports a quantity through directed flow, such as a chemical carried by moving fluid. Unlike diffusion, which responds to concentration differences, advection follows a specified velocity field. The variants below differ in how velocity is represented.
+Advection transports a quantity through directed flow, such as a chemical carried by moving fluid. Unlike diffusion, which responds to concentration differences, advection follows a specified velocity field. For example, start with a concentration at the center of a 2D field and move it toward increasing x with a constant positive x-velocity:
+
+```python
+field = pal.NewPDEgrid((30, 30))
+field.SetTimeSpaceStep(0.1, 1.0, 1.0)
+field[15, 15] = 1.0
+field.Advection(1.0, 0.0)
+field.Update()
+print(field[15, 15], field[16, 15])  # source decreases; next site gains
+```
+
+The two velocity arguments specify x and y motion. A positive x-velocity carries concentration toward increasing x; the timestep and grid spacing determine how far it moves in one update. Here the flow advances only a fraction of one lattice cell in the timestep, so the concentration is distributed between sites rather than shifted by a whole cell. As with diffusion, the transport call queues changes until `Update()`.
+
+Choose the advection method based on how velocity is represented. These are **reference signatures**, not a sequence of operations:
 
 ```python
 field.Advection(vx, vy=0.0, vz=0.0, ...)
