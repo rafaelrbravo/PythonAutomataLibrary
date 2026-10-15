@@ -640,7 +640,16 @@ The list stores integer identifiers, **not copies of grid sites or agents**. You
 | `Iter()` | Return a no-copy/live iterable view. |
 | `len(items)`, `items[i]` | Length/index access. |
 
-Use `Iter()` for one-pass iteration when a copy is unnecessary. Use `All()` when the returned values must remain independent of subsequent IList changes.
+Use `Iter()` for one-pass iteration when a copy is unnecessary. Unlike `Iter()`, `All()` makes a snapshot that remains independent of later list changes. For example, continuing from the `sites` list above:
+
+```python
+saved = sites.All()  # copy the two indices
+sites.Clear()        # empty the original IList
+print(len(sites))    # 0
+print(len(saved))    # 2
+```
+
+Use `Iter()` to read the current contents without copying, but do not assume that an iterator preserves old contents if the list is modified. Use `All()` when you need to retain the identifiers across changes to the list.
 
 ## PopGrid
 
