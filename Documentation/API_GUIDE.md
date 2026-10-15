@@ -239,7 +239,7 @@ The nutrient update now consumes 0.01 concentration units per cell at each site,
 
 As models grow, passing every grid and parameter separately can make function signatures difficult to read. Python's `collections.namedtuple` groups related objects under descriptive field names, and Numba supports accessing those fields inside compiled functions.
 
-For example, package an agent grid, a nutrient field, and a NumPy array of rates:
+For example, package an agent grid, a nutrient field, and a NumPy array of rates. The three named-tuple fields hold references to those objects; the grids and array allocate their own storage. The named tuple does not need to reserve space for every cell or nutrient value:
 
 ```python
 from collections import namedtuple
