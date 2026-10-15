@@ -884,7 +884,7 @@ You can also assign packed RGB integers such as `0xFF0000`, and use a linear sit
 
 It also provides `xDim`, `yDim`, `ToI(x, y)`, `ItoX(i)`, `ItoY(i)`, and `len(pix)`.
 
-The window lifecycle is:
+The window lifecycle offers the following operations (shown as reference calls, not a sequence to execute verbatim):
 
 ```python
 window.Update()
@@ -894,6 +894,18 @@ window.AddGifFrame(block=False)
 window.StopGif()
 window.IsOpen()
 window.Close()
+```
+
+For example, to record two frames to a GIF after drawing the first frame, use a sequence such as:
+
+```python
+window.StartGif("frames.gif")
+window.Update()
+window.AddGifFrame()
+# Change pix here to draw the next frame.
+window.Update()
+window.AddGifFrame()
+window.StopGif()
 ```
 
 `Update()` publishes the current pixel buffer to the renderer. `StartGif()` begins a GIF recording, each `AddGifFrame()` appends the currently rendered frame, and `StopGif()` finalizes the file. `block=True` on asynchronous output operations waits for that requested output to complete before returning; call `StopGif()` before relying on the GIF file as complete.
