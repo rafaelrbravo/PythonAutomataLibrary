@@ -4,7 +4,7 @@ This document explains how PAL is organized, why its major interfaces and implem
 
 ## Reading map
 
-Begin with the **design problem and execution path**, which establish what PAL delegates to Python, Numba, and native code. Then read **state representations and subsystem choices** to understand how model data is stored and updated. The remaining chapters cover debugging, extending, testing, and benchmarking PAL, followed by scientific validation.
+Chapter 1 explains the design problem and traces execution through the public API, Python wrappers, Numba, and native code. Chapter 2 explains state ownership, neighborhood interpretation, update timing, execution modes, rendering, and random-number state. Chapter 3 applies those principles to each subsystem. Chapters 4 and 5 cover maintenance, testing, and performance; Chapter 6 distinguishes software correctness from scientific validation. Chapter 7 points to the complementary user-facing references.
 
 ## 1. Foundations: responsibilities and execution
 
