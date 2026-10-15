@@ -1,6 +1,19 @@
 # PAL API Guide
 
-This guide combines a first working model and practical modeling workflows with the detailed behavioral contracts of PAL's public API. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
+This guide introduces PAL through a working model, then explains each component and its behavioral contracts. Start by choosing the representation that fits your model, follow the tutorial in order, and consult the detailed component sections as needed. Start with the worked sections, then use the API sections below to check semantics, constraints, and examples. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
+
+## Choose the right PAL structure
+
+| Need | PAL structure |
+| --- | --- |
+| One typed value per lattice site | `Grid` |
+| Individual agents with identity/properties | `AgentGrid` |
+| Integer counts without individual identity | `PopGrid` |
+| Continuous diffusing/advecting field | `PDEgrid` |
+| Reusable integer query result | `IList` |
+| Binomial/multinomial draws | `Multinomial` |
+
+These structures can be composed in one `@pal.njit` model step. For example, agents can query a field, queue population changes, and then update the population and field at explicitly chosen points in the timestep. The order of those commits determines which state subsequent operations read.
 
 ## Build a cell model, one feature at a time
 
@@ -828,16 +841,3 @@ Use safe mode until the model is correct, then benchmark fast mode. Do not rely 
 ## Saving PAL objects
 
 PAL native-backed model objects support standard Python pickling. Checkpoints preserve the state needed to resume the object rather than process-local pointers: AgentGrid geometry, occupancy, agents and properties; PopGrid geometry, capacity, current counts and pending deltas; PDEgrid geometry, time/space steps, current field and pending deltas; IList contents; and a Multinomial's current `Setup`/`Sample` remainder. Safe/fast identity is also restored. This means a PopGrid or PDEgrid may be pickled before `Update()` without losing its queued changes.
-
-## Choosing the right structure
-
-| Need | PAL structure |
-| --- | --- |
-| One typed value per lattice site | `Grid` |
-| Individual agents with identity/properties | `AgentGrid` |
-| Integer counts without individual identity | `PopGrid` |
-| Continuous diffusing/advecting field | `PDEgrid` |
-| Reusable integer query result | `IList` |
-| Binomial/multinomial draws | `Multinomial` |
-
-These structures can be composed in one `@pal.njit` model step. For example, agents can query a field, queue population changes, and then update the population and field at explicitly chosen points in the timestep. The order of those commits determines which state subsequent operations read.
