@@ -1,6 +1,6 @@
 # PAL Architecture and Design
 
-This document explains PAL's organization, the reasons behind its interfaces, and its implementation trade-offs. It focuses on execution architecture, state semantics, and subsystem design rather than teaching the API from the beginning. Use the [API Guide](API_GUIDE.md) for runnable modeling workflows and public API behavior, the [API Reference](API_REFERENCE.md) for exact signatures, and the [Cheatsheet](CHEATSHEET.md) for quick lookup.
+This document explains PAL's organization, the reasons behind its interfaces, and its implementation trade-offs. It focuses on execution architecture, state semantics, and subsystem design rather than teaching the API from the beginning. Use the [PAL Guide](PAL_GUIDE.md) for runnable modeling workflows and public API behavior, the [API Reference](API_REFERENCE.md) for exact signatures, and the [Cheatsheet](CHEATSHEET.md) for quick lookup.
 
 ## Contents
 
@@ -56,7 +56,7 @@ A PAL object's public methods operate on state managed through PAL's native-back
 
 This distinction affects object lifetime and mutation. Creating, moving, or disposing an agent must keep position, occupancy, and handle validity consistent. Writing directly into an internal count or pointer-like representation could bypass those invariants, so PAL exposes explicit state-changing methods. Likewise, a returned array or slice must be interpreted according to its contract: a detached copy is a snapshot, not a live view into native memory, and editing it changes the copy until the result is explicitly assigned back.
 
-Native-backed objects can support pickling, but pickling an object is not equivalent to serializing the entire simulation process. A model's complete checkpoint may also need parameters, timestep, other coupled objects, external state, and random-number state. See the [API Guide's saving section](API_GUIDE.md#saving-pal-objects) for the checkpoint contract and its limitations.
+Native-backed objects can support pickling, but pickling an object is not equivalent to serializing the entire simulation process. A model's complete checkpoint may also need parameters, timestep, other coupled objects, external state, and random-number state. See the [PAL Guide's saving section](PAL_GUIDE.md#saving-pal-objects) for the checkpoint contract and its limitations.
 
 ### 2.2 Relative-offset neighborhoods
 
@@ -86,7 +86,7 @@ Fast mode should be treated as a measured optimization, not a correctness mode. 
 
 ## 3. Subsystem design choices
 
-The first two chapters cover PAL's implementation layers and the state and timing rules shared across execution paths. This chapter explains what each subsystem's representation enables and what remains the modeler's responsibility. For signatures, examples, performance options, safety-mode selection, and checkpointing, consult the API Reference and API Guide. Usage instructions complement this design rationale but cannot replace tests of implementation behavior or scientific validity.
+The first two chapters cover PAL's implementation layers and the state and timing rules shared across execution paths. This chapter explains what each subsystem's representation enables and what remains the modeler's responsibility. For signatures, examples, performance options, safety-mode selection, and checkpointing, consult the API Reference and PAL Guide. Usage instructions complement this design rationale but cannot replace tests of implementation behavior or scientific validity.
 
 ### 3.1 Grid: typed site state and explicit indexing
 
