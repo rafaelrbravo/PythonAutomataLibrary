@@ -645,6 +645,8 @@ pop[10, 12] = 10   # replace that site's count
 pop[:] = 0        # clear counts at all sites
 ```
 
+These lines illustrate separate operations; the final assignment clears the population. To continue from the earlier example with 20 individuals at `(10, 12)`, omit the clearing line or restore that count before the next example.
+
 Linear (`pop[:]`) and spatial (`pop[:, :]`) slice reads return detached `int64` NumPy arrays; slice assignment writes to the population. Population changes can instead be accumulated and applied together:
 
 ```python
