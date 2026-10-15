@@ -482,6 +482,9 @@ print(grid[site])               # 2.5, accessed by linear index
 region = grid[2:5, 3:8]       # a 3-by-5 NumPy array
 region[:] = 7.0                # modifies the copy, not grid
 print(grid[10, 12])             # still 2.5
+grid[2:5, 3:8] = 7.0            # writes directly to the grid
+print(grid[3, 4])               # 7.0
+print(grid[10, 12])             # still 2.5 (outside the region)
 ```
 
 To change the PAL grid itself, assign to `grid[x, y]` or a grid slice such as `grid[:] = 0`. Three-dimensional grids additionally accept `grid[x, y, z]`. Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. A detached slice copy is not a live view of the Grid.
