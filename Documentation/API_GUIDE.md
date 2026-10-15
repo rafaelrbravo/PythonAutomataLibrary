@@ -609,7 +609,7 @@ print(wrapped.InWrapSQY(-1))  # -1 (outside the nonwrapped axis)
 
 ## IList
 
-Use `IList` to collect a reusable set of integer identifiers—such as grid indices or agent handles—for later iteration, shuffling, or random selection. It is useful for neighborhood queries, candidate destinations, and subsets of agents.
+Use `IList` to collect a reusable list of integer identifiers—such as grid indices or agent handles—for later iteration, shuffling, or random selection. It is useful for neighborhood queries, candidate destinations, and subsets of agents. Unlike a mathematical set, it preserves insertion order and can contain repeated identifiers; `Append()` does not enforce uniqueness.
 
 ```python
 items = pal.NewIList()
