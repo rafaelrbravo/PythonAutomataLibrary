@@ -580,6 +580,28 @@ DispWrapZ(z1, z2)
 
 `InWrapSQ*` maps integer lattice coordinates into the corresponding axis; `InWrap*` does the same for continuous coordinates. On a nonwrapped axis, an out-of-range coordinate returns `-1`. `DispWrap*(x1, x2)` returns the shortest signed displacement from `x1` to `x2`, accounting for periodic boundaries.
 
+## IList
+
+Use `IList` to collect a reusable set of integer identifiers—such as grid indices or agent handles—for later iteration, shuffling, or random selection. It is useful for neighborhood queries, candidate destinations, and subsets of agents.
+
+```python
+items = pal.NewIList()
+```
+
+`IList` collects integer identifiers for later use. These can be **grid-site indices** (such as `cells.ToI(x, y)`) or **agent handles**, letting you save a selection of sites or agents and subsequently iterate over it, shuffle it, or sample a random entry. For example, collect empty neighboring sites and choose one with `Random()`, or collect selected agents and process them later with `Iter()`. It stores identifiers, not copies of the sites or agents themselves. Stored values are nonnegative int32 integers in the supported contract.
+
+| Operation | Meaning |
+| --- | --- |
+| `Append(i)` | Append a nonnegative int32 value; returns the IList for chaining. |
+| `Clear()` | Remove all entries; returns the IList for chaining. |
+| `Random()` | Return a random entry. |
+| `Shuffle()` | Shuffle entries in place; returns the IList for chaining. |
+| `All()` | Return a detached copy. |
+| `Iter()` | Return a no-copy/live iterable view. |
+| `len(items)`, `items[i]` | Length/index access. |
+
+Use `Iter()` for one-pass iteration when a copy is unnecessary. Use `All()` when the returned values must remain independent of subsequent IList changes.
+
 ## PopGrid
 
 Use `PopGrid` when only the number of individuals at each lattice site matters, not their separate identities. It supports count-based population dynamics and movement, often avoiding the cost of representing every individual as a separate agent.
@@ -693,28 +715,6 @@ field.AdvectionInterfaces(xVels, yVels=None, zVels=None, ...)
 ```
 
 Advection uses a conservative first-order upwind discretization. `Advection` uses constant velocity components. `AdvectionField` uses cell-centered velocity fields and averages adjacent values at interior faces. `AdvectionInterfaces` supplies positive-face velocities directly; the negative face uses the neighboring cell's stored positive-face velocity. Supply velocity components only for dimensions that exist. The same scalar-or-face-array Cartesian boundary arguments used by diffusion are available: `None` closes a nonwrapped face to advective flux, while supplied values provide the exterior concentration used for inflow. Safe mode checks the CFL condition before accumulating changes.
-
-## IList
-
-Use `IList` to collect a reusable set of integer identifiers—such as grid indices or agent handles—for later iteration, shuffling, or random selection. It is useful for neighborhood queries, candidate destinations, and subsets of agents.
-
-```python
-items = pal.NewIList()
-```
-
-`IList` collects integer identifiers for later use. These can be **grid-site indices** (such as `cells.ToI(x, y)`) or **agent handles**, letting you save a selection of sites or agents and subsequently iterate over it, shuffle it, or sample a random entry. For example, collect empty neighboring sites and choose one with `Random()`, or collect selected agents and process them later with `Iter()`. It stores identifiers, not copies of the sites or agents themselves. Stored values are nonnegative int32 integers in the supported contract.
-
-| Operation | Meaning |
-| --- | --- |
-| `Append(i)` | Append a nonnegative int32 value; returns the IList for chaining. |
-| `Clear()` | Remove all entries; returns the IList for chaining. |
-| `Random()` | Return a random entry. |
-| `Shuffle()` | Shuffle entries in place; returns the IList for chaining. |
-| `All()` | Return a detached copy. |
-| `Iter()` | Return a no-copy/live iterable view. |
-| `len(items)`, `items[i]` | Length/index access. |
-
-Use `Iter()` for one-pass iteration when a copy is unnecessary. Use `All()` when the returned values must remain independent of subsequent IList changes.
 
 ## Random numbers and Multinomial
 
