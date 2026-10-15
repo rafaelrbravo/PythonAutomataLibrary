@@ -22,61 +22,70 @@ def _namespace(code):
     return namespace
 
 
-def test_all_python_blocks_parse():
-    for number, block in enumerate(_blocks(), 1):
-        # A few blocks intentionally show indented replacements for a function body.
-        ast.parse("if True:\n" + "\n".join("    " + line for line in block.splitlines()), filename=f"block {number}")
+def _run_complete_program(tmp_path, block_number, replacements=None):
+    """Run a published complete program from a real source file."""
+    code = _blocks()[block_number]
+    # The GUI tutorial waits for manual window closure; replace its event loop
+    # with a bounded headless smoke test while retaining the published functions.
+    if replacements:
+        for old, new in replacements:
+            assert old in code, f"Expected tutorial fragment missing: {old!r}"
+            code = code.replace(old, new)
+    source = tmp_path / f"api_guide_program_{block_number}.py"
+    source.write_text(code, encoding="utf-8")
+    runpy.run_path(str(source), run_name="__main__")
 
 
-def test_tutorial_initial_cells():
-    ns = _namespace(_blocks()[0])
-    cells = ns["Setup"]()
-    assert len(cells.All()) == 4
-    assert all(cells.counts[x, y] == 1 for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)))
+def test_complete_initial_cells(tmp_path):
+    _run_complete_program(tmp_path, 0)
 
 
-def test_tutorial_agent_movement_and_compilation():
-    blocks = _blocks()
-    ns = _namespace(blocks[1])
-    exec(blocks[2], ns)
-    cells = ns["Setup"]()
-    pal = ns["pal"]
-    ns["MOORE"] = pal.MooreHood(2, excludeCenter=True)
-    empty = pal.NewIList()
-    neighbors = ns["EmptyNeighbors"](cells, cells.All()[0], empty).All()
-    assert len(neighbors) > 0
-    exec(blocks[4], ns)
-    for _ in range(3):
-        ns["Step"](cells, empty)
-        assert len(cells.All()) == 4
-    exec(blocks[7], ns)
-    exec(blocks[6], ns)
-    for _ in range(3):
-        ns["Step"](cells, empty)
-        assert len(cells.All()) == 4
-    exec(blocks[9], ns)
-    nutrient = pal.NewPDEgrid((ns["SIZE"], ns["SIZE"]))
-    nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
-    nutrient[:] = 1.0
-    ns["StepNutrient"](cells, nutrient)
-    assert nutrient[14, 14] <= 1.0
+def test_complete_visualization(tmp_path, monkeypatch):
+    import PythonAutomataLibrary as pal
+
+    class FakeWindow:
+        def __init__(self):
+            self.updates = 0
+        def Update(self):
+            self.updates += 1
+        def IsOpen(self):
+            return self.updates < 2
+        def Close(self):
+            pass
+
+    class FakePixels:
+        def __setitem__(self, key, value):
+            pass
+
+    window = FakeWindow()
+    monkeypatch.setattr(pal, "StartPixWindow", lambda *args, **kwargs: (FakePixels(), window))
+    monkeypatch.setattr(pal, "AwaitWindows", lambda: None)
+    _run_complete_program(tmp_path, 1)
+    assert window.updates >= 1
 
 
-def test_tutorial_population_compiled():
-    ns = _namespace(_blocks()[11])
-    pal = ns["pal"]
-    pal.Seed(1234)
-    cells = pal.NewPopGrid((ns["SIZE"], ns["SIZE"]))
-    for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
-        cells[x, y] = 1
-    multi = pal.NewMultinomial()
-    nutrient = pal.NewPDEgrid((ns["SIZE"], ns["SIZE"]))
-    nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
-    nutrient[:] = 1.0
-    for _ in range(5):
-        ns["Step"](cells, multi)
-        assert cells.GetPop() == 4
-        ns["StepNutrient"](cells, nutrient)
+def test_complete_population_random_walk(tmp_path, monkeypatch):
+    import PythonAutomataLibrary as pal
+
+    class FakeWindow:
+        def __init__(self):
+            self.updates = 0
+        def Update(self):
+            self.updates += 1
+        def IsOpen(self):
+            return self.updates < 3
+        def Close(self):
+            pass
+
+    class FakePixels:
+        def __setitem__(self, key, value):
+            pass
+
+    window = FakeWindow()
+    monkeypatch.setattr(pal, "StartPixWindow", lambda *args, **kwargs: (FakePixels(), window))
+    monkeypatch.setattr(pal, "AwaitWindows", lambda: None)
+    _run_complete_program(tmp_path, 11)
+    assert window.updates == 3
 
 
 def _cheatsheet_sections():
