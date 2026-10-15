@@ -424,7 +424,7 @@ Each option targets a different cost: **fast mode reduces runtime checks, JIT co
 
 ### Example: unrolled Von Neumann neighborhood
 
-For a small, fixed neighborhood, PAL can compile each neighbor operation directly into the function instead of executing a conventional loop. Consider summing values in the four cardinal directions around `(x, y)`:
+For a small, fixed neighborhood, PAL can compile the neighbor operations directly rather than executing a conventional loop. Consider summing values in the four cardinal directions around `(x, y)`:
 
 ```python
 VON_NEUMANN = pal.VonNeumannHood(2, excludeCenter=True)
@@ -447,15 +447,15 @@ total += grid[x, y - 1]
 total += grid[x, y + 1]
 ```
 
-The exact offset order is not important for this sum; the example above illustrates the four operations, not the generated machine code. At boundaries, `Hood` still handles valid coordinates and wrapping according to the grid's configuration.
+The offset order does not affect this sum. The example illustrates four operations, not the generated machine code. At boundaries, `Hood` still handles valid coordinates and wrapping according to the grid's configuration.
 
-**Why this is fast:** The neighborhood has a fixed number of offsets known at compilation time. With `unroll=True`, Numba can specialize each operation, eliminating the ordinary neighborhood-loop control and making the resulting code easier to optimize. This can be **extremely performant** in the inner loop of an agent-based model, where the same small neighborhood is visited millions of times. It preserves PAL's compact neighborhood syntax rather than requiring manually expanded code.
+**Why this is fast:** The neighborhood has a fixed number of offsets known at compilation time. With `unroll=True`, Numba can specialize each operation, eliminating the ordinary neighborhood-loop control and making the resulting code easier to optimize. This can substantially improve performance when an agent-based model repeatedly visits the same small neighborhood. It preserves PAL's compact neighborhood syntax rather than requiring manually expanded code.
 
 The option changes how the loop is compiled, not which neighbors are visited. For large neighborhoods or substantial loop bodies, the duplicated operations can outweigh the runtime benefit; compare against ordinary iteration before enabling it.
 
 ### Safety contracts and mode selection
 
-Safe and fast objects expose the same modeling API. PAL starts in safe mode. To opt into fast mode, call `pal.FastMode()` **before constructing any PAL model or window object**. The first such construction locks the process-wide mode selection; a later `pal.FastMode()` raises `RuntimeError`. Run safe and fast comparisons in separate processes rather than trying to switch modes mid-run. Safe mode validates public operations and is the development/default mode; fast mode assumes the model obeys those contracts and removes performance-sensitive checks. Examples of safe-mode checks include lattice bounds and dimensionality, dead-agent and occupancy errors, PopGrid overflow, and PDE field/interface array shape or dimensionality. Invalid operations in fast mode are outside the supported contract rather than an alternative error-handling API.
+Safe and fast objects share the same modeling API; PAL starts in safe mode. To opt into fast mode, call `pal.FastMode()` **before constructing any PAL model or window object**. The first such construction locks the process-wide mode selection; a later `pal.FastMode()` raises `RuntimeError`. Run safe and fast comparisons in separate processes rather than trying to switch modes mid-run. Safe mode validates public operations and is the development/default mode; fast mode assumes the model obeys those contracts and removes performance-sensitive checks. Examples of safe-mode checks include lattice bounds and dimensionality, dead-agent and occupancy errors, PopGrid overflow, and PDE field/interface array shape or dimensionality. Invalid operations in fast mode are outside the supported contract rather than an alternative error-handling API.
 
 Use safe mode until the model is correct, then benchmark fast mode. Do not rely on safe-mode exceptions as model control flow.
 
@@ -683,7 +683,7 @@ This example seeds PAL's random-number generator before drawing two values. The 
 
 ### Multinomial allocations
 
-A binomial draw counts how many of `n` trials have one outcome. A multinomial allocation extends this to several mutually exclusive outcomes, such as moving left, moving right, or staying put. In the example below, each of 100 individuals independently has a 20% chance of moving left, a 30% chance of moving right, and a 50% chance of staying. The resulting counts vary from run to run, but always sum to 100.
+A binomial draw counts successes among `n` trials. A multinomial allocation distributes those trials among mutually exclusive outcomes, such as moving left, right, or staying put. In the example below, each of 100 individuals independently has a 20% chance of moving left, a 30% chance of moving right, and a 50% chance of staying. The sampled counts vary, but their sum is always 100.
 
 ```python
 multi = pal.NewMultinomial()
@@ -695,11 +695,11 @@ stay = 100 - left - right  # unallocated individuals
 independent = multi.Binomial(100, 0.2)  # separate binomial draw
 ```
 
-`Setup(n)` initializes a multinomial sequence with `n` trials and probability mass 1 and is chainable. Each `Sample(p)` takes that category's probability in the original multinomial distribution, draws from the remaining trials using the corresponding conditional probability, then removes the sampled count and `p` from the remaining state. Thus successive calls such as `Sample(0.2)` and `Sample(0.3)` represent categories with probabilities 0.2 and 0.3, not 0.2 followed by 0.3 of the remainder. In the example, the remaining probability is 0.5, and `stay` accounts for individuals not allocated to either sampled category. In safe mode cumulative requested probability cannot exceed 1. `Binomial(n, p)` performs an independent binomial draw and does not consume the current multinomial sequence. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
+`Setup(n)` initializes a chainable multinomial sequence with `n` trials and total probability mass 1. Each `Sample(p)` takes that category's probability in the original multinomial distribution, draws from the remaining trials using the corresponding conditional probability, then removes the sampled count and `p` from the remaining state. Thus `Sample(0.2)` followed by `Sample(0.3)` assigns original category probabilities of 0.2 and 0.3; the second call does not mean 30% of the remainder. In the example, the remaining probability is 0.5, and `stay` accounts for individuals not allocated to either sampled category. In safe mode cumulative requested probability cannot exceed 1. `Binomial(n, p)` performs an independent binomial draw and does not consume the current multinomial sequence. `NewMultinomial(other)` copies solver configuration but starts with fresh sampling state.
 
 ### Reusing the binomial solver core
 
-If several independent multinomial allocations are needed, construct one sampler and pass it into another constructor:
+To make independent multinomial allocations while reusing a solver, pass one sampler to another constructor:
 
 ```python
 movement = pal.NewMultinomial()
@@ -712,7 +712,7 @@ division.Setup(50)
 dividing = division.Sample(0.1)
 ```
 
-`NewMultinomial(movement)` **shares the underlying reusable binomial solver core**, avoiding a separate solver setup, but the two `Multinomial` objects keep **independent remaining-count and remaining-probability state**. The second instance does not inherit the first instance's partially sampled `Setup` sequence. Call `Setup` separately for each allocation. Sharing the solver does not create separate random streams: both samplers use PAL's common RNG, so results still depend on call order.
+`NewMultinomial(movement)` **shares the underlying reusable binomial solver core**, avoiding a separate solver setup, but the two `Multinomial` objects keep **independent remaining-count and remaining-probability state**. The second sampler does not inherit the first sampler's partially sampled `Setup` sequence. Call `Setup` separately for each allocation. Sharing the solver does not create separate random streams: both samplers use PAL's common RNG, so results still depend on call order.
 
 
 ## PDEgrid
@@ -905,15 +905,15 @@ window.StopGif()
 
 ### OpenGLWindow
 
-Choose `OpenGLWindow` when you want to draw geometric objects such as circles, boxes, and lines, including in three dimensions. Unlike `PixWindow`, it renders shapes rather than requiring you to color individual pixels.
+Choose `OpenGLWindow` to draw circles, boxes, and lines, including in 3D. Unlike `PixWindow`, it renders geometric shapes rather than individual colored pixels.
 
 ```python
 draw, window = pal.StartOpenGLWindow(30, 30, width=800, height=800, title="PAL")
 ```
 
-This opens a two-dimensional drawing area spanning 30 × 30 model units in an 800 × 800 window. Supply `zDim` for a three-dimensional scene; `headless=True` requests off-screen rendering.
+This opens an 800 × 800 window displaying a 30 × 30-unit 2D drawing area. Supply `zDim` for a three-dimensional scene; `headless=True` requests off-screen rendering.
 
-For example, draw a red circle centered at `(15, 15)` and publish the result:
+To draw and display a red circle centered at `(15, 15)`:
 
 ```python
 draw.Circle(3.0, pal.RGB(255, 0, 0), 15.0, 15.0)
@@ -929,7 +929,7 @@ draw.BoxSQ(color, x, y, z=0.0)
 draw.Line(width, color, x1, y1, x2, y2, z1=0.0, z2=0.0)
 ```
 
-The latter block shows method signatures with placeholder argument names; it is a reference, not a standalone runnable example.
+These are reference signatures with placeholder arguments, not a runnable example.
 
 Window controls include `Borders(width, color)`, `Camera(x, y, z, yaw=None, pitch=None)`, `Background(color)`, `Clear()`, `Update()`, `IsOpen()`, `Save(path, block=False)`, `StartGif(path, delay=100)`, `AddGifFrame(block=False, timeout=30)`, `StopGif(timeout=30)`, and `Close()`. The GIF lifecycle is the same as for `PixWindow`: start recording, append rendered frames, then stop to finalize the file.
 
