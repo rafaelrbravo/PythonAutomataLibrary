@@ -1,7 +1,12 @@
 """Verify PAL grids and mutable state can travel together through compiled functions."""
-from collections import namedtuple
+from typing import NamedTuple
+import numpy as np
+import PythonAutomataLibrary as pal
 
-Model = namedtuple("Model", "cells nutrient rates")
+class Model(NamedTuple):
+    cells: pal.AgentGrid
+    nutrient: pal.PDEgrid
+    rates: np.ndarray
 
 
 def test_namedtuple_composite_across_jitted_functions(api):
@@ -9,18 +14,17 @@ def test_namedtuple_composite_across_jitted_functions(api):
     cells.NewAgentSQ(3, 3)
     nutrient = api.NewPDEgrid((8, 8))
     nutrient[:] = 1.0
-    import numpy as np
     rates = np.array([0.1, 0.2])
-    model = Model(cells, nutrient, rates)
+    model = Model(cells=cells, nutrient=nutrient, rates=rates)
 
     @api.njit(cache=False)
-    def consume(state):
+    def consume(state: Model):
         for agent in state.cells.All():
             x, y = state.cells.XSQ(agent), state.cells.YSQ(agent)
             state.nutrient[x, y] -= state.rates[0]
 
     @api.njit(cache=False)
-    def step(state):
+    def step(state: Model):
         consume(state)
         state.rates[1] += 1.0
         return state.nutrient[3, 3]
