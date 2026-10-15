@@ -553,6 +553,8 @@ By default an `AgentGrid` is not stackable: at most one agent may occupy a latti
 
 `All()` has **snapshot semantics**. The returned collection can be iterated while agents are created or disposed without changing the current iteration. `All(shuffle=True)` returns the same population in randomized order.
 
+**Working with `IList`.** `AgentGrid` identifies agents by integer handles and lattice sites by integer indices, so `pal.NewIList()` is useful for collecting either kind of identifier during queries. For example, when choosing an empty neighboring site, clear a reusable `IList`, append each eligible site's index with `agents.ToI(x, y)`, then select one with `Random()` and convert it back with `agents.ItoX(i)` and `agents.ItoY(i)`. Do not mix site indices with agent handles. The [empty-neighbor tutorial](#3-find-neighbors-and-empty-sites) shows this pattern in code; the [IList section](#ilist) explains its storage and iteration behavior.
+
 The following is a *pattern*, not a standalone executable example: `ShouldDie` represents a death rule you define for your model.
 
 ```python
