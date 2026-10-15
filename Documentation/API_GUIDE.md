@@ -1,6 +1,6 @@
 # PAL API Guide
 
-This guide introduces PAL through a working model, then explains each component and its behavioral contracts. Start with the component overview and follow the worked tutorial in order. The later sections document detailed behavior, constraints, and specialized operations. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
+This guide starts with a working model, then explains PAL's components, behavior, constraints, and specialized operations. Begin with the component overview and work through the tutorial in order. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
 
 ## Choose the right PAL structure
 
@@ -13,13 +13,13 @@ This guide introduces PAL through a working model, then explains each component 
 | Reusable integer query result | `IList` |
 | Binomial/multinomial draws | `Multinomial` |
 
-These components can work together in one model. For example, individual cells in an `AgentGrid` can consume a nutrient represented by a `PDEgrid`. Some components support accumulating changes before applying them together with `Update()`; later sections explain why the timing of those updates matters.
+You can combine these components: for example, cells in an `AgentGrid` can consume a nutrient represented by a `PDEgrid`. Some components accumulate changes until `Update()` applies them together; the timing of those updates matters.
 
 ## Build a cell model, one feature at a time
 
-This tutorial follows **one simple model**: cells occupy sites on a two-dimensional lattice. First we place and draw them. Then we let them move to empty neighboring sites. Then we compile the movement rule, add a boundary-fed nutrient field, and replace agents with population counts. Each stage reuses the same biological idea, so the new material is about PAL rather than new biology.
+The tutorial develops **one simple model** of cells on a two-dimensional lattice. We place and draw cells, move them into empty neighboring sites, compile the movement rule, add a boundary-fed nutrient field, and finally represent cells as population counts. The biological premise stays the same so each stage can focus on a new PAL feature.
 
-Use the examples in order. The code blocks marked **complete program** can be saved as separate Python files and run independently. Later snippets show focused modifications to the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
+Follow the examples in order. Blocks marked **complete program** run independently when saved as Python files; other snippets modify the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
 
 PAL begins in safe mode, which checks operations for common errors. The tutorial uses this default. Later, the [performance section](#performance-fastmode-njitcachetrue-and-unrolltrue) explains how to select fast mode and compile frequently executed code.
 
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
 ### 2. Draw the cells immediately
 
-Visual feedback is useful from the first model. `StartPixWindow` gives us a pixel grid and a window. `pal.AwaitWindows()` waits for the windows to be ready before the program continues. Each site becomes one pixel, enlarged by `scale`. We draw black background pixels and red occupied sites.
+`StartPixWindow` creates a pixel grid and a window. `pal.AwaitWindows()` waits until windows are ready before the program continues. Each lattice site becomes one pixel, enlarged by `scale`. We draw the background black and occupied sites red.
 
 **Complete program — place and display cells:**
 
@@ -147,7 +147,7 @@ The cells wander without overlapping. A cell with no empty neighbors stays put. 
 
 ### 5. Compile the timestep
 
-The movement rule from stage 4 is now called repeatedly, so it is a good candidate for compilation. `@pal.njit(cache=True)` compiles the function for faster repeated execution; the first call still takes time to compile, and compatible later runs can reuse the cached result. Because the neighborhood results already use `IList`, no change in data representation is needed. Add the decorator to `Step` and annotate its PAL arguments:
+The movement rule runs every timestep, making it a good candidate for compilation. `@pal.njit(cache=True)` compiles the function for faster repeated execution; the first call still takes time to compile, and compatible later runs can reuse the cached result. Because the neighborhood results already use `IList`, no change in data representation is needed. Add the decorator to `Step` and annotate its PAL arguments:
 
 ```python
 @pal.njit(cache=True)
@@ -171,7 +171,7 @@ def EmptyNeighbors(cells: pal.AgentGrid, agent: int, empty: pal.IList):
     return empty
 ```
 
-Both functions now run in compiled code, while `main`, window creation, and rendering can remain in ordinary Python. In the compiled `EmptyNeighbors`, `unroll=True` expands the small, fixed eight-neighbor loop, which can reduce loop overhead. It has no unrolling benefit in the ordinary Python version from stage 3, and larger neighborhoods or complex loop bodies can increase compilation time and code size. The simulation rule and data representation are unchanged. `cache=True` can reuse compiled specializations in later runs; the [performance section](#performance-fastmode-njitcachetrue-and-unrolltrue) explains the tradeoffs.
+Both functions now run as compiled code. `main`, window creation, and rendering can remain in ordinary Python. In the compiled `EmptyNeighbors`, `unroll=True` expands the small, fixed eight-neighbor loop, which can reduce loop overhead. It has no unrolling benefit in the ordinary Python version from stage 3, and larger neighborhoods or complex loop bodies can increase compilation time and code size. The simulation rule and data representation are unchanged. `cache=True` can reuse compiled specializations in later runs; the [performance section](#performance-fastmode-njitcachetrue-and-unrolltrue) explains the tradeoffs.
 
 ### 6. Add a diffusing nutrient
 
@@ -285,11 +285,11 @@ The nutrient update now consumes 0.01 concentration units per cell at each site,
 
 ### Where to go next
 
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, and switch cell representations while keeping that field. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. For compilation and execution options, see [Performance](#performance-fastmode-njitcachetrue-and-unrolltrue). Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [IList](#ilist), [PopGrid](#popgrid), [Random numbers and Multinomial](#random-numbers-and-multinomial), or [PDEgrid](#pdegrid). The later sections cover [visualization](#visualization), [saving PAL objects](#saving-pal-objects), and [organizing larger models](#organizing-larger-models). You do not need to use every feature in the tutorial model.
+You have now constructed and visualized model state, queried neighborhoods, moved cells, compiled repeated work, evolved a nutrient field, and changed cell representations without changing that field. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. For compilation and execution options, see [Performance](#performance-fastmode-njitcachetrue-and-unrolltrue). Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [IList](#ilist), [PopGrid](#popgrid), [Random numbers and Multinomial](#random-numbers-and-multinomial), or [PDEgrid](#pdegrid). The later sections cover [visualization](#visualization), [saving PAL objects](#saving-pal-objects), and [organizing larger models](#organizing-larger-models). You do not need to use every feature in the tutorial model.
 
 ## Core use
 
-This section collects import, execution-mode, and compilation conventions used throughout the component reference. The tutorial above works in PAL's default safe mode, so you can return to these options when you need them.
+These import, execution-mode, and compilation conventions apply throughout the guide. The tutorial uses PAL's default safe mode.
 
 ```python
 import PythonAutomataLibrary as pal
@@ -320,7 +320,7 @@ grid.NewAgentSQ(10, 12)
 print(CountAgents(grid))  # 1
 ```
 
-Keep model construction outside the compiled function when it only needs to happen once; compile the work that runs repeatedly. `pal.njit` wraps Numba `njit` and additionally transforms PAL model code. Among other PAL-specific compilation behavior, annotated PAL arguments allow safe-mode errors in compiled model code to report the model source line.
+Construct a model once in Python and compile the work that runs repeatedly. `pal.njit` wraps Numba `njit` and additionally transforms PAL model code. Among other PAL-specific compilation behavior, annotated PAL arguments allow safe-mode errors in compiled model code to report the model source line.
 
 ## Construction
 
@@ -420,7 +420,7 @@ PAL provides three complementary performance controls:
 - **`@pal.njit(cache=True)`** compiles a Python function to native code, avoiding Python interpreter overhead in repeated numerical loops. The first call for a particular argument-type specialization still incurs compilation cost. `cache=True` saves compiled specializations to disk so later runs can reuse them when compatible; it does not make the first compilation faster, and some changes or environments require recompilation.
 - **`unroll=True`** only affects performance inside functions compiled with `@pal.njit`; it provides no unrolling benefit in ordinary Python execution. It expands the loop body for each neighborhood offset, removing ordinary loop-control overhead and exposing individual operations to optimization. Use it only for **stencil operations over relatively small neighborhoods with simple loop bodies**: both the number of neighbors and the amount of code inside the loop increase generated code size and compilation time. For large neighborhoods or complex loop bodies, prefer ordinary iteration.
 
-These optimizations address different costs: **fast mode reduces runtime checks, JIT compilation reduces interpreter overhead, caching reduces repeated compilation across runs, and unrolling reduces inner-loop overhead**. They can be used together. Benchmark representative models because the benefit of each depends on the operations performed.
+Each option targets a different cost: **fast mode reduces runtime checks, JIT compilation reduces interpreter overhead, caching avoids compatible recompilation across runs, and unrolling reduces inner-loop overhead**. You can combine them, but benchmark representative workloads.
 
 ### Example: unrolled Von Neumann neighborhood
 
@@ -981,7 +981,7 @@ Safe/fast identity is also restored. In particular, a `PopGrid` or `PDEgrid` can
 
 ## Organizing larger models
 
-Once a model uses several grids and parameter arrays, it can be useful to group them into a single object. This is an optional organizational technique, not a requirement for using PAL.
+Once a model uses several grids and parameter arrays, it can be useful to group them into a single object. This organization is optional.
 
 ### Package model components with a named tuple
 
