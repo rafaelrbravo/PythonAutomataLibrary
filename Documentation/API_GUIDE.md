@@ -141,7 +141,7 @@ The cells wander without overlapping. A cell with no empty neighbors stays put. 
 
 ### 5. Compile the timestep
 
-Because the neighborhood results already use `IList`, compiling the movement rule requires no change in data representation. Add `@pal.njit(cache=True)` to the same `Step` function and annotate its PAL arguments:
+The movement rule from stage 4 is now called repeatedly, so it is a good candidate for compilation. `@pal.njit(cache=True)` compiles the function for faster repeated execution; the first call still takes time to compile, and compatible later runs can reuse the cached result. Because the neighborhood results already use `IList`, no change in data representation is needed. Add the decorator to `Step` and annotate its PAL arguments:
 
 ```python
 @pal.njit(cache=True)
