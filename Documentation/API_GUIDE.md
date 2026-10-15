@@ -264,10 +264,12 @@ def main():
     nutrient[:] = 1.0
     pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Population random walk")
     pal.AwaitWindows()
+    step = 0
     while window.IsOpen():
         Step(cells, multi)
         assert cells.GetPop() == initialPop  # movement conserves cell count
         StepNutrient(cells, nutrient)
+        step += 1
         Draw(cells, pix)
         window.Update()
         time.sleep(0.05)
@@ -296,7 +298,7 @@ To save the state at a chosen timestep, use Python's `pickle` to store the popul
 ```python
 import pickle
 
-step = 0  # replace with the current timestep in your simulation
+# `step` is the timestep counter maintained by stage 7.
 with open("cells.pkl", "wb") as f:
     pickle.dump({"cells": cells, "nutrient": nutrient, "step": step}, f)
 
