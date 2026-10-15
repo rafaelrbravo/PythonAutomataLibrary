@@ -27,6 +27,7 @@ PAL has five implementation layers:
 3. **Numba implementations and overloads.** Numba **compiles** Python functions into machine code for faster repeated execution. PAL's **overloads** provide versions of supported operations that work inside those compiled functions.
 4. **`pal.njit` source transformation.** Before Numba compiles a function, PAL can **transform** certain Python constructs—such as neighborhood and box loops—into forms Numba can compile.
 5. **C layer (native core).** **Native** means code compiled from a lower-level language rather than executed by the Python interpreter. PAL uses C for some of its data storage and computational routines; not every operation calls C.
+
 Tests check agreement between implementations; examples and documentation describe the public API's intended behavior.
 
 **The central idea is that users work with the same PAL objects and methods whether their code runs in Python or is compiled with Numba.** PAL handles the different implementations behind the scenes. Not every operation passes through every layer.
@@ -35,9 +36,7 @@ Tests check agreement between implementations; examples and documentation descri
 
 PAL uses Python to construct models, configure experiments, inspect results, and perform work that does not need millions of repetitions. Repeated model calculations can instead run in functions compiled by Numba, avoiding much of the overhead of executing Python loops. Both paths operate on PAL objects, with the C core providing storage and selected lower-level operations.
 
-PAL exposes the same supported methods in ordinary Python and compiled functions, but they do not necessarily use the same implementation. Python wrappers handle ordinary calls, while Numba overloads provide compiled versions of supported operations. Numba cannot compile arbitrary Python code: it needs supported operations and argument types.
-
-For supported operations, the two paths should have the same observable behavior, including return values, state changes, boundary handling, and errors where those are part of the API. Their internal implementations and performance may differ. Not every operation reaches the C core; some work is handled directly by Python or Numba.
+Python wrappers handle ordinary calls; Numba overloads implement supported calls in compiled functions. Numba cannot compile arbitrary Python code: it needs supported operations and argument types. The implementations can differ, but supported operations should have the same observable behavior in both paths, including return values, state changes, boundary handling, and errors where those are part of the API. Not every operation reaches the C core; some work is handled directly by Python or Numba.
 
 ### 1.4 Model-code transformation with `pal.njit`
 
@@ -69,7 +68,7 @@ Relative offsets avoid storing absolute-neighbor lists for every cell and allow 
 
 ### 2.3 Separate update and commit operations
 
-PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits pending changes. This makes the timestep's commit boundary explicit.
+PAL distinguishes pending changes from committed state. In `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits it, making the timestep's commit boundary explicit.
 
 This distinction has mathematical consequences. If every new site value must be computed from the same old field, immediate mutation can make results depend on iteration order. Queued deltas let the model calculate changes before committing them. This does not guarantee synchronous updates in every case: reads observe the current committed state, while direct indexing can mutate it immediately. PAL permits order-dependent algorithms but makes the choice explicit.
 
@@ -87,7 +86,7 @@ Fast mode should be treated as a measured optimization, not a correctness mode. 
 
 ## 3. Subsystem design choices
 
-Chapter 1 describes how a model operation reaches its implementation; Chapter 2 describes the state and timing rules that must hold regardless of execution path. This chapter examines the concrete representations that enforce those rules. For each subsystem, the key questions are what its representation makes easy and what it leaves to the modeler. For complete call signatures and usage examples, see the API Reference and API Guide. The API Guide also covers performance options, safety-mode selection, and checkpointing. Those usage instructions complement the design rationale here; they do not replace tests of implementation behavior or scientific validity.
+The first two chapters cover PAL's implementation layers and the state and timing rules shared across execution paths. This chapter explains what each subsystem's representation enables and what remains the modeler's responsibility. For signatures, examples, performance options, safety-mode selection, and checkpointing, consult the API Reference and API Guide. Usage instructions complement this design rationale but cannot replace tests of implementation behavior or scientific validity.
 
 ### 3.1 Grid: typed site state and explicit indexing
 
@@ -115,7 +114,9 @@ A `PopGrid` stores integer population counts per site. It is intended for popula
 
 Its `Add` operation queues a delta; `Update` applies pending changes; `Reset` clears current state and pending deltas. The delta buffer lets the model compute changes before committing them. For a movement event from site A to site B, queue a negative delta at A and a positive delta at B, then update once. If the model reads current counts during this phase, it sees the pre-commit counts, which helps make the update independent of visitation order.
 
-The `capacity` argument selects the smallest integer storage type that can represent the requested per-site population. It is a storage-sizing hint, not a population limit. In safe mode, PAL checks direct writes and committed updates against the selected storage type's range, rather than the requested capacity; queued deltas have their own storage bounds, and the total population must fit a signed 64-bit integer. Model-specific population limits remain the modeler's responsibility. `GetPop()` reports the total across all sites, whereas `All()` returns the indices of nonzero sites, not the counts themselves. Read the count at each returned index when its local value is needed. Keeping these semantics distinct avoids confusing the set of occupied sites with the population data stored there.
+The `capacity` argument selects the smallest integer storage type that can represent the requested per-site population. It is a storage-sizing hint, not a population limit. In safe mode, PAL checks direct writes and committed updates against the selected storage type's range, not the requested capacity. Queued deltas have their own storage bounds, and the total population must fit a signed 64-bit integer. The modeler must enforce any model-specific population limit.
+
+`GetPop()` reports the total across all sites. `All()` instead returns indices of nonzero sites, not their counts; read each indexed site to obtain its local count. The set of occupied sites and the population values are distinct.
 
 ### 3.4 PDEgrid: numerical operations with explicit assumptions
 
@@ -137,7 +138,7 @@ The distinction between queued and immediate mutations is especially important f
 
 Draw order matters: changing when one component samples can change later outcomes, even if the later component is unchanged. External RNGs have independent state and require separate seeding or checkpoint handling.
 
-PAL object checkpoints do not save RNG state. For reproducible continuation, call `pal.Seed(checkpointSeed)` immediately after saving the model, before continuing. After loading the checkpoint in another run, call `pal.Seed(checkpointSeed)` again before any random draws. Both runs then start a new random sequence from the same model state. This requires identical parameters, execution order, and subsequent draws; the convention is most reliable in single-threaded runs and does not guarantee identical multithreaded outcomes when thread assignment changes.
+PAL object checkpoints do not save RNG state. To reproduce a continuation, call `pal.Seed(checkpointSeed)` immediately after saving the model, before continuing. In the resumed run, load the checkpoint and call `pal.Seed(checkpointSeed)` before any random draws. Both runs then start a new random sequence from the same model state. Reproduction still requires identical parameters, execution order, and subsequent draws; this approach is most reliable in single-threaded runs and does not guarantee identical multithreaded outcomes if thread assignments change.
 
 ### 3.7 Multinomial sampling: configuration versus sample state
 
@@ -147,6 +148,6 @@ A `Multinomial` sampler separates configuration from the state accumulated while
 
 Visualization is separate from simulation state transitions, allowing headless execution and drawing at selected steps. `PixWindow` provides a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D and 3D geometry.
 
-After writing pixels or drawing geometry, call `Update()` to request display. If the window cannot keep up, display frames are automatically skipped rather than making the simulation wait. Saving images and recording GIF frames are different: these requests run asynchronously, so the simulation can continue while output is written, but requested saved frames are not skipped. The window thread remains open until pending drawing and saving work finishes.
+After writing pixels or drawing geometry, call `Update()` to request display. If the window cannot keep up, display frames are skipped instead of blocking the simulation. Image saves and GIF recordings differ: output is written asynchronously so the simulation can continue, but requested saved frames are not skipped. The window thread remains open until pending drawing and saving work finishes.
 
 Constructing frames still costs computation, even when presentation is nonblocking. Keep drawing separate from model updates when measuring performance. Headless rendering exercises the off-screen output path but cannot validate interactive window behavior.
