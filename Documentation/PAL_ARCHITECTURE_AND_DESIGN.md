@@ -4,7 +4,7 @@ This document explains how PAL is organized, why its major interfaces and implem
 
 ## Reading map
 
-Chapter 1 explains the design problem and traces execution through the public API, Python wrappers, Numba, and native code. Chapter 2 explains state ownership, neighborhood interpretation, update timing, execution modes, and rendering. Chapter 3 examines each subsystem's representation and trade-offs, including random-number state. Chapters 4 and 5 cover maintenance, testing, and performance; Chapter 6 distinguishes software correctness from scientific validation. Chapter 7 points to the complementary user-facing references.
+Chapter 1 explains the design problem and traces execution through the public API, Python wrappers, Numba, and native code. Chapter 2 explains state ownership, neighborhood interpretation, update timing, and execution modes. Chapter 3 examines each subsystem's representation and trade-offs, including random-number state and visualization. Chapters 4 and 5 cover maintenance, testing, and performance; Chapter 6 distinguishes software correctness from scientific validation. Chapter 7 points to the complementary user-facing references.
 
 ## 1. Foundations: responsibilities and execution
 
@@ -113,10 +113,6 @@ A process-wide mode also avoids pretending that an individual object can be swit
 
 Fast mode should be treated as a measured optimization, not a correctness mode. It can reduce validation overhead; it cannot repair invalid model assumptions, unsafe numerical parameters, or a wrong update order. Safe mode can catch selected contract violations, but it cannot establish that the biological or physical equations are appropriate.
 
-### 2.6 Separating visualization from simulation
-
-Keep rendering separate from the simulation's state transitions. This separation allows headless execution and intermittent rendering, and it prevents display costs from obscuring the cost of the model itself. Benchmark the update kernel separately from drawing, then measure end-to-end runtime if that reflects the user's actual workload. A plausible-looking image is not proof that the underlying state transitions are correct.
-
 ## 3. Subsystem design choices
 
 Chapter 1 describes how a model operation reaches its implementation; Chapter 2 describes the state and timing rules that must hold regardless of execution path. This chapter examines the concrete representations that enforce those rules. The central question for each subsystem is not only what it stores, but what information or behavior its representation makes easy—and what it deliberately leaves to the modeler. For complete call signatures and usage examples, see the API Reference and API Guide.
@@ -172,6 +168,8 @@ A shared stream simplifies reproducing a particular execution order across Pytho
 A `Multinomial` sampler separates configuration from the state accumulated while sampling. `Setup(n)` configures the number of trials for repeated `Sample(p)` calls; `Binomial(n, p)` performs a draw with an explicit trial count. `NewMultinomial(other)` copies the sampler's configuration, but not its current multinomial remainder, so the new sampler starts with independent sampling state. Both samplers must use the same process-wide safety mode. This distinction matters when cloning a configured sampler: configuration can be shared without continuing the same partially consumed sample state.
 
 ### 3.8 Visualization: simulation state versus presentation
+
+Rendering is deliberately separate from simulation state transitions. That separation permits headless runs and intermittent drawing, and it keeps visualization costs from being mistaken for model-update costs. Benchmark simulation and rendering separately before measuring end-to-end performance. A plausible-looking image is not evidence that the state transitions are correct.
 
 `PixWindow` exposes a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D/3D geometry. These are distinct rendering interfaces with different presentation workflows.
 
