@@ -334,7 +334,7 @@ grid = pal.NewAgentGrid((-100, 100))   # x wraps, y does not
 grid = pal.NewPDEgrid((-100, -100))    # x and y wrap
 ```
 
-`numAgentProps` controls how many floating-point properties each agent has. `isStackable=False` means at most one agent can occupy a lattice site; `True` allows multiple agents per site. `PopGrid.capacity` sets an optional **per-site** population limit, not a limit on the entire grid.
+`numAgentProps` controls how many floating-point properties each agent has. `isStackable=False` means at most one agent can occupy a lattice site; `True` allows multiple agents per site. `PopGrid.capacity` selects the smallest integer storage type that can hold the requested **per-site** count; it does not impose a strict population limit.
 
 ### Constructor validation and limits
 
@@ -663,7 +663,7 @@ print(pop[10, 12])    # 17
 | `All()` | Copy of the linear indices of currently nonzero sites. |
 | `Reset()` | Clear current populations and pending changes. |
 
-`capacity=None` uses the int64 maximum as the per-site population cap. An explicit `capacity` must be a nonnegative int64 integer; invalid, fractional, nonfinite, or out-of-range values raise `ValueError` during construction. Capacity constrains each site independently; total population is tracked separately and must remain representable as a nonnegative int64. In safe mode, direct writes enforce these bounds immediately. `Add()` queues signed changes without applying them to the current counts; a queued change may exceed a site's remaining capacity until it is checked at `Update()`. `Update()` validates every resulting site count and the total population before applying any pending delta; if validation fails, current populations and pending deltas are unchanged. Fast mode assumes these constraints are satisfied.
+`capacity=None` selects signed int64 storage. An explicit `capacity` must be a nonnegative int64 integer; invalid, fractional, nonfinite, or out-of-range values raise `ValueError` during construction. PAL selects uint8, uint16, uint32, or int64 storage according to that value. **The requested capacity is not an enforced limit:** for example, `capacity=100` selects uint8, allowing site counts up to 255. Safe mode checks direct writes against the selected storage range and checks the final site counts and signed-int64 total population at `Update()`. `Add()` queues signed changes; pending deltas have their own integer range and are checked for overflow when queued. If `Update()` validation fails, current counts and pending deltas remain unchanged. Fast mode omits these safety checks.
 
 ## Random numbers and Multinomial
 
