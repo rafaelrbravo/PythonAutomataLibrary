@@ -37,7 +37,7 @@ PAL uses Python for constructing models, configuring experiments, inspecting res
 
 PAL exposes the same supported methods in ordinary Python and compiled functions, but they do not necessarily use the same implementation. Python wrappers handle ordinary calls, while Numba overloads provide compiled versions of supported operations. This is necessary because Numba cannot compile arbitrary Python code and requires operations and argument types it understands.
 
-For supported operations, the two paths should have the same observable behavior, including returned values and changes to model state. Their internal code and performance may differ. Not every operation reaches the C core; some work is handled directly by Python or Numba.
+For supported operations, the two paths should have the same observable behavior, including return values, state changes, boundary handling, and errors where those are part of the API. Their internal implementations and performance may differ. Not every operation reaches the C core; some work is handled directly by Python or Numba.
 
 ### 1.4 Model-code transformation with `pal.njit`
 
