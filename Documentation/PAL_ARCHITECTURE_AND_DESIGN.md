@@ -14,7 +14,7 @@ PAL targets models that repeatedly update many small pieces of state. A timestep
 
 PAL's architecture splits the problem by frequency and responsibility. Python remains the control language for constructing the model, selecting parameters, loading inputs, managing experiments, and deciding when to draw or checkpoint. Repeated computation is expressed in functions that PAL can prepare for Numba compilation. The native core supplies low-level state and kernels behind that interface.
 
-This split does not mean that all Python code is slow or that every model function should be compiled. It puts optimization effort where repeated work makes it worthwhile. A function called once during setup usually needs less attention than a loop executed at every site over millions of timesteps. Start with clear model code, identify the repeated work, and benchmark before moving more logic into compiled kernels.
+The boundary is also a design constraint: a high-level model can combine different state representations without rewriting its timestep in C, while the low-level implementations can evolve without changing the model-facing API. The cost is that wrappers, compiled overloads, and native state must be maintained together. This split does not mean that all Python code is slow or that every model function should be compiled. It puts optimization effort where repeated work makes it worthwhile. A function called once during setup usually needs less attention than a loop executed at every site over millions of timesteps. Start with clear model code, identify the repeated work, and benchmark before moving more logic into compiled kernels.
 
 ### 1.2 The layers and their responsibilities
 
@@ -59,7 +59,7 @@ PAL's `njit` interface is not simply a spelling alias for Numba's decorator. Bef
 
 The transformation lets users express spatial operations directly instead of writing coordinate conversions in every loop. It also gives PAL a place to add source-aware safe-mode diagnostics when argument annotations provide enough type information.
 
-Transformations add a layer that users should understand when debugging. The Python source a modeler reads is not necessarily the exact function body Numba receives. A traceback or typing error may refer to transformed code or a synthetic compilation context. Annotations improve the information available to the transformer, but they do not guarantee that every error can be attributed to a perfect source location.
+The benefit of this approach is that spatial loops retain readable model-level syntax while their compiled form can specialize the iteration work. The cost is an additional translation stage with its own supported syntax, type assumptions, and failure modes. Transformations add a layer that users should understand when debugging. The Python source a modeler reads is not necessarily the exact function body Numba receives. A traceback or typing error may refer to transformed code or a synthetic compilation context. Annotations improve the information available to the transformer, but they do not guarantee that every error can be attributed to a perfect source location.
 
 When a failure occurs only under `@pal.njit`, do not immediately rewrite the scientific algorithm. First isolate the smallest function that reproduces it, confirm argument annotations and supported API usage, and compare it with a Python version. Then determine whether the problem lies in the transformation, Numba typing, a wrapper, or the underlying operation.
 
@@ -145,7 +145,7 @@ The `counts` property is a read-only occupancy query view, not a writable altern
 
 ### 3.3 PopGrid: counts instead of individual objects
 
-A `PopGrid` stores integer population counts per site. It is intended for populations whose members are interchangeable for the questions being asked. That can greatly reduce storage and update overhead compared with representing every individual as an agent, but it removes individual-level history and identity.
+A `PopGrid` stores integer population counts per site. It is intended for populations whose members are interchangeable for the questions being asked. The choice is a modeling assumption, not just a memory optimization: two populations with equal site counts are indistinguishable to this representation even if their individual histories differ. That can greatly reduce storage and update overhead compared with representing every individual as an agent, but it removes individual-level history and identity.
 
 Its `Add` operation queues a delta; `Update` applies pending changes; `Reset` clears current state and pending deltas. The explicit delta buffer makes it possible to compute a set of changes before committing them. For a movement event from site A to site B, queue a negative delta at A and a positive delta at B, then update once. If the model reads current counts during this phase, it sees the pre-commit counts, which helps make the update independent of visitation order.
 
@@ -153,7 +153,7 @@ The `capacity` option limits the total population represented by the grid, not t
 
 ### 3.4 PDEgrid: numerical operations with explicit assumptions
 
-A `PDEgrid` stores a lattice scalar field. Its transport methods represent different mathematical choices: scalar-coefficient diffusion, spatially varying or interface-defined coefficients, masked interfaces, alternating-direction implicit diffusion, radial diffusion on circular or spherical domains, and constant or spatially varying advection. Choose a method based on the equation and geometry being modeled, not simply on which method is fastest.
+A `PDEgrid` stores a lattice scalar field. Unlike an AgentGrid, its state is a spatially distributed quantity rather than a collection of individually tracked entities. This makes field-level transport and source terms natural, but it also means the modeler must choose a discretization and interpret the units of stored values and coefficients consistently. Its transport methods represent different mathematical choices: scalar-coefficient diffusion, spatially varying or interface-defined coefficients, masked interfaces, alternating-direction implicit diffusion, radial diffusion on circular or spherical domains, and constant or spatially varying advection. Choose a method based on the equation and geometry being modeled, not simply on which method is fastest.
 
 `SetTimeSpaceStep` configures the temporal step `dt` and spatial steps `dx`, `dy`, and `dz` used by transport methods. These values are part of the discretized equation. A timestep that is too large can produce unstable or inaccurate results even when every API call is valid. Boundary conditions likewise belong to the mathematical problem: face-specific values and periodic wrapping can produce different solutions.
 
