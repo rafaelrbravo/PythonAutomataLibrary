@@ -20,14 +20,14 @@ This division lets a high-level model combine different state representations wi
 
 ### 1.2 The layers and their responsibilities
 
-PAL has five implementation layers, supported by tests and documentation:
+PAL has five implementation layers:
 
 1. **Public API and Protocols.** The public API defines what users can do with PAL: which objects and methods exist and what arguments they accept. **Protocols** describe those interfaces for type checking and autocomplete; they do not implement them.
 2. **Python constructors and wrappers.** **Constructors** create PAL objects. **Wrappers** handle calls made from ordinary Python, translating user-friendly arguments into the operations PAL performs internally.
 3. **Numba implementations and overloads.** Numba **compiles** Python functions into machine code for faster repeated execution. PAL's **overloads** provide versions of supported operations that work inside those compiled functions.
 4. **`pal.njit` source transformation.** Before Numba compiles a function, PAL can **transform** certain Python constructs—such as neighborhood and box loops—into forms Numba can compile.
 5. **C layer (native core).** **Native** means code compiled from a lower-level language rather than executed by the Python interpreter. PAL uses C for some of its data storage and computational routines; not every operation calls C.
-6. **Tests, examples, and documentation.** These are not an execution layer. They check that the implementations agree and show users what the public API promises.
+Tests, examples, and documentation support these layers by checking that the implementations agree and showing users what the public API promises.
 
 **The central idea is that users work with the same PAL objects and methods whether their code runs in Python or is compiled with Numba.** PAL handles the different implementations behind the scenes. Not every operation passes through every layer.
 
@@ -115,7 +115,7 @@ A `PopGrid` stores integer population counts per site. It is intended for popula
 
 Its `Add` operation queues a delta; `Update` applies pending changes; `Reset` clears current state and pending deltas. The explicit delta buffer makes it possible to compute a set of changes before committing them. For a movement event from site A to site B, queue a negative delta at A and a positive delta at B, then update once. If the model reads current counts during this phase, it sees the pre-commit counts, which helps make the update independent of visitation order.
 
-The `capacity` option specifies the expected maximum population at a single site. PAL uses it to choose the smallest integer representation that can hold counts up to that value, reducing memory use and improving performance. **PAL does not enforce this capacity**: the model must keep counts within the chosen representation's range and enforce any per-site or global population limits itself. `GetPop()` reports the total across all sites, whereas `All()` returns the indices of nonzero sites, not the counts themselves. Read the count at each returned index when its local value is needed. Keeping these semantics distinct avoids confusing the set of occupied sites with the population data stored there.
+The `capacity` argument selects the smallest integer storage type that can represent the requested per-site population. It is a storage-sizing hint, not a population limit. In safe mode, PAL checks direct writes and committed updates against the selected storage type's range, rather than the requested capacity; queued deltas have their own storage bounds, and the total population must fit a signed 64-bit integer. Model-specific population limits remain the modeler's responsibility. `GetPop()` reports the total across all sites, whereas `All()` returns the indices of nonzero sites, not the counts themselves. Read the count at each returned index when its local value is needed. Keeping these semantics distinct avoids confusing the set of occupied sites with the population data stored there.
 
 ### 3.4 PDEgrid: numerical operations with explicit assumptions
 
@@ -145,11 +145,8 @@ A `Multinomial` sampler separates configuration from the state accumulated while
 
 ### 3.8 Visualization: simulation state versus presentation
 
-Rendering is deliberately separate from simulation state transitions. That separation permits headless runs and intermittent drawing, and it keeps visualization costs from being mistaken for model-update costs. Benchmark simulation and rendering separately before measuring end-to-end performance. A plausible-looking image does not establish that the state transitions are correct.
+Visualization is separate from simulation state transitions, allowing headless execution and drawing at selected steps. `PixWindow` provides a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D and 3D geometry.
 
-`PixWindow` exposes a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D/3D geometry. They serve different rendering workflows.
+After writing pixels or drawing geometry, call `Update()` to request display. If the window cannot keep up, display frames are automatically skipped rather than making the simulation wait. Saving images and recording GIF frames are different: these requests run asynchronously, so the simulation can continue while output is written, but requested saved frames are not skipped. The window thread remains open until pending drawing and saving work finishes.
 
-Write pixel colors or OpenGL primitives, then call the window's `Update()` to request presentation. Display frames are automatically skipped when the window cannot render them quickly enough, allowing simulation to continue without waiting for every frame. Saving a visualization or recording GIF frames is asynchronous: the simulation can continue without waiting for the output to finish writing. Unlike display updates, requested saved frames are not skipped, and the window thread remains open until all pending drawing and saving work is finished. Constructing pixel buffers or geometry still has a cost, so measure drawing and simulation separately when performance matters. Keep drawing separate from the computational kernel unless using an explicitly supported compiled drawing API.
-
-Headless rendering exists so output can be generated and tested without a visible interactive window, but it still depends on the relevant image or graphics backend. A headless test validates the supported off-screen path; it cannot fully validate window placement, user input, or a display server's lifecycle.
-
+Constructing frames still takes computation, even when presentation is nonblocking. Keep drawing separate from model updates when measuring performance. Headless rendering exercises the off-screen output path but cannot validate interactive window behavior.
