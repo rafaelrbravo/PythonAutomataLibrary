@@ -301,7 +301,7 @@ Only load pickle files you trust: loading a malicious pickle can execute arbitra
 
 ### Where to go next
 
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [PopGrid](#popgrid), [PDEgrid](#pdegrid), [IList](#ilist), or [Random numbers and Multinomial](#random-numbers-and-multinomial). The later sections cover [organizing larger models](#organizing-larger-models), [visualization](#visualization), and [saving PAL objects](#saving-pal-objects). You do not need to use every feature in the tutorial model.
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [PopGrid](#popgrid), [PDEgrid](#pdegrid), [IList](#ilist), or [Random numbers and Multinomial](#random-numbers-and-multinomial). The later sections cover [saving PAL objects](#saving-pal-objects), [organizing larger models](#organizing-larger-models), and [visualization](#visualization). You do not need to use every feature in the tutorial model.
 
 ## Core use
 
@@ -754,6 +754,10 @@ dividing = division.Sample(0.1)
 `NewMultinomial(movement)` **shares the underlying reusable binomial solver core**, avoiding a separate solver setup, but the two `Multinomial` objects keep **independent remaining-count and remaining-probability state**. The second instance does not inherit the first instance's partially sampled `Setup` sequence. Call `Setup` separately for each allocation. Sharing the solver does not create separate random streams: both samplers use PAL's common RNG, so results still depend on call order.
 
 
+## Saving PAL objects
+
+PAL native-backed model objects support standard Python pickling. Checkpoints preserve the state needed to resume the object rather than process-local pointers: AgentGrid geometry, occupancy, agents and properties; PopGrid geometry, capacity, current counts and pending deltas; PDEgrid geometry, time/space steps, current field and pending deltas; IList contents; and a Multinomial's current `Setup`/`Sample` remainder. Safe/fast identity is also restored. This means a PopGrid or PDEgrid may be pickled before `Update()` without losing its queued changes.
+
 ## Organizing larger models
 
 Once a model uses several grids and parameter arrays, it can be useful to group them into a single object. This is an optional organizational technique, not a requirement for using PAL.
@@ -864,6 +868,3 @@ Set `headless=True` for off-screen image/GIF generation. OpenGL headless renderi
 
 Use `pal.AwaitWindows()` when model execution should wait for PAL windows to finish their lifecycle.
 
-## Saving PAL objects
-
-PAL native-backed model objects support standard Python pickling. Checkpoints preserve the state needed to resume the object rather than process-local pointers: AgentGrid geometry, occupancy, agents and properties; PopGrid geometry, capacity, current counts and pending deltas; PDEgrid geometry, time/space steps, current field and pending deltas; IList contents; and a Multinomial's current `Setup`/`Sample` remainder. Safe/fast identity is also restored. This means a PopGrid or PDEgrid may be pickled before `Update()` without losing its queued changes.
