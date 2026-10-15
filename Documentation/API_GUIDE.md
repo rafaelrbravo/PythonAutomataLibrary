@@ -17,7 +17,7 @@ These components can work together in one model. For example, individual cells i
 
 ## Build a cell model, one feature at a time
 
-This tutorial follows **one simple model**: cells occupy sites on a two-dimensional lattice. First we place and draw them. Then we let them move to empty neighboring sites. Then we compile the movement rule, add a boundary-fed nutrient field, replace agents with population counts, and save the state. Each stage reuses the same biological idea, so the new material is about PAL rather than new biology.
+This tutorial follows **one simple model**: cells occupy sites on a two-dimensional lattice. First we place and draw them. Then we let them move to empty neighboring sites. Then we compile the movement rule, add a boundary-fed nutrient field, and replace agents with population counts. Each stage reuses the same biological idea, so the new material is about PAL rather than new biology.
 
 Use the examples in order. The code blocks marked **complete program** can be saved as separate Python files and run independently. Later snippets show focused modifications to the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
 
@@ -283,49 +283,9 @@ Each of the eight Moore-neighborhood directions has probability `1/8`. At an int
 
 The nutrient update now consumes 0.01 concentration units per cell at each site, so multiple occupancy increases local consumption. The same fixed-value boundaries replenish nutrient in both representations. The two versions implement the same basic random-walk idea, but not the same exclusion process: `AgentGrid` avoids occupied destinations and updates agents sequentially; `PopGrid` permits multiple occupancy and moves all counts synchronously. That distinction matters when comparing results. See [Multinomial](#random-numbers-and-multinomial) for more about sampling and solver reuse.
 
-### 8. Reproduce and save a run
-
-For reproducible runs, call `pal.Seed` near the beginning of `main`, **before** any stochastic operation (including movement or multinomial sampling):
-
-```python
-pal.Seed(1234)
-```
-
-The same seed reproduces the same random stream when the initial state and order of random calls also match. Stage 7 already seeds its complete program; earlier stages can add the same call.
-
-To save the state at a chosen timestep, use Python's `pickle` to store the population grid, nutrient field, and current step number together. The following snippet demonstrates **saving and immediately reloading a checkpoint**; it is not meant to run on every iteration of the simulation loop. Place it in ordinary Python code (for example, inside `main` after the simulation state exists), not inside an `@pal.njit` function. In a real simulation, save at the desired checkpoint and load later when starting a resumed run:
-
-```python
-import pickle
-
-# `step` is the timestep counter maintained by stage 7.
-with open("cells.pkl", "wb") as f:
-    pickle.dump({"cells": cells, "nutrient": nutrient, "step": step}, f)
-
-with open("cells.pkl", "rb") as f:
-    state = pickle.load(f)
-cells = state["cells"]
-nutrient = state["nutrient"]
-step = state["step"]
-
-# Recreate helpers not included in this checkpoint before resuming:
-multi = pal.NewMultinomial()
-initialPop = cells.GetPop()
-
-# Continue one timestep with the functions from stage 7:
-Step(cells, multi)
-assert cells.GetPop() == initialPop
-StepNutrient(cells, nutrient)
-step += 1
-```
-
-This restores the simulation fields and recreates the sampler and conservation baseline used in stage 7. A display window is not part of this checkpoint: create a new `PixWindow` if the resumed run should render. The example does **not** restore the random generator's state, so it demonstrates state restoration rather than an identical continuation of the original stochastic trajectory.
-
-Only load pickle files you trust: loading a malicious pickle can execute arbitrary Python code. Saving object state is not the same as saving every source of randomness or every external resource. To resume a stochastic trajectory exactly, also preserve the relevant random state and any other model state your experiment uses. A fixed seed is sufficient for replaying a run from its beginning under the same call sequence, not necessarily for resuming halfway through it.
-
 ### Where to go next
 
-You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, switch cell representations while keeping that field, and record experiments. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. For compilation and execution options, see [Performance](#performance-fastmode-njitcachetrue-and-unrolltrue). Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [IList](#ilist), [PopGrid](#popgrid), [PDEgrid](#pdegrid), or [Random numbers and Multinomial](#random-numbers-and-multinomial). The later sections cover [saving PAL objects](#saving-pal-objects), [organizing larger models](#organizing-larger-models), and [visualization](#visualization). You do not need to use every feature in the tutorial model.
+You now have the central PAL workflow: construct state, visualize it, query neighborhoods, move cells, compile repeated work, evolve a nutrient field, and switch cell representations while keeping that field. The remainder of this guide is organized by task. Start with [Core use](#core-use), [Construction](#construction), and [Shared spatial API](#shared-spatial-api) for conventions common to the grids. For compilation and execution options, see [Performance](#performance-fastmode-njitcachetrue-and-unrolltrue). Then consult the section for the component you need: [Grid](#grid), [AgentGrid](#agentgrid), [IList](#ilist), [PopGrid](#popgrid), [PDEgrid](#pdegrid), or [Random numbers and Multinomial](#random-numbers-and-multinomial). The later sections cover [saving PAL objects](#saving-pal-objects), [organizing larger models](#organizing-larger-models), and [visualization](#visualization). You do not need to use every feature in the tutorial model.
 
 ## Core use
 
@@ -873,7 +833,47 @@ dividing = division.Sample(0.1)
 
 ## Saving PAL objects
 
-Use Python's standard `pickle` module to save PAL model objects and reload them later. This is useful for checkpoints and reproducible experiments; [tutorial stage 8](#8-reproduce-and-save-a-run) shows a complete save-and-reload example. Only load pickle files from sources you trust.
+Use Python's standard `pickle` module to save PAL model objects and reload them later. This optional workflow is useful for checkpoints and reproducible experiments. Only load pickle files from sources you trust.
+
+### Example: save and resume the population model
+
+For reproducible runs, call `pal.Seed` near the beginning of `main`, **before** any stochastic operation (including movement or multinomial sampling):
+
+```python
+pal.Seed(1234)
+```
+
+The same seed reproduces the same random stream when the initial state and order of random calls also match. The [count-based tutorial](#7-replace-individual-cells-with-population-counts) already seeds its complete program.
+
+To save the state at a chosen timestep, use Python's `pickle` to store the population grid, nutrient field, and current step number together. The following snippet demonstrates **saving and immediately reloading a checkpoint**; it is not meant to run on every iteration of the simulation loop. Place it in ordinary Python code (for example, inside `main` after the simulation state exists), not inside an `@pal.njit` function. In a real simulation, save at the desired checkpoint and load later when starting a resumed run:
+
+```python
+import pickle
+
+# `step` is the timestep counter maintained by the count-based tutorial.
+with open("cells.pkl", "wb") as f:
+    pickle.dump({"cells": cells, "nutrient": nutrient, "step": step}, f)
+
+with open("cells.pkl", "rb") as f:
+    state = pickle.load(f)
+cells = state["cells"]
+nutrient = state["nutrient"]
+step = state["step"]
+
+# Recreate helpers not included in this checkpoint before resuming:
+multi = pal.NewMultinomial()
+initialPop = cells.GetPop()
+
+# Continue one timestep with the functions from stage 7:
+Step(cells, multi)
+assert cells.GetPop() == initialPop
+StepNutrient(cells, nutrient)
+step += 1
+```
+
+This restores the simulation fields and recreates the sampler and conservation baseline used in stage 7. A display window is not part of this checkpoint: create a new `PixWindow` if the resumed run should render. The example does **not** restore the random generator's state, so it demonstrates state restoration rather than an identical continuation of the original stochastic trajectory.
+
+Only load pickle files you trust: loading a malicious pickle can execute arbitrary Python code. Saving object state is not the same as saving every source of randomness or every external resource. To resume a stochastic trajectory exactly, also preserve the relevant random state and any other model state your experiment uses. A fixed seed is sufficient for replaying a run from its beginning under the same call sequence, not necessarily for resuming halfway through it.
 
 ### What a checkpoint preserves
 
