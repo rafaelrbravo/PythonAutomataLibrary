@@ -422,7 +422,7 @@ pal.VonNeumannHood(dim, excludeCenter=False)
 pal.CircleHood(dim, rad, excludeCenter=False)
 ```
 
-### Performance: `FastMode()`, `njit(cache=True)`, and `unroll=True`
+## Performance: `FastMode()`, `njit(cache=True)`, and `unroll=True`
 
 PAL provides three complementary performance controls:
 
@@ -432,7 +432,7 @@ PAL provides three complementary performance controls:
 
 These optimizations address different costs: **fast mode reduces runtime checks, JIT compilation reduces interpreter overhead, caching reduces repeated compilation across runs, and unrolling reduces inner-loop overhead**. They can be used together. Benchmark representative models because the benefit of each depends on the operations performed.
 
-#### Example: unrolled Von Neumann neighborhood
+### Example: unrolled Von Neumann neighborhood
 
 For a small, fixed neighborhood, PAL can compile each neighbor operation directly into the function instead of executing a conventional loop. Consider summing values in the four cardinal directions around `(x, y)`:
 
@@ -464,6 +464,12 @@ The exact offset order is not important for this sum; the example above illustra
 Unrolling increases generated code size and may increase compilation time. It is most attractive for small, fixed neighborhoods; benchmark larger ones. The option changes how the loop is compiled, not which neighbors are visited.
 
 `MooreHood` contains offsets with each coordinate in `[-1, 1]`. `VonNeumannHood` contains the center and axis-adjacent offsets. `CircleHood` contains integer offsets whose Euclidean distance from the center is at most `rad`; `rad` may be noninteger, but must be finite and nonnegative. Set `excludeCenter=True` to omit the zero offset. All three constructors support dimensions 1–3 and reject other dimension counts with `ValueError`. Each returns a tuple of integer offset tuples; these describe relative positions, not site indices, until mapped through `grid.Hood(...)`.
+
+### Safety contracts and mode selection
+
+Safe and fast objects expose the same modeling API. PAL starts in safe mode. To opt into fast mode, call `pal.FastMode()` **before constructing any PAL model or window object**. The first such construction locks the process-wide mode selection; a later `pal.FastMode()` raises `RuntimeError`. Run safe and fast comparisons in separate processes rather than trying to switch modes mid-run. Safe mode validates public operations and is the development/default mode; fast mode assumes the model obeys those contracts and removes performance-sensitive checks. Examples of safe-mode checks include lattice bounds and dimensionality, dead-agent and occupancy errors, PopGrid overflow, and PDE field/interface array shape or dimensionality. Invalid operations in fast mode are outside the supported contract rather than an alternative error-handling API.
+
+Use safe mode until the model is correct, then benchmark fast mode. Do not rely on safe-mode exceptions as model control flow.
 
 ## Grid
 
@@ -835,12 +841,6 @@ Colors are packed integer RGB values such as `0xFF0000`. `pal.ColorScale(colors,
 Set `headless=True` for off-screen image/GIF generation. OpenGL headless rendering requires a supported standalone backend such as EGL.
 
 Use `pal.AwaitWindows()` when model execution should wait for PAL windows to finish their lifecycle.
-
-## Safe and fast contracts
-
-Safe and fast objects expose the same modeling API. PAL starts in safe mode. To opt into fast mode, call `pal.FastMode()` **before constructing any PAL model or window object**. The first such construction locks the process-wide mode selection; a later `pal.FastMode()` raises `RuntimeError`. Run safe and fast comparisons in separate processes rather than trying to switch modes mid-run. Safe mode validates public operations and is the development/default mode; fast mode assumes the model obeys those contracts and removes performance-sensitive checks. Examples of safe-mode checks include lattice bounds and dimensionality, dead-agent and occupancy errors, PopGrid overflow, and PDE field/interface array shape or dimensionality. Invalid operations in fast mode are outside the supported contract rather than an alternative error-handling API.
-
-Use safe mode until the model is correct, then benchmark fast mode. Do not rely on safe-mode exceptions as model control flow.
 
 ## Saving PAL objects
 
