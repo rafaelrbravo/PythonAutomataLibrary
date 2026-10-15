@@ -2,9 +2,14 @@
 
 This document explains how PAL is organized, why its major interfaces and implementation choices exist, and how to maintain them. It focuses on architecture, subsystem responsibilities, trade-offs, testing, and performance—not on teaching the API from the beginning. Use the [API Guide](API_GUIDE.md) for runnable modeling workflows and public API behavior, the [API Reference](API_REFERENCE.md) for exact signatures, and the [Cheatsheet](CHEATSHEET.md) for quick lookup.
 
-## Reading map
+## Chapter Contents
 
-Chapter 1 explains the design problem and traces execution through the public API, Python wrappers, Numba, and native code. Chapter 2 explains state ownership, neighborhood interpretation, update timing, and execution modes. Chapter 3 examines each subsystem's representation and trade-offs, including random-number state and visualization. Chapters 4 and 5 cover maintenance, testing, and performance; Chapter 6 distinguishes software correctness from scientific validation. Chapter 7 points to the complementary user-facing references.
+1. Explains the design problem and traces execution through the public API, Python wrappers, Numba, and native code.
+2. Explains state ownership, neighborhood interpretation, update timing, and execution modes.
+3. Examines each subsystem's representation and trade-offs, including random-number state and visualization.
+4. maintenance, testing, and performance;
+5. Distinguishes software correctness from scientific validation.
+6. Points to the complementary user-facing references.
 
 ## 1. Foundations: responsibilities and execution
 
