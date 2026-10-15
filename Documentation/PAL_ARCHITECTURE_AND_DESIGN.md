@@ -39,15 +39,7 @@ The native implementation is not itself the public contract. A C function may ac
 
 This separation creates a maintenance obligation: behavior must remain coherent across the wrapper and native layers. If the Python method accepts a keyword argument but its Numba overload silently binds that keyword differently, the layers disagree. If a native routine handles a one-dimensional coordinate differently from the safe wrapper, a mode-specific defect can result. PAL's parity tests therefore compare outcomes across paths rather than assuming that one layer automatically inherits the correctness of another.
 
-### 1.4 The public API is a contract, not a mirror of the C implementation
-
-PAL's public names and signatures are designed around modeler-facing concepts: a grid site, an agent handle, a population count, a neighborhood, a field, or a random draw. The native core may use lower-level representations that do not resemble those concepts directly. That is acceptable as long as the public behavior remains consistent.
-
-Protocol declarations are part of this contract because users and tools read them for annotations and autocomplete. But a declaration is not executable proof. Likewise, a docstring or manual paragraph cannot make unsupported runtime behavior valid. The implementation, declarations, tests, and generated references must describe the same public API.
-
-API changes therefore require coordination across layers. When altering an argument name, return type, indexing rule, or safe-mode behavior, check the Python method, the Numba overload, relevant Protocol declaration, documentation generator, examples, and regression tests. A change that works in one path but breaks another is not complete merely because the primary example still runs.
-
-### 1.5 Python and Numba execution paths
+### 1.4 Python and Numba execution paths
 
 Python execution is useful for interactive exploration, setup code, inspection, and small operations. Numba-compiled execution is useful for repeated loops where Python dispatch would be costly. PAL supports both because a scientific workflow naturally mixes these kinds of work.
 
@@ -55,7 +47,7 @@ Supporting both introduces complexity. Numba imposes typing and compilation cons
 
 PAL treats parity as a correctness requirement for supported usage, not as a promise that Python and compiled code have identical internals or performance. Compare observable behavior: return values, mutations, errors where they are part of the contract, boundary handling, and state after the operation. If a difference appears, reduce it to a minimal reproducer and test both paths.
 
-### 1.6 Model-code transformation with `pal.njit`
+### 1.5 Model-code transformation with `pal.njit`
 
 PAL's `njit` interface is not simply a spelling alias for Numba's decorator. Before compilation, it can prepare functions that use PAL-specific syntax and diagnostics. In particular, neighborhood and Box iteration are model-friendly abstractions that may need to be expanded into forms that the compiler can type and execute efficiently.
 
@@ -65,7 +57,7 @@ This approach keeps spatial loops readable while allowing their compiled form to
 
 When a failure occurs under `@pal.njit`, first reproduce it in safe mode, without calling `pal.FastMode()`. If the additional checks do not identify the problem, temporarily remove `@pal.njit` from the functions involved, starting with the ones closest to the failure, and use a Python debugger to follow the execution. Once the error is understood, restore compilation and verify the fix in both Python and compiled execution. If the failure occurs only when compiled, reduce it to a small example and check PAL's transformation requirements, argument annotations, and supported API usage before changing the scientific algorithm.
 
-### 1.7 A concrete execution trace
+### 1.6 A concrete execution trace
 
 Consider a model step that reads a field value, changes an agent, and queues a population delta. At the **model layer**, the author chooses the order of those operations. The **public PAL API** resolves coordinates, handles, and arguments. In ordinary Python execution, Python-facing wrappers perform the supported operations; in a compiled step, PAL's preparation and Numba-compatible call path must preserve their observable meaning. Both paths ultimately work with the relevant native-backed state. A later `Update()` on the population grid commits the queued delta; it is not implied by a field read or an agent movement.
 
