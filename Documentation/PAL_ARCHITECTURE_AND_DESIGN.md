@@ -24,7 +24,7 @@ This division lets a high-level model combine different state representations wi
 
 ### 1.2 The layers and their responsibilities
 
-A useful mental model is to separate PAL into several cooperating layers:
+PAL's architecture can be understood through six cooperating responsibilities:
 
 1. **Public API and Protocol declarations.** These define the names, signatures, type-facing interface, and expected user-visible operations. They support readable calls, type annotations, and autocomplete.
 2. **Python constructors and wrappers.** These create objects, translate public arguments into implementation calls, and expose native-backed state through a Python-friendly interface.
@@ -99,7 +99,7 @@ A neighborhood such as Moore or Von Neumann is naturally a pattern around a loca
 
 Applying a neighborhood also makes boundary behavior explicit. Applying a hood must account for grid dimensions and wrapping flags; the relative pattern alone does not know whether a particular neighbor falls outside a nonperiodic domain. PAL's application step can translate offsets into coordinates, wrap periodic axes, and omit out-of-domain sites according to the public contract.
 
-This avoids storing a separate absolute-neighbor list for every cell and lets the compiled path transform high-level neighborhood loops. Neighborhood destinations are not necessarily unique: small or wrapped domains can map multiple offsets to the same site. Whether to count those repeated contributions or deduplicate them depends on the model, so choose and test the intended behavior.
+Relative offsets avoid storing absolute-neighbor lists for every cell and allow the compiled path to transform high-level neighborhood loops. Neighborhood destinations are not necessarily unique: small or wrapped domains can map multiple offsets to the same site. Whether to count those repeated contributions or deduplicate them depends on the model, so choose and test the intended behavior.
 
 ### 2.4 Separate update and commit operations
 
