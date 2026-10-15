@@ -153,7 +153,19 @@ def Step(cells: pal.AgentGrid, empty: pal.IList):
             cells.MoveSQ(agent, cells.ItoX(site), cells.ItoY(site))
 ```
 
-Also decorate `EmptyNeighbors` with `@pal.njit(cache=True)` and annotate `cells: pal.AgentGrid` and `empty: pal.IList` so it can be called from compiled `Step`. The simulation rule is unchanged; only the repeated computation is compiled. Keep window management in ordinary Python.
+Replace the earlier `EmptyNeighbors` definition with this compiled version as well:
+
+```python
+@pal.njit(cache=True)
+def EmptyNeighbors(cells: pal.AgentGrid, agent: int, empty: pal.IList):
+    empty.Clear()
+    for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
+        if cells.counts[x, y] == 0:
+            empty.Append(cells.ToI(x, y))
+    return empty
+```
+
+Both functions now run in compiled code, while `main`, window creation, and rendering can remain in ordinary Python. The simulation rule and data representation are unchanged. `cache=True` can reuse compiled specializations in later runs; the [performance section](#performance-fastmode-njitcachetrue-and-unrolltrue) explains the tradeoffs.
 
 ### 6. Add a diffusing nutrient
 
