@@ -908,7 +908,14 @@ draw, window = pal.StartOpenGLWindow(30, 30, width=800, height=800, title="PAL")
 
 This opens a two-dimensional drawing area spanning 30 × 30 model units in an 800 × 800 window. Supply `zDim` for a three-dimensional scene; `headless=True` requests off-screen rendering.
 
-Draw geometry with:
+For example, draw a red circle centered at `(15, 15)` and publish the result:
+
+```python
+draw.Circle(3.0, pal.RGB(255, 0, 0), 15.0, 15.0)
+window.Update()
+```
+
+Other drawing operations include:
 
 ```python
 draw.Circle(rad, color, x, y, z=0.0)
@@ -916,6 +923,8 @@ draw.Box(xLen, color, x, y, z=0.0, yLen=None, zLen=None)
 draw.BoxSQ(color, x, y, z=0.0)
 draw.Line(width, color, x1, y1, x2, y2, z1=0.0, z2=0.0)
 ```
+
+The latter block shows method signatures with placeholder argument names; it is a reference, not a standalone runnable example.
 
 Window controls include `Borders(width, color)`, `Camera(x, y, z, yaw=None, pitch=None)`, `Background(color)`, `Clear()`, `Update()`, `IsOpen()`, `Save(path, block=False)`, `StartGif(path, delay=100)`, `AddGifFrame(block=False, timeout=30)`, `StopGif(timeout=30)`, and `Close()`. The GIF lifecycle is the same as for `PixWindow`: start recording, append rendered frames, then stop to finalize the file.
 
