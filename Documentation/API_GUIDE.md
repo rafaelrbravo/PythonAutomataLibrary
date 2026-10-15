@@ -963,6 +963,18 @@ window.Update()
 
 You can also assign packed RGB integers such as `0xFF0000`, and use a linear site index (`pix[i]`) instead of coordinates.
 
+To display the nutrient field introduced in tutorial stage 6, create a second pixel window and map concentrations from 0 (black) to 1 (green). This snippet assumes `nutrient` already exists and has the same 30 × 30 dimensions:
+
+```python
+nutrientPix, nutrientWindow = pal.StartPixWindow(30, 30, scale=12, title="Nutrient")
+for x in range(30):
+    for y in range(30):
+        nutrientPix[x, y] = pal.ColorScale((pal.RGB(0, 0, 0), pal.RGB(0, 255, 0)), nutrient[x, y])
+nutrientWindow.Update()
+```
+
+Run the drawing loop again after each nutrient update to refresh the image. `ColorScale` expects a normalized value between 0 and 1 and clamps values outside that range; if your field uses another range, normalize it before choosing a color. Manage the second window's lifecycle alongside the cell window.
+
 It also provides `xDim`, `yDim`, `ToI(x, y)`, `ItoX(i)`, `ItoY(i)`, and `len(pix)`.
 
 The window lifecycle offers the following operations (shown as reference calls, not a sequence to execute verbatim):
