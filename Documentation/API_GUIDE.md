@@ -575,11 +575,15 @@ agents.Move(agent, x, y, z)
 
 ### Occupancy and queries
 
+Use these queries to inspect which agents occupy a lattice site without changing the population. For example, after creating `agents` and placing an agent at `(10, 12)` as above:
+
 ```python
-agents.LastAgent(x, y, z)
-agents.AgentsAt(x, y, z)
-agents.counts[x, y, z]
+print(agents.counts[10, 12])  # 1
+for agent in agents.AgentsAt(10, 12):
+    print(agent)
 ```
+
+The count reports how many agents occupy the site, while `AgentsAt` yields their handles. The corresponding query forms are `agents.LastAgent(x, y)`, `agents.AgentsAt(x, y)`, and `agents.counts[x, y]` on a 2D grid; supply the appropriate number of coordinates for other dimensions.
 
 `LastAgent` returns the most recently stacked agent at a site, or `-1` if the site is empty. Iterate with `for agent in agents.AgentsAt(x, y):` in Python or inside `@pal.njit`. Do not create, dispose, or move agents during direct iteration, including moves within the same lattice site. Safe mode detects these changes and raises `RuntimeError`; fast mode omits that check. In Python, `AgentsAt(i)` also accepts a linear site index, including for multidimensional grids; `AgentsAt(x, y)` and `AgentsAt(x, y, z)` use coordinates. This overload is distinct from the continuous-position `AgentsInRadius` query. `counts` exposes lattice occupancy counts and supports linear-site, coordinate, and slice indexing (`agents.counts[i]`, `agents.counts[x, y]`, or `agents.counts[:, :]`). It is a **read-only query view**, not a second mutable population grid. Slice queries return detached arrays of occupancy counts. A nonspatial (`dimensions=()`) AgentGrid has no lattice counts; querying `len(agents.counts)` raises `ValueError`.
 
