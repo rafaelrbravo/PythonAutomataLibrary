@@ -633,7 +633,8 @@ Use `Iter()` for one-pass iteration when a copy is unnecessary. Use `All()` when
 Use `PopGrid` when only the number of individuals at each lattice site matters, not their separate identities. It supports count-based population dynamics and movement, often avoiding the cost of representing every individual as a separate agent.
 
 ```python
-pop = pal.NewPopGrid((xDim, yDim), capacity=None)
+pop = pal.NewPopGrid((30, 30), capacity=100)
+pop[10, 12] = 20
 ```
 
 `PopGrid` stores integer population counts. Indexing and direct assignment modify the current population immediately.
@@ -666,7 +667,8 @@ pop.Update()
 Use `PDEgrid` for spatially varying continuous quantities that evolve through transport, such as nutrients, oxygen, signaling molecules, or temperature. It combines a scalar field with diffusion and advection operations, so it is preferable to a plain `Grid` when those dynamics are needed.
 
 ```python
-field = pal.NewPDEgrid((xDim, yDim))
+field = pal.NewPDEgrid((30, 30))
+field[10, 12] = 1.0
 ```
 
 `PDEgrid` stores a continuous `float32` scalar field. Direct indexing/assignment changes the current field immediately. Slice reads return detached `float32` NumPy arrays; array slice assignment writes to the field, but editing a previously read slice does not. Linear (`field[:]`) and spatial (`field[:, :]`) slices are supported. `Add(value, ...)` accumulates a pending delta; `Update()` applies pending changes simultaneously. `Reset()` clears both the field and pending changes.
