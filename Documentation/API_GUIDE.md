@@ -838,45 +838,26 @@ Advection uses a conservative first-order upwind discretization. `Advection` use
 
 Use Python's standard `pickle` module to save PAL model objects and reload them later. This optional workflow is useful for checkpoints and reproducible experiments. Only load pickle files from sources you trust.
 
-### Example: save and resume the population model
+### Example: save and load model state
 
-For reproducible runs, call `pal.Seed` near the beginning of `main`, **before** any stochastic operation (including movement or multinomial sampling):
-
-```python
-pal.Seed(1234)
-```
-
-The same seed reproduces the same random stream when the initial state and order of random calls also match. The [count-based tutorial](#7-replace-individual-cells-with-population-counts) already seeds its complete program.
-
-To save the state at a chosen timestep, use Python's `pickle` to store the population grid, nutrient field, and current step number together. The following snippet demonstrates **saving and immediately reloading a checkpoint**; it is not meant to run on every iteration of the simulation loop. Place it in ordinary Python code (for example, inside `main` after the simulation state exists), not inside an `@pal.njit` function. In a real simulation, save at the desired checkpoint and load later when starting a resumed run:
+Python's `pickle` module can save PAL objects and restore them later. For example, after creating `cells` and `nutrient` in the [count-based tutorial](#7-replace-individual-cells-with-population-counts), save them from ordinary Python code (not inside an `@pal.njit` function):
 
 ```python
 import pickle
 
-# `step` is the timestep counter maintained by the count-based tutorial.
-with open("cells.pkl", "wb") as f:
-    pickle.dump({"cells": cells, "nutrient": nutrient, "step": step}, f)
+with open("model.pkl", "wb") as f:
+    pickle.dump({"cells": cells, "nutrient": nutrient}, f)
 
-with open("cells.pkl", "rb") as f:
+with open("model.pkl", "rb") as f:
     state = pickle.load(f)
+
 cells = state["cells"]
 nutrient = state["nutrient"]
-step = state["step"]
-
-# Recreate helpers not included in this checkpoint before resuming:
-multi = pal.NewMultinomial()
-initialPop = cells.GetPop()
-
-# Continue one timestep with the functions from stage 7:
-Step(cells, multi)
-assert cells.GetPop() == initialPop
-StepNutrient(cells, nutrient)
-step += 1
 ```
 
-This restores the simulation fields and recreates the sampler and conservation baseline used in stage 7. A display window is not part of this checkpoint: create a new `PixWindow` if the resumed run should render. The example does **not** restore the random generator's state, so it demonstrates state restoration rather than an identical continuation of the original stochastic trajectory.
+This restores the saved grids, including their current values. It does **not** restore the random-number generator's state or a display window. To resume a simulation, also save any needed timestep counters and other model state, and recreate external resources such as windows. A fixed seed can reproduce a run from its beginning when the initial state and sequence of random calls match, but it does not by itself resume the same stochastic trajectory halfway through.
 
-Only load pickle files you trust: loading a malicious pickle can execute arbitrary Python code. Saving object state is not the same as saving every source of randomness or every external resource. To resume a stochastic trajectory exactly, also preserve the relevant random state and any other model state your experiment uses. A fixed seed is sufficient for replaying a run from its beginning under the same call sequence, not necessarily for resuming halfway through it.
+Only load pickle files you trust: loading a malicious pickle can execute arbitrary Python code.
 
 ### What a checkpoint preserves
 
