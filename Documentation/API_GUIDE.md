@@ -201,7 +201,7 @@ window.Update()
 
 `StepNutrient` can remain an ordinary Python function for this first version; compiling the cell movement step does not require compiling every other function. The boundary arguments specify fixed exterior concentrations: unlike the default no-flux boundaries, these permit nutrient to diffuse into the modeled region when cells deplete it. `Diffusion` queues the transport changes and `Update()` commits them. The values are illustrative, not biologically calibrated.
 
-To see nutrient depletion, open a second `PixWindow` and color each site according to `nutrient[x, y]`, for example using `pal.ColorScale`; the cell window can remain unchanged. See [Visualization](#visualization) for rendering and [Boundary conditions for transport](#boundary-conditions-for-transport) for boundary options.
+**What you will see:** the existing window still shows only the moving red cells. The nutrient is updated in the model but is not yet drawn, so its depletion is invisible in that window. To visualize it separately, open a second `PixWindow` and color each site according to `nutrient[x, y]`, for example using `pal.ColorScale`; the cell window can remain unchanged. See [Visualization](#visualization) for rendering and [Boundary conditions for transport](#boundary-conditions-for-transport) for boundary options.
 
 ### 7. Replace individual cells with population counts
 
