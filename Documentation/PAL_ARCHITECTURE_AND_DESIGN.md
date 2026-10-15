@@ -157,7 +157,7 @@ The mutation contract is especially important here. `Add()` queues a field delta
 
 `IList` stores reusable integer collections in Python and compiled code. For example, a model can collect empty neighboring sites and choose one for reproduction without allocating a new collection at every step.
 
-`All()` returns a detached NumPy copy; `Iter()` traverses the current values without making that detached copy. Use `All()` when the result must remain independent of later list mutations and `Iter()` for one-pass traversal. Clear reused lists before repopulating them, and check that a list is nonempty before calling `Random()`.
+`All()` returns a detached NumPy copy; `Iter()` exposes the current native-backed values without making that detached copy. This avoids an allocation in tight compiled loops, but it is not a snapshot: changing the list while consuming an `Iter()` result can change the values being traversed or invalidate assumptions about its storage. Use `All()` when iteration must be insulated from later mutations, and `Iter()` only while the underlying list remains unchanged. Clear reused lists before repopulating them, and check that a list is nonempty before calling `Random()`.
 
 ### 3.6 Randomness: one explicit PAL stream
 
