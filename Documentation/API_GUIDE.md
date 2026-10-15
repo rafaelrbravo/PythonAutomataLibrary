@@ -446,6 +446,8 @@ Unrolling increases generated code size and may increase compilation time. It is
 
 ## Grid
 
+Use `Grid` when each lattice site needs a value, such as terrain type, occupancy flags, environmental measurements, or a precomputed spatial map. It is a general-purpose typed array on PAL's spatial lattice; unlike `AgentGrid`, it does not track individual agents, and unlike `PDEgrid`, it does not provide a transport solver.
+
 ```python
 grid = pal.NewGrid((xDim, yDim), dtype)
 ```
@@ -465,6 +467,8 @@ region = grid[2:5, 3:8]
 Slice reads return detached NumPy copies. Scalar and slice reads/writes work in Python and compiled PAL model code. In safe mode, invalid scalar indices and coordinates are rejected; fast mode assumes valid access. Safe mode validates bounds, dimensionality, and whether assigned values are representable by the Grid dtype: boolean grids accept only `0`/`1`; integer grids reject fractional, nonfinite, and out-of-range assignments; floating grids reject nonfinite or out-of-range assignments. Use a wider dtype when a calculation may exceed its current range. A detached slice copy is not a live view of the Grid.
 
 ## AgentGrid
+
+Use `AgentGrid` when individual agents must retain their identities as they move, reproduce, die, or change properties. It manages agent handles and locations, making it suitable for cell-based and other individual-based models where tracking particular entities matters.
 
 ```python
 agents = pal.NewAgentGrid((xDim, yDim), numAgentProps=2)
@@ -571,6 +575,8 @@ DispWrapZ(z1, z2)
 
 ## PopGrid
 
+Use `PopGrid` when only the number of individuals at each lattice site matters, not their separate identities. It supports count-based population dynamics and movement, often avoiding the cost of representing every individual as a separate agent.
+
 ```python
 pop = pal.NewPopGrid((xDim, yDim), capacity=None)
 ```
@@ -601,6 +607,8 @@ pop.Update()
 `capacity=None` uses the int64 maximum as the per-site population cap. An explicit `capacity` must be a nonnegative int64 integer; invalid, fractional, nonfinite, or out-of-range values raise `ValueError` during construction. Capacity constrains each site independently; total population is tracked separately and must remain representable as a nonnegative int64. In safe mode, direct writes enforce these bounds immediately. `Add()` queues signed changes without applying them to the current counts; a queued change may exceed a site's remaining capacity until it is checked at `Update()`. `Update()` validates every resulting site count and the total population before applying any pending delta; if validation fails, current populations and pending deltas are unchanged. Fast mode assumes these constraints are satisfied.
 
 ## PDEgrid
+
+Use `PDEgrid` for spatially varying continuous quantities that evolve through transport, such as nutrients, oxygen, signaling molecules, or temperature. It combines a scalar field with diffusion and advection operations, so it is preferable to a plain `Grid` when those dynamics are needed.
 
 ```python
 field = pal.NewPDEgrid((xDim, yDim))
@@ -675,6 +683,8 @@ Advection uses a conservative first-order upwind discretization. `Advection` use
 
 ## IList
 
+Use `IList` to collect a reusable set of integer identifiers—such as grid indices or agent handles—for later iteration, shuffling, or random selection. It is useful for neighborhood queries, candidate destinations, and subsets of agents.
+
 ```python
 items = pal.NewIList()
 ```
@@ -694,6 +704,8 @@ items = pal.NewIList()
 Use `Iter()` for one-pass iteration when a copy is unnecessary. Use `All()` when the returned values must remain independent of subsequent IList changes.
 
 ## Random numbers and Multinomial
+
+Use PAL's random-number functions for stochastic decisions such as selecting agents or destinations. Use `Multinomial` when a count of individuals or events must be distributed among several possible outcomes without sampling each one separately.
 
 ```python
 pal.Seed(seed)
@@ -736,6 +748,8 @@ dividing = division.Sample(0.1)
 
 
 ## Visualization
+
+Use PAL's visualization components to inspect spatial model state while a simulation runs. `PixWindow` is suited to pixel-based lattice views, while the OpenGL windows support 2D and 3D geometry; rendering and simulation computation remain separate.
 
 PAL provides a pixel renderer for lattice models and an OpenGL renderer for 2D/3D geometry. Rendering runs separately from model computation.
 
