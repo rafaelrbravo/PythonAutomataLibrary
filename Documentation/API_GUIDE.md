@@ -528,7 +528,7 @@ for agent in agents.All():
 
 ### Position
 
-PAL distinguishes a **lattice site** (integer coordinates) from a **continuous position** (floating-point coordinates). Use lattice positions when agents occupy specific sites; use continuous positions for off-lattice movement. On the two-dimensional `agents` grid created above, the lattice operations look like this:
+PAL distinguishes **lattice sites** (integer coordinates) from **continuous positions** (floating-point coordinates). Use lattice coordinates for site-based placement and continuous coordinates for off-lattice movement. On the two-dimensional `agents` grid created above, the lattice operations look like this:
 
 ```python
 print(agents.XSQ(agent), agents.YSQ(agent))  # 10 12
@@ -542,7 +542,7 @@ For continuous positions, use `agents.X(agent)`, `agents.Y(agent)`, and `agents.
 
 ### Occupancy and queries
 
-Use these queries to inspect which agents occupy a lattice site without changing the population. Continuing from the position example, the agent has moved to `(11, 12)`, so query that site:
+These queries inspect site occupancy without changing the population. The agent in the preceding example moved to `(11, 12)`, so query that site:
 
 ```python
 print(agents.counts[11, 12])  # 1
@@ -550,13 +550,13 @@ for agent in agents.AgentsAt(11, 12):
     print(agent)
 ```
 
-The count reports how many agents occupy the site, while `AgentsAt` yields their handles. The corresponding query forms are `agents.LastAgent(x, y)`, `agents.AgentsAt(x, y)`, and `agents.counts[x, y]` on a 2D grid; supply the appropriate number of coordinates for other dimensions.
+The count gives the number of occupants; `AgentsAt` yields their handles. The corresponding query forms are `agents.LastAgent(x, y)`, `agents.AgentsAt(x, y)`, and `agents.counts[x, y]` on a 2D grid; supply the appropriate number of coordinates for other dimensions.
 
 `LastAgent` returns the most recently stacked agent at a site, or `-1` if the site is empty. Iterate with `for agent in agents.AgentsAt(x, y):` in Python or inside `@pal.njit`. Do not create, dispose, or move agents during direct iteration, including moves within the same lattice site. Safe mode detects these changes and raises `RuntimeError`; fast mode omits that check. In Python, `AgentsAt(i)` also accepts a linear site index, including for multidimensional grids; `AgentsAt(x, y)` and `AgentsAt(x, y, z)` use coordinates. This overload is distinct from the continuous-position `AgentsInRadius` query. `counts` exposes lattice occupancy counts and supports linear-site, coordinate, and slice indexing (`agents.counts[i]`, `agents.counts[x, y]`, or `agents.counts[:, :]`). It is a **read-only query view**, not a second mutable population grid. Slice queries return detached arrays of occupancy counts. A nonspatial (`dimensions=()`) AgentGrid has no lattice counts; querying `len(agents.counts)` raises `ValueError`.
 
 ### Radius iteration
 
-`AgentsInRadius` finds agents within a distance of a **continuous position**, rather than restricting a query to one lattice site. Continuing from the earlier 2D example, the agent is centered at `(11.5, 12.5)` after moving to site `(11, 12)`. A radius-2 query around that point finds it:
+`AgentsInRadius` searches around a **continuous position**, not just within one lattice site. Continuing from the earlier 2D example, the agent is centered at `(11.5, 12.5)` after moving to site `(11, 12)`. A radius-2 query around that point finds it:
 
 ```python
 for nearby, dx, dy, distSq in agents.AgentsInRadius(2.0, 11.5, 12.5):
@@ -569,7 +569,7 @@ The radius is inclusive: agents with distance exactly `rad` are included. Return
 
 ### Wrapping
 
-Wrapping makes opposite edges of a lattice neighbors. As described in [Construction](#construction), a negative dimension enables wrapping along that axis. For example, create a 30 × 30 agent grid whose x-axis wraps while its y-axis does not:
+Wrapping connects opposite lattice edges. As described in [Construction](#construction), a negative dimension enables wrapping on that axis. For example, create a 30 × 30 agent grid whose x-axis wraps while its y-axis does not:
 
 ```python
 wrapped = pal.NewAgentGrid((-30, 30))
@@ -753,7 +753,7 @@ Transport methods use these spacings. Choose consistent units: if time is measur
 
 ### Boundary conditions for transport
 
-A boundary condition specifies what happens at the edge of the modeled region. PAL's Cartesian diffusion and advection methods use the same boundary argument names, but the physical effect depends on the transport process:
+Boundary conditions govern transport across the modeled region's edges. PAL's Cartesian diffusion and advection methods share boundary argument names, but their physical effects differ:
 
 | Boundary choice | How to specify it | Meaning |
 | --- | --- | --- |
@@ -761,7 +761,7 @@ A boundary condition specifies what happens at the edge of the modeled region. P
 | Fixed exterior concentration | Pass a scalar, such as `xMinBC=1.0` | Prescribe the concentration just outside that face |
 | Periodic | Construct the grid with a negative dimension on that axis, such as `(-30, 30)` | The two opposite faces connect; do not pass explicit BC values on that axis |
 
-The names identify both the **axis** (`x`, `y`, or `z`) and the **side** (`Min` or `Max`). For example, `xMinBC` controls the left face and `yMaxBC` the top face of a 2D grid. Unspecified nonwrapped faces are closed by default.
+Each name specifies an **axis** (`x`, `y`, or `z`) and **side** (`Min` or `Max`). For example, `xMinBC` controls the left face and `yMaxBC` the top face of a 2D grid. Unspecified nonwrapped faces are closed by default.
 
 For example, on a nonwrapped 2D nutrient field:
 
@@ -780,7 +780,7 @@ For a spatially varying boundary concentration, pass a C-contiguous `float32` ar
 
 ### Diffusion
 
-Diffusion spreads a quantity from regions of higher concentration toward regions of lower concentration. For a first example, put a concentration of 1 at the center of an otherwise empty field, then diffuse it for one timestep:
+Diffusion spreads a quantity from higher to lower concentrations. To illustrate, place concentration 1 at the center of an otherwise empty field and diffuse it for one timestep:
 
 ```python
 field = pal.NewPDEgrid((30, 30))
@@ -791,9 +791,9 @@ field.Update()
 print(field[15, 15])  # less than 1.0: concentration spreads outward
 ```
 
-Here `0.1` in `SetTimeSpaceStep` is the timestep, whereas `0.1` in `Diffusion` is the diffusion rate. The first call to `Diffusion` queues changes; `Update()` applies them. With no boundary arguments, the nonwrapped edges have no flux.
+The `0.1` passed to `SetTimeSpaceStep` is the timestep; the `0.1` passed to `Diffusion` is the diffusion rate. The first call to `Diffusion` queues changes; `Update()` applies them. With no boundary arguments, the nonwrapped edges have no flux.
 
-Choose a diffusion method based on how the rate varies across space. The following are **reference signatures**, not a sequence of calls to run together:
+Choose the diffusion method according to how its rate varies across space. The following are **reference signatures**, not a sequence of calls to run together:
 
 ```python
 field.Diffusion(rateConstant, ...)
@@ -811,7 +811,7 @@ Cartesian diffusion methods accept optional `xMinBC`, `xMaxBC`, `yMinBC`, `yMaxB
 
 ### Advection
 
-Advection transports a quantity through directed flow, such as a chemical carried by moving fluid. Unlike diffusion, which responds to concentration differences, advection follows a specified velocity field. For example, start with a concentration at the center of a 2D field and move it toward increasing x with a constant positive x-velocity:
+Advection transports a quantity along a specified velocity field, such as a chemical carried by flowing fluid. Unlike diffusion, it does not depend on concentration gradients. For example, start with a concentration at the center of a 2D field and move it toward increasing x with a constant positive x-velocity:
 
 ```python
 field = pal.NewPDEgrid((30, 30))
@@ -822,9 +822,9 @@ field.Update()
 print(field[15, 15], field[16, 15])  # source decreases; next site gains
 ```
 
-The two velocity arguments specify x and y motion. A positive x-velocity carries concentration toward increasing x; the timestep and grid spacing determine how far it moves in one update. Here the flow advances only a fraction of one lattice cell in the timestep, so the concentration is distributed between sites rather than shifted by a whole cell. As with diffusion, the transport call queues changes until `Update()`.
+The velocity arguments specify motion along x and y. Positive x-velocity moves concentration toward increasing x; the timestep and grid spacing determine the distance moved per update. Here the flow advances only a fraction of one lattice cell in the timestep, so the concentration is distributed between sites rather than shifted by a whole cell. As with diffusion, the transport call queues changes until `Update()`.
 
-Choose the advection method based on how velocity is represented. These are **reference signatures**, not a sequence of operations:
+Choose the advection method according to how velocity is represented. These are **reference signatures**, not a sequence of operations:
 
 ```python
 field.Advection(vx, vy=0.0, vz=0.0, ...)
