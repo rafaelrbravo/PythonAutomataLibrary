@@ -68,7 +68,7 @@ Relative offsets avoid storing absolute-neighbor lists for every cell and allow 
 
 ### 2.3 Separate update and commit operations
 
-PAL distinguishes pending changes from committed state. In `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits it, making the timestep's commit boundary explicit.
+PAL distinguishes pending changes from committed state. In `PopGrid` and `PDEgrid`, `Add` queues deltas and `Update` commits them, making the timestep's commit boundary explicit.
 
 This distinction has mathematical consequences. If every new site value must be computed from the same old field, immediate mutation can make results depend on iteration order. Queued deltas let the model calculate changes before committing them. This does not guarantee synchronous updates in every case: reads observe the current committed state, while direct indexing can mutate it immediately. PAL permits order-dependent algorithms but makes the choice explicit.
 
@@ -100,7 +100,7 @@ Grid slices are detached NumPy copies, not live native-backed views. Editing the
 
 ### 3.2 AgentGrid: handles, occupancy, and mutation
 
-An agent handle is distinct from its position. The handle identifies the living agent; position determines where it is located. This separation lets a model retain identity while an agent moves, and lets queries report handles without copying whole Python objects. The modeler remains responsible for defining and maintaining any additional per-agent state. Handles may be reused after disposal, so a saved handle value is not a permanent identity across an agent's death and a later allocation. A snapshot of handles preserves the values selected for iteration, not historical identities; models that need persistent lineage identifiers should maintain them separately.
+An agent handle is distinct from its position. The handle identifies the living agent; position determines where it is located. This separation lets a model retain identity while an agent moves, and lets queries report handles without copying whole Python objects. The modeler remains responsible for the meaning and lifecycle of any additional per-agent state. Handles may be reused after disposal, so a saved handle value is not a permanent identity across an agent's death and a later allocation. A snapshot of handles preserves the values selected for iteration, not historical identities; models that need persistent lineage identifiers should maintain them separately.
 
 Stackability is an explicit constructor choice because allowing multiple agents at a site changes the model's state space and affects occupancy logic. A nonstackable grid rejects a second occupant in safe mode. Do not enable stackability merely to suppress an error: decide whether multiple occupancy is biologically or physically meaningful.
 
@@ -110,7 +110,7 @@ The `counts` property is a read-only occupancy query view, not a writable altern
 
 ### 3.3 PopGrid: counts instead of individual objects
 
-A `PopGrid` stores integer population counts per site. It is intended for populations whose members are interchangeable for the questions being asked. This is a modeling assumption, not just a memory optimization: populations with equal site counts are indistinguishable even when their individual histories differ. This can greatly reduce storage and update overhead relative to individual agents, but loses individual histories and identities.
+A `PopGrid` stores integer population counts per site. It is intended for populations whose members are interchangeable for the questions being asked. This is a modeling assumption, not just a memory optimization: populations with equal site counts are indistinguishable even when their individual histories differ. This can greatly reduce storage and update overhead relative to individual agents, at the cost of individual histories and identities.
 
 Its `Add` operation queues a delta; `Update` applies pending changes; `Reset` clears current state and pending deltas. The delta buffer lets the model compute changes before committing them. For a movement event from site A to site B, queue a negative delta at A and a positive delta at B, then update once. If the model reads current counts during this phase, it sees the pre-commit counts, which helps make the update independent of visitation order.
 
@@ -120,7 +120,7 @@ The `capacity` argument selects the smallest integer storage type that can repre
 
 ### 3.4 PDEgrid: numerical operations with explicit assumptions
 
-A `PDEgrid` stores a lattice scalar field. Unlike an AgentGrid, its state is a spatially distributed quantity rather than a collection of individually tracked entities. This representation supports field-level transport and source terms, but the modeler must choose a discretization and use consistent units for stored values and coefficients. Its transport methods represent different mathematical choices: scalar-coefficient diffusion, spatially varying or interface-defined coefficients, masked interfaces, alternating-direction implicit diffusion, radial diffusion on circular or spherical domains, and constant or spatially varying advection. Choose the method that matches the equation and geometry, not merely the fastest one.
+A `PDEgrid` stores a lattice scalar field. Unlike an `AgentGrid`, its state is a spatially distributed quantity rather than a collection of individually tracked entities. This representation supports field-level transport and source terms, but the modeler must choose a discretization and use consistent units for stored values and coefficients. Its transport methods represent different mathematical choices: scalar-coefficient diffusion, spatially varying or interface-defined coefficients, masked interfaces, alternating-direction implicit diffusion, radial diffusion on circular or spherical domains, and constant or spatially varying advection. Choose the method that matches the equation and geometry, not merely the fastest one.
 
 `SetTimeSpaceStep` configures the temporal step `dt` and spatial steps `dx`, `dy`, and `dz` used by transport methods. These values are part of the discretized equation. A timestep that is too large can produce unstable or inaccurate results even when every API call is valid. Boundary conditions likewise belong to the mathematical problem: face-specific values and periodic wrapping can produce different solutions.
 
@@ -148,6 +148,6 @@ A `Multinomial` sampler separates configuration from the state accumulated while
 
 Visualization is separate from simulation state transitions, allowing headless execution and drawing at selected steps. `PixWindow` provides a writable pixel buffer for lattice-style images; `OpenGLWindow` draws 2D and 3D geometry.
 
-After writing pixels or drawing geometry, call `Update()` to request display. If the window cannot keep up, display frames are skipped instead of blocking the simulation. Image saves and GIF recordings differ: output is written asynchronously so the simulation can continue, but requested saved frames are not skipped. The window thread remains open until pending drawing and saving work finishes.
+After writing pixels or drawing geometry, call `Update()` to request display. If the window cannot keep up, display frames are skipped instead of blocking the simulation. Saving images and recording GIF frames differ from display updates: output is written asynchronously so the simulation can continue, but requested saved frames are not skipped. The window thread remains open until pending drawing and saving work finishes.
 
 Constructing frames still costs computation, even when presentation is nonblocking. Keep drawing separate from model updates when measuring performance. Headless rendering exercises the off-screen output path but cannot validate interactive window behavior.
