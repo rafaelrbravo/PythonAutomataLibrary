@@ -1,4 +1,6 @@
-# PAL Architecture and Design
+# PAL Architecture and Design — Draft
+
+This draft reorganizes the architecture document for review. The published document remains `PAL_ARCHITECTURE_AND_DESIGN.md` until this revision is approved.
 
 This document explains how PAL is organized and why its major interfaces and implementation choices exist. It focuses on architecture, subsystem responsibilities, trade-offs, validation strategy, and performance reasoning—not on teaching the API from the beginning. For runnable modeling workflows and public API behavior, use the [API Guide](API_GUIDE.md). For method signatures and descriptions, use the [API Reference](API_REFERENCE.md). The [Cheatsheet](CHEATSHEET.md) is the quick lookup.
 
@@ -27,7 +29,7 @@ A useful mental model is to separate PAL into several cooperating layers:
 5. **The native C core.** This provides low-level storage and computational routines used by the Python/Numba-facing layer.
 6. **Tests, examples, and generated documentation.** These act as executable and written statements of the public contract, checking that the layers agree.
 
-These are responsibilities, not necessarily six separate packages; several may share a source file. Keeping them conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
+These are responsibilities, not necessarily six separate packages; several may share a source file. The usual path is: model code calls the public wrapper; the wrapper selects a Python or Numba-compatible implementation; `pal.njit` may transform supported PAL-specific loop syntax before Numba compiles it; and the compiled operation reaches native-backed state or a native kernel where appropriate. Not every operation passes through every layer. Keeping the responsibilities conceptually distinct helps localize defects. A constructor bug, a Numba typing error, a native-state problem, and a stale API declaration require different fixes.
 
 ### 1.3 The native core and Python interface
 
@@ -254,7 +256,7 @@ No single test style can establish every kind of correctness. PAL uses several c
 
 Each layer catches a different class of defect. A focused test localizes a regression; a parity test catches path divergence; an invariant can catch an error shared by multiple implementations; and an integrated model can expose interaction bugs that isolated unit tests miss. Passing these tests still does not prove that a scientific hypothesis is correct, so model validation remains a separate responsibility (see the validation chapter below).
 
-#### Running the test suite
+### Running the test suite
 
 PAL's `Testing/` suite exercises public behavior across geometry and wrapping, Grid/IList/Multinomial/RNG operations, AgentGrid and PopGrid state changes, PDE transport and boundaries, compiled Python/Numba parity, visualization, integrated models, and historical regressions. Many tests use independent invariants or small reference calculations rather than reproducing PAL's implementation.
 
