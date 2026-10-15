@@ -1019,6 +1019,7 @@ static int64_t PopGrid_FieldGet(const PopGrid *g,int32_t i){
 static void PopGrid_FieldSet(PopGrid *g,int32_t i,int64_t v){
     switch(g->fieldType){case PG_FIELD_U8:((uint8_t*)g->field)[i]=(uint8_t)v;break;case PG_FIELD_U16:((uint16_t*)g->field)[i]=(uint16_t)v;break;case PG_FIELD_U32:((uint32_t*)g->field)[i]=(uint32_t)v;break;default:((int64_t*)g->field)[i]=v;}
 }
+static int64_t PopGrid_FieldMax(const PopGrid *g){switch(g->fieldType){case PG_FIELD_U8:return UINT8_MAX;case PG_FIELD_U16:return UINT16_MAX;case PG_FIELD_U32:return UINT32_MAX;default:return INT64_MAX;}}
 static int64_t PopGrid_DeltaGet(const PopGrid *g,int32_t i){
     switch(g->deltaType){case PG_DELTA_I16:return ((int16_t*)g->deltas)[i];case PG_DELTA_I32:return ((int32_t*)g->deltas)[i];default:return ((int64_t*)g->deltas)[i];}
 }
@@ -1066,11 +1067,11 @@ PAL_API int64_t pal_pg_geti(uintptr_t h,int32_t i){PopGrid*g=(PopGrid*)h;return 
 PAL_API int64_t pal_pg_get(uintptr_t h,int32_t x,int32_t y,int32_t z){PopGrid*g=(PopGrid*)h;return PopGrid_FieldGet(g,PopGrid_ToI(g,x,y,z));}
 
 /* Safe API: validates population bounds and delta accumulator overflow. */
-PAL_API int32_t pal_pg_seti(uintptr_t h,int32_t i,int64_t value){PopGrid*g=(PopGrid*)h;if(i<0||i>=g->length||value<0||value>g->capacity)return 0;int64_t old=PopGrid_FieldGet(g,i),diff=value-old;if(diff>0&&g->population>INT64_MAX-diff)return 0;g->population+=diff;PopGrid_FieldSet(g,i,value);return 1;}
+PAL_API int32_t pal_pg_seti(uintptr_t h,int32_t i,int64_t value){PopGrid*g=(PopGrid*)h;if(i<0||i>=g->length||value<0||value>PopGrid_FieldMax(g))return 0;int64_t old=PopGrid_FieldGet(g,i),diff=value-old;if(diff>0&&g->population>INT64_MAX-diff)return 0;g->population+=diff;PopGrid_FieldSet(g,i,value);return 1;}
 PAL_API int32_t pal_pg_addi(uintptr_t h,int32_t i,int64_t value){PopGrid*g=(PopGrid*)h;if(i<0||i>=g->length)return 0;int64_t next;if(!PopGrid_DeltaFits(g,PopGrid_DeltaGet(g,i),value,&next))return 0;PopGrid_DeltaSet(g,i,next);return 1;}
 PAL_API int32_t pal_pg_set(uintptr_t h,int32_t x,int32_t y,int32_t z,int64_t value){PopGrid*g=(PopGrid*)h;return pal_pg_seti(h,PopGrid_ToI(g,x,y,z),value);}
 PAL_API int32_t pal_pg_add(uintptr_t h,int32_t x,int32_t y,int32_t z,int64_t value){PopGrid*g=(PopGrid*)h;return pal_pg_addi(h,PopGrid_ToI(g,x,y,z),value);}
-PAL_API int32_t pal_pg_update(uintptr_t h){PopGrid*g=(PopGrid*)h;int64_t newPop=g->population;for(int32_t i=0;i<g->length;i++){int64_t f=PopGrid_FieldGet(g,i),d=PopGrid_DeltaGet(g,i);if((d>0&&f>g->capacity-d)||(d<0&&(d==INT64_MIN||f<-d)))return 0;if(d>0&&newPop>INT64_MAX-d)return 0;if(d<0&&newPop < -d)return 0;newPop+=d;}for(int32_t i=0;i<g->length;i++){int64_t d=PopGrid_DeltaGet(g,i);PopGrid_FieldSet(g,i,PopGrid_FieldGet(g,i)+d);PopGrid_DeltaSet(g,i,0);}g->population=newPop;return 1;}
+PAL_API int32_t pal_pg_update(uintptr_t h){PopGrid*g=(PopGrid*)h;int64_t newPop=0,max=PopGrid_FieldMax(g);for(int32_t i=0;i<g->length;i++){int64_t f=PopGrid_FieldGet(g,i),d=PopGrid_DeltaGet(g,i);if((d>0&&f>max-d)||(d<0&&(d==INT64_MIN||f<-d)))return 0;int64_t next=f+d;if(newPop>INT64_MAX-next)return 0;newPop+=next;}for(int32_t i=0;i<g->length;i++){int64_t d=PopGrid_DeltaGet(g,i);PopGrid_FieldSet(g,i,PopGrid_FieldGet(g,i)+d);PopGrid_DeltaSet(g,i,0);}g->population=newPop;return 1;}
 
 /* Fast API: same storage, no safety checks in Add/Set/Update hot paths. */
 PAL_API int32_t pal_pg_seti_(uintptr_t h,int32_t i,int64_t value){PopGrid*g=(PopGrid*)h;int64_t old=PopGrid_FieldGet(g,i);g->population+=value-old;PopGrid_FieldSet(g,i,value);return 1;}
@@ -1081,7 +1082,7 @@ PAL_API int32_t pal_pg_update_(uintptr_t h){PopGrid*g=(PopGrid*)h;for(int32_t i=
 
 PAL_API int64_t pal_pg_pop(uintptr_t h){return ((PopGrid*)h)->population;}
 PAL_API void pal_pg_clear(uintptr_t h){PopGrid*g=(PopGrid*)h;memset(g->field,0,(size_t)g->length*g->fieldType);memset(g->deltas,0,(size_t)g->length*g->deltaType);g->population=0;}
-PAL_API int32_t pal_pg_clear_value(uintptr_t h,int64_t value){PopGrid*g=(PopGrid*)h;if(value<0||value>g->capacity)return 0;if(value>0&&g->length>0&&value>INT64_MAX/g->length)return 0;for(int32_t i=0;i<g->length;i++)PopGrid_FieldSet(g,i,value);memset(g->deltas,0,(size_t)g->length*g->deltaType);g->population=value*g->length;return 1;}
+PAL_API int32_t pal_pg_clear_value(uintptr_t h,int64_t value){PopGrid*g=(PopGrid*)h;if(value<0||value>PopGrid_FieldMax(g))return 0;if(value>0&&g->length>0&&value>INT64_MAX/g->length)return 0;for(int32_t i=0;i<g->length;i++)PopGrid_FieldSet(g,i,value);memset(g->deltas,0,(size_t)g->length*g->deltaType);g->population=value*g->length;return 1;}
 PAL_API void pal_pg_clear_value_(uintptr_t h,int64_t value){PopGrid*g=(PopGrid*)h;for(int32_t i=0;i<g->length;i++)PopGrid_FieldSet(g,i,value);memset(g->deltas,0,(size_t)g->length*g->deltaType);g->population=value*g->length;}
 
 PAL_API int32_t pal_pg_field_bytes(uintptr_t h){return ((PopGrid*)h)->fieldType;}
@@ -1097,24 +1098,24 @@ PAL_API void pal_pg_region_get(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int3
     for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++)out[k++]=PopGrid_FieldGet(g,PopGrid_ToI(g,x,y,z));
 }
 static int32_t PopGrid_RegionSetScalar(PopGrid*g,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,int64_t v,int safe){
-    if(safe && (v<0||v>g->capacity))return 0; int64_t diff=0;
+    if(safe && (v<0||v>PopGrid_FieldMax(g)))return 0; int64_t diff=0;
     for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++){int32_t i=PopGrid_ToI(g,x,y,z);int64_t old=PopGrid_FieldGet(g,i);if((v-old>0&&diff>INT64_MAX-(v-old))||(v-old<0&&diff<INT64_MIN-(v-old)))return 0;diff+=v-old;}
     if(safe && ((diff>0&&g->population>INT64_MAX-diff)||(diff<0&&g->population < -diff)))return 0;
     for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++)PopGrid_FieldSet(g,PopGrid_ToI(g,x,y,z),v);
     g->population+=diff; return 1;
 }
-static int32_t PopGrid_LinearSetScalar(PopGrid*g,int32_t i0,int32_t i1,int64_t v,int safe){if(safe&&(v<0||v>g->capacity))return 0;int64_t diff=0;for(int32_t i=i0;i<i1;i++){int64_t d=v-PopGrid_FieldGet(g,i);if((d>0&&diff>INT64_MAX-d)||(d<0&&diff<INT64_MIN-d))return 0;diff+=d;}if(safe&&((diff>0&&g->population>INT64_MAX-diff)||(diff<0&&g->population < -diff)))return 0;for(int32_t i=i0;i<i1;i++)PopGrid_FieldSet(g,i,v);g->population+=diff;return 1;}
+static int32_t PopGrid_LinearSetScalar(PopGrid*g,int32_t i0,int32_t i1,int64_t v,int safe){if(safe&&(v<0||v>PopGrid_FieldMax(g)))return 0;int64_t diff=0;for(int32_t i=i0;i<i1;i++){int64_t d=v-PopGrid_FieldGet(g,i);if((d>0&&diff>INT64_MAX-d)||(d<0&&diff<INT64_MIN-d))return 0;diff+=d;}if(safe&&((diff>0&&g->population>INT64_MAX-diff)||(diff<0&&g->population < -diff)))return 0;for(int32_t i=i0;i<i1;i++)PopGrid_FieldSet(g,i,v);g->population+=diff;return 1;}
 PAL_API int32_t pal_pg_linear_set_scalar(uintptr_t h,int32_t i0,int32_t i1,int64_t v){return PopGrid_LinearSetScalar((PopGrid*)h,i0,i1,v,1);}
 PAL_API int32_t pal_pg_linear_set_scalar_(uintptr_t h,int32_t i0,int32_t i1,int64_t v){return PopGrid_LinearSetScalar((PopGrid*)h,i0,i1,v,0);}
 PAL_API int32_t pal_pg_region_set_scalar(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,int64_t v){return PopGrid_RegionSetScalar((PopGrid*)h,x0,x1,y0,y1,z0,z1,v,1);}
 PAL_API int32_t pal_pg_region_set_scalar_(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,int64_t v){return PopGrid_RegionSetScalar((PopGrid*)h,x0,x1,y0,y1,z0,z1,v,0);}
 static int32_t PopGrid_RegionSetArray(PopGrid*g,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,const int64_t*in,int safe){
     int32_t k=0; int64_t diff=0;
-    for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++,k++){int64_t v=in[k];if(safe&&(v<0||v>g->capacity))return 0;int64_t old=PopGrid_FieldGet(g,PopGrid_ToI(g,x,y,z)),d=v-old;if((d>0&&diff>INT64_MAX-d)||(d<0&&diff<INT64_MIN-d))return 0;diff+=d;}
+    for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++,k++){int64_t v=in[k];if(safe&&(v<0||v>PopGrid_FieldMax(g)))return 0;int64_t old=PopGrid_FieldGet(g,PopGrid_ToI(g,x,y,z)),d=v-old;if((d>0&&diff>INT64_MAX-d)||(d<0&&diff<INT64_MIN-d))return 0;diff+=d;}
     if(safe&&((diff>0&&g->population>INT64_MAX-diff)||(diff<0&&g->population < -diff)))return 0;
     k=0;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++,k++)PopGrid_FieldSet(g,PopGrid_ToI(g,x,y,z),in[k]);g->population+=diff;return 1;
 }
-static int32_t PopGrid_LinearSetArray(PopGrid*g,int32_t i0,int32_t i1,const int64_t*in,int safe){int64_t diff=0;for(int32_t i=i0;i<i1;i++){int64_t v=in[i-i0];if(safe&&(v<0||v>g->capacity))return 0;int64_t d=v-PopGrid_FieldGet(g,i);if((d>0&&diff>INT64_MAX-d)||(d<0&&diff<INT64_MIN-d))return 0;diff+=d;}if(safe&&((diff>0&&g->population>INT64_MAX-diff)||(diff<0&&g->population < -diff)))return 0;for(int32_t i=i0;i<i1;i++)PopGrid_FieldSet(g,i,in[i-i0]);g->population+=diff;return 1;}
+static int32_t PopGrid_LinearSetArray(PopGrid*g,int32_t i0,int32_t i1,const int64_t*in,int safe){int64_t diff=0;for(int32_t i=i0;i<i1;i++){int64_t v=in[i-i0];if(safe&&(v<0||v>PopGrid_FieldMax(g)))return 0;int64_t d=v-PopGrid_FieldGet(g,i);if((d>0&&diff>INT64_MAX-d)||(d<0&&diff<INT64_MIN-d))return 0;diff+=d;}if(safe&&((diff>0&&g->population>INT64_MAX-diff)||(diff<0&&g->population < -diff)))return 0;for(int32_t i=i0;i<i1;i++)PopGrid_FieldSet(g,i,in[i-i0]);g->population+=diff;return 1;}
 PAL_API int32_t pal_pg_linear_set_array(uintptr_t h,int32_t i0,int32_t i1,const int64_t*in){return PopGrid_LinearSetArray((PopGrid*)h,i0,i1,in,1);}
 PAL_API int32_t pal_pg_linear_set_array_(uintptr_t h,int32_t i0,int32_t i1,const int64_t*in){return PopGrid_LinearSetArray((PopGrid*)h,i0,i1,in,0);}
 PAL_API int32_t pal_pg_region_set_array(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,const int64_t*in){return PopGrid_RegionSetArray((PopGrid*)h,x0,x1,y0,y1,z0,z1,in,1);}
