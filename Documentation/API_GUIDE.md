@@ -364,16 +364,7 @@ Keep model construction outside the compiled function when it only needs to happ
 
 ## Construction
 
-PAL uses `New...` functions to create its grids and helper objects. Choose the constructor for the kind of state you need; the table below summarizes the options before the individual component sections explain their operations.
-
-| Function | Purpose |
-| --- | --- |
-| `NewGrid(dimensions, dtype)` | Typed lattice values. |
-| `NewAgentGrid(dimensions, numAgentProps=0, isStackable=False)` | Discrete or continuous agents with optional per-agent properties. |
-| `NewPopGrid(dimensions, capacity=None)` | Integer population counts on a lattice. |
-| `NewPDEgrid(dimensions)` | Continuous scalar field with diffusion/advection operations. |
-| `NewIList()` | Reusable integer query/list container. |
-| `NewMultinomial(other=None)` | Binomial/multinomial sampler. |
+Use the [component overview](#choose-the-right-pal-structure) to select the state or helper type you need. PAL constructs these objects with `New...` functions—for example, `pal.NewAgentGrid(...)`, `pal.NewPDEgrid(...)`, and `pal.NewIList()`. The [API Reference](API_REFERENCE.md) lists constructor signatures; the sections below explain the arguments and behavior that matter when setting up a model.
 
 Spatial grids use one to three dimensions. A **negative dimension enables wrapping on that axis**, while its absolute value gives the size. For example:
 
