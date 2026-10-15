@@ -544,6 +544,8 @@ By default an `AgentGrid` is not stackable: at most one agent may occupy a latti
 
 `All()` has **snapshot semantics**. The returned collection can be iterated while agents are created or disposed without changing the current iteration. `All(shuffle=True)` returns the same population in randomized order.
 
+The following is a *pattern*, not a standalone executable example: `ShouldDie` represents a death rule you define for your model.
+
 ```python
 for agent in agents.All():
     if ShouldDie(agent):
@@ -566,11 +568,11 @@ For continuous positions, use `agents.X(agent)`, `agents.Y(agent)`, and `agents.
 
 ### Occupancy and queries
 
-Use these queries to inspect which agents occupy a lattice site without changing the population. For example, after creating `agents` and placing an agent at `(10, 12)` as above:
+Use these queries to inspect which agents occupy a lattice site without changing the population. Continuing from the position example, the agent has moved to `(11, 12)`, so query that site:
 
 ```python
-print(agents.counts[10, 12])  # 1
-for agent in agents.AgentsAt(10, 12):
+print(agents.counts[11, 12])  # 1
+for agent in agents.AgentsAt(11, 12):
     print(agent)
 ```
 
