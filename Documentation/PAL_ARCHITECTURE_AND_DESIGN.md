@@ -4,7 +4,7 @@ This document explains how PAL is organized, why its major interfaces and implem
 
 ## Reading map
 
-Chapter 1 explains the design problem and traces execution through the public API, Python wrappers, Numba, and native code. Chapter 2 explains state ownership, neighborhood interpretation, update timing, execution modes, and rendering; Chapter 3 covers random-number state alongside the other subsystems. Chapter 3 applies those principles to each subsystem. Chapters 4 and 5 cover maintenance, testing, and performance; Chapter 6 distinguishes software correctness from scientific validation. Chapter 7 points to the complementary user-facing references.
+Chapter 1 explains the design problem and traces execution through the public API, Python wrappers, Numba, and native code. Chapter 2 explains state ownership, neighborhood interpretation, update timing, execution modes, and rendering. Chapter 3 examines each subsystem's representation and trade-offs, including random-number state. Chapters 4 and 5 cover maintenance, testing, and performance; Chapter 6 distinguishes software correctness from scientific validation. Chapter 7 points to the complementary user-facing references.
 
 ## 1. Foundations: responsibilities and execution
 
