@@ -847,12 +847,14 @@ Choose `PixWindow` for a two-dimensional lattice view where each site or pixel i
 pix, window = pal.StartPixWindow(xDim, yDim, scale=1, title="PAL", headless=False)
 ```
 
-`pix` is a write-oriented pixel buffer, not a general-purpose numeric `Grid`: it supports assignment but does not expose a public pixel-read API. Assign integer RGB colors by coordinate or linear index:
+`pix` is a write-oriented pixel buffer, not a general-purpose numeric `Grid`: it supports assignment but does not expose a public pixel-read API. Assign integer RGB colors by coordinate or linear index. For example, to color one site red and then display it:
 
 ```python
-pix[x, y] = 0xFF0000
-pix[i] = 0x00FF00
+pix[10, 12] = pal.RGB(255, 0, 0)
+window.Update()
 ```
+
+You can also assign packed RGB integers such as `0xFF0000`, and use a linear site index (`pix[i]`) instead of coordinates.
 
 It also provides `xDim`, `yDim`, `ToI(x, y)`, `ItoX(i)`, `ItoY(i)`, and `len(pix)`.
 
