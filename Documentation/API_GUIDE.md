@@ -165,13 +165,13 @@ Replace the earlier `EmptyNeighbors` definition with this compiled version as we
 @pal.njit(cache=True)
 def EmptyNeighbors(cells: pal.AgentGrid, agent: int, empty: pal.IList):
     empty.Clear()
-    for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
+    for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent), unroll=True):
         if cells.counts[x, y] == 0:
             empty.Append(cells.ToI(x, y))
     return empty
 ```
 
-Both functions now run in compiled code, while `main`, window creation, and rendering can remain in ordinary Python. The simulation rule and data representation are unchanged. `cache=True` can reuse compiled specializations in later runs; the [performance section](#performance-fastmode-njitcachetrue-and-unrolltrue) explains the tradeoffs.
+Both functions now run in compiled code, while `main`, window creation, and rendering can remain in ordinary Python. In the compiled `EmptyNeighbors`, `unroll=True` expands the small, fixed eight-neighbor loop, which can reduce loop overhead. It has no unrolling benefit in the ordinary Python version from stage 3, and larger neighborhoods or complex loop bodies can increase compilation time and code size. The simulation rule and data representation are unchanged. `cache=True` can reuse compiled specializations in later runs; the [performance section](#performance-fastmode-njitcachetrue-and-unrolltrue) explains the tradeoffs.
 
 ### 6. Add a diffusing nutrient
 
