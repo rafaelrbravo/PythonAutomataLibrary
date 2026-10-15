@@ -320,7 +320,7 @@ grid.NewAgentSQ(10, 12)
 print(CountAgents(grid))  # 1
 ```
 
-Construct a model once in Python and compile the work that runs repeatedly. `pal.njit` wraps Numba `njit` and additionally transforms PAL model code. Among other PAL-specific compilation behavior, annotated PAL arguments allow safe-mode errors in compiled model code to report the model source line.
+Keep model construction outside compiled functions when it only needs to happen once; compile the work that runs repeatedly. `pal.njit` wraps Numba `njit` and additionally transforms PAL model code. Among other PAL-specific compilation behavior, annotated PAL arguments allow safe-mode errors in compiled model code to report the model source line.
 
 ## Construction
 
