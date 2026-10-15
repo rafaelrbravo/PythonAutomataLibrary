@@ -8,6 +8,11 @@ This tutorial follows **one simple model**: cells occupy sites on a two-dimensio
 
 Use the examples in order. The code blocks marked **complete program** can be saved as separate Python files and run independently. Later snippets show focused modifications to the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
 
+Before building the model, two PAL controls are useful to know:
+
+- **`pal.FastMode()`** selects fast execution instead of PAL's default safe mode. Call it at the start of the program, **before creating any PAL model or window objects**. Mode selection is process-wide and cannot be changed after the first PAL object is constructed. Keep safe mode while learning or debugging; enable fast mode when appropriate for a tested model.
+- **`pal.AwaitWindows()`** waits for PAL's visualization windows to become ready before the program proceeds. We will use it when we introduce a window in stage 2; it is not needed for a model that has no window.
+
 ### 1. Place cells on a lattice
 
 An `AgentGrid` stores identifiable cells and their positions. We choose a nonstackable 30 × 30 lattice: at most one cell can occupy each site. A `Grid`, by contrast, stores one typed value per site and does not create individual cell identities.
