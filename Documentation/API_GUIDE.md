@@ -690,6 +690,8 @@ print(pop[10, 12])    # 17
 
 `Add` changes only the pending delta. In this example, the source site remains at 20 and the destination remains unchanged until `Update()`; afterward, the source contains 17 and the destination has increased by 3. More generally, until `Update()`, `GetPop()`, indexing, and `All()` still reflect the current population. A single `Update()` commits the queued changes together, avoiding order-dependent reads during a synchronous timestep. Direct assignments during that timestep still change current values immediately.
 
+**Population movement with `Multinomial`.** When individuals at a site can move in several directions, `pal.NewMultinomial()` provides a sampler for distributing that site's population among the possible outcomes. Call `Setup(n)` with the site's population, then `Sample(p)` for each outcome, and use `pop.Add()` to queue the resulting transfers. Finally, call `pop.Update()` to apply the transfers together. See the [count-based random walk](#7-replace-individual-cells-with-population-counts) for a complete example.
+
 | Operation | Meaning |
 | --- | --- |
 | `GetPop()` | Total population over all sites. |
