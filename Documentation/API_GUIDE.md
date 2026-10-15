@@ -396,6 +396,8 @@ pal.VonNeumannHood(dim, excludeCenter=False)
 pal.CircleHood(dim, rad, excludeCenter=False)
 ```
 
+`MooreHood` contains offsets with each coordinate in `[-1, 1]`. `VonNeumannHood` contains the center and axis-adjacent offsets. `CircleHood` contains integer offsets whose Euclidean distance from the center is at most `rad`; `rad` may be noninteger, but must be finite and nonnegative. Set `excludeCenter=True` to omit the zero offset. All three constructors support dimensions 1–3 and reject other dimension counts with `ValueError`. Each returns a tuple of integer offset tuples; these describe relative positions, not site indices, until mapped through `grid.Hood(...)`.
+
 ## Performance: `FastMode()`, `njit(cache=True)`, and `unroll=True`
 
 PAL provides three complementary performance controls:
@@ -436,8 +438,6 @@ The exact offset order is not important for this sum; the example above illustra
 **Why this is fast:** The neighborhood has a fixed number of offsets known at compilation time. With `unroll=True`, Numba can specialize each operation, eliminating the ordinary neighborhood-loop control and making the resulting code easier to optimize. This can be **extremely performant** in the inner loop of an agent-based model, where the same small neighborhood is visited millions of times. It preserves PAL's compact neighborhood syntax rather than requiring manually expanded code.
 
 Unrolling increases generated code size and may increase compilation time. It is most attractive for small, fixed neighborhoods; benchmark larger ones. The option changes how the loop is compiled, not which neighbors are visited.
-
-`MooreHood` contains offsets with each coordinate in `[-1, 1]`. `VonNeumannHood` contains the center and axis-adjacent offsets. `CircleHood` contains integer offsets whose Euclidean distance from the center is at most `rad`; `rad` may be noninteger, but must be finite and nonnegative. Set `excludeCenter=True` to omit the zero offset. All three constructors support dimensions 1–3 and reject other dimension counts with `ValueError`. Each returns a tuple of integer offset tuples; these describe relative positions, not site indices, until mapped through `grid.Hood(...)`.
 
 ### Safety contracts and mode selection
 
