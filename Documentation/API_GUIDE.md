@@ -80,7 +80,7 @@ You should see four red cells near the center. If you change their initial coord
 
 In this model, cells move only into empty neighboring sites. `pal.MooreHood(2, excludeCenter=True)` describes the eight relative offsets around a 2D site. `cells.Hood(..., x, y)` converts those offsets to valid lattice coordinates. `XSQ` and `YSQ` give an agent's lattice site.
 
-An `IList` is PAL's reusable integer list, designed for efficient neighborhood queries. Store **linear site indices** rather than Python coordinate tuples. Add this near the constants in the preceding program:
+An `IList` is PAL's reusable list of integers. We use it to collect empty neighboring sites. Each site has coordinates `(x, y)`, but `IList` stores a single integer per site: `cells.ToI(x, y)` converts coordinates to that site's index. Later, `cells.ItoX(i)` and `cells.ItoY(i)` convert the index back to coordinates. Add the following code to the program from stage 2, immediately after the color constants:
 
 ```python
 MOORE = pal.MooreHood(2, excludeCenter=True)
