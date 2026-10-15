@@ -119,7 +119,7 @@ Keep rendering separate from the simulation's state transitions. This separation
 
 ## 3. Subsystem design choices
 
-The previous chapters explain the common execution path and state semantics. This chapter applies those ideas to each subsystem: what it stores, which operations define its contract, and which trade-offs follow from that representation. For complete call signatures and usage examples, see the API Reference and API Guide.
+Chapter 1 describes how a model operation reaches its implementation; Chapter 2 describes the state and timing rules that must hold regardless of execution path. This chapter examines the concrete representations that enforce those rules. The central question for each subsystem is not only what it stores, but what information or behavior its representation makes easy—and what it deliberately leaves to the modeler. For complete call signatures and usage examples, see the API Reference and API Guide.
 
 ### 3.1 Grid: typed site state and explicit indexing
 
