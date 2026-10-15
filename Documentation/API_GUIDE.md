@@ -496,10 +496,12 @@ Slice reads return detached NumPy copies. Scalar and slice reads/writes work in 
 Use `AgentGrid` when individual agents must retain their identities as they move, reproduce, die, or change properties. It manages agent handles and locations, making it suitable for cell-based and other individual-based models where tracking particular entities matters.
 
 ```python
-agents = pal.NewAgentGrid((xDim, yDim), numAgentProps=2)
+agents = pal.NewAgentGrid((30, 30), numAgentProps=2)
+agent = agents.NewAgentSQ(10, 12)
+agents[agent, 0] = 1.5
 ```
 
-PAL represents an agent by an integer handle. Agent properties are stored on the grid and accessed with `agents[agent, property]`.
+PAL represents an agent by an integer **handle**, returned when the agent is created. The handle identifies the agent even when it moves; it is not a lattice-site index. Here `numAgentProps=2` reserves two floating-point properties per agent, indexed as `0` and `1`. Agent properties are stored on the grid and accessed with `agents[agent, property]`.
 
 ### Population and lifecycle
 
