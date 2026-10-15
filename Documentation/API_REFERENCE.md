@@ -189,7 +189,7 @@ Create an OpenGL visualization window for 2D or 3D drawing.
 | method | `Save(self, path: str, block=False)` | Save the currently published scene to an image file; block controls whether to wait for completion. |
 | method | `Close(self)` | Close the window and release rendering resources. |
 
-The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [PAL Guide](API_GUIDE.pdf) for which object to use in Python and compiled drawing code.
+The `OpenGLWindow` table follows its source Protocol, which also contains method implementations; repeated declarations are listed once. `OpenGLDraw` is a compiled primitive collector, while the returned window handles rendering and output. Consult the [PAL Guide](PAL_GUIDE.pdf) for which object to use in Python and compiled drawing code.
 
 ## Pix drawing buffer
 
