@@ -65,7 +65,7 @@ PAL's `njit` interface is not simply a spelling alias for Numba's decorator. Bef
 
 The transformation lets users express spatial operations directly instead of writing coordinate conversions in every loop. It also gives PAL a place to add source-aware safe-mode diagnostics when argument annotations provide enough type information.
 
-The benefit of this approach is that spatial loops retain readable model-level syntax while their compiled form can specialize the iteration work. The cost is an additional translation stage with its own supported syntax, type assumptions, and failure modes. Transformations add a layer that users should understand when debugging. The preparation step uses Python source inspection; if the function's source cannot be retrieved, PAL leaves the function unchanged and passes it to Numba. Consequently, PAL-specific loop rewriting should not be assumed to work for dynamically defined functions whose source is unavailable. The Python source a modeler reads is not necessarily the exact function body Numba receives. A traceback or typing error may refer to transformed code or a synthetic compilation context. Annotations improve the information available to the transformer, but they do not guarantee that every error can be attributed to a perfect source location.
+This approach keeps spatial loops readable while allowing their compiled form to specialize iteration. It also introduces a translation stage with its own syntax restrictions, type assumptions, and failure modes that matter during debugging. The preparation step uses Python source inspection; if the function's source cannot be retrieved, PAL leaves the function unchanged and passes it to Numba. Consequently, PAL-specific loop rewriting should not be assumed to work for dynamically defined functions whose source is unavailable. The Python source a modeler reads is not necessarily the exact function body Numba receives. A traceback or typing error may refer to transformed code or a synthetic compilation context. Annotations improve the information available to the transformer, but they do not guarantee that every error can be attributed to a perfect source location.
 
 When a failure occurs under `@pal.njit`, first reproduce it in safe mode, without calling `pal.FastMode()`. If the additional checks do not identify the problem, temporarily remove `@pal.njit` from the functions involved, starting with the ones closest to the failure, and use a Python debugger to follow the execution. Once the error is understood, restore compilation and verify the fix in both Python and compiled execution. If the failure occurs only when compiled, reduce it to a small example and check PAL's transformation requirements, argument annotations, and supported API usage before changing the scientific algorithm.
 
@@ -73,7 +73,7 @@ When a failure occurs under `@pal.njit`, first reproduce it in safe mode, withou
 
 Consider a model step that reads a field value, changes an agent, and queues a population delta. At the **model layer**, the author chooses the order of those operations. The **public PAL API** resolves coordinates, handles, and arguments. In ordinary Python execution, Python-facing wrappers perform the supported operations; in a compiled step, PAL's preparation and Numba-compatible call path must preserve their observable meaning. Both paths ultimately work with the relevant native-backed state. A later `Update()` on the population grid commits the queued delta; it is not implied by a field read or an agent movement.
 
-The trace also explains why an apparently successful API call does not establish a correct model step: dispatch, location, and update timing are independent responsibilities. This trace exposes three independent questions during debugging: **Was the right site or handle selected? Was the right operation dispatched? Was the state committed at the intended point?** A failure in any one can produce a scientifically wrong timestep despite apparently reasonable model code.
+A successful API call does not establish a correct model step: dispatch, location, and update timing are separate concerns. Ask three questions when debugging: **Was the right site or handle selected? Was the right operation dispatched? Was the state committed at the intended point?** A failure in any one can produce a scientifically wrong timestep despite apparently reasonable model code.
 
 The execution path is conceptual rather than a promise that every call crosses every layer. Some operations are resolved in wrappers or compiled code; consult the actual implementation when profiling call overhead or changing a kernel.
 
@@ -81,9 +81,9 @@ The execution path is conceptual rather than a promise that every call crosses e
 
 ### 2.1 Native-backed state and object lifetime
 
-A PAL object is more than a Python container. Its public methods operate on state managed through PAL's native-backed implementation. The Python object is the user's handle to that state; it is not safe to assume that every internal value is an ordinary Python list or NumPy array that can be edited freely.
+A PAL object's public methods operate on state managed through PAL's native-backed implementation, not necessarily an ordinary Python container. The Python object is the user's handle to that state; it is not safe to assume that every internal value is an ordinary Python list or NumPy array that can be edited freely.
 
-This matters for lifetime and mutation. Creating, moving, or disposing an agent must keep position, occupancy, and handle validity consistent. Writing directly into an internal count or pointer-like representation could bypass those invariants, so PAL exposes explicit state-changing methods. Likewise, a returned array or slice must be interpreted according to its contract: a detached copy is a snapshot, not a live view into native memory, and editing it changes the copy until the result is explicitly assigned back.
+This distinction affects object lifetime and mutation. Creating, moving, or disposing an agent must keep position, occupancy, and handle validity consistent. Writing directly into an internal count or pointer-like representation could bypass those invariants, so PAL exposes explicit state-changing methods. Likewise, a returned array or slice must be interpreted according to its contract: a detached copy is a snapshot, not a live view into native memory, and editing it changes the copy until the result is explicitly assigned back.
 
 Native-backed objects can support pickling, but pickling an object is not equivalent to serializing the entire simulation process. A model's complete checkpoint may also need parameters, timestep, other coupled objects, external state, and random-number state. See the [API Guide's saving section](API_GUIDE.md#saving-pal-objects) for the checkpoint contract and its limitations.
 
@@ -97,15 +97,15 @@ When adding an operation, identify which layer owns each invariant. A population
 
 A neighborhood such as Moore or Von Neumann is naturally a pattern around a location. PAL represents it as relative integer offsets, then applies it to a specific grid position with `grid.Hood(...)`. This separates the reusable pattern from the grid location where it is used.
 
-The distinction also makes boundary behavior explicit. Applying a hood must account for grid dimensions and wrapping flags; the relative pattern alone does not know whether a particular neighbor falls outside a nonperiodic domain. PAL's application step can translate offsets into coordinates, wrap periodic axes, and omit out-of-domain sites according to the public contract.
+Applying a neighborhood also makes boundary behavior explicit. Applying a hood must account for grid dimensions and wrapping flags; the relative pattern alone does not know whether a particular neighbor falls outside a nonperiodic domain. PAL's application step can translate offsets into coordinates, wrap periodic axes, and omit out-of-domain sites according to the public contract.
 
 This avoids storing a separate absolute-neighbor list for every cell and lets the compiled path transform high-level neighborhood loops. It does not guarantee unique destinations: small or wrapped domains can map multiple offsets to the same site. Whether to count those repeated contributions or deduplicate them depends on the model, so choose and test the intended behavior.
 
 ### 2.4 Separate update and commit operations
 
-PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits pending changes. This makes the timestep boundary visible in code.
+PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits pending changes. This exposes the timestep boundary in code.
 
-This distinction has mathematical consequences. If every new site value must be computed from the same old field, immediate mutation can make results depend on iteration order. Queued deltas let the model calculate changes before committing them. This is not a universal synchronous-update guarantee: reads still observe the current committed state, and direct indexing can mutate state immediately. PAL permits order-dependent algorithms but makes the choice explicit.
+This distinction has mathematical consequences. If every new site value must be computed from the same old field, immediate mutation can make results depend on iteration order. Queued deltas let the model calculate changes before committing them. This does not guarantee synchronous updates in every case: reads observe the current committed state, while direct indexing can mutate it immediately. PAL permits order-dependent algorithms but makes the choice explicit.
 
 Agent updates have different semantics. `All()` snapshots which handles will be visited, but it does not snapshot the world. If one agent reproduces, later agents may see the newborn's occupancy even though the newborn is not part of the original handle snapshot. This is a deliberate and useful pattern for sequential agent models, but it is not equivalent to a synchronous cellular update.
 
@@ -208,7 +208,7 @@ When an operation behaves unexpectedly, follow the layers in order:
 7. **Check independent invariants.** Test a conservation law, exact coordinate identity, or hand-computed update.
 8. **Only then localize the implementation layer.** Determine whether the defect belongs to the public wrapper, Numba overload/transformer, native core, or visualization layer.
 
-This sequence moves from observable contract to minimal evidence before diving into implementation details. It reduces the risk of "fixing" a wrapper symptom by changing the model's scientific behavior.
+This sequence checks the observable contract and isolates the failure before examining implementation details. It reduces the risk of "fixing" a wrapper symptom by changing the model's scientific behavior.
 
 ### 4.2 How to extend a public operation
 
@@ -223,7 +223,7 @@ This order prevents documentation from becoming an unsupported promise and keeps
 
 ### 4.3 Testing strategy
 
-PAL's architecture creates several distinct failure boundaries: the public wrapper may bind arguments incorrectly, a compiled overload may diverge from Python, a native kernel may corrupt state, and an integrated model may expose incorrect update ordering. Testing must cross those boundaries rather than only exercising each component in isolation. No single test style can establish every kind of correctness. PAL uses several complementary forms of evidence:
+PAL's architecture creates several distinct failure boundaries: the public wrapper may bind arguments incorrectly, a compiled overload may diverge from Python, a native kernel may corrupt state, and an integrated model may expose incorrect update ordering. Testing must cross those boundaries rather than only exercising each component in isolation. No single test style establishes every kind of correctness. PAL therefore uses complementary forms of evidence:
 
 - **Focused API tests** check individual public operations, argument forms, boundary cases, and error behavior.
 - **Python/Numba parity tests** check that supported calls agree across execution paths.
@@ -277,7 +277,7 @@ Do not optimize by removing a check merely because it appears in a profile. Firs
 
 Before running a large simulation, reduce the domain and timestep count until the expected answer can be computed manually. A two-site transfer can establish whether queued population changes conserve the total. A linear field can establish whether indexing and finite differences produce the expected gradient. A tiny periodic grid can show exactly which neighbor lies across a boundary.
 
-Small examples are powerful because they turn vague visual plausibility into an assertion with a known answer. Keep such examples as regression tests after the model grows.
+Small examples replace visual plausibility with assertions whose expected results are known. Keep such examples as regression tests after the model grows.
 
 ### 6.2 Test invariants and edge cases
 
@@ -289,7 +289,7 @@ Test the cases most likely to break assumptions: the first and last site, wrappe
 
 Safe-mode checks and passing unit tests show that operations respect tested contracts. They do not establish that the chosen growth law, diffusion coefficient, update schedule, stochastic distribution, or boundary condition is scientifically justified. Validate the numerical method against known solutions where possible; test convergence as grid spacing and timestep change; and compare stochastic results across independent seeds.
 
-Document assumptions alongside the model: whether agents update sequentially or synchronously, whether boundaries are reflecting, fixed, or periodic, whether rates are per unit time or per step, and whether counts or fields represent densities or totals. These assumptions determine what the simulation means.
+Document assumptions alongside the model: whether agents update sequentially or synchronously, whether boundaries are reflecting, fixed, or periodic, whether rates are per unit time or per step, and whether counts or fields represent densities or totals. These assumptions determine how the simulation should be interpreted.
 
 
 ## 7. Using the rest of the documentation
