@@ -105,7 +105,7 @@ This avoids storing a separate absolute-neighbor list for every cell and lets th
 
 PAL makes a distinction between changes that are being accumulated and changes that have become the current state. For `PopGrid` and `PDEgrid`, `Add` queues a delta and `Update` commits pending changes. This makes the timestep boundary visible in code.
 
-This distinction matters mathematically. If every new site value must be computed from the same old field, immediate mutation can make results depend on iteration order. Queued deltas let the model calculate changes before committing them. Direct indexing remains available when immediate assignment is intended; PAL permits order-dependent algorithms but makes the choice explicit.
+This distinction matters mathematically. If every new site value must be computed from the same old field, immediate mutation can make results depend on iteration order. Queued deltas let the model calculate changes before committing them. This is not a universal synchronous-update guarantee: reads still observe the current committed state, and direct indexing can mutate state immediately. PAL permits order-dependent algorithms but makes the choice explicit.
 
 Agent updates have different semantics. `All()` snapshots which handles will be visited, but it does not snapshot the world. If one agent reproduces, later agents may see the newborn's occupancy even though the newborn is not part of the original handle snapshot. This is a deliberate and useful pattern for sequential agent models, but it is not equivalent to a synchronous cellular update.
 
@@ -175,7 +175,7 @@ A `PDEgrid` stores a lattice scalar field. Its Cartesian, interface-based, maske
 
 Call `SetTimeSpaceStep` to specify the time and spatial scales used by transport methods. These values are part of the discretized equation. A timestep that is too large can produce unstable or inaccurate results even if every API call is valid. Boundary conditions likewise belong to the mathematical problem: fixed-value, face-dependent, and periodic boundaries can produce different solutions.
 
-Transport routines accumulate changes for `Update()` to commit. That separation does not guarantee stability, positivity, or conservation. Validate against a known field, check boundary behavior, and test convergence as timestep and grid spacing change.
+Transport routines accumulate changes for `Update()` to commit. That separation makes the update schedule explicit, but it does not by itself guarantee stability, positivity, or conservation; those properties depend on the scheme, coefficients, timestep, and boundary conditions. Validate against a known field, check boundary behavior, and test convergence as timestep and grid spacing change.
 
 ### 3.5 IList: reusable collections for compiled workflows
 
@@ -256,7 +256,7 @@ No single test style can establish every kind of correctness. PAL uses several c
 
 Each layer catches a different class of defect. A focused test localizes a regression; a parity test catches path divergence; an invariant can catch an error shared by multiple implementations; and an integrated model can expose interaction bugs that isolated unit tests miss. Passing these tests still does not prove that a scientific hypothesis is correct, so model validation remains a separate responsibility (see the validation chapter below).
 
-### Running the test suite
+#### Running the test suite
 
 PAL's `Testing/` suite exercises public behavior across geometry and wrapping, Grid/IList/Multinomial/RNG operations, AgentGrid and PopGrid state changes, PDE transport and boundaries, compiled Python/Numba parity, visualization, integrated models, and historical regressions. Many tests use independent invariants or small reference calculations rather than reproducing PAL's implementation.
 
