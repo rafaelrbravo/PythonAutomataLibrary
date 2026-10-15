@@ -185,15 +185,10 @@ RED = pal.RGB(255, 0, 0)
 @pal.njit(cache=True)
 def Step(cells: pal.PopGrid, multi: pal.Multinomial):
     for i in cells.All():
-        multi.Setup(cells[i])
+        multi.Setup(cells.counts[i])
         x, y = cells.ItoX(i), cells.ItoY(i)
-        neighbors = 0
         for nx, ny in cells.Hood(MOORE, x, y):
-            neighbors += 1
-        if neighbors == 0:
-            continue
-        for nx, ny in cells.Hood(MOORE, x, y):
-            moved = multi.Sample(1.0 / neighbors)
+            moved = multi.Sample(1.0 / 8)
             cells.Add(-moved, i)
             cells.Add(moved, nx, ny)
     cells.Update()
@@ -234,7 +229,7 @@ if __name__ == "__main__":
     main()
 ```
 
-As in the `AgentGrid` version, each cell selects one valid neighboring destination uniformly. `Setup(cells[i])` starts a multinomial allocation for all cells currently at site `i`; `Sample(1.0 / neighbors)` allocates them among the valid directions. Probabilities refer to the **original** site's population, not the remaining unassigned cells. Queued transfers are committed together with `Update()`, so arrivals do not move again in the same timestep.
+Each of the eight Moore-neighborhood directions has probability `1/8`. `Setup(cells.counts[i])` starts a multinomial allocation for all cells currently at site `i`; each `Sample(1.0 / 8)` assigns cells to one valid direction. At a nonwrapped boundary, invalid directions are skipped, and their unallocated probability mass corresponds to cells staying at their original site. Probabilities refer to the **original** site's population, not the remaining unassigned cells. Queued transfers are committed together with `Update()`, so arrivals do not move again in the same timestep.
 
 The nutrient update now consumes 0.01 concentration units per cell at each site, so multiple occupancy increases local consumption. The same fixed-value boundaries replenish nutrient in both representations. The two versions implement the same basic random-walk idea, but not the same exclusion process: `AgentGrid` avoids occupied destinations and updates agents sequentially; `PopGrid` permits multiple occupancy and moves all counts synchronously. That distinction matters when comparing results. See [Multinomial](#random-numbers-and-multinomial) for more about sampling and solver reuse.
 
