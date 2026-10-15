@@ -108,7 +108,13 @@ def EmptyNeighbors(cells, agent, empty):
     return empty
 ```
 
-Create `empty = pal.NewIList()` once in `main`, immediately after `cells = Setup()`. To inspect the result before adding movement, insert `print(EmptyNeighbors(cells, cells.All()[0], empty).All())` immediately afterward. The printed indices identify available lattice sites; `ItoX` and `ItoY` recover their coordinates. At a nonperiodic boundary, `Hood` omits offsets outside the grid.
+Create `empty = pal.NewIList()` once in `main`, immediately after `cells = Setup()`. To inspect the result before adding movement, insert this line immediately afterward:
+
+```python
+print(EmptyNeighbors(cells, cells.All()[0], empty).All())
+```
+
+`cells.All()[0]` selects one of the initial agents, `EmptyNeighbors` fills the reusable list with empty neighboring site indices, and `.All()` returns those indices for printing. The printed values are **site indices, not agent handles**; `ItoX` and `ItoY` recover their coordinates. At a nonperiodic boundary, `Hood` omits offsets outside the grid.
 
 ### 4. Move cells to empty neighboring sites
 
