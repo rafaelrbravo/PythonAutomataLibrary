@@ -1,6 +1,6 @@
 # PAL Cheatsheet
 
-Install (includes visualization): `python -m pip install PythonAutomataLibrary`\n\nCopy bundled examples: `generate-pal-examples [destination-parent-directory]` → creates `PAL-Examples/`; defaults to current directory and never overwrites.
+Install: `python -m pip install PythonAutomataLibrary`
 
 `import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under **`@pal.njit(cache=True)`**.
 
