@@ -1,6 +1,6 @@
 # PAL distribution and release checklist
 
-PAL targets **Windows, Linux, and macOS**. Public installation through PyPI and conda-forge is **not confirmed**. Do not advertise the commands below as working until packages are published and installation is tested.
+PAL targets **Windows, Linux, and macOS**. The intended standard user installation is `python -m pip install PythonAutomataLibrary` from PyPI, using prebuilt wheels containing the native core. These are the planned release instructions; public PyPI and conda-forge availability are **not yet confirmed**. The remainder of this document tracks release engineering and validation.
 
 ## Build locally
 
