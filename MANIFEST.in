@@ -3,3 +3,4 @@ include build_native.py
 include README.md
 recursive-exclude * __pycache__ *.py[cod]
 global-exclude *.dll *.so *.dylib *.pyd
+recursive-include Examples *.py *.md *.txt *.csv *.json *.png *.jpg *.jpeg *.gif *.npy *.npz
