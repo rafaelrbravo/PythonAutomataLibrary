@@ -1,6 +1,10 @@
 # PAL distribution and release checklist
 
-PAL targets **Windows, Linux, and macOS**. The intended standard user installation is `python -m pip install PythonAutomataLibrary` from PyPI, using prebuilt wheels containing the native core. These are the planned release instructions; public PyPI and conda-forge availability are **not yet confirmed**. The remainder of this document tracks release engineering and validation.
+PAL targets **Windows, Linux, and macOS**. The intended standard user installation is `python -m pip install PythonAutomataLibrary` from PyPI, using prebuilt wheels containing the native core. PAL v1.0.0 is published on [PyPI](https://pypi.org/project/PythonAutomataLibrary/); conda-forge availability is not yet confirmed. The unreleased v1.0.1 changes include visualization dependencies by default and bundled examples. The remainder of this document tracks release engineering and validation.
+
+## Examples (upcoming v1.0.1)
+
+The default installation includes visualization dependencies and bundled examples. Run `generate-pal-examples` to create an editable `PAL-Examples/` folder in the current directory, or `generate-pal-examples /path/to/parent` to create it elsewhere. The parent directory must exist; existing example folders are never overwritten. No separate download is required.
 
 ## Build locally
 
@@ -34,7 +38,7 @@ To check a wheel without importing from the checkout, install it in a new enviro
 
 ```bash
 pip install PythonAutomataLibrary
-pip install 'PythonAutomataLibrary[visualization]'  # optional GUI dependencies
+generate-pal-examples  # copies bundled examples to ./PAL-Examples
 conda install conda-forge::pythonautomatalibrary
 ```
 
