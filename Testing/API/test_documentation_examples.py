@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 
-GUIDE = Path(__file__).resolve().parents[2] / "Documentation" / "API_GUIDE.md"
+GUIDE = Path(__file__).resolve().parents[2] / "Documentation" / "PAL_GUIDE.md"
 
 
 def _blocks():
