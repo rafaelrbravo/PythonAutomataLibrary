@@ -4,6 +4,7 @@ import PythonAutomataLibrary as pal
 SIZE = 30
 BLACK = pal.RGB(0, 0, 0)
 RED = pal.RGB(255, 0, 0)
+MOORE = pal.MooreHood(2, excludeCenter=True)
 
 def Draw(cells, pix):
     pix[:] = BLACK
