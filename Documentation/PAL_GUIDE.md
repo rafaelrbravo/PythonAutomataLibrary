@@ -37,7 +37,7 @@ You can combine these components: for example, cells in an `AgentGrid` can consu
 
 The tutorial develops **one simple model** of cells on a two-dimensional lattice. We place and draw cells, move them into empty neighboring sites, compile the movement rule, add a boundary-fed nutrient field, and finally represent cells as population counts. The biological premise stays the same so each stage can focus on a new PAL feature.
 
-Follow the examples in order. Blocks marked **complete program** run independently when saved as Python files; other snippets modify the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
+Each numbered stage has a matching **complete, runnable program** in `Examples/Tutorial/`, named `01_PlaceCells.py` through `07_PopulationCounts.py`. After installing PAL, run `generate-pal-examples` (or `generate-pal-examples /path/to/parent`) to copy them into `PAL-Examples/Tutorial/`. For example, run `python PAL-Examples/Tutorial/01_PlaceCells.py` from the destination parent directory. The numbered files accumulate the changes described below, so you can run any stage without manually assembling snippets. Blocks marked **complete program** run independently when saved as Python files; other snippets modify the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
 
 PAL begins in safe mode, which checks operations for common errors. The tutorial uses this default. Later, the [performance section](#performance-fastmode-njitcachetrue-and-unrolltrue) explains how to select fast mode and compile frequently executed code.
 
