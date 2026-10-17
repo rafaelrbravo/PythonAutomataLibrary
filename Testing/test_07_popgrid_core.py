@@ -85,7 +85,7 @@ def test_wrapping(api, dims, axis, size):
 
 def test_safe_update_is_atomic_on_underflow(api, safe_mode):
     if not safe_mode:
-        pytest.skip("Fast mode requires caller to preserve population bounds")
+        pytest.skip("Fast mode omits population range checks")
     g = api.NewPopGrid((4,), capacity=100)
     g[0] = 5
     g[1] = 6
@@ -97,14 +97,15 @@ def test_safe_update_is_atomic_on_underflow(api, safe_mode):
     np.testing.assert_array_equal(g[:], before)
 
 
-def test_safe_update_is_atomic_on_capacity_overflow(api, safe_mode):
+def test_safe_update_is_atomic_on_storage_overflow(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode requires caller to preserve population bounds")
     g = api.NewPopGrid((3,), capacity=10)
     g[0] = 7
     g[1] = 2
     before = g[:]
-    # Capacity is per site, not a bound on the grid-wide population.
+    # capacity=10 selects uint8 storage (maximum 255), not a limit of 10.
+    g[2] = 250
     g.Add(11, 2)
     with pytest.raises(ValueError):
         g.Update()
@@ -115,6 +116,8 @@ def test_safe_rejects_invalid_assignment(api, safe_mode):
     if not safe_mode:
         pytest.skip("Unchecked mode intentionally does not promise input validation")
     g = api.NewPopGrid((3,), capacity=10)
-    for value in (-1, 11, 1.5, float("nan")):
+    g[0] = 11  # Values above the capacity hint are allowed.
+    assert g[0] == 11
+    for value in (-1, 256, 1.5, float("nan")):
         with pytest.raises((ValueError, OverflowError)):
             g[0] = value
