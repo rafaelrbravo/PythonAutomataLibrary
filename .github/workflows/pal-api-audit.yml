@@ -55,7 +55,8 @@ jobs:
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
           NUMBA_DISABLE_CACHE: '1'
-        run: python -m pytest -q Testing
+        timeout-minutes: 15
+        run: python -u -m pytest -vv -s Testing
       - name: API performance benchmark
         if: success()
         env:
