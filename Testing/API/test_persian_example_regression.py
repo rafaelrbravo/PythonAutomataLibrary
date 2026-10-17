@@ -8,7 +8,7 @@ import PythonAutomataLibrary as pal
 
 def test_persian_setup_real_example_source(monkeypatch):
     monkeypatch.setenv("NUMBA_DISABLE_CACHE", "1")
-    example = Path(__file__).parents[2] / "Examples" / "ComplexExamples" / "Persian.py"
+    example = Path(__file__).parents[2] / "Examples" / "Models" / "Persian.py"
     spec = importlib.util.spec_from_file_location("pal_persian_regression", example)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

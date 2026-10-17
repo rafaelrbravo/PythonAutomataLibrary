@@ -32,7 +32,7 @@ def main():
     for pdf in pdfs:
         shutil.copy2(pdf, docs_target / pdf.name)
     print(f"Copied PAL examples and documentation PDFs to {target}")
-    print("Run an example with: python PAL-Examples/Agents/<example>.py")
+    print("Run an example with: python PAL-Examples/Tutorial/01_PlaceCells.py")
     return 0
 
 

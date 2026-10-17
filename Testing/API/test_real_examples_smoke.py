@@ -34,7 +34,7 @@ def test_birthdeath_real_example_kernels(monkeypatch):
 
 def test_popgrid_multinomial_real_example_kernel(monkeypatch):
     monkeypatch.setenv("NUMBA_DISABLE_CACHE", "1")
-    ns = _load("Examples/Agents/PopGridExample.py")
+    ns = _load("Examples/Populations/PopGridExample.py")
     cells = pal.NewPopGrid((ns.X, ns.Y))
     mn = pal.NewMultinomial()
     cells[0, 0] = ns.STARTING_POP
@@ -48,7 +48,7 @@ def test_popgrid_multinomial_real_example_kernel(monkeypatch):
 
 def test_reaction_diffusion_2d_real_example_kernel(monkeypatch):
     monkeypatch.setenv("NUMBA_DISABLE_CACHE", "1")
-    ns = _load("Examples/Diffusibles/ReactionDiffusion2D.py")
+    ns = _load("Examples/Fields/ReactionDiffusion2D.py")
     g1 = pal.NewPDEgrid((ns.X, ns.Y))
     g2 = pal.NewPDEgrid((ns.X, ns.Y))
     ns.Step(g1, g2)
@@ -60,7 +60,7 @@ def test_reaction_diffusion_2d_real_example_kernel(monkeypatch):
 
 def test_diffusion_advection_3d_real_example_kernel(monkeypatch):
     monkeypatch.setenv("NUMBA_DISABLE_CACHE", "1")
-    ns = _load("Examples/Diffusibles/DiffusionAdvection3D.py")
+    ns = _load("Examples/Fields/DiffusionAdvection3D.py")
     grid = pal.NewPDEgrid((-ns.X, -ns.Y, -ns.Z))
     grid[ns.X // 2, ns.Y // 2, ns.Z // 2] = 1.0
     ns.Step(grid)
