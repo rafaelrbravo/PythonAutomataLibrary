@@ -10,25 +10,23 @@ def Draw(cells, pix):
     for agent in cells.All():
         pix[cells.XSQ(agent), cells.YSQ(agent)] = RED
 
-def Setup():
-    cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
+def Setup(cells):
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
-    return cells
 
-MOORE = pal.MooreHood(2, excludeCenter=True)
-
-def EmptyNeighbors(cells, agent, empty):
+def EmptyNeighbors(cells, agent, empty, moore):
     empty.Clear()
-    for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
+    for x, y in cells.Hood(moore, cells.XSQ(agent), cells.YSQ(agent)):
         if cells.counts[x, y] == 0:
             empty.Append(cells.ToI(x, y))
     return empty
 
 def main():
-    cells = Setup()
+    cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
+    Setup(cells)
     empty = pal.NewIList()
-    print(EmptyNeighbors(cells, cells.All()[0], empty).All())
+    moore = pal.MooreHood(2, excludeCenter=True)
+    print(EmptyNeighbors(cells, cells.All()[0], empty, moore).All())
     pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Cells")
     Draw(cells, pix)
     window.Update()
