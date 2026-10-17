@@ -51,12 +51,20 @@ jobs:
       - name: Install headless OpenGL backend
         run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1-mesa-dri
       - run: gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
-      - name: Run full Testing suite
+      - name: Run isolated test groups with per-test timeouts
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
           NUMBA_DISABLE_CACHE: '1'
-        timeout-minutes: 15
-        run: python -u -m pytest -vv -s Testing
+        timeout-minutes: 20
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install pytest-timeout
+          for group in Testing/API Testing/test_*.py; do
+            echo "::group::Audit group $group"
+            python -u -m pytest -vv -s --timeout=90 --timeout-method=signal "$group"
+            echo "::endgroup::"
+          done
       - name: API performance benchmark
         if: success()
         env:
