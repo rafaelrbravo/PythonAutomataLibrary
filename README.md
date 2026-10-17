@@ -1,5 +1,7 @@
 # Python Automata Library (PAL)
 
+[![DOI](https://zenodo.org/badge/1385841661.svg)](https://doi.org/10.5281/zenodo.23439298)
+
 PAL is a Python modeling library for high-performance agent-based, lattice population, and PDE models. Model code uses a compact object-oriented API and can be compiled with `@pal.njit`; PAL keeps performance-sensitive state and algorithms in a precompiled native core.
 
 ```python
@@ -70,7 +72,9 @@ The public API has dedicated regression coverage in `Testing/API/`; the full `Te
 
 If you use PAL in your research, please cite:
 
-> Bravo, R. R. (2026). *Python Automata Library (PAL)* [Computer software]. https://github.com/rafaelrbravo/PythonAutomataLibrary
+> Bravo, R. R. (2026). *Python Automata Library (PAL)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23439298
+
+For reproducibility, cite the specific release you used: [PAL v1.0.0](https://doi.org/10.5281/zenodo.23439299).
 
 GitHub's **Cite this repository** button provides citation formats from [CITATION.cff](CITATION.cff).
 
