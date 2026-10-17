@@ -11,10 +11,11 @@ requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "numba",
+    "pygame>=2.5",
+    "moderngl>=5.10",
+    "pyglet>=2.0",
+    "pillow>=10",
 ]
-
-[project.optional-dependencies]
-visualization = ["pygame>=2.5", "moderngl>=5.10", "pyglet>=2.0", "pillow>=10"]
 
 [tool.setuptools]
 packages = ["PythonAutomataLibrary"]
