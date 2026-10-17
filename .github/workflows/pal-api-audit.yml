@@ -75,7 +75,7 @@ jobs:
             PYTHONPATH=.. python Testing/benchmark_keyword_binding.py
           done
 
-  windows-examples:
+  windows-api:
     if: ${{ github.event_name != 'workflow_run' }}
     runs-on: windows-latest
     strategy:
@@ -94,7 +94,7 @@ jobs:
           for /f "usebackq tokens=*" %%i in (`"%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer\\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do set "VSINSTALL=%%i"
           call "%VSINSTALL%\\VC\\Auxiliary\\Build\\vcvars64.bat"
           cl /O2 /LD pal_native.c /Fe:pal_native.dll
-      - name: Run Windows real-example regressions
+      - name: Run Windows API regressions
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
-        run: python -m pytest -q Testing/API/test_persian_example_regression.py Testing/API/test_real_examples_smoke.py
+        run: python -m pytest -q Testing/API/test_constructors.py Testing/API/test_grid_api.py Testing/API/test_agentgrid_api.py Testing/API/test_popgrid_api.py
