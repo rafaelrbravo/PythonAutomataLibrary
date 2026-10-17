@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pal-examples = "PythonAutomataLibrary.ExampleInstaller:main"
+generate-pal-examples = "PythonAutomataLibrary.ExampleInstaller:main"
 
 [tool.setuptools]
 packages = ["PythonAutomataLibrary"]
