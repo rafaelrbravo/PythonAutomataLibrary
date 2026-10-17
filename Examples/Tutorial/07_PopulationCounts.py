@@ -2,16 +2,15 @@ import time
 import PythonAutomataLibrary as pal
 
 SIZE = 30
-MOORE = pal.MooreHood(2, excludeCenter=True)
 BLACK = pal.RGB(0, 0, 0)
 RED = pal.RGB(255, 0, 0)
 
 @pal.njit(cache=True)
-def Step(cells: pal.PopGrid, multi: pal.Multinomial):
+def Step(cells: pal.PopGrid, multi: pal.Multinomial, moore):
     for i in cells.All():
         multi.Setup(cells[i])
         x, y = cells.ItoX(i), cells.ItoY(i)
-        for nx, ny in cells.Hood(MOORE, x, y):
+        for nx, ny in cells.Hood(moore, x, y):
             moved = multi.Sample(1.0 / 8)
             cells.Add(-moved, i)
             cells.Add(moved, nx, ny)
@@ -39,6 +38,7 @@ def main():
         cells[x, y] = 1
     initialPop = cells.GetPop()
     multi = pal.NewMultinomial()
+    moore = pal.MooreHood(2, excludeCenter=True)
     nutrient = pal.NewPDEgrid((SIZE, SIZE))
     nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
     nutrient[:] = 1.0
@@ -46,7 +46,7 @@ def main():
     pal.AwaitWindows()
     step = 0
     while window.IsOpen():
-        Step(cells, multi)
+        Step(cells, multi, moore)
         assert cells.GetPop() == initialPop  # movement conserves cell count
         StepNutrient(cells, nutrient)
         step += 1
