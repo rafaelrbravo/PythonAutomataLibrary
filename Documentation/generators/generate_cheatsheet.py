@@ -99,7 +99,7 @@ def _api_entries():
 
 
 def _md():
-    lines = ["# PAL Cheatsheet", "", INTRO, "",
+    lines = ["# PAL Cheatsheet", "", "Install: `python -m pip install PythonAutomataLibrary`", "", INTRO, "",
              "Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y and Z/z variants.", "",
              "Curated one-page API map; see API Guide and API Reference for details.", ""]
     for title, rows in _api_entries():
@@ -232,7 +232,7 @@ def _build_pdf():
             y -= 4 + (extra_section if title != blocks[-1][0] else 0)
     c.setFont("Helvetica", 6.7)
     c.setFillColor(colors.HexColor("#555555"))
-    c.drawString(margin, 8, "See API Reference for exact signatures and defaults")
+    c.drawString(margin, 8, "Install: pip install PythonAutomataLibrary  |  See API Reference for exact signatures")
     c.save()
     print(f"One-page cheatsheet: {sum(len(e) for _,e in SECTIONS)} curated entries, {size:.1f} pt, column heights {[round(h) for h in heights]}")
     return buf.getvalue(), 1
