@@ -21,8 +21,17 @@ def main():
     if target.exists():
         print(f"Destination already exists: {target}\nNothing was overwritten.", file=sys.stderr)
         return 1
+    docs = Path(__file__).resolve().parent / "Documentation"
+    pdfs = sorted(docs.glob("*.pdf")) if docs.is_dir() else []
+    if not pdfs:
+        print("PAL documentation PDFs are missing from this installation.", file=sys.stderr)
+        return 1
     shutil.copytree(source, target)
-    print(f"Copied PAL examples to {target}")
+    docs_target = target / "Documentation"
+    docs_target.mkdir()
+    for pdf in pdfs:
+        shutil.copy2(pdf, docs_target / pdf.name)
+    print(f"Copied PAL examples and documentation PDFs to {target}")
     print("Run an example with: python PAL-Examples/Agents/<example>.py")
     return 0
 
