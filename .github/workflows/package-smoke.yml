@@ -1,4 +1,5 @@
 name: Package smoke tests
+# Validate clean source checkouts without committed native binaries.
 on:
   push:
     branches: [main]
