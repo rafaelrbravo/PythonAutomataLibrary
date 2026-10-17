@@ -24,3 +24,11 @@ Thumbs.db
 
 # Legacy code
 Legacy/
+# Generated native binaries and build intermediates
+*.dll
+*.so
+*.dylib
+*.obj
+*.lib
+*.exp
+*.pyd
