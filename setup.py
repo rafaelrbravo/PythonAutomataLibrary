@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 import shlex
+import shutil
 import subprocess
 import sys
 from setuptools import setup, Distribution
@@ -14,6 +15,9 @@ ROOT = Path(__file__).resolve().parent
 class BuildWithNative(build_py):
     def run(self):
         super().run()
+        examples_source = ROOT / "Examples"
+        if examples_source.is_dir():
+            shutil.copytree(examples_source, Path(self.build_lib) / "PythonAutomataLibrary" / "Examples", dirs_exist_ok=True)
         source = ROOT / "pal_native.c"
         destination = Path(self.build_lib) / "PythonAutomataLibrary"
         destination.mkdir(parents=True, exist_ok=True)
