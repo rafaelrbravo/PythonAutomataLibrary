@@ -60,7 +60,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install pytest-timeout
-          for group in Testing/API Testing/test_*.py; do
+          for group in Testing/API/test_*.py Testing/test_*.py; do
             echo "::group::Audit group $group"
             python -u -m pytest -vv -s --timeout=90 --timeout-method=signal "$group"
             echo "::endgroup::"
