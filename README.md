@@ -55,7 +55,7 @@ Install PAL, then copy its bundled examples into a new, editable folder in your 
 
 ```text
 python -m pip install PythonAutomataLibrary
-pal-examples
+generate-pal-examples
 ```
 
 This creates `PAL-Examples/` without downloading from GitHub. The command refuses to overwrite an existing `PAL-Examples/` folder. Run individual Python scripts from that folder; examples requiring a graphical display should be run on a desktop computer.
