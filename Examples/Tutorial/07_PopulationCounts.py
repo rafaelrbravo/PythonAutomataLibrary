@@ -1,0 +1,59 @@
+import time
+import PythonAutomataLibrary as pal
+
+SIZE = 30
+MOORE = pal.MooreHood(2, excludeCenter=True)
+BLACK = pal.RGB(0, 0, 0)
+RED = pal.RGB(255, 0, 0)
+
+@pal.njit(cache=True)
+def Step(cells: pal.PopGrid, multi: pal.Multinomial):
+    for i in cells.All():
+        multi.Setup(cells[i])
+        x, y = cells.ItoX(i), cells.ItoY(i)
+        for nx, ny in cells.Hood(MOORE, x, y):
+            moved = multi.Sample(1.0 / 8)
+            cells.Add(-moved, i)
+            cells.Add(moved, nx, ny)
+    cells.Update()
+
+@pal.njit(cache=True)
+def StepNutrient(cells: pal.PopGrid, nutrient: pal.PDEgrid):
+    for i in range(len(cells)):
+        nutrient[i] = max(0.0, nutrient[i] - 0.01 * cells[i])
+    nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
+    nutrient.Update()
+
+@pal.njit(cache=True)
+def Draw(cells: pal.PopGrid, pix: pal.Pix):
+    pix[:] = BLACK
+    for x in range(SIZE):
+        for y in range(SIZE):
+            if cells[x, y]:
+                pix[x, y] = RED
+
+def main():
+    pal.Seed(1234)
+    cells = pal.NewPopGrid((SIZE, SIZE))
+    for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
+        cells[x, y] = 1
+    initialPop = cells.GetPop()
+    multi = pal.NewMultinomial()
+    nutrient = pal.NewPDEgrid((SIZE, SIZE))
+    nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
+    nutrient[:] = 1.0
+    pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Population random walk")
+    pal.AwaitWindows()
+    step = 0
+    while window.IsOpen():
+        Step(cells, multi)
+        assert cells.GetPop() == initialPop  # movement conserves cell count
+        StepNutrient(cells, nutrient)
+        step += 1
+        Draw(cells, pix)
+        window.Update()
+        time.sleep(0.05)
+    window.Close()
+
+if __name__ == "__main__":
+    main()
