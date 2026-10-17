@@ -1,4 +1,5 @@
 name: Build release distributions
+# Build native libraries from source; no tracked build artifacts required.
 on:
   workflow_dispatch:
   push:
