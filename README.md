@@ -30,13 +30,13 @@ PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL 
 
 ## Installation
 
-Install PAL with pip once a release is published:
+Once PAL is published on PyPI, install it with:
 
 ```text
 python -m pip install PythonAutomataLibrary
 ```
 
-Prebuilt wheels bundle the native core for supported Windows, Linux, and macOS platforms. For development from a source checkout, build the native library as described below.
+PAL is not yet confirmed available on PyPI. Release wheels are designed to bundle the native core for Windows, Linux, and macOS. Until publication, use the source build instructions below. See [distribution status](Documentation/DISTRIBUTION.md).
 
 ## Build from source
 
