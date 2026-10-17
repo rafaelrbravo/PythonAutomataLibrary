@@ -2,6 +2,16 @@
 
 This guide starts with a working model, then explains PAL's components, behavior, constraints, and specialized operations. Begin with the component overview and work through the tutorial in order. For current public signatures and method descriptions, use the [API Reference](API_REFERENCE.md). For quick syntax, use the [Cheatsheet](CHEATSHEET.md). For implementation structure and design rationale, see [PAL Architecture and Design](PAL_ARCHITECTURE_AND_DESIGN.md).
 
+## Installation
+
+Install PAL from PyPI:
+
+```bash
+python -m pip install PythonAutomataLibrary
+```
+
+Then import it with `import PythonAutomataLibrary as pal`. Prebuilt platform wheels are intended to include the native C core, so users do not need to compile it separately. For source builds and release details, see [Distribution](DISTRIBUTION.md).
+
 ## Choose the right PAL structure
 
 | Need | PAL structure |
