@@ -36,7 +36,7 @@ jobs:
       - run: python -m pip install -U pip pytest numpy numba pillow moderngl reportlab==5.0.1
       - name: Verify generated documentation
         run: |
-          python -c 'from pathlib import Path; names=("API_GUIDE", "API_REFERENCE", "PAL_ARCHITECTURE_AND_DESIGN"); assert all((Path("Documentation") / (n + ".md")).is_file() and (Path("Documentation") / (n + ".pdf")).is_file() for n in names)'
+          python -c 'from pathlib import Path; names=("PAL_GUIDE", "API_REFERENCE", "PAL_ARCHITECTURE_AND_DESIGN"); assert all((Path("Documentation") / (n + ".md")).is_file() and (Path("Documentation") / (n + ".pdf")).is_file() for n in names)'
           python Documentation/generators/generate_cheatsheet.py --check
       - name: Upload generated documentation
         if: matrix.mode == 'safe'
