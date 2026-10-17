@@ -65,3 +65,13 @@ python -m pytest -q Testing
 `NativeCore.py` is the Python/Numba API and compilation layer. `pal_native.c` owns stable mutable simulation state and the workhorse native algorithms. Safe and fast PAL objects are selected at construction time, so compiled hot paths do not branch on safety mode.
 
 The public API has dedicated regression coverage in `Testing/API/`; the full `Testing/` tree is the integration gate.
+
+## Citation
+
+If you use PAL in your research, please cite:
+
+> Bravo, R. R. (2026). *Python Automata Library (PAL)* [Computer software]. https://github.com/rafaelrbravo/PythonAutomataLibrary
+
+GitHub's **Cite this repository** button provides citation formats from [CITATION.cff](CITATION.cff).
+
+PAL is based on the Hybrid Automata Library (HAL). Please also acknowledge or cite HAL when its underlying ideas or algorithms are relevant to your work.
