@@ -18,6 +18,12 @@ class BuildWithNative(build_py):
         examples_source = ROOT / "Examples"
         if examples_source.is_dir():
             shutil.copytree(examples_source, Path(self.build_lib) / "PythonAutomataLibrary" / "Examples", dirs_exist_ok=True)
+        docs_source = ROOT / "Documentation"
+        docs_target = Path(self.build_lib) / "PythonAutomataLibrary" / "Documentation"
+        if docs_source.is_dir():
+            docs_target.mkdir(parents=True, exist_ok=True)
+            for pdf in docs_source.glob("*.pdf"):
+                shutil.copy2(pdf, docs_target / pdf.name)
         source = ROOT / "pal_native.c"
         destination = Path(self.build_lib) / "PythonAutomataLibrary"
         destination.mkdir(parents=True, exist_ok=True)
