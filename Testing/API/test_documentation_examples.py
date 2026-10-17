@@ -80,12 +80,12 @@ def test_complete_population_random_walk(tmp_path, monkeypatch):
         def Close(self):
             pass
 
-    class FakePixels:
-        def __setitem__(self, key, value):
-            pass
+    from PythonAutomataLibrary.PixWindow import _PixFast, _PixSafe
+    pix_type = _PixFast if os.environ.get("PAL_TEST_MODE") == "fast" else _PixSafe
+    pixels = pix_type(np.zeros((30, 30), dtype=np.uint32))
 
     window = FakeWindow()
-    monkeypatch.setattr(pal, "StartPixWindow", lambda *args, **kwargs: (FakePixels(), window))
+    monkeypatch.setattr(pal, "StartPixWindow", lambda *args, **kwargs: (pixels, window))
     monkeypatch.setattr(pal, "AwaitWindows", lambda: None)
     _run_complete_program(tmp_path, 11)
     assert window.updates == 3
