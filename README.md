@@ -49,6 +49,17 @@ Note that `--no-deps` skips all dependencies, not just visualization; this minim
 
 Release wheels bundle the native core for Windows, Linux, and macOS, without manual compilation. PAL v1.0.0 is [published on PyPI](https://pypi.org/project/PythonAutomataLibrary/). See [distribution details](Documentation/DISTRIBUTION.md).
 
+## Examples
+
+Install PAL, then copy its bundled examples into a new, editable folder in your current directory:
+
+```text
+python -m pip install PythonAutomataLibrary
+pal-examples
+```
+
+This creates `PAL-Examples/` without downloading from GitHub. The command refuses to overwrite an existing `PAL-Examples/` folder. Run individual Python scripts from that folder; examples requiring a graphical display should be run on a desktop computer.
+
 ## Build from source
 
 PAL currently loads its native library from the package directory. Build it before importing PAL.
