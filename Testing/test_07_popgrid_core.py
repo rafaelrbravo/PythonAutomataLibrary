@@ -103,9 +103,9 @@ def test_safe_update_is_atomic_on_storage_overflow(api, safe_mode):
     g = api.NewPopGrid((3,), capacity=10)
     g[0] = 7
     g[1] = 2
-    before = g[:]
     # capacity=10 selects uint8 storage (maximum 255), not a limit of 10.
     g[2] = 250
+    before = g[:]
     g.Add(11, 2)
     with pytest.raises(ValueError):
         g.Update()
