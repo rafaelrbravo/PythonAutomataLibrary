@@ -10,6 +10,14 @@ Install PAL from PyPI:
 python -m pip install PythonAutomataLibrary
 ```
 
+Visualization dependencies are included in the standard installation. To copy the bundled example programs into an editable folder, run:
+
+```bash
+generate-pal-examples
+```
+
+This creates `PAL-Examples/` in your current directory. To select a different parent directory, use `generate-pal-examples /path/to/directory` (or a quoted Windows path). The directory must already exist, and an existing `PAL-Examples/` folder will never be overwritten. The examples are bundled with the installation, so generating the folder requires no network connection.
+
 Then import it with `import PythonAutomataLibrary as pal`. Prebuilt platform wheels are intended to include the native C core, so users do not need to compile it separately. For source builds and release details, see [Distribution](DISTRIBUTION.md).
 
 ## Choose the right PAL structure
