@@ -1,5 +1,7 @@
 # PAL Cheatsheet
 
+Install: `python -m pip install PythonAutomataLibrary`
+
 `import PythonAutomataLibrary as pal` · Safe mode is default. Call `pal.FastMode()` before constructing any PAL object. Put substantive model kernels under **`@pal.njit(cache=True)`**.
 
 Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y and Z/z variants.
