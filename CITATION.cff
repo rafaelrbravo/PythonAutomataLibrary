@@ -1,9 +1,11 @@
 cff-version: 1.2.0
 message: "If you use Python Automata Library (PAL), please cite this software."
 type: software
+version: 1.0.0
 title: "Python Automata Library (PAL)"
 authors:
   - family-names: Bravo
     given-names: Rafael R.
+    orcid: "https://orcid.org/0000-0002-0065-4341"
 repository-code: "https://github.com/rafaelrbravo/PythonAutomataLibrary"
-license: MIT
+license: Apache-2.0
