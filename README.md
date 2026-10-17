@@ -32,11 +32,20 @@ PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL 
 
 ## Installation
 
-Install PAL from PyPI:
+Install PAL from PyPI (including visualization dependencies):
 
 ```text
 python -m pip install PythonAutomataLibrary
 ```
+
+For a minimal headless installation, install without dependencies and add only the core requirements:
+
+```text
+python -m pip install --no-deps PythonAutomataLibrary
+python -m pip install numpy numba
+```
+
+Note that `--no-deps` skips all dependencies, not just visualization; this minimal installation is for advanced users and may be reported as missing dependencies by `pip check`.
 
 Release wheels bundle the native core for Windows, Linux, and macOS, without manual compilation. PAL v1.0.0 is [published on PyPI](https://pypi.org/project/PythonAutomataLibrary/). See [distribution details](Documentation/DISTRIBUTION.md).
 
