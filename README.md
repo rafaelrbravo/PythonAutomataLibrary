@@ -38,7 +38,7 @@ Install PAL from PyPI:
 python -m pip install PythonAutomataLibrary
 ```
 
-Release wheels are intended to bundle the native core for Windows, Linux, and macOS, without manual compilation. PyPI publication is pending; see [distribution status](Documentation/DISTRIBUTION.md).
+Release wheels bundle the native core for Windows, Linux, and macOS, without manual compilation. PAL v1.0.0 is [published on PyPI](https://pypi.org/project/PythonAutomataLibrary/). See [distribution details](Documentation/DISTRIBUTION.md).
 
 ## Build from source
 
