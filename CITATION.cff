@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use Python Automata Library (PAL), please cite this software."
+type: software
+title: "Python Automata Library (PAL)"
+authors:
+  - family-names: Bravo
+    given-names: Rafael R.
+repository-code: "https://github.com/rafaelrbravo/PythonAutomataLibrary"
+license: MIT
