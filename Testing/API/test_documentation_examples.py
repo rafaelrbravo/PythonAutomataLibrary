@@ -88,7 +88,8 @@ def test_complete_population_random_walk(tmp_path, monkeypatch):
     monkeypatch.setattr(pal, "StartPixWindow", lambda *args, **kwargs: (pixels, window))
     monkeypatch.setattr(pal, "AwaitWindows", lambda: None)
     _run_complete_program(tmp_path, 13)
-    assert window.updates == 3
+    # Both tutorial windows share the fake window: two initial draws and two loop draws.
+    assert window.updates == 4
 
 
 def _cheatsheet_sections():
