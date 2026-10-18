@@ -4,6 +4,7 @@ import PythonAutomataLibrary as pal
 SIZE = 30
 BLACK = pal.RGB(0, 0, 0)
 RED = pal.RGB(255, 0, 0)
+NUTRIENT_COLORS = (BLACK, pal.RGB(0, 100, 255), pal.RGB(255, 255, 0))
 
 MOORE = pal.MooreHood(2, excludeCenter=True)
 
@@ -33,6 +34,11 @@ def Draw(cells: pal.PopGrid, pix: pal.Pix):
             if cells[x, y]:
                 pix[x, y] = RED
 
+def DrawNutrient(nutrient, pix):
+    for x in range(SIZE):
+        for y in range(SIZE):
+            pix[x, y] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[x, y])))
+
 def main():
     pal.Seed(1234)
     cells = pal.NewPopGrid((SIZE, SIZE))
@@ -44,17 +50,23 @@ def main():
     nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
     nutrient[:] = 1.0
     pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Population random walk")
+    nutrientPix, nutrientWindow = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Nutrient")
+    DrawNutrient(nutrient, nutrientPix)
+    nutrientWindow.Update()
     pal.AwaitWindows()
     step = 0
-    while window.IsOpen():
+    while window.IsOpen() and nutrientWindow.IsOpen():
         Step(cells, multi)
         assert cells.GetPop() == initialPop  # movement conserves cell count
         StepNutrient(cells, nutrient)
         step += 1
         Draw(cells, pix)
         window.Update()
+        DrawNutrient(nutrient, nutrientPix)
+        nutrientWindow.Update()
         time.sleep(0.05)
     window.Close()
+    nutrientWindow.Close()
 
 if __name__ == "__main__":
     main()
