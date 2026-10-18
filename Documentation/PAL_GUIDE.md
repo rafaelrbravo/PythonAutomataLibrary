@@ -52,14 +52,13 @@ import PythonAutomataLibrary as pal
 
 SIZE = 30
 
-def Setup():
-    cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
+def Setup(cells):
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
-    return cells
 
 def main():
-    cells = Setup()
+    cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
+    Setup(cells)
     print("Initial cells:", len(cells.All()))
 
 if __name__ == "__main__":
@@ -87,14 +86,13 @@ def Draw(cells, pix):
     for agent in cells.All():
         pix[cells.I(agent)] = RED
 
-def Setup():
-    cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
+def Setup(cells):
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
-    return cells
 
 def main():
-    cells = Setup()
+    cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
+    Setup(cells)
     pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Cells")
     Draw(cells, pix)
     window.Update()
@@ -126,7 +124,7 @@ def EmptyNeighbors(cells, agent, empty):
     return empty
 ```
 
-Create `empty = pal.NewIList()` once in `main`, immediately after `cells = Setup()`. To inspect the result before adding movement, insert this line immediately afterward:
+Create `empty = pal.NewIList()` once in `main`, immediately after `Setup(cells)`. To inspect the result before adding movement, insert this line immediately afterward:
 
 ```python
 print(EmptyNeighbors(cells, cells.All()[0], empty).All())
