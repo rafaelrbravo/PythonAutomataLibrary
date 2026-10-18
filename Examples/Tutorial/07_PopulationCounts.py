@@ -29,15 +29,13 @@ def StepNutrient(cells: pal.PopGrid, nutrient: pal.PDEgrid):
 @pal.njit(cache=True)
 def Draw(cells: pal.PopGrid, pix: pal.Pix):
     pix[:] = BLACK
-    for x in range(SIZE):
-        for y in range(SIZE):
-            if cells[x, y]:
-                pix[x, y] = RED
+    for i in range(len(cells)):
+        if cells[i]:
+            pix[i] = RED
 
 def DrawNutrient(nutrient, pix):
-    for x in range(SIZE):
-        for y in range(SIZE):
-            pix[x, y] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[x, y])))
+    for i in range(len(nutrient)):
+        pix[i] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[i])))
 
 def main():
     pal.Seed(1234)
