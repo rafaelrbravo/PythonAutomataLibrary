@@ -4,6 +4,7 @@ import PythonAutomataLibrary as pal
 SIZE = 30
 BLACK = pal.RGB(0, 0, 0)
 RED = pal.RGB(255, 0, 0)
+NUTRIENT_COLORS = (BLACK, pal.RGB(0, 100, 255), pal.RGB(255, 255, 0))
 
 MOORE = pal.MooreHood(2, excludeCenter=True)
 
@@ -38,6 +39,11 @@ def StepNutrient(cells, nutrient):
     nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
     nutrient.Update()
 
+def DrawNutrient(nutrient, pix):
+    for x in range(SIZE):
+        for y in range(SIZE):
+            pix[x, y] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[x, y])))
+
 def main():
     cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
     Setup(cells)
@@ -48,14 +54,20 @@ def main():
     pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Cells")
     Draw(cells, pix)
     window.Update()
+    nutrientPix, nutrientWindow = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Nutrient")
+    DrawNutrient(nutrient, nutrientPix)
+    nutrientWindow.Update()
     pal.AwaitWindows()
-    while window.IsOpen():
+    while window.IsOpen() and nutrientWindow.IsOpen():
         Step(cells, empty)
         StepNutrient(cells, nutrient)
         Draw(cells, pix)
         window.Update()
+        DrawNutrient(nutrient, nutrientPix)
+        nutrientWindow.Update()
         time.sleep(0.05)
     window.Close()
+    nutrientWindow.Close()
 
 if __name__ == "__main__":
     main()
