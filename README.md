@@ -55,10 +55,10 @@ Install PAL, then copy its bundled examples into a new, editable folder in your 
 
 ```text
 python -m pip install PythonAutomataLibrary
-generate-pal-examples
+python -m PythonAutomataLibrary.ExampleInstaller
 ```
 
-To choose a different parent directory, pass its path, for example `generate-pal-examples ~/Documents` (or `generate-pal-examples "C:\\Users\\YourName\\Documents"` on Windows). This creates `PAL-Examples/` inside the chosen directory, with runnable examples and a `Documentation/` folder containing the PAL PDF manuals, without downloading from GitHub. The command refuses to overwrite an existing `PAL-Examples/` folder. Run individual Python scripts from that folder; examples requiring a graphical display should be run on a desktop computer.
+To choose a different parent directory, pass its path, for example `python -m PythonAutomataLibrary.ExampleInstaller ~/Documents` (or `python -m PythonAutomataLibrary.ExampleInstaller "C:\\Users\\YourName\\Documents"` on Windows). This creates `PAL-Examples/` inside the chosen directory, with runnable examples and a `Documentation/` folder containing the PAL PDF manuals, without downloading from GitHub. The command refuses to overwrite an existing `PAL-Examples/` folder. Run individual Python scripts from that folder; examples requiring a graphical display should be run on a desktop computer.
 
 ## Build from source
 
