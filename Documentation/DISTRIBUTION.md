@@ -4,7 +4,7 @@ PAL targets **Windows, Linux, and macOS**. The intended standard user installati
 
 ## Examples (upcoming v1.0.1)
 
-The default installation includes visualization dependencies and bundled examples. Run `generate-pal-examples` to create an editable `PAL-Examples/` folder in the current directory, or `generate-pal-examples /path/to/parent` to create it elsewhere. The parent directory must exist; existing example folders are never overwritten. No separate download is required.
+The default installation includes visualization dependencies and bundled examples. Run `python -m PythonAutomataLibrary.ExampleInstaller` to create an editable `PAL-Examples/` folder in the current directory, or append a parent path to create it elsewhere, for example `python -m PythonAutomataLibrary.ExampleInstaller /path/to/parent`. The parent directory must exist; existing example folders are never overwritten. No separate download is required. This module invocation avoids relying on the Python environment's scripts directory being on `PATH`.
 
 ## Build locally
 
@@ -38,7 +38,7 @@ To check a wheel without importing from the checkout, install it in a new enviro
 
 ```bash
 pip install PythonAutomataLibrary
-generate-pal-examples  # copies bundled examples to ./PAL-Examples
+python -m PythonAutomataLibrary.ExampleInstaller  # copies bundled examples to ./PAL-Examples
 conda install conda-forge::pythonautomatalibrary
 ```
 
