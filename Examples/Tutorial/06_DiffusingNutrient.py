@@ -35,7 +35,7 @@ def Step(cells: pal.AgentGrid, empty: pal.IList):
 def StepNutrient(cells, nutrient):
     for agent in cells.All():
         x, y = cells.XSQ(agent), cells.YSQ(agent)
-        nutrient[x, y] = max(0.0, nutrient[x, y] - 0.01)
+        nutrient[x, y] = max(0.0, nutrient[x, y] - 0.2)
     nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
     nutrient.Update()
 
