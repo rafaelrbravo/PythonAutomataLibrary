@@ -13,10 +13,10 @@ python -m pip install PythonAutomataLibrary
 Visualization dependencies are included in the standard installation. To copy the bundled example programs into an editable folder, run:
 
 ```bash
-generate-pal-examples
+python -m PythonAutomataLibrary.ExampleInstaller
 ```
 
-This creates `PAL-Examples/` in your current directory. To select a different parent directory, use `generate-pal-examples /path/to/directory` (or a quoted Windows path). The directory must already exist, and an existing `PAL-Examples/` folder will never be overwritten. The examples and documentation PDFs are bundled with the installation; the generated folder includes `Documentation/` with the PDF guides, and generating it requires no network connection.
+This creates `PAL-Examples/` in your current directory. To select a different parent directory, use `python -m PythonAutomataLibrary.ExampleInstaller /path/to/directory` (or a quoted Windows path). The directory must already exist, and an existing `PAL-Examples/` folder will never be overwritten. The examples and documentation PDFs are bundled with the installation; the generated folder includes `Documentation/` with the PDF guides, and generating it requires no network connection.
 
 Then import it with `import PythonAutomataLibrary as pal`. Prebuilt platform wheels are intended to include the native C core, so users do not need to compile it separately. For source builds and release details, see [Distribution](DISTRIBUTION.md).
 
@@ -37,7 +37,7 @@ You can combine these components: for example, cells in an `AgentGrid` can consu
 
 The tutorial develops **one simple model** of cells on a two-dimensional lattice. We place and draw cells, move them into empty neighboring sites, compile the movement rule, add a boundary-fed nutrient field, and finally represent cells as population counts. The biological premise stays the same so each stage can focus on a new PAL feature.
 
-Each numbered stage has a matching **complete, runnable program** in `Examples/Tutorial/`, named `01_PlaceCells.py` through `07_PopulationCounts.py`. After installing PAL, run `generate-pal-examples` (or `generate-pal-examples /path/to/parent`) to copy them into `PAL-Examples/Tutorial/`. For example, run `python PAL-Examples/Tutorial/01_PlaceCells.py` from the destination parent directory. The numbered files accumulate the changes described below, so you can run any stage without manually assembling snippets. Blocks marked **complete program** run independently when saved as Python files; other snippets modify the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
+Each numbered stage has a matching **complete, runnable program** in `Examples/Tutorial/`, named `01_PlaceCells.py` through `07_PopulationCounts.py`. After installing PAL, run `python -m PythonAutomataLibrary.ExampleInstaller` (or `python -m PythonAutomataLibrary.ExampleInstaller /path/to/parent`) to copy them into `PAL-Examples/Tutorial/`. For example, run `python PAL-Examples/Tutorial/01_PlaceCells.py` from the destination parent directory. The numbered files accumulate the changes described below, so you can run any stage without manually assembling snippets. Blocks marked **complete program** run independently when saved as Python files; other snippets modify the preceding program. The [detailed API sections](#core-use) remain available for complete behavior and less common features.
 
 PAL begins in safe mode, which checks operations for common errors. The tutorial uses this default. Later, the [performance section](#performance-fastmode-njitcachetrue-and-unrolltrue) explains how to select fast mode and compile frequently executed code.
 
