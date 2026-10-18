@@ -39,6 +39,19 @@ def _run_complete_program(tmp_path, block_number, replacements=None):
     runpy.run_path(str(source), run_name="__main__")
 
 
+def test_guide_complete_programs_match_tutorial_files():
+    """Keep the guide's standalone programs synchronized with their example files."""
+    examples = Path(__file__).resolve().parents[2] / "Examples" / "Tutorial"
+    for block_number, filename in (
+        (0, "01_PlaceCells.py"),
+        (1, "02_DrawCells.py"),
+        (13, "07_PopulationCounts.py"),
+    ):
+        published = _blocks()[block_number].strip().splitlines()
+        example = (examples / filename).read_text(encoding="utf-8").strip().splitlines()
+        assert [line for line in published if line.strip()] == [line for line in example if line.strip()], filename
+
+
 def test_complete_initial_cells(tmp_path):
     _run_complete_program(tmp_path, 0)
 
