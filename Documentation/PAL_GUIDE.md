@@ -209,7 +209,7 @@ The initial concentration is 1 everywhere. Each timestep, cells remove nutrient 
 def StepNutrient(cells, nutrient):
     for agent in cells.All():
         x, y = cells.XSQ(agent), cells.YSQ(agent)
-        nutrient[x, y] = max(0.0, nutrient[x, y] - 0.01)
+        nutrient[x, y] = max(0.0, nutrient[x, y] - 0.2)
     nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
     nutrient.Update()
 ```
@@ -221,11 +221,13 @@ Step(cells, empty)                # move cells first
 StepNutrient(cells, nutrient)     # consume and diffuse nutrient
 Draw(cells, pix)                 # display the updated cells
 window.Update()
+DrawNutrient(nutrient, nutrientPix)
+nutrientWindow.Update()
 ```
 
 `StepNutrient` can remain an ordinary Python function for this first version; compiling the cell movement step does not require compiling every other function. The boundary arguments specify fixed exterior concentrations: unlike the default no-flux boundaries, these permit nutrient to diffuse into the modeled region when cells deplete it. `Diffusion` queues the transport changes and `Update()` commits them. The values are illustrative, not biologically calibrated.
 
-**What you will see:** the existing window still shows only the moving red cells. The nutrient is updated in the model but is not yet drawn, so its depletion is invisible in that window. To visualize it separately, follow the [nutrient rendering example in PixWindow](#pixwindow): it defines a reusable `DrawNutrient` function and a second window. Call `DrawNutrient(nutrient, nutrientPix, nutrientWindow)` after `StepNutrient(cells, nutrient)` in the loop above, and close the nutrient window when the simulation ends. The original cell window remains unchanged. See [Boundary conditions for transport](#boundary-conditions-for-transport) for boundary options.
+**What you will see:** two windows update together. The cell window shows moving red cells, while the nutrient window uses a black-to-white `ColorScale` gradient (0 = black, 1 = white). Create the nutrient pixel window in `main` with `nutrientPix, nutrientWindow = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Nutrient")`; use the `DrawNutrient` function in the [PixWindow section](#pixwindow). Close both windows when the simulation ends. See [Boundary conditions for transport](#boundary-conditions-for-transport) for boundary options.
 
 ### 7. Replace individual cells with population counts
 
@@ -240,9 +242,11 @@ import time
 import PythonAutomataLibrary as pal
 
 SIZE = 30
-MOORE = pal.MooreHood(2, excludeCenter=True)
 BLACK = pal.RGB(0, 0, 0)
 RED = pal.RGB(255, 0, 0)
+NUTRIENT_COLORS = (BLACK, pal.RGB(255, 255, 255))
+
+MOORE = pal.MooreHood(2, excludeCenter=True)
 
 @pal.njit(cache=True)
 def Step(cells: pal.PopGrid, multi: pal.Multinomial):
@@ -258,7 +262,7 @@ def Step(cells: pal.PopGrid, multi: pal.Multinomial):
 @pal.njit(cache=True)
 def StepNutrient(cells: pal.PopGrid, nutrient: pal.PDEgrid):
     for i in range(len(cells)):
-        nutrient[i] = max(0.0, nutrient[i] - 0.01 * cells[i])
+        nutrient[i] = max(0.0, nutrient[i] - 0.2 * cells[i])
     nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
     nutrient.Update()
 
@@ -269,6 +273,11 @@ def Draw(cells: pal.PopGrid, pix: pal.Pix):
         for y in range(SIZE):
             if cells[x, y]:
                 pix[x, y] = RED
+
+def DrawNutrient(nutrient, pix):
+    for x in range(SIZE):
+        for y in range(SIZE):
+            pix[x, y] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[x, y])))
 
 def main():
     pal.Seed(1234)
@@ -281,17 +290,23 @@ def main():
     nutrient.SetTimeSpaceStep(1.0, 1.0, 1.0)
     nutrient[:] = 1.0
     pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Population random walk")
+    nutrientPix, nutrientWindow = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Nutrient")
+    DrawNutrient(nutrient, nutrientPix)
+    nutrientWindow.Update()
+    Draw(cells, pix)
+    window.Update()
     pal.AwaitWindows()
-    step = 0
-    while window.IsOpen():
+    while window.IsOpen() and nutrientWindow.IsOpen():
         Step(cells, multi)
         assert cells.GetPop() == initialPop  # movement conserves cell count
         StepNutrient(cells, nutrient)
-        step += 1
         Draw(cells, pix)
         window.Update()
+        DrawNutrient(nutrient, nutrientPix)
+        nutrientWindow.Update()
         time.sleep(0.05)
     window.Close()
+    nutrientWindow.Close()
 
 if __name__ == "__main__":
     main()
@@ -299,7 +314,7 @@ if __name__ == "__main__":
 
 Each of the eight Moore-neighborhood directions has probability `1/8`. At an interior site, all eight directions are valid, so every cell moves; at an edge or corner, some directions are unavailable, so cells may stay. `Setup(cells[i])` starts a multinomial allocation for all cells currently at site `i`; each `Sample(1.0 / 8)` assigns cells to one valid direction. At a nonwrapped boundary, invalid directions are skipped, and their unallocated probability mass corresponds to cells staying at their original site. For example, a corner site has only three valid Moore-neighborhood destinations: each receives probability `1/8`, while the remaining `5/8` is the probability of staying. This differs from the individual-agent model, which selects uniformly among available empty neighbors and therefore moves whenever at least one is available. Probabilities refer to the **original** site's population, not the remaining unassigned cells. Queued transfers are committed together with `Update()`, so arrivals do not move again in the same timestep. The assertion checks the model's population-conservation invariant after every movement step; if you later add cell birth or death, revise or remove that check.
 
-The nutrient update now consumes 0.01 concentration units per cell at each site, so multiple occupancy increases local consumption. The same fixed-value boundaries replenish nutrient in both representations. The two versions implement the same basic random-walk idea, but not the same exclusion process: `AgentGrid` avoids occupied destinations and updates agents sequentially; `PopGrid` permits multiple occupancy and moves all counts synchronously. That distinction matters when comparing results. See [Multinomial](#random-numbers-and-multinomial) for more about sampling and solver reuse.
+The nutrient update now consumes 0.2 concentration units per cell at each site, so multiple occupancy increases local consumption. The same fixed-value boundaries replenish nutrient in both representations. The two versions implement the same basic random-walk idea, but not the same exclusion process: `AgentGrid` avoids occupied destinations and updates agents sequentially; `PopGrid` permits multiple occupancy and moves all counts synchronously. That distinction matters when comparing results. See [Multinomial](#random-numbers-and-multinomial) for more about sampling and solver reuse.
 
 ### Where to go next
 
@@ -875,21 +890,22 @@ window.Update()
 
 You can also assign packed RGB integers such as `0xFF0000`, and use a linear site index (`pix[i]`) instead of coordinates.
 
-To display the nutrient field introduced in tutorial stage 6, create a second pixel window and map concentrations from 0 (black) to 1 (green). This snippet assumes `nutrient` already exists and has the same 30 × 30 dimensions:
+To display the nutrient field introduced in tutorial stage 6, use a second pixel window and map concentrations from 0 (black) to 1 (white). This matches the runnable tutorial files:
 
 ```python
-def DrawNutrient(nutrient, nutrientPix, nutrientWindow):
-    colors = (pal.RGB(0, 0, 0), pal.RGB(0, 255, 0))
-    for x in range(30):
-        for y in range(30):
-            nutrientPix[x, y] = pal.ColorScale(colors, nutrient[x, y])
-    nutrientWindow.Update()
+NUTRIENT_COLORS = (pal.RGB(0, 0, 0), pal.RGB(255, 255, 255))
 
-nutrientPix, nutrientWindow = pal.StartPixWindow(30, 30, scale=12, title="Nutrient")
-DrawNutrient(nutrient, nutrientPix, nutrientWindow)
+def DrawNutrient(nutrient, pix):
+    for x in range(SIZE):
+        for y in range(SIZE):
+            pix[x, y] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[x, y])))
+
+nutrientPix, nutrientWindow = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Nutrient")
+DrawNutrient(nutrient, nutrientPix)
+nutrientWindow.Update()
 ```
 
-Call `DrawNutrient(nutrient, nutrientPix, nutrientWindow)` again after each nutrient update to refresh the image. `ColorScale` expects a normalized value between 0 and 1 and clamps values outside that range; if your field uses another range, normalize it before choosing a color. Manage the second window's lifecycle alongside the cell window.
+Call `DrawNutrient(nutrient, nutrientPix)` and `nutrientWindow.Update()` after each nutrient update. The normalized concentration determines the grayscale intensity. Manage both windows together and close them when the simulation ends.
 
 It also provides `xDim`, `yDim`, `ToI(x, y)`, `ItoX(i)`, `ItoY(i)`, and `len(pix)`.
 
