@@ -214,7 +214,24 @@ def StepNutrient(cells, nutrient):
     nutrient.Update()
 ```
 
-Keep the movement step from stage 5. In `main`, construct `nutrient` once alongside `cells`, then add the nutrient update to the existing simulation loop in this order:
+Draw the nutrient concentration with a grayscale `ColorScale`. Define the colors alongside the other constants, and add the drawing function alongside `Draw`:
+
+```python
+NUTRIENT_COLORS = (BLACK, pal.RGB(255, 255, 255))
+
+def DrawNutrient(nutrient, pix):
+    for x in range(SIZE):
+        for y in range(SIZE):
+            pix[x, y] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[x, y])))
+```
+
+In `main`, create a second pixel window alongside the cell window:
+
+```python
+nutrientPix, nutrientWindow = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Nutrient")
+```
+
+Keep the movement step from stage 5. Construct `nutrient` once alongside `cells`, then update and draw both windows in the simulation loop:
 
 ```python
 Step(cells, empty)                # move cells first
@@ -227,7 +244,7 @@ nutrientWindow.Update()
 
 `StepNutrient` can remain an ordinary Python function for this first version; compiling the cell movement step does not require compiling every other function. The boundary arguments specify fixed exterior concentrations: unlike the default no-flux boundaries, these permit nutrient to diffuse into the modeled region when cells deplete it. `Diffusion` queues the transport changes and `Update()` commits them. The values are illustrative, not biologically calibrated.
 
-**What you will see:** two windows update together. The cell window shows moving red cells, while the nutrient window uses a black-to-white `ColorScale` gradient (0 = black, 1 = white). Create the nutrient pixel window in `main` with `nutrientPix, nutrientWindow = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Nutrient")`; use the `DrawNutrient` function in the [PixWindow section](#pixwindow). Close both windows when the simulation ends. See [Boundary conditions for transport](#boundary-conditions-for-transport) for boundary options.
+**What you will see:** two windows update together. The cell window shows moving red cells, while the nutrient window uses a black-to-white `ColorScale` gradient (0 = black, 1 = white). The `DrawNutrient` function above is also discussed in the [PixWindow section](#pixwindow). Close both windows when the simulation ends. See [Boundary conditions for transport](#boundary-conditions-for-transport) for boundary options.
 
 ### 7. Replace individual cells with population counts
 
