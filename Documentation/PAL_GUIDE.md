@@ -270,7 +270,7 @@ def Step(cells: pal.PopGrid, multi: pal.Multinomial):
     for i in cells.All():
         multi.Setup(cells[i])
         x, y = cells.ItoX(i), cells.ItoY(i)
-        for nx, ny in cells.Hood(MOORE, x, y):
+        for nx, ny in cells.Hood(MOORE, x, y, unroll=True):
             moved = multi.Sample(1.0 / 8)
             cells.Add(-moved, i)
             cells.Add(moved, nx, ny)
