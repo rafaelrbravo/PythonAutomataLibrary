@@ -1,4 +1,5 @@
 name: Package smoke tests
+# Validation rerun requested 2026-10-18; no release tag created.
 # Validate clean source checkouts without committed native binaries.
 on:
   push:
