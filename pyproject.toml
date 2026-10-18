@@ -17,9 +17,6 @@ dependencies = [
     "pillow>=10",
 ]
 
-[project.scripts]
-generate-pal-examples = "PythonAutomataLibrary.ExampleInstaller:main"
-
 [tool.setuptools]
 packages = ["PythonAutomataLibrary"]
 include-package-data = true
