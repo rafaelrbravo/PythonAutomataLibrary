@@ -220,9 +220,8 @@ Draw the nutrient concentration with a grayscale `ColorScale`. Define the colors
 NUTRIENT_COLORS = (BLACK, pal.RGB(255, 255, 255))
 
 def DrawNutrient(nutrient, pix):
-    for x in range(SIZE):
-        for y in range(SIZE):
-            pix[x, y] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[x, y])))
+    for i in range(len(nutrient)):
+        pix[i] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[i])))
 ```
 
 In `main`, create a second pixel window alongside the cell window:
@@ -286,15 +285,13 @@ def StepNutrient(cells: pal.PopGrid, nutrient: pal.PDEgrid):
 @pal.njit(cache=True)
 def Draw(cells: pal.PopGrid, pix: pal.Pix):
     pix[:] = BLACK
-    for x in range(SIZE):
-        for y in range(SIZE):
-            if cells[x, y]:
-                pix[x, y] = RED
+    for i in range(len(cells)):
+        if cells[i]:
+            pix[i] = RED
 
 def DrawNutrient(nutrient, pix):
-    for x in range(SIZE):
-        for y in range(SIZE):
-            pix[x, y] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[x, y])))
+    for i in range(len(nutrient)):
+        pix[i] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[i])))
 
 def main():
     pal.Seed(1234)
@@ -913,9 +910,8 @@ To display the nutrient field introduced in tutorial stage 6, use a second pixel
 NUTRIENT_COLORS = (pal.RGB(0, 0, 0), pal.RGB(255, 255, 255))
 
 def DrawNutrient(nutrient, pix):
-    for x in range(SIZE):
-        for y in range(SIZE):
-            pix[x, y] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[x, y])))
+    for i in range(len(nutrient)):
+        pix[i] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[i])))
 
 nutrientPix, nutrientWindow = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Nutrient")
 DrawNutrient(nutrient, nutrientPix)
