@@ -22,7 +22,7 @@ def Step(cells: pal.PopGrid, multi: pal.Multinomial):
 @pal.njit(cache=True)
 def StepNutrient(cells: pal.PopGrid, nutrient: pal.PDEgrid):
     for i in range(len(cells)):
-        nutrient[i] = max(0.0, nutrient[i] - 0.01 * cells[i])
+        nutrient[i] = max(0.0, nutrient[i] - 0.2 * cells[i])
     nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
     nutrient.Update()
 
@@ -53,13 +53,13 @@ def main():
     nutrientPix, nutrientWindow = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Nutrient")
     DrawNutrient(nutrient, nutrientPix)
     nutrientWindow.Update()
+    Draw(cells, pix)
+    window.Update()
     pal.AwaitWindows()
-    step = 0
     while window.IsOpen() and nutrientWindow.IsOpen():
         Step(cells, multi)
         assert cells.GetPop() == initialPop  # movement conserves cell count
         StepNutrient(cells, nutrient)
-        step += 1
         Draw(cells, pix)
         window.Update()
         DrawNutrient(nutrient, nutrientPix)
