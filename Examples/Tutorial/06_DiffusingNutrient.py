@@ -4,7 +4,7 @@ import PythonAutomataLibrary as pal
 SIZE = 30
 BLACK = pal.RGB(0, 0, 0)
 RED = pal.RGB(255, 0, 0)
-NUTRIENT_COLORS = (BLACK, pal.RGB(0, 100, 255), pal.RGB(255, 255, 0))
+NUTRIENT_COLORS = (BLACK, pal.RGB(255, 255, 255))
 
 MOORE = pal.MooreHood(2, excludeCenter=True)
 
