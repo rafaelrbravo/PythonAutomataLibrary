@@ -85,7 +85,7 @@ RED = pal.RGB(255, 0, 0)
 def Draw(cells, pix):
     pix[:] = BLACK
     for agent in cells.All():
-        pix[cells.XSQ(agent), cells.YSQ(agent)] = RED
+        pix[cells.I(agent)] = RED
 
 def Setup():
     cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
