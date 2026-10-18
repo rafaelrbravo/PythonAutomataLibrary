@@ -87,7 +87,7 @@ def test_complete_population_random_walk(tmp_path, monkeypatch):
     window = FakeWindow()
     monkeypatch.setattr(pal, "StartPixWindow", lambda *args, **kwargs: (pixels, window))
     monkeypatch.setattr(pal, "AwaitWindows", lambda: None)
-    _run_complete_program(tmp_path, 11)
+    _run_complete_program(tmp_path, 13)
     assert window.updates == 3
 
 
