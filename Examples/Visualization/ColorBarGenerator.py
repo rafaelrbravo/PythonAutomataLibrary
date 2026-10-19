@@ -1,6 +1,6 @@
 import PythonAutomataLibrary as pal
 
-X=20
+X=40
 Y=200
 SCALE=3
 
