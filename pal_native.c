@@ -322,11 +322,13 @@ static int AgentGrid_PointInBounds(const AgentGrid *grid, double x, double y, do
     return 1;
 }
 
-static void AgentGrid_SetPointPosition(AgentGrid *grid, int32_t agent, double x, double y, double z) {
-    grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)] = x;
-    if (grid->dimension > 1) grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)] = y;
-    if (grid->dimension > 2) grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)] = z;
-}
+#define PAL_AG_POINT_TYPE AgentGrid
+#define PAL_AG_POINT_FLOAT double
+#define PAL_AG_POINT_NAME AgentGrid_SetPointPosition
+#include "agentgrid_point_template.h"
+#undef PAL_AG_POINT_NAME
+#undef PAL_AG_POINT_FLOAT
+#undef PAL_AG_POINT_TYPE
 
 PAL_API uintptr_t pal_ag_new(const int32_t *dimensions, int32_t dimension,
                              int32_t nUserProperties, int32_t stackable) {
@@ -1332,6 +1334,13 @@ static int32_t AgentGrid32_PointToI(const AgentGrid32 *g,const float coords[3]) 
     }
     return location;
 }
+#define PAL_AG_POINT_TYPE AgentGrid32
+#define PAL_AG_POINT_FLOAT float
+#define PAL_AG_POINT_NAME AgentGrid32_SetPointPosition
+#include "agentgrid_point_template.h"
+#undef PAL_AG_POINT_NAME
+#undef PAL_AG_POINT_FLOAT
+#undef PAL_AG_POINT_TYPE
 PAL_API int32_t pal_ag32_move_pt(uintptr_t handle,int32_t agent,float x,float y,float z) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
     if (!g || !g->dimension || agent<0 || agent>=g->nAgents ||
@@ -1341,8 +1350,7 @@ PAL_API int32_t pal_ag32_move_pt(uintptr_t handle,int32_t agent,float x,float y,
     if (location==PAL_NULL) return 0;
     int32_t old=g->intProperties[(size_t)agent*N_AGENT_INT_PROPERTIES+AGENT_LOCATION];
     if (location!=old && !pal_ag32_move_i(handle,agent,location)) return 0;
-    for (int32_t axis=0;axis<g->dimension;axis++)
-        g->floatProperties[(size_t)agent*g->nFloatProperties+axis]=coords[axis];
+    AgentGrid32_SetPointPosition(g,agent,x,y,z);
     g->generation++;
     return 1;
 }
@@ -1354,8 +1362,7 @@ PAL_API int32_t pal_ag32_new_pt(uintptr_t handle,float x,float y,float z) {
     if (location==PAL_NULL) return PAL_NULL;
     int32_t agent=pal_ag32_new_i(handle,location);
     if (agent==PAL_NULL) return PAL_NULL;
-    for (int32_t axis=0;axis<g->dimension;axis++)
-        g->floatProperties[(size_t)agent*g->nFloatProperties+axis]=coords[axis];
+    AgentGrid32_SetPointPosition(g,agent,x,y,z);
     return agent;
 }
 PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
