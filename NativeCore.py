@@ -5167,6 +5167,16 @@ class _AgentGrid32Native:
     def GetPop(self):
         return _ag32_population(self._ptr)
 
+    @property
+    def nDims(self):
+        return len(self.dimensions)
+
+    def __len__(self):
+        length = 1
+        for dimension in self.dimensions:
+            length *= dimension
+        return length if self.dimensions else 0
+
     def NewAgentI(self, location):
         return _ag32_new_i(self._ptr, location)
 
