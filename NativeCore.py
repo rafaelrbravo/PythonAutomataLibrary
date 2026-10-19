@@ -555,6 +555,7 @@ _pd32_clear = _bind("pal_pd32_clear", None, _PTR, _F32)
 _pd32_steps = _bind("pal_pd32_steps", None, _PTR, _F64, _F64, _F64, _F64)
 _pd32_voxel = _bind("pal_pd32_voxel", _F64, _PTR)
 _pd32_diffuse = _bind("pal_pd32_diffuse", _I32, _PTR, _F64)
+_pd32_diffuse_mask = _bind("pal_pd32_diffuse_mask", _I32, _PTR, _F64, _F32_PTR)
 _pd32_advection = _bind("pal_pd32_advection", _I32, _PTR, _F64, _F64, _F64)
 
 _pd_new = _bind("pal_pd_new", _PTR, _I32_PTR, _I32)
