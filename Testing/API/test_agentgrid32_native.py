@@ -195,3 +195,26 @@ def test_agentgrid32_stackable_randomized_invariants():
                     assert locations[head] == cell
     finally:
         core._ag32_free(handle)
+
+
+def test_agentgrid32_stackable_growth_preserves_chains():
+    dims = np.array([3], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1, 1, 1)
+    assert handle
+    try:
+        for agent in range(1100):
+            assert core._ag32_new_i(handle, agent % 3) == agent
+        assert core._ag32_capacity(handle) >= 1100
+        assert core._ag32_population(handle) == 1100
+        for cell in range(3):
+            assert core._ag32_count_i(handle, cell) == sum(i % 3 == cell for i in range(1100))
+        for agent in (0, 499, 999, 1099):
+            assert core._ag32_dispose(handle, agent) == 1
+        assert core._ag32_population(handle) == 1096
+        assert core._ag32_move_i(handle, 1001, 0) == 1
+        assert core._ag32_at_i(handle, 0) == 1001
+        assert core._ag32_count_i(handle, 0) == 367
+        assert core._ag32_new_i(handle, 2) >= 0
+        assert core._ag32_population(handle) == 1097
+    finally:
+        core._ag32_free(handle)
