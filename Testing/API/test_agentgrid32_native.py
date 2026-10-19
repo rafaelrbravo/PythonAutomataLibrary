@@ -344,3 +344,27 @@ def test_agentgrid32_point_creation_python_and_compiled():
         assert core._ag32_get_property(handle, b, 1) == np.float32(3.875)
     finally:
         core._ag32_free(handle)
+
+
+def test_agentgrid32_point_creation_stackable_and_recycled_ids():
+    dims = np.array([2, 3, 4], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 3, 1, 1)
+    assert handle
+    try:
+        a = core._ag32_new_pt(handle, np.float32(1.125), np.float32(2.25), np.float32(3.5))
+        b = core._ag32_new_pt(handle, np.float32(1.75), np.float32(2.875), np.float32(3.125))
+        assert (a, b) == (0, 1)
+        assert core._ag32_count_i(handle, 23) == 2
+        assert core._ag32_at_i(handle, 23) == b
+        assert core._ag32_dispose(handle, b) == 1
+        assert core._ag32_at_i(handle, 23) == a
+        assert core._ag32_new_pt(handle, np.float32(-0.25), np.float32(1), np.float32(1)) == -1
+        assert core._ag32_new_pt(handle, np.float32(2), np.float32(1), np.float32(1)) == -1
+        assert core._ag32_population(handle) == 1
+        c = core._ag32_new_pt(handle, np.float32(0.375), np.float32(0.625), np.float32(0.875))
+        assert c == b
+        assert core._ag32_at_i(handle, 0) == c
+        assert tuple(core._ag32_get_property(handle, c, axis) for axis in range(3)) == (0.375, 0.625, 0.875)
+        assert core._ag32_count_i(handle, 23) == 1
+    finally:
+        core._ag32_free(handle)
