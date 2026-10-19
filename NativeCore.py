@@ -273,7 +273,7 @@ _U8_PTR = ctypes.POINTER(ctypes.c_uint8)
 def _BCArray(bc, expected):
     if bc is None: return np.empty(0,dtype=np.float64)
     if np.isscalar(bc): return np.full(expected,bc,dtype=np.float64)
-    return bc
+    return np.ascontiguousarray(bc,dtype=np.float64)
 
 @overload(_BCArray)
 def _BCArrayOverload(bc, expected):
@@ -287,7 +287,7 @@ def _BCArrayOverload(bc, expected):
             return out
         return impl
     if isinstance(bc, types.Array):
-        def impl(bc, expected): return bc
+        def impl(bc, expected): return np.ascontiguousarray(bc,dtype=np.float64)
         return impl
 
 def _NumbaCType(cType):
