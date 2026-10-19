@@ -1,8 +1,6 @@
 import time
 import PythonAutomataLibrary as pal
 
-# pal.FastMode()
-
 X=100
 Y=100
 VIS_SCALE=5
@@ -114,6 +112,7 @@ def DrawModel(grid:pal.AgentGrid,drug:pal.PDEgrid,pix:pal.Pix,xOffset):
                 pix[x+xOffset,y]=pal.ColorScale(HeatmapRGB,drug[i])
 
 def main():
+    # pal.FastMode()
     pix,win=pal.StartPixWindow(
         X*3,
         Y,
