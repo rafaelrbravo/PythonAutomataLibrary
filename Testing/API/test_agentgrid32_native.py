@@ -282,3 +282,41 @@ def test_agentgrid32_point_movement_validates_bounds_and_occupancy():
         assert core._ag32_get_property(handle, agent, 1) == np.float32(3.5)
     finally:
         core._ag32_free(handle)
+
+
+def test_agentgrid32_point_move_within_same_cell_preserves_fractional_position():
+    dims = np.array([3, 4, 5], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 3, 1, 0)
+    assert handle
+    try:
+        agent = core._ag32_new_i(handle, 0)
+        @core.nb.njit
+        def move_in_cell(h, a):
+            return core._ag32_move_pt(h, a, np.float32(0.125), np.float32(0.75), np.float32(0.875))
+        assert move_in_cell(handle, agent) == 1
+        assert core._ag32_at_i(handle, 0) == agent
+        assert core._ag32_population(handle) == 1
+        assert tuple(core._ag32_get_property(handle, agent, axis) for axis in range(3)) == (0.125, 0.75, 0.875)
+    finally:
+        core._ag32_free(handle)
+
+
+def test_agentgrid32_stackable_point_move_keeps_occupancy_chains():
+    dims = np.array([3], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1, 1, 1)
+    assert handle
+    try:
+        a = core._ag32_new_i(handle, 0)
+        b = core._ag32_new_i(handle, 0)
+        assert core._ag32_move_pt(handle, a, np.float32(1.25), np.float32(0), np.float32(0)) == 1
+        assert core._ag32_move_pt(handle, b, np.float32(1.75), np.float32(0), np.float32(0)) == 1
+        assert core._ag32_count_i(handle, 0) == 0
+        assert core._ag32_count_i(handle, 1) == 2
+        assert core._ag32_at_i(handle, 1) == b
+        assert core._ag32_get_property(handle, a, 0) == np.float32(1.25)
+        assert core._ag32_get_property(handle, b, 0) == np.float32(1.75)
+        assert core._ag32_dispose(handle, b) == 1
+        assert core._ag32_at_i(handle, 1) == a
+        assert core._ag32_count_i(handle, 1) == 1
+    finally:
+        core._ag32_free(handle)
