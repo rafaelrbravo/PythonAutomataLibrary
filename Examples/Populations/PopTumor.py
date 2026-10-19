@@ -28,7 +28,7 @@ VON_NEUMANN=pal.VonNeumannHood(2,excludeCenter=True)
 
 
 @pal.njit(cache=True)
-def Init(cells,sums):
+def Init(cells: tuple[pal.PopGrid, ...], sums: pal.Grid):
     x=cells[TUMOR].xDim//2
     y=cells[TUMOR].yDim//2
 
@@ -39,7 +39,7 @@ def Init(cells,sums):
 
 
 @pal.njit(cache=True)
-def UpdateSums(cells,sums):
+def UpdateSums(cells: tuple[pal.PopGrid, ...], sums: pal.Grid):
     for i in range(len(sums)):
         sums[i]=(
             cells[TUMOR][i]
@@ -50,7 +50,7 @@ def UpdateSums(cells,sums):
 
 
 @pal.njit(cache=True)
-def StepType(cells,sums,mn,cellType):
+def StepType(cells: tuple[pal.PopGrid, ...], sums: pal.Grid, mn: pal.Multinomial, cellType):
     grid=cells[cellType]
 
     for i in range(len(grid)):
@@ -159,7 +159,7 @@ def Migrate(grid:pal.PopGrid,mn:pal.Multinomial):
 
 
 @pal.njit(cache=True)
-def Step(cells,sums,mn):
+def Step(cells: tuple[pal.PopGrid, ...], sums: pal.Grid, mn: pal.Multinomial):
     for cellType in range(N_TYPES):
         StepType(cells,sums,mn,cellType)
 
@@ -174,7 +174,7 @@ def Step(cells,sums,mn):
 
 
 @pal.njit(cache=True)
-def Draw(cells,pix,xOffset):
+def Draw(cells: tuple[pal.PopGrid, ...], pix: pal.Pix, xOffset):
     for x in range(SIDE_LEN):
         for y in range(SIDE_LEN):
             tumor=cells[TUMOR][x,y]/LATTICE_CAP
@@ -194,7 +194,7 @@ def Draw(cells,pix,xOffset):
 
 
 @pal.njit(cache=True)
-def Population(cells):
+def Population(cells: tuple[pal.PopGrid, ...]):
     return (
         cells[TUMOR].GetPop()
         +cells[M1].GetPop()
