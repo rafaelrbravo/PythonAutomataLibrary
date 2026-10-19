@@ -1264,6 +1264,41 @@ PAL_API double pal_pd32_voxel(uintptr_t handle) {
     return grid->dx * grid->dy * grid->dz;
 }
 
+PAL_API int32_t pal_pd32_advection(uintptr_t handle, double velocityX, double velocityY, double velocityZ) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    const double velocities[3] = {velocityX, velocityY, velocityZ};
+    const double spacings[3] = {grid->dx, grid->dy, grid->dz};
+    const int32_t ny = grid->dimension > 1 ? grid->dimensions[1] : 1;
+    const int32_t nz = grid->dimension > 2 ? grid->dimensions[2] : 1;
+    const int32_t strides[3] = {ny * nz, nz, 1};
+    double cfl = 0.0;
+    double factors[3] = {0.0, 0.0, 0.0};
+    if (!isfinite(grid->dt) || grid->dt < 0.0) return 0;
+    for (int32_t axis = 0; axis < grid->dimension; axis++) {
+        if (!isfinite(velocities[axis]) || !isfinite(spacings[axis]) || spacings[axis] <= 0.0) return 0;
+        factors[axis] = velocities[axis] * grid->dt / spacings[axis];
+        if (!isfinite(factors[axis])) return 0;
+        if (grid->dimensions[axis] > 1) cfl += fabs(factors[axis]);
+    }
+    if (cfl > 1.0) return 0;
+    /* Conservative upwind flux: positive velocity flows toward increasing coordinates. */
+    for (int32_t axis = 0; axis < grid->dimension; axis++) {
+        const int32_t size = grid->dimensions[axis];
+        const int32_t stride = strides[axis];
+        const double factor = factors[axis];
+        if (size <= 1 || factor == 0.0) continue;
+        for (int32_t i = 0; i < grid->length; i++) {
+            const int32_t coordinate = (i / stride) % size;
+            if (coordinate == size - 1 && !grid->wrap[axis]) continue;
+            const int32_t j = coordinate == size - 1 ? i - (size - 1) * stride : i + stride;
+            const float flux = (float)(factor * (factor > 0.0 ? (double)grid->field[i] : (double)grid->field[j]));
+            grid->deltas[i] -= flux;
+            grid->deltas[j] += flux;
+        }
+    }
+    return 1;
+}
+
 PAL_API int32_t pal_pd32_diffuse(uintptr_t handle, double rate) {
     PDEGrid32 *grid = (PDEGrid32 *)handle;
     if (!isfinite(rate) || rate < 0.0 || !isfinite(grid->dt) || grid->dt < 0.0) return 0;
