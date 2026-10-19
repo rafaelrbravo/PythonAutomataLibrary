@@ -450,3 +450,13 @@ def test_agentgrid32_internal_factory_rejects_invalid_options():
     for stackable in (-1, 2, 0.5, "yes"):
         with pytest.raises(ValueError, match="isStackable"):
             core._NewAgentGrid32((2, 2), isStackable=stackable)
+
+
+def test_agentgrid32_internal_factory_geometry():
+    with core._NewAgentGrid32((-3, 4), numAgentProps=1) as grid:
+        assert grid.nDims == 2
+        assert grid.dimensions == (3, 4)
+        assert len(grid) == 12
+    with core._NewAgentGrid32((), numAgentProps=1) as grid:
+        assert grid.nDims == 0
+        assert len(grid) == 0
