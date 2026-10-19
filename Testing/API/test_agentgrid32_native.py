@@ -563,3 +563,14 @@ def test_float32_agentgrid_property_validation():
             with pytest.raises(ValueError):
                 grid.AddProperty(agent, 0, invalid)
         assert grid.GetProperty(agent, 0) == pytest.approx(1.75)
+
+
+def test_float32_agentgrid_dead_agent_properties_are_inaccessible():
+    with core._NewAgentGrid32((3,), numAgentProps=1) as grid:
+        agent = grid.NewAgent(1)
+        assert grid.SetProperty(agent, 0, 3.0)
+        assert grid.Dispose(agent)
+        assert not grid.SetProperty(agent, 0, 4.0)
+        assert not grid.AddProperty(agent, 0, 1.0)
+        assert np.isnan(grid.GetProperty(agent, 0))
+        assert not grid.SetProperty(agent + 100, 0, 4.0)
