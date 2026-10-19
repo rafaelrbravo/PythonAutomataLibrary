@@ -1443,7 +1443,9 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
 #define PAL_PD_FLOAT float
 #define PAL_PD_PREFIX pal_pd32_
 #define PAL_PD_DIFFUSION diffuse
+#define PAL_PD_STEP_GETTERS
 #include "pdegrid_field_template.h"
+#undef PAL_PD_STEP_GETTERS
 #undef PAL_PD_DIFFUSION
 #undef PAL_PD_PREFIX
 #undef PAL_PD_FLOAT
