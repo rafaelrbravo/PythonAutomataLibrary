@@ -182,9 +182,10 @@ def Draw(cells: tuple[pal.PopGrid, ...], pix: pal.Pix, xOffset):
             m2=cells[M2][x,y]/LATTICE_CAP
             both=cells[MBOTH][x,y]/LATTICE_CAP
 
-            r=min(1.0,tumor+m1)
-            g=min(1.0,tumor+m2)
-            b=min(1.0,tumor+both)
+            # Brighten low-density sites so the growing tumor is visible.
+            r=min(1.0,(tumor+m1)**0.25)
+            g=min(1.0,(tumor+m2)**0.25)
+            b=min(1.0,(tumor+both)**0.25)
 
             pix[x+xOffset,y]=pal.RGB(
                 int(r*255),
@@ -248,9 +249,8 @@ def main():
             Draw(cells,pix,snapshot*SIDE_LEN)
             win.Update()
     
-            Step(cells,sums,mn)
     
-        win.Save("PopulationGrid.png")
+    win.Save("PopulationGrid.png")
 
 
 if __name__=="__main__":
