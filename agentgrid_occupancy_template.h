@@ -38,6 +38,14 @@ PAL_API int32_t PAL_AG_OCC_FN(PAL_AG_OCC_LEN)(uintptr_t handle) {
     return grid ? grid->length : 0;
 }
 
+
+#ifdef PAL_AG_OCC_CAPACITY
+PAL_API int32_t PAL_AG_OCC_FN(PAL_AG_OCC_CAPACITY)(uintptr_t handle) {
+    PAL_AG_TYPE *grid=(PAL_AG_TYPE *)handle;
+    return grid ? grid->capacity : 0;
+}
+#endif
+
 #undef PAL_AG_OCC_FN
 #undef PAL_AG_OCC_JOIN
 #undef PAL_AG_OCC_JOIN2
