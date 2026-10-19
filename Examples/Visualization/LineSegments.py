@@ -17,7 +17,7 @@ def Draw(draw:pal.OpenGLDraw):
 def main():
     # pal.FastMode()
 
-    draw,win=pal.StartOpenGLWindow(xDim=X,yDim=Y,zDim=Z,scale=SCALE,title="segment")
+    draw,win=pal.StartOpenGLWindow(xDim=X,yDim=Y,zDim=Z,width=X*SCALE,height=Y*SCALE,title="segment")
 
     pal.AwaitWindows()
     while win.IsOpen():
