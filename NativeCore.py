@@ -5215,7 +5215,21 @@ class _AgentGrid32Native:
     def NewAgentSQ(self, x, y=-1, z=-1):
         return self.NewAgentI(self._SQToI(x, y, z))
 
+    def _CheckPT(self, x, y, z):
+        if self.nDims == 0: raise ValueError("point coordinates require a spatial grid")
+        coords = (x, y, z)
+        for axis in range(self.nDims):
+            value = coords[axis]
+            if not np.isfinite(value) or value < 0 or value >= self.dimensions[axis]:
+                raise IndexError("AgentGrid point coordinate out of bounds")
+            rounded = np.float32(value)
+            if not np.isfinite(rounded) or rounded < 0 or rounded >= self.dimensions[axis]:
+                raise IndexError("AgentGrid point coordinate not representable in float32 grid")
+        for axis in range(self.nDims, 3):
+            if coords[axis] != 0: raise ValueError("unexpected AgentGrid point coordinate")
+
     def NewAgentPT(self, x, y=0, z=0):
+        self._CheckPT(x, y, z)
         return _ag32_new_pt(self._ptr, np.float32(x), np.float32(y), np.float32(z))
 
     def MoveI(self, agent, location):
@@ -5231,6 +5245,7 @@ class _AgentGrid32Native:
         return self.MoveI(agent, self._SQToI(x, y, z))
 
     def MovePT(self, agent, x, y=0, z=0):
+        self._CheckPT(x, y, z)
         return bool(_ag32_move_pt(self._ptr, agent, np.float32(x), np.float32(y), np.float32(z)))
 
     def Dispose(self, agent):
