@@ -67,4 +67,11 @@ class PlatformWheel(bdist_wheel):
         super().finalize_options()
         self.root_is_pure = False
 
+    def get_tag(self):
+        # PAL loads a standalone C shared library via ctypes; it does not
+        # use the CPython extension ABI. Keep the platform-specific tag,
+        # but allow the same wheel to install on any supported Python 3.
+        _, _, platform = super().get_tag()
+        return "py3", "none", platform
+
 setup(distclass=NativeDistribution, cmdclass={"build_py": BuildWithNative, "bdist_wheel": PlatformWheel, "sdist": SourceWithoutNativeBinaries})
