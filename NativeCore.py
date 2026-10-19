@@ -5515,11 +5515,11 @@ class _PDEgrid32SafePython:
         return _pd32_geti(self._ptr,i)
     def SetI(self,i,value):
         self._CheckI(i)
-        if not np.isfinite(value): raise ValueError("PDEgrid value must be finite")
+        if not np.isfinite(value) or abs(value)>3.4028234663852886e38: raise ValueError("PDEgrid value must be finite and representable as float32")
         return _pd32_seti(self._ptr,i,value)
     def AddI(self,value,i):
         self._CheckI(i)
-        if not np.isfinite(value): raise ValueError("PDEgrid value must be finite")
+        if not np.isfinite(value) or abs(value)>3.4028234663852886e38: raise ValueError("PDEgrid value must be finite and representable as float32")
         _pd32_addi(self._ptr,i,value)
 
 
