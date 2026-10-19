@@ -58,7 +58,7 @@ def Draw(grid:pal.AgentGrid,draw:pal.OpenGLDraw):
 
 
 def main():
-    pal.FastMode()
+    # pal.FastMode()
 
     draw,win=pal.StartOpenGLWindow(xDim=X,yDim=Y,title="BirthDeathOffLattice")
     grid=pal.NewAgentGrid(dimensions=(X,Y),numAgentProps=1,isStackable=True)
