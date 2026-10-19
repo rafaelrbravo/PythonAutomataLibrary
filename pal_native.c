@@ -1235,6 +1235,30 @@ PAL_API uintptr_t pal_ag32_new(const int32_t *dimensions, int32_t dimension,
     return (uintptr_t)g;
 }
 
+/* Float32 agent property access uses true float storage, not double casts. */
+PAL_API int32_t pal_ag32_set_property(uintptr_t handle,int32_t agent,int32_t property,float value) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || agent<0 || agent>=g->capacity || property<0 ||
+        property>=g->nFloatProperties || !isfinite(value)) return 0;
+    g->floatProperties[(size_t)agent*g->nFloatProperties+property]=value;
+    return 1;
+}
+PAL_API float pal_ag32_get_property(uintptr_t handle,int32_t agent,int32_t property) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || agent<0 || agent>=g->capacity || property<0 ||
+        property>=g->nFloatProperties) return NAN;
+    return g->floatProperties[(size_t)agent*g->nFloatProperties+property];
+}
+PAL_API int32_t pal_ag32_add_property(uintptr_t handle,int32_t agent,int32_t property,float delta) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || agent<0 || agent>=g->capacity || property<0 ||
+        property>=g->nFloatProperties || !isfinite(delta)) return 0;
+    size_t i=(size_t)agent*g->nFloatProperties+property;
+    float next=g->floatProperties[i]+delta;
+    if (!isfinite(next)) return 0;
+    g->floatProperties[i]=next;
+    return 1;
+}
 PAL_API int32_t pal_ag32_capacity(uintptr_t handle) {
     return handle ? ((AgentGrid32 *)handle)->capacity : 0;
 }
