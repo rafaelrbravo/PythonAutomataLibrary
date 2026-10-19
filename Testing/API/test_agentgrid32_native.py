@@ -425,3 +425,18 @@ def test_agentgrid32_internal_factory_manages_native_lifetime():
         assert grid.GetPop() == 0
     assert grid._ptr == 0
     grid.Close()
+
+
+def test_agentgrid32_internal_wrapper_stackable_occupancy_and_property_add():
+    with core._NewAgentGrid32((3,), numAgentProps=1, isStackable=True) as grid:
+        a = grid.NewAgentPT(1.125)
+        b = grid.NewAgentPT(1.75)
+        assert grid.CountI(1) == 2
+        assert grid.AtI(1) == b
+        assert grid.SetProperty(a, 1, 1.25)
+        assert grid.AddProperty(a, 1, 0.5)
+        assert grid.GetProperty(a, 1) == np.float32(1.75)
+        assert grid.MoveI(b, 2)
+        assert grid.CountI(1) == 1
+        assert grid.AtI(1) == a
+        assert grid.CountI(2) == 1
