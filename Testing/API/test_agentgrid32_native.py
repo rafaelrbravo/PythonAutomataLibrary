@@ -218,3 +218,24 @@ def test_agentgrid32_stackable_growth_preserves_chains():
         assert core._ag32_population(handle) == 1097
     finally:
         core._ag32_free(handle)
+
+
+def test_agentgrid32_compiled_stackable_lifecycle():
+    dims = np.array([4], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1, 1, 1)
+    assert handle
+    try:
+        @core.nb.njit
+        def compiled_cycle(h):
+            a = core._ag32_new_i(h, 0)
+            b = core._ag32_new_i(h, 0)
+            before = core._ag32_count_i(h, 0)
+            moved = core._ag32_move_i(h, a, 2)
+            after = core._ag32_count_i(h, 0)
+            disposed = core._ag32_dispose(h, b)
+            return a, b, before, moved, after, disposed, core._ag32_population(h)
+        assert compiled_cycle(handle) == (0, 1, 2, 1, 1, 1, 1)
+        assert core._ag32_count_i(handle, 2) == 1
+        assert core._ag32_at_i(handle, 2) == 0
+    finally:
+        core._ag32_free(handle)
