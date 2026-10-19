@@ -5058,7 +5058,11 @@ def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False, dtype=np.float6
     Empty dimensions select a nonspatial population. Negative axis lengths
     enable wrapping. `numAgentProps` counts float properties per agent.
     """
-    if np.dtype(dtype) != np.dtype(np.float64):
+    try:
+        requested_dtype = np.dtype(dtype)
+    except (TypeError, ValueError):
+        raise ValueError('AgentGrid dtype must be float64') from None
+    if requested_dtype != np.dtype(np.float64):
         raise ValueError('AgentGrid currently supports only float64; float32 native backend is not yet implemented')
     dims = _dimensions_array(dimensions,allowZero=True)
     try: props=float(numAgentProps)
@@ -5102,7 +5106,11 @@ def NewPopGrid(dimensions, dtype=np.int64):
 
 def NewPDEgrid(dimensions, dtype=np.float64):
     """Create a 1D–3D float64 lattice field supporting diffusion and advection."""
-    if np.dtype(dtype) != np.dtype(np.float64):
+    try:
+        requested_dtype = np.dtype(dtype)
+    except (TypeError, ValueError):
+        raise ValueError('PDEgrid dtype must be float64') from None
+    if requested_dtype != np.dtype(np.float64):
         raise ValueError('PDEgrid currently supports only float64; float32 native backend is not yet implemented')
     dims = _dimensions_array(dimensions)
     fast=_UseFastMode()
