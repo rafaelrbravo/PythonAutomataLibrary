@@ -3,6 +3,7 @@ import multiprocessing as mp
 from multiprocessing import shared_memory
 import numpy as np
 import operator
+import queue
 from .NativeCore import _ReserveWindowPosition,_ReleaseWindow,_RegisterWindowInit,_RegisterCrashWindow,_UnregisterCrashWindow,_UseFastMode
 from typing import Protocol
 from numba import types
@@ -206,97 +207,94 @@ class PixWindow(Protocol):
         ...
 
 def _WindowProcess(shmName,frameShmName,saveShmName,xDim,yDim,scale,title,screenX,screenY,closeRequest,visualClosed,closedEvent,savePath,saveEvent,saveDone,frameSeq,frameLock,framePending,readyEvent,outputQ,outputAckQ):
-    import pygame
+    """Display PixWindow's shared pixel frames using pyglet's OpenGL texture backend."""
+    import pyglet
+    from pyglet import gl
+    from PIL import Image
+
     shm=shared_memory.SharedMemory(name=shmName)
     frameShm=shared_memory.SharedMemory(name=frameShmName)
     saveShm=shared_memory.SharedMemory(name=saveShmName)
-    pix=np.ndarray((xDim,yDim),dtype=np.uint32,buffer=shm.buf)
     framePix=np.ndarray((xDim,yDim),dtype=np.uint32,buffer=frameShm.buf)
-    savePix=np.ndarray((xDim,yDim),dtype=np.uint32,buffer=saveShm.buf)
     displayPix=np.empty((xDim,yDim),dtype=np.uint32)
-    rgb=np.empty((xDim,yDim,3),dtype=np.uint8)
-    saveRgb=np.empty((xDim,yDim,3),dtype=np.uint8)
-    import os
-    os.environ['SDL_VIDEO_WINDOW_POS']=f'{screenX},{screenY}'
-    pygame.display.init()
-    screen=pygame.display.set_mode((xDim*scale,yDim*scale))
-    pygame.display.set_caption(title)
-    clock=pygame.time.Clock()
-    surf=pygame.Surface((xDim,yDim),depth=24)
-    screen.fill((0,0,0))
-    pygame.display.flip()
-    readyEvent.set()
+    rgb=np.empty((yDim,xDim,4),dtype=np.uint8)
+    rgb[:,:,3]=255
+    window=None
+
+    def _RgbFrame(src):
+        # PAL stores pixels as [x,y] and presents y=0 at the bottom.
+        pixels=src.T
+        rgb[:,:,0]=(pixels>>16)&255
+        rgb[:,:,1]=(pixels>>8)&255
+        rgb[:,:,2]=pixels&255
+        return rgb
+
+    def _SaveFrame(path,frame):
+        src=np.frombuffer(frame,dtype=np.uint32).reshape(xDim,yDim)
+        pixels=src.T[::-1,:]
+        output=np.empty((yDim,xDim,3),dtype=np.uint8)
+        output[:,:,0]=(pixels>>16)&255
+        output[:,:,1]=(pixels>>8)&255
+        output[:,:,2]=pixels&255
+        image=Image.fromarray(output)
+        if scale!=1: image=image.resize((xDim*scale,yDim*scale),resample=Image.Resampling.NEAREST)
+        image.save(path)
+
+    def _DrainOutput():
+        while True:
+            try: output=outputQ.get_nowait()
+            except queue.Empty: break
+            if output[0]=='save':
+                _,path,frame,token=output
+                _SaveFrame(path,frame)
+                outputAckQ.put(('save',token))
 
     try:
+        window=pyglet.window.Window(width=xDim*scale,height=yDim*scale,caption=title,visible=True)
+        window.set_location(screenX,screenY)
+        texture=pyglet.image.Texture.create(xDim,yDim)
+        gl.glBindTexture(texture.target,texture.id)
+        gl.glTexParameteri(texture.target,gl.GL_TEXTURE_MIN_FILTER,gl.GL_NEAREST)
+        gl.glTexParameteri(texture.target,gl.GL_TEXTURE_MAG_FILTER,gl.GL_NEAREST)
+
+        @window.event
+        def on_close():
+            visualClosed.set()
+            window.set_visible(False)
+
+        # Initialize a black frame before signaling that the window is ready.
+        displayPix.fill(0)
+        imageData=pyglet.image.ImageData(xDim,yDim,'RGBA',_RgbFrame(displayPix).tobytes(),pitch=xDim*4)
+        texture.blit_into(imageData,0,0,0)
+        readyEvent.set()
         while True:
             if not visualClosed.is_set():
-                for event in pygame.event.get():
-                    if event.type==pygame.QUIT:
-                        visualClosed.set()
-                        pygame.display.quit()
-                        break
-
-            # Consume at most one completed frame. Copy the shared frame while
-            # holding the lock, then release it before doing RGB conversion and
-            # display work. Update() drops frames while one is already pending,
-            # so a fast model can never starve the renderer by continually
-            # invalidating the frame being converted.
+                window.dispatch_events()
             if framePending.is_set():
                 with frameLock:
                     displayPix[:]=framePix
                     framePending.clear()
-                rgb[:,:,0]=(displayPix>>16)&255
-                rgb[:,:,1]=(displayPix>>8)&255
-                rgb[:,:,2]=displayPix&255
-                pygame.surfarray.blit_array(surf,rgb[:,::-1,:])
-            while True:
-                try:
-                    output=outputQ.get_nowait()
-                except Exception:
-                    break
-                if output[0]=='save':
-                    _,path,frame,token=output
-                    src=np.frombuffer(frame,dtype=np.uint32).reshape(xDim,yDim)
-                    saveRgb[:,:,0]=(src>>16)&255
-                    saveRgb[:,:,1]=(src>>8)&255
-                    saveRgb[:,:,2]=src&255
-                    saveSurf=pygame.surfarray.make_surface(saveRgb[:,::-1,:])
-                    if scale!=1:
-                        saveSurf=pygame.transform.scale(saveSurf,(xDim*scale,yDim*scale))
-                    pygame.image.save(saveSurf,path)
-                    outputAckQ.put(('save',token))
+                imageData.set_data('RGBA',xDim*4,_RgbFrame(displayPix).tobytes())
+                texture.blit_into(imageData,0,0,0)
+            _DrainOutput()
             if closeRequest.is_set():
-                # Close is queued only after the parent has finished submitting
-                # output. Drain every accepted output job before terminating.
-                while True:
-                    try:
-                        output=outputQ.get_nowait()
-                    except Exception:
-                        break
-                    if output[0]=='save':
-                        _,path,frame,token=output
-                        src=np.frombuffer(frame,dtype=np.uint32).reshape(xDim,yDim)
-                        saveRgb[:,:,0]=(src>>16)&255
-                        saveRgb[:,:,1]=(src>>8)&255
-                        saveRgb[:,:,2]=src&255
-                        saveSurf=pygame.surfarray.make_surface(saveRgb[:,::-1,:])
-                        if scale!=1:
-                            saveSurf=pygame.transform.scale(saveSurf,(xDim*scale,yDim*scale))
-                        pygame.image.save(saveSurf,path)
-                        outputAckQ.put(('save',token))
+                _DrainOutput()
                 break
             if not visualClosed.is_set():
-                drawSurf=surf if scale==1 else pygame.transform.scale(surf,(xDim*scale,yDim*scale))
-                screen.blit(drawSurf,(0,0))
-                pygame.display.flip()
-            clock.tick(60)
+                window.switch_to()
+                window.clear()
+                gl.glBindTexture(texture.target,texture.id)
+                texture.blit(0,0,width=xDim*scale,height=yDim*scale)
+                window.flip()
+            pyglet.clock.tick()
+            import time
+            time.sleep(1/60)
     finally:
         closedEvent.set()
-        pygame.display.quit()
+        if window is not None: window.close()
         shm.close()
         frameShm.close()
         saveShm.close()
-
 
 def _HeadlessWindowProcess(outputQ,outputAckQ,xDim,yDim,scale,closeRequest,closedEvent,readyEvent):
     # Output-only worker: intentionally imports neither pygame nor any display API.
