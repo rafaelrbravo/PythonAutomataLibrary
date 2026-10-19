@@ -112,3 +112,27 @@ def test_agentgrid32_square_coordinates_are_float32_centers():
             assert core._ag32_get_property(handle, agent, len(dims)) == np.float32(0)
         finally:
             core._ag32_free(handle)
+
+def test_agentgrid32_movement_updates_occupancy_and_coordinates():
+    dims = np.array([3, 4], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 2, 1, 0)
+    assert handle
+    try:
+        first = core._ag32_new_i(handle, 0)
+        blocker = core._ag32_new_i(handle, 2)
+        assert core._ag32_move_i(handle, first, 2) == 0
+        assert core._ag32_at_i(handle, 0) == first
+        assert core._ag32_move_i(handle, first, 7) == 1
+        assert core._ag32_at_i(handle, 0) == -1
+        assert core._ag32_at_i(handle, 7) == first
+        assert core._ag32_get_property(handle, first, 0) == np.float32(1.5)
+        assert core._ag32_get_property(handle, first, 1) == np.float32(3.5)
+        assert core._ag32_move_i(handle, first, 12) == 0
+        @core.nb.njit
+        def compiled_move(h, agent):
+            return core._ag32_move_i(h, agent, 6)
+        assert compiled_move(handle, first) == 1
+        assert core._ag32_at_i(handle, 6) == first
+        assert core._ag32_at_i(handle, 2) == blocker
+    finally:
+        core._ag32_free(handle)
