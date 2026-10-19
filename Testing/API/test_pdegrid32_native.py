@@ -245,3 +245,21 @@ def test_pdegrid32_variable_rate_harmonic_diffusion():
         assert core._pd32_geti(handle, 2) == pytest.approx(expected, abs=1e-6)
     finally:
         core._pd32_free(handle)
+
+def test_pdegrid32_jitclass_handles():
+    dims = np.array([5], dtype=np.int32)
+    for cls in (core._PDEgrid32Safe, core._PDEgrid32Fast):
+        handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1)
+        assert handle
+        try:
+            grid = cls(handle, 1, 5, -1, -1, 5, False, False, False)
+            grid.SetI(2, np.float32(1.0))
+            grid.AddI(np.float32(0.25), 2)
+            grid.Update()
+            assert grid.GetI(2) == pytest.approx(1.25)
+            @core.nb.njit
+            def read_compiled(g):
+                return g.GetI(2)
+            assert read_compiled(grid) == pytest.approx(1.25)
+        finally:
+            core._pd32_free(handle)
