@@ -48,6 +48,20 @@ jobs:
       - name: Install headless OpenGL backend
         run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1-mesa-dri
       - run: gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
+      - name: Diagnose AgentGrid compiled precision under sanitizers
+        if: matrix.mode == 'safe'
+        env:
+          PAL_TEST_MODE: safe
+          NUMBA_DISABLE_CACHE: '1'
+          PYTHONMALLOC: debug
+          PYTHONFAULTHANDLER: '1'
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1:abort_on_error=1
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcc -std=c11 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fPIC -shared -o libpal_native.so pal_native.c -lm
+          LD_PRELOAD="$(gcc -print-file-name=libasan.so)" python -u -m pytest -vv -s --timeout=90 Testing/API/test_agentgrid_float64.py
+          gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
       - name: Run isolated test groups with per-test timeouts
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
