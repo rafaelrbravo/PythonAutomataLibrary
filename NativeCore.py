@@ -5371,9 +5371,17 @@ class _PDEgrid32SafePython:
             if not np.isfinite(y) or not np.isfinite(z) or y!=int(y) or z!=int(z): raise ValueError('3D PDEgrid requires x,y,z')
         if x<0 or x>=self._xDim or self._dimension>1 and (y<0 or y>=self._yDim) or self._dimension>2 and (z<0 or z>=self._zDim): raise IndexError('PDEgrid coordinate out of bounds')
         return _pd32_toi(self._ptr,x,y,z)
-    def ItoX(self,i): return _pd32_itox(self._ptr,i)
-    def ItoY(self,i): return _pd32_itoy(self._ptr,i)
-    def ItoZ(self,i): return _pd32_itoz(self._ptr,i)
+    def ItoX(self,i):
+        self._CheckI(i)
+        return _pd32_itox(self._ptr,i)
+    def ItoY(self,i):
+        if self._dimension<2: raise ValueError("ItoY requires a 2D or 3D PDEgrid")
+        self._CheckI(i)
+        return _pd32_itoy(self._ptr,i)
+    def ItoZ(self,i):
+        if self._dimension<3: raise ValueError("ItoZ requires a 3D PDEgrid")
+        self._CheckI(i)
+        return _pd32_itoz(self._ptr,i)
     def GetI(self,i): return _pd32_geti(self._ptr,i)
     def __getitem__(self,i):
         if isinstance(i,tuple):
