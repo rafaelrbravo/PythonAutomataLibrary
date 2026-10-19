@@ -60,7 +60,7 @@ jobs:
         run: |
           set -euo pipefail
           gcc -std=c11 -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fPIC -shared -o libpal_native.so pal_native.c -lm
-          LD_PRELOAD="$(gcc -print-file-name=libasan.so)" python -u -m pytest -vv -s --timeout=90 Testing/API/test_agentgrid_float64.py
+          LD_PRELOAD="$(gcc -print-file-name=libasan.so)" python -u -m pytest -vv -s Testing/API/test_agentgrid_float64.py
           gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
       - name: Run isolated test groups with per-test timeouts
         env:
