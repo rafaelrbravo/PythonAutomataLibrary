@@ -167,7 +167,7 @@ typedef struct {
     int32_t nDead;
     uint64_t generation;
 
-    float *floatProperties;
+    double *floatProperties;
     int32_t *intProperties;
     int32_t *aliveAgents;
     int32_t *deadAgents;
@@ -205,8 +205,8 @@ static int AgentGrid_Grow(AgentGrid *grid) {
     if (oldCapacity > INT32_MAX / 2) return 0;
     int32_t newCapacity = oldCapacity > 0 ? oldCapacity * 2 : 1000;
 
-    float *newFloatProperties = (float *)calloc(
-        (size_t)newCapacity * (size_t)grid->nFloatProperties, sizeof(float));
+    double *newFloatProperties = (double *)calloc(
+        (size_t)newCapacity * (size_t)grid->nFloatProperties, sizeof(double));
     int32_t *newIntProperties = (int32_t *)malloc(
         (size_t)newCapacity * N_AGENT_INT_PROPERTIES * sizeof(int32_t));
     int32_t *newAliveAgents = (int32_t *)malloc((size_t)newCapacity * sizeof(int32_t));
@@ -222,7 +222,7 @@ static int AgentGrid_Grow(AgentGrid *grid) {
     }
 
     memcpy(newFloatProperties, grid->floatProperties,
-           (size_t)oldCapacity * (size_t)grid->nFloatProperties * sizeof(float));
+           (size_t)oldCapacity * (size_t)grid->nFloatProperties * sizeof(double));
     memcpy(newIntProperties, grid->intProperties,
            (size_t)oldCapacity * N_AGENT_INT_PROPERTIES * sizeof(int32_t));
     memcpy(newAliveAgents, grid->aliveAgents, (size_t)grid->population * sizeof(int32_t));
@@ -315,28 +315,28 @@ static void AgentGrid_SetSquarePosition(AgentGrid *grid, int32_t agent, int32_t 
         z = location % grid->dimensions[2];
     }
 
-    grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)] = (float)x + 0.5f;
+    grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)] = (double)x + 0.5;
     if (grid->dimension > 1)
-        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)] = (float)y + 0.5f;
+        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)] = (double)y + 0.5;
     if (grid->dimension > 2)
-        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)] = (float)z + 0.5f;
+        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)] = (double)z + 0.5;
 }
 
-static int32_t AgentGrid_PointToI(const AgentGrid *grid, float x, float y, float z) {
+static int32_t AgentGrid_PointToI(const AgentGrid *grid, double x, double y, double z) {
     int32_t xi = (int32_t)floorf(x);
     int32_t yi = grid->dimension > 1 ? (int32_t)floorf(y) : 0;
     int32_t zi = grid->dimension > 2 ? (int32_t)floorf(z) : 0;
     return AgentGrid_ToI(grid, xi, yi, zi);
 }
 
-static int AgentGrid_PointInBounds(const AgentGrid *grid, float x, float y, float z) {
-    if (!isfinite(x) || x < 0.0f || x >= (float)grid->dimensions[0]) return 0;
-    if (grid->dimension > 1 && (!isfinite(y) || y < 0.0f || y >= (float)grid->dimensions[1])) return 0;
-    if (grid->dimension > 2 && (!isfinite(z) || z < 0.0f || z >= (float)grid->dimensions[2])) return 0;
+static int AgentGrid_PointInBounds(const AgentGrid *grid, double x, double y, double z) {
+    if (!isfinite(x) || x < 0.0 || x >= (double)grid->dimensions[0]) return 0;
+    if (grid->dimension > 1 && (!isfinite(y) || y < 0.0 || y >= (double)grid->dimensions[1])) return 0;
+    if (grid->dimension > 2 && (!isfinite(z) || z < 0.0 || z >= (double)grid->dimensions[2])) return 0;
     return 1;
 }
 
-static void AgentGrid_SetPointPosition(AgentGrid *grid, int32_t agent, float x, float y, float z) {
+static void AgentGrid_SetPointPosition(AgentGrid *grid, int32_t agent, double x, double y, double z) {
     grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)] = x;
     if (grid->dimension > 1) grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)] = y;
     if (grid->dimension > 2) grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)] = z;
@@ -364,8 +364,8 @@ PAL_API uintptr_t pal_ag_new(const int32_t *dimensions, int32_t dimension,
         grid->length *= grid->dimensions[d];
     }
 
-    grid->floatProperties = (float *)calloc(
-        (size_t)grid->capacity * (size_t)grid->nFloatProperties, sizeof(float));
+    grid->floatProperties = (double *)calloc(
+        (size_t)grid->capacity * (size_t)grid->nFloatProperties, sizeof(double));
     grid->intProperties = (int32_t *)malloc(
         (size_t)grid->capacity * N_AGENT_INT_PROPERTIES * sizeof(int32_t));
     grid->aliveAgents = (int32_t *)malloc((size_t)grid->capacity * sizeof(int32_t));
@@ -444,11 +444,11 @@ PAL_API int32_t pal_ag_i_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;r
 PAL_API int32_t pal_ag_xsq_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||g->dimension<1)return PAL_BAD_I;int32_t i=g->intProperties[AgentGrid_IntIndex(a,AGENT_LOCATION)];return g->dimension==1?i:g->dimension==2?i/g->dimensions[1]:i/(g->dimensions[1]*g->dimensions[2]);}
 PAL_API int32_t pal_ag_ysq_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||g->dimension<2)return PAL_BAD_I;int32_t i=g->intProperties[AgentGrid_IntIndex(a,AGENT_LOCATION)];return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_ag_zsq_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||g->dimension<3)return PAL_BAD_I;return g->intProperties[AgentGrid_IntIndex(a,AGENT_LOCATION)]%g->dimensions[2];}
-PAL_API float pal_ag_x_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>0?g->floatProperties[AgentGrid_FloatIndex(g,a,0)]:NAN;}
-PAL_API float pal_ag_y_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>1?g->floatProperties[AgentGrid_FloatIndex(g,a,1)]:NAN;}
-PAL_API float pal_ag_z_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>2?g->floatProperties[AgentGrid_FloatIndex(g,a,2)]:NAN;}
-PAL_API float pal_ag_getp_safe(uintptr_t h,int32_t a,int32_t p){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&p>=0&&p<g->nFloatProperties-g->dimension?g->floatProperties[AgentGrid_FloatIndex(g,a,g->dimension+p)]:NAN;}
-PAL_API int32_t pal_ag_setp_safe(uintptr_t h,int32_t a,int32_t p,float v){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||p<0||p>=g->nFloatProperties-g->dimension||!isfinite(v))return 0;g->floatProperties[AgentGrid_FloatIndex(g,a,g->dimension+p)]=v;return 1;}
+PAL_API double pal_ag_x_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>0?g->floatProperties[AgentGrid_FloatIndex(g,a,0)]:NAN;}
+PAL_API double pal_ag_y_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>1?g->floatProperties[AgentGrid_FloatIndex(g,a,1)]:NAN;}
+PAL_API double pal_ag_z_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>2?g->floatProperties[AgentGrid_FloatIndex(g,a,2)]:NAN;}
+PAL_API double pal_ag_getp_safe(uintptr_t h,int32_t a,int32_t p){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&p>=0&&p<g->nFloatProperties-g->dimension?g->floatProperties[AgentGrid_FloatIndex(g,a,g->dimension+p)]:NAN;}
+PAL_API int32_t pal_ag_setp_safe(uintptr_t h,int32_t a,int32_t p,double v){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||p<0||p>=g->nFloatProperties-g->dimension||!isfinite(v))return 0;g->floatProperties[AgentGrid_FloatIndex(g,a,g->dimension+p)]=v;return 1;}
 PAL_API double pal_ag_inwrap_safe(uintptr_t h,double v,int32_t d){AgentGrid*g=(AgentGrid*)h;if(d<0||d>=g->dimension||!isfinite(v))return NAN;return AgentGrid_InWrap(g,v,d);}
 PAL_API double pal_ag_dispwrap_safe(uintptr_t h,double a,double b,int32_t d){AgentGrid*g=(AgentGrid*)h;if(d<0||d>=g->dimension||!isfinite(a)||!isfinite(b)||a<0||b<0||a>=g->dimensions[d]||b>=g->dimensions[d])return NAN;return AgentGrid_DispWrap(g,a,b,d);}
 PAL_API int32_t pal_ag_inwrap_sq_safe(uintptr_t h,int32_t v,int32_t d){AgentGrid*g=(AgentGrid*)h;if(d<0||d>=g->dimension)return PAL_BAD_I;return AgentGrid_Wrap(g,v,d);}
@@ -498,7 +498,7 @@ PAL_API int32_t pal_ag_alive_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*
 PAL_API int32_t pal_ag_nagents(uintptr_t handle) { return ((AgentGrid *)handle)->nAgents; }
 PAL_API int32_t *pal_ag_grid_data(uintptr_t handle) { return ((AgentGrid *)handle)->grid; }
 PAL_API int32_t *pal_ag_int_data(uintptr_t handle) { return ((AgentGrid *)handle)->intProperties; }
-PAL_API float *pal_ag_float_data(uintptr_t handle) { return ((AgentGrid *)handle)->floatProperties; }
+PAL_API double *pal_ag_float_data(uintptr_t handle) { return ((AgentGrid *)handle)->floatProperties; }
 PAL_API int32_t pal_ag_nfloatprops(uintptr_t handle) { return ((AgentGrid *)handle)->nFloatProperties; }
 PAL_API int32_t pal_ag_stackable(uintptr_t handle) { return ((AgentGrid *)handle)->stackable; }
 PAL_API int32_t pal_ag_wrap(uintptr_t handle, int32_t dimension) { AgentGrid*g=(AgentGrid*)handle; return dimension>=0&&dimension<g->dimension?g->wrap[dimension]:0; }
@@ -530,7 +530,7 @@ PAL_API int32_t pal_ag_new_sq(uintptr_t handle, int32_t x, int32_t y, int32_t z)
     return pal_ag_new_i(handle, AgentGrid_ToI(grid, x, y, z));
 }
 
-PAL_API int32_t pal_ag_new_pt(uintptr_t handle, float x, float y, float z) {
+PAL_API int32_t pal_ag_new_pt(uintptr_t handle, double x, double y, double z) {
     AgentGrid *grid = (AgentGrid *)handle;
     if (grid->dimension == 0 || !AgentGrid_PointInBounds(grid, x, y, z)) return PAL_NULL;
     int32_t location = AgentGrid_PointToI(grid, x, y, z);
@@ -589,25 +589,25 @@ PAL_API int32_t pal_ag_zsq(uintptr_t handle, int32_t agent) {
     return pal_ag_i(handle, agent) % grid->dimensions[2];
 }
 
-PAL_API float pal_ag_x(uintptr_t handle, int32_t agent) {
+PAL_API double pal_ag_x(uintptr_t handle, int32_t agent) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)];
 }
-PAL_API float pal_ag_y(uintptr_t handle, int32_t agent) {
+PAL_API double pal_ag_y(uintptr_t handle, int32_t agent) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)];
 }
-PAL_API float pal_ag_z(uintptr_t handle, int32_t agent) {
+PAL_API double pal_ag_z(uintptr_t handle, int32_t agent) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)];
 }
 
-PAL_API float pal_ag_getp(uintptr_t handle, int32_t agent, int32_t property) {
+PAL_API double pal_ag_getp(uintptr_t handle, int32_t agent, int32_t property) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, grid->dimension + property)];
 }
 
-PAL_API void pal_ag_setp(uintptr_t handle, int32_t agent, int32_t property, float value) {
+PAL_API void pal_ag_setp(uintptr_t handle, int32_t agent, int32_t property, double value) {
     AgentGrid *grid = (AgentGrid *)handle;
     grid->floatProperties[AgentGrid_FloatIndex(grid, agent, grid->dimension + property)] = value;
 }
@@ -644,7 +644,7 @@ PAL_API int32_t pal_ag_move_i(uintptr_t handle, int32_t agent, int32_t location)
     return 1;
 }
 
-PAL_API int32_t pal_ag_move_pt(uintptr_t handle, int32_t agent, float x, float y, float z) {
+PAL_API int32_t pal_ag_move_pt(uintptr_t handle, int32_t agent, double x, double y, double z) {
     AgentGrid *grid = (AgentGrid *)handle;
     if (!pal_ag_alive(handle, agent) || grid->dimension == 0 || !AgentGrid_PointInBounds(grid, x, y, z)) return 0;
     int32_t location = AgentGrid_PointToI(grid, x, y, z);
@@ -676,7 +676,7 @@ PAL_API int32_t pal_ag_new_sq_(uintptr_t handle, int32_t x, int32_t y, int32_t z
     return pal_ag_new_i_(handle, AgentGrid_ToI(grid, x, y, z));
 }
 
-PAL_API int32_t pal_ag_new_pt_(uintptr_t handle, float x, float y, float z) {
+PAL_API int32_t pal_ag_new_pt_(uintptr_t handle, double x, double y, double z) {
     AgentGrid *grid = (AgentGrid *)handle;
     int32_t location = AgentGrid_PointToI(grid, x, y, z);
     int32_t agent = AgentGrid_AllocateAgent(grid);
@@ -715,7 +715,7 @@ PAL_API int32_t pal_ag_move_i_(uintptr_t handle, int32_t agent, int32_t location
     return 1;
 }
 
-PAL_API int32_t pal_ag_move_pt_(uintptr_t handle, int32_t agent, float x, float y, float z) {
+PAL_API int32_t pal_ag_move_pt_(uintptr_t handle, int32_t agent, double x, double y, double z) {
     AgentGrid *grid = (AgentGrid *)handle;
     int32_t location = AgentGrid_PointToI(grid, x, y, z);
     int32_t oldLocation = grid->intProperties[AgentGrid_IntIndex(agent, AGENT_LOCATION)];
@@ -728,12 +728,12 @@ PAL_API int32_t pal_ag_move_pt_(uintptr_t handle, int32_t agent, float x, float 
     return 1;
 }
 
-PAL_API float pal_ag_getp_(uintptr_t handle, int32_t agent, int32_t property) {
+PAL_API double pal_ag_getp_(uintptr_t handle, int32_t agent, int32_t property) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, grid->dimension + property)];
 }
 
-PAL_API void pal_ag_setp_(uintptr_t handle, int32_t agent, int32_t property, float value) {
+PAL_API void pal_ag_setp_(uintptr_t handle, int32_t agent, int32_t property, double value) {
     AgentGrid *grid = (AgentGrid *)handle;
     grid->floatProperties[AgentGrid_FloatIndex(grid, agent, grid->dimension + property)] = value;
 }
@@ -767,7 +767,7 @@ PAL_API int32_t pal_ag_add_q(uintptr_t gh,uintptr_t qh,int32_t x,int32_t y,int32
     if(g->dimension==2){if(z!=-1)return PAL_NULL;}else if(g->dimension==3&&(z<0||z>=g->dimensions[2]))return PAL_NULL;
     return AgentGrid_AddLocationToQuery(g,(IList*)qh,AgentGrid_ToI(g,x,y,z));}
 PAL_API int32_t pal_ag_get_q(uintptr_t gh,uintptr_t qh,int32_t x,int32_t y,int32_t z){IList*q=(IList*)qh;q->length=0;return pal_ag_add_q(gh,qh,x,y,z);}
-static float AgentGrid_WrappedDelta(float d,int32_t size,int32_t wrap){if(!wrap)return d;float half=0.5f*(float)size;if(d>half)d-=(float)size;else if(d<-half)d+=(float)size;return d;}
+static double AgentGrid_WrappedDelta(double d,int32_t size,int32_t wrap){if(!wrap)return d;double half=0.5*(double)size;if(d>half)d-=(double)size;else if(d<-half)d+=(double)size;return d;}
 PAL_API int32_t pal_ag_add_radius_q(uintptr_t gh,uintptr_t qh,double radius,double x,double y,double z,int32_t exclude){
     AgentGrid*g=(AgentGrid*)gh;IList*q=(IList*)qh;
     if(radius<0.0||!isfinite(radius)||!isfinite(x)||
@@ -787,7 +787,7 @@ PAL_API int32_t pal_ag_add_radius_q(uintptr_t gh,uintptr_t qh,double radius,doub
     for(int64_t xo=0;xo<nx;xo++){int32_t xi=(int32_t)((int64_t)x1+xo);int32_t xx=AgentGrid_Wrap(g,xi,0);if(xx==PAL_NULL)continue;
       for(int64_t yo=0;yo<ny;yo++){int32_t yi=(int32_t)((int64_t)y1+yo);int32_t yy=g->dimension>1?AgentGrid_Wrap(g,yi,1):0;if(yy==PAL_NULL)continue;
        for(int64_t zo=0;zo<nz;zo++){int32_t zi=(int32_t)((int64_t)z1+zo);int32_t zz=g->dimension>2?AgentGrid_Wrap(g,zi,2):0;if(zz==PAL_NULL)continue;int32_t loc=AgentGrid_ToI(g,xx,yy,zz);int32_t a=g->grid[loc];
-        if(a!=PAL_NULL){int32_t addCap=g->stackable?g->counts[loc]:1;if(addCap>INT32_MAX-q->length||!IList_Reserve(q,q->length+addCap))return PAL_NULL;}while(a!=PAL_NULL){float dx=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,0)]-(float)x,g->dimensions[0],g->wrap[0]);float dy=0, dz=0;if(g->dimension>1)dy=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,1)]-(float)y,g->dimensions[1],g->wrap[1]);if(g->dimension>2)dz=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,2)]-(float)z,g->dimensions[2],g->wrap[2]);if(a!=exclude && (double)dx*dx+(double)dy*dy+(double)dz*dz<=r2){q->items[q->length++]=a;}if(!g->stackable)break;a=g->intProperties[AgentGrid_IntIndex(a,AGENT_PREV)];}
+        if(a!=PAL_NULL){int32_t addCap=g->stackable?g->counts[loc]:1;if(addCap>INT32_MAX-q->length||!IList_Reserve(q,q->length+addCap))return PAL_NULL;}while(a!=PAL_NULL){double dx=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,0)]-(double)x,g->dimensions[0],g->wrap[0]);double dy=0, dz=0;if(g->dimension>1)dy=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,1)]-(double)y,g->dimensions[1],g->wrap[1]);if(g->dimension>2)dz=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,2)]-(double)z,g->dimensions[2],g->wrap[2]);if(a!=exclude && (double)dx*dx+(double)dy*dy+(double)dz*dz<=r2){q->items[q->length++]=a;}if(!g->stackable)break;a=g->intProperties[AgentGrid_IntIndex(a,AGENT_PREV)];}
     }}}return q->length;
 }
 PAL_API int32_t pal_ag_get_radius_q(uintptr_t gh,uintptr_t qh,double radius,double x,double y,double z,int32_t exclude){((IList*)qh)->length=0;return pal_ag_add_radius_q(gh,qh,radius,x,y,z,exclude);}
@@ -1552,9 +1552,9 @@ PAL_API size_t pal_pd_snapshot_size(uintptr_t h){PDEGrid*g=(PDEGrid*)h;return si
 PAL_API int32_t pal_pd_snapshot(uintptr_t h,uint8_t*out,size_t n){PDEGrid*g=(PDEGrid*)h;if(n<pal_pd_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,4);SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->dt);SNAP_PUT(p,g->dx);SNAP_PUT(p,g->dy);SNAP_PUT(p,g->dz);memcpy(p,g->field,(size_t)g->length*4);p+=(size_t)g->length*4;memcpy(p,g->deltas,(size_t)g->length*4);return 1;}
 PAL_API uintptr_t pal_pd_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,4))return 0;int32_t dim,dims[3],wrap[3],len;float dt,dx,dy,dz;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,dt);SNAP_GET(p,dx);SNAP_GET(p,dy);SNAP_GET(p,dz);size_t need=sizeof(PalSnapHeader)+4+24+4+16+(size_t)len*8;if(n<need||dim<1||dim>3)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_pd_new(sd,dim);if(!h)return 0;PDEGrid*g=(PDEGrid*)h;if(g->length!=len){pal_pd_free(h);return 0;}g->dt=dt;g->dx=dx;g->dy=dy;g->dz=dz;memcpy(g->field,p,(size_t)len*4);p+=(size_t)len*4;memcpy(g->deltas,p,(size_t)len*4);return h;}
 
-PAL_API size_t pal_ag_snapshot_size(uintptr_t h){AgentGrid*g=(AgentGrid*)h;size_t s=sizeof(PalSnapHeader)+4+24+4*8; s+=(size_t)g->capacity*g->nFloatProperties*4+(size_t)g->capacity*N_AGENT_INT_PROPERTIES*4+(size_t)g->population*4+(size_t)g->nDead*4;if(g->dimension>0){s+=(size_t)g->length*4;if(g->stackable)s+=(size_t)g->length*4;}return s;}
-PAL_API int32_t pal_ag_snapshot(uintptr_t h,uint8_t*out,size_t n){AgentGrid*g=(AgentGrid*)h;if(n<pal_ag_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,5);SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->stackable);SNAP_PUT(p,g->nUserProperties);SNAP_PUT(p,g->nFloatProperties);SNAP_PUT(p,g->capacity);SNAP_PUT(p,g->population);SNAP_PUT(p,g->nAgents);SNAP_PUT(p,g->nDead);size_t nf=(size_t)g->capacity*g->nFloatProperties*4,ni=(size_t)g->capacity*N_AGENT_INT_PROPERTIES*4;memcpy(p,g->floatProperties,nf);p+=nf;memcpy(p,g->intProperties,ni);p+=ni;memcpy(p,g->aliveAgents,(size_t)g->population*4);p+=(size_t)g->population*4;memcpy(p,g->deadAgents,(size_t)g->nDead*4);p+=(size_t)g->nDead*4;if(g->dimension>0){memcpy(p,g->grid,(size_t)g->length*4);p+=(size_t)g->length*4;if(g->stackable)memcpy(p,g->counts,(size_t)g->length*4);}return 1;}
-PAL_API uintptr_t pal_ag_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,5))return 0;int32_t dim,dims[3],wrap[3],len,stack,nup,nfp,cap,pop,na,nd;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,stack);SNAP_GET(p,nup);SNAP_GET(p,nfp);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,na);SNAP_GET(p,nd);if(dim<0||dim>3||cap<0||pop<0||nd<0)return 0;size_t need=sizeof(PalSnapHeader)+4+24+32+(size_t)cap*nfp*4+(size_t)cap*N_AGENT_INT_PROPERTIES*4+(size_t)(pop+nd)*4+(dim>0?(size_t)len*4:0)+(dim>0&&stack?(size_t)len*4:0);if(n<need)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_ag_new(sd,dim,nup,stack);if(!h)return 0;AgentGrid*g=(AgentGrid*)h;if(g->capacity<cap){while(g->capacity<cap)if(!AgentGrid_Grow(g)){pal_ag_free(h);return 0;}}g->population=pop;g->nAgents=na;g->nDead=nd;size_t nf=(size_t)cap*nfp*4,ni=(size_t)cap*N_AGENT_INT_PROPERTIES*4;memcpy(g->floatProperties,p,nf);p+=nf;memcpy(g->intProperties,p,ni);p+=ni;memcpy(g->aliveAgents,p,(size_t)pop*4);p+=(size_t)pop*4;memcpy(g->deadAgents,p,(size_t)nd*4);p+=(size_t)nd*4;if(dim>0){memcpy(g->grid,p,(size_t)len*4);p+=(size_t)len*4;if(stack)memcpy(g->counts,p,(size_t)len*4);}return h;}
+PAL_API size_t pal_ag_snapshot_size(uintptr_t h){AgentGrid*g=(AgentGrid*)h;size_t s=sizeof(PalSnapHeader)+4+24+4*8; s+=(size_t)g->capacity*g->nFloatProperties*8+(size_t)g->capacity*N_AGENT_INT_PROPERTIES*4+(size_t)g->population*4+(size_t)g->nDead*4;if(g->dimension>0){s+=(size_t)g->length*4;if(g->stackable)s+=(size_t)g->length*4;}return s;}
+PAL_API int32_t pal_ag_snapshot(uintptr_t h,uint8_t*out,size_t n){AgentGrid*g=(AgentGrid*)h;if(n<pal_ag_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,6);SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->stackable);SNAP_PUT(p,g->nUserProperties);SNAP_PUT(p,g->nFloatProperties);SNAP_PUT(p,g->capacity);SNAP_PUT(p,g->population);SNAP_PUT(p,g->nAgents);SNAP_PUT(p,g->nDead);size_t nf=(size_t)g->capacity*g->nFloatProperties*8,ni=(size_t)g->capacity*N_AGENT_INT_PROPERTIES*4;memcpy(p,g->floatProperties,nf);p+=nf;memcpy(p,g->intProperties,ni);p+=ni;memcpy(p,g->aliveAgents,(size_t)g->population*4);p+=(size_t)g->population*4;memcpy(p,g->deadAgents,(size_t)g->nDead*4);p+=(size_t)g->nDead*4;if(g->dimension>0){memcpy(p,g->grid,(size_t)g->length*4);p+=(size_t)g->length*4;if(g->stackable)memcpy(p,g->counts,(size_t)g->length*4);}return 1;}
+PAL_API uintptr_t pal_ag_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,6))return 0;int32_t dim,dims[3],wrap[3],len,stack,nup,nfp,cap,pop,na,nd;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,stack);SNAP_GET(p,nup);SNAP_GET(p,nfp);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,na);SNAP_GET(p,nd);if(dim<0||dim>3||cap<0||pop<0||nd<0)return 0;size_t need=sizeof(PalSnapHeader)+4+24+32+(size_t)cap*nfp*8+(size_t)cap*N_AGENT_INT_PROPERTIES*4+(size_t)(pop+nd)*4+(dim>0?(size_t)len*4:0)+(dim>0&&stack?(size_t)len*4:0);if(n<need)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_ag_new(sd,dim,nup,stack);if(!h)return 0;AgentGrid*g=(AgentGrid*)h;if(g->capacity<cap){while(g->capacity<cap)if(!AgentGrid_Grow(g)){pal_ag_free(h);return 0;}}g->population=pop;g->nAgents=na;g->nDead=nd;size_t nf=(size_t)cap*nfp*8,ni=(size_t)cap*N_AGENT_INT_PROPERTIES*4;memcpy(g->floatProperties,p,nf);p+=nf;memcpy(g->intProperties,p,ni);p+=ni;memcpy(g->aliveAgents,p,(size_t)pop*4);p+=(size_t)pop*4;memcpy(g->deadAgents,p,(size_t)nd*4);p+=(size_t)nd*4;if(dim>0){memcpy(g->grid,p,(size_t)len*4);p+=(size_t)len*4;if(stack)memcpy(g->counts,p,(size_t)len*4);}return h;}
 PAL_API int32_t pal_pg_all_count(uintptr_t h){PopGrid*g=(PopGrid*)h;int32_t n=0;for(int32_t i=0;i<g->length;i++)if(PopGrid_FieldGet(g,i)!=0)n++;return n;}
 PAL_API int32_t pal_pg_all_copy(uintptr_t h,int32_t*out){PopGrid*g=(PopGrid*)h;int32_t n=0;for(int32_t i=0;i<g->length;i++)if(PopGrid_FieldGet(g,i)!=0)out[n++]=i;return n;}
 
