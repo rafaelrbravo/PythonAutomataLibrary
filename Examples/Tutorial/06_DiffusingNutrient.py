@@ -22,7 +22,6 @@ def EmptyNeighbors(cells: pal.AgentGrid, agent: int, empty: pal.IList):
     for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent), unroll=True):
         if cells.counts[x, y] == 0:
             empty.Append(cells.ToI(x, y))
-    return empty
 
 @pal.njit(cache=True)
 def Step(cells: pal.AgentGrid, empty: pal.IList):
