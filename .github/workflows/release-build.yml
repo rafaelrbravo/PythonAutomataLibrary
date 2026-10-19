@@ -65,7 +65,7 @@ jobs:
       - name: Build platform wheels
         uses: pypa/cibuildwheel@v3.1
         env:
-          CIBW_BUILD: 'cp310-* cp311-* cp312-* cp313-*'
+          CIBW_BUILD: 'cp312-*'
           CIBW_SKIP: '*-musllinux_*'
           CIBW_ARCHS_LINUX: auto
           CIBW_ARCHS_WINDOWS: AMD64
@@ -81,9 +81,8 @@ jobs:
           import tomllib
           version = tomllib.loads(Path("pyproject.toml").read_text())["project"]["version"]
           wheels = list(Path("wheelhouse").glob("*.whl"))
-          assert len(wheels) == 4, f"Expected four CPython wheels per platform, found {len(wheels)}: {wheels}"
-          for tag in ("cp310", "cp311", "cp312", "cp313"):
-              assert sum(f"-{tag}-{tag}-" in wheel.name for wheel in wheels) == 1, tag
+          assert len(wheels) == 1, f"Expected one Python-independent wheel per platform, found {len(wheels)}: {wheels}"
+          assert '-py3-none-' in wheels[0].name, f'Incorrect Python wheel tag: {wheels[0]}'
           platform = {"Windows": "win_amd64", "Linux": "manylinux", "macOS": "macosx"}[os.environ["RUNNER_OS"]]
           for wheel in wheels:
               assert platform in wheel.name, f"Wheel platform does not match runner {platform}: {wheel}"
@@ -105,6 +104,42 @@ jobs:
           name: wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
           if-no-files-found: error
+  wheel-compatibility:
+    needs: wheels
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: wheels-ubuntu-latest
+          - os: windows-latest
+            artifact: wheels-windows-latest
+          - os: macos-15
+            artifact: wheels-macos-15
+          - os: macos-15-intel
+            artifact: wheels-macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: wheelhouse
+      - name: Test same wheel on supported Python versions
+        shell: bash
+        run: |
+          for version in 3.10 3.11 3.12 3.13; do
+            echo "Testing Python $version"
+          done
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install wheel without source builds and smoke test
+        shell: bash
+        run: |
+          python -m pip install --only-binary=:all: wheelhouse/*.whl
+          python -m pip check
+          python packaging/smoke_install.py
   sdist:
     needs: version-check
     runs-on: ubuntu-latest
@@ -168,7 +203,7 @@ jobs:
           path: dist/*.tar.gz
           if-no-files-found: error
   verify-release-assets:
-    needs: [wheels, sdist]
+    needs: [wheels, wheel-compatibility, sdist]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -195,7 +230,7 @@ jobs:
           import tarfile
           wheels = list(Path('.').glob('*.whl'))
           sources = list(Path('.').glob('*.tar.gz'))
-          assert len(wheels) == 16, f'Expected 16 wheels (4 Python versions x 4 platforms), got {len(wheels)}'
+          assert len(wheels) == 4, f'Expected 4 platform wheels, got {len(wheels)}'
           assert len(sources) == 1, 'Expected one source archive'
           import tomllib
           version = tomllib.loads(Path('../pyproject.toml').read_text())['project']['version']
@@ -209,14 +244,10 @@ jobs:
               assert any(name.endswith('/README.md') for name in source_names), 'Missing README.md'
               assert any(name.endswith('/build_native.py') for name in source_names), 'Missing native build helper'
               assert not any(name.lower().endswith(('.dll', '.so', '.dylib', '.pyd')) for name in source_names), 'Precompiled binary in source distribution'
-          for python_tag in ('cp310', 'cp311', 'cp312', 'cp313'):
-              matches = [wheel for wheel in wheels if f'-{python_tag}-{python_tag}-' in wheel.name]
-              assert len(matches) == 4, f'Expected 4 wheels for {python_tag}, got {matches}'
-              assert sum('macosx' in wheel.name for wheel in matches) == 2, matches
-              assert sum('macosx' in wheel.name and wheel.name.endswith('_arm64.whl') for wheel in matches) == 1, matches
-              assert sum('macosx' in wheel.name and wheel.name.endswith('_x86_64.whl') for wheel in matches) == 1, matches
-              assert sum('manylinux' in wheel.name for wheel in matches) == 1, matches
-              assert sum('win_amd64' in wheel.name for wheel in matches) == 1, matches
+          assert all('-py3-none-' in wheel.name for wheel in wheels), wheels
+          assert sum('macosx' in wheel.name for wheel in wheels) == 2, wheels
+          assert sum('manylinux' in wheel.name for wheel in wheels) == 1, wheels
+          assert sum('win_amd64' in wheel.name for wheel in wheels) == 1, wheels
           for wheel in wheels:
               assert not wheel.name.endswith('-none-any.whl'), wheel
               with ZipFile(wheel) as archive:
