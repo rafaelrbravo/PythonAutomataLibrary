@@ -1271,18 +1271,27 @@ PAL_API int32_t pal_pd32_diffuse(uintptr_t handle, double rate) {
     const int32_t nz = grid->dimension > 2 ? grid->dimensions[2] : 1;
     const int32_t stride[3] = {ny * nz, nz, 1};
     const double spacing[3] = {grid->dx, grid->dy, grid->dz};
+    double factors[3] = {0.0, 0.0, 0.0};
+    double stability = 0.0;
+    for (int32_t axis = 0; axis < grid->dimension; axis++) {
+        if (!isfinite(spacing[axis]) || spacing[axis] <= 0.0) return 0;
+        factors[axis] = rate * grid->dt / (spacing[axis] * spacing[axis]);
+        if (!isfinite(factors[axis])) return 0;
+        if (grid->dimensions[axis] > 1) stability += factors[axis];
+    }
+    /* Explicit diffusion is monotone for sum(rate*dt/dx^2) <= 1/2. */
+    if (stability > 0.5) return 0;
     for (int32_t axis = 0; axis < grid->dimension; axis++) {
         const int32_t size = grid->dimensions[axis];
         const int32_t step = stride[axis];
-        if (!isfinite(spacing[axis]) || spacing[axis] <= 0.0) return 0;
-        const double factor = rate * grid->dt / (spacing[axis] * spacing[axis]);
-        if (!isfinite(factor)) return 0;
+        if (size == 1 || factors[axis] == 0.0) continue;
         for (int32_t i = 0; i < grid->length; i++) {
             const int32_t coordinate = (i / step) % size;
             if (coordinate == size - 1 && !grid->wrap[axis]) continue;
-            if (size == 1) continue;
+            /* A wrapped size-2 axis already has the same neighbor face. */
+            if (coordinate == size - 1 && size == 2) continue;
             const int32_t j = coordinate == size - 1 ? i - (size - 1) * step : i + step;
-            const float flux = (float)(factor * ((double)grid->field[j] - grid->field[i]));
+            const float flux = (float)(factors[axis] * ((double)grid->field[j] - grid->field[i]));
             grid->deltas[i] += flux;
             grid->deltas[j] -= flux;
         }
