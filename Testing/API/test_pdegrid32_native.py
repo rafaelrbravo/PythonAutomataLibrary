@@ -198,7 +198,7 @@ def test_pdegrid32_masked_diffusion_blocks_flux_and_rejects_invalid_mask():
     try:
         assert core._pd32_seti(handle, 2, ctypes.c_float(1.0)) == 1
         mask = np.ones(5, dtype=np.float32)
-        mask[3] = 0
+        mask[3] = -1
         assert core._pd32_diffuse_mask(handle, 0.1, mask.ctypes.data_as(ctypes.POINTER(ctypes.c_float))) == 1
         core._pd32_update(handle)
         assert core._pd32_geti(handle, 1) == pytest.approx(0.1, abs=1e-6)
