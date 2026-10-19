@@ -616,3 +616,14 @@ def test_float32_agentgrid_dispose_alive_list_and_reuse():
         assert grid.GetPop() == 0
         assert grid.NewAgent(7) >= 0
         assert grid.GetPop() == 1
+
+
+def test_float32_agentgrid_property_addition_overflow_is_atomic():
+    with core._NewAgentGrid32((3,), numAgentProps=1) as grid:
+        agent = grid.NewAgent(1)
+        assert grid.SetProperty(agent, 0, 3e38)
+        with pytest.raises(ValueError, match="overflow"):
+            grid.AddProperty(agent, 0, 1e38)
+        assert grid.GetProperty(agent, 0) == pytest.approx(3e38, rel=1e-6)
+        assert grid.AddProperty(agent, 0, -1e38)
+        assert grid.GetProperty(agent, 0) == pytest.approx(2e38, rel=1e-6)
