@@ -217,17 +217,16 @@ def _WindowProcess(shmName,frameShmName,saveShmName,xDim,yDim,scale,title,screen
     saveShm=shared_memory.SharedMemory(name=saveShmName)
     framePix=np.ndarray((xDim,yDim),dtype=np.uint32,buffer=frameShm.buf)
     displayPix=np.empty((xDim,yDim),dtype=np.uint32)
-    rgb=np.empty((yDim,xDim,4),dtype=np.uint8)
-    rgb[:,:,3]=255
+    # Packed PAL pixels are 0x00RRGGBB. On little-endian machines their
+    # in-memory byte order is BGRA; OpenGL ignores the unused alpha channel.
+    # A transpose is required because PAL stores pixels as [x,y].
+    uploadPix=np.empty((yDim,xDim),dtype=np.uint32)
     window=None
 
-    def _RgbFrame(src):
-        # PAL stores pixels as [x,y] and presents y=0 at the bottom.
-        pixels=src.T
-        rgb[:,:,0]=(pixels>>16)&255
-        rgb[:,:,1]=(pixels>>8)&255
-        rgb[:,:,2]=pixels&255
-        return rgb
+    def _UploadFrame(src):
+        np.copyto(uploadPix,src.T)
+        imageData.set_data('BGRA',xDim*4,uploadPix.tobytes())
+        texture.blit_into(imageData,0,0,0)
 
     def _SaveFrame(path,frame):
         src=np.frombuffer(frame,dtype=np.uint32).reshape(xDim,yDim)
@@ -264,8 +263,8 @@ def _WindowProcess(shmName,frameShmName,saveShmName,xDim,yDim,scale,title,screen
 
         # Initialize a black frame before signaling that the window is ready.
         displayPix.fill(0)
-        imageData=pyglet.image.ImageData(xDim,yDim,'RGBA',_RgbFrame(displayPix).tobytes(),pitch=xDim*4)
-        texture.blit_into(imageData,0,0,0)
+        imageData=pyglet.image.ImageData(xDim,yDim,'BGRA',bytes(xDim*yDim*4),pitch=xDim*4)
+        _UploadFrame(displayPix)
         readyEvent.set()
         while True:
             if not visualClosed.is_set():
@@ -274,8 +273,7 @@ def _WindowProcess(shmName,frameShmName,saveShmName,xDim,yDim,scale,title,screen
                 with frameLock:
                     displayPix[:]=framePix
                     framePending.clear()
-                imageData.set_data('RGBA',xDim*4,_RgbFrame(displayPix).tobytes())
-                texture.blit_into(imageData,0,0,0)
+                _UploadFrame(displayPix)
             _DrainOutput()
             if closeRequest.is_set():
                 _DrainOutput()
