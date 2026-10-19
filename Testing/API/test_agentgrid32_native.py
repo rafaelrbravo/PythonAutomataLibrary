@@ -48,3 +48,30 @@ def test_agentgrid32_property_operations_are_float32():
         assert compiled_property(handle) == np.float32(3.75)
     finally:
         core._ag32_free(handle)
+
+def test_agentgrid32_single_occupancy_lifecycle_and_reuse():
+    dims = np.array([4], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1, 1, 0)
+    assert handle
+    try:
+        first = core._ag32_new_i(handle, 2)
+        assert first == 0
+        assert core._ag32_at_i(handle, 2) == first
+        assert core._ag32_population(handle) == 1
+        assert core._ag32_new_i(handle, 2) == -1
+        assert core._ag32_set_property(handle, first, 1, np.float32(8.0)) == 1
+        assert core._ag32_dispose(handle, first) == 1
+        assert core._ag32_dispose(handle, first) == 0
+        assert core._ag32_at_i(handle, 2) == -1
+        assert core._ag32_population(handle) == 0
+        assert core._ag32_new_i(handle, 3) == first
+        assert core._ag32_get_property(handle, first, 1) == np.float32(0.0)
+        @core.nb.njit
+        def compiled_cycle(h):
+            a = core._ag32_new_i(h, 1)
+            n = core._ag32_population(h)
+            core._ag32_dispose(h, a)
+            return n
+        assert compiled_cycle(handle) == 2
+    finally:
+        core._ag32_free(handle)
