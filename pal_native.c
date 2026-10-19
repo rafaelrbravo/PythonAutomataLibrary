@@ -1288,8 +1288,6 @@ PAL_API int32_t pal_pd32_diffuse(uintptr_t handle, double rate) {
         for (int32_t i = 0; i < grid->length; i++) {
             const int32_t coordinate = (i / step) % size;
             if (coordinate == size - 1 && !grid->wrap[axis]) continue;
-            /* A wrapped size-2 axis already has the same neighbor face. */
-            if (coordinate == size - 1 && size == 2) continue;
             const int32_t j = coordinate == size - 1 ? i - (size - 1) * step : i + step;
             const float flux = (float)(factors[axis] * ((double)grid->field[j] - grid->field[i]));
             grid->deltas[i] += flux;
