@@ -436,3 +436,25 @@ def test_shared_diffusion_invalid_rate_is_atomic(prefix, scalar, method):
         assert sum(geti(handle, i) for i in range(25)) == pytest.approx(1.0)
     finally:
         free(handle)
+
+
+@pytest.mark.parametrize("safe", [False, True])
+def test_internal_float32_pdegrid_jitclass_in_compiled_model(safe):
+    """Exercise the actual float32 PDEgrid object through a compiled model."""
+    previous = core._UseFastMode
+    core._UseFastMode = lambda: not safe
+    try:
+        grid = core._NewPDEgrid32((5,))
+        @core.nb.njit
+        def model(field):
+            field.SetTimeSpaceStep(1.0, 1.0)
+            field.SetI(2, np.float32(1.0))
+            field.Diffusion(0.1)
+            field.Update()
+            return field.GetI(1), field.GetI(2), field.GetI(3)
+        left, center, right = model(grid)
+        assert (left, center, right) == pytest.approx((0.1, 0.8, 0.1), abs=1e-6)
+    finally:
+        core._UseFastMode = previous
+        if "grid" in locals():
+            core._pd32_free(grid._ptr)
