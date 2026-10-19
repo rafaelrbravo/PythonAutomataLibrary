@@ -300,27 +300,13 @@ static void AgentGrid_RemoveAgent(AgentGrid *grid, int32_t agent) {
     }
 }
 
-static void AgentGrid_SetSquarePosition(AgentGrid *grid, int32_t agent, int32_t location) {
-    if (grid->dimension == 0) return;
-
-    int32_t x = 0, y = 0, z = 0;
-    if (grid->dimension == 1) {
-        x = location;
-    } else if (grid->dimension == 2) {
-        x = location / grid->dimensions[1];
-        y = location % grid->dimensions[1];
-    } else {
-        x = location / (grid->dimensions[1] * grid->dimensions[2]);
-        y = (location / grid->dimensions[2]) % grid->dimensions[1];
-        z = location % grid->dimensions[2];
-    }
-
-    grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)] = (double)x + 0.5;
-    if (grid->dimension > 1)
-        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)] = (double)y + 0.5;
-    if (grid->dimension > 2)
-        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)] = (double)z + 0.5;
-}
+#define PAL_AG_POS_TYPE AgentGrid
+#define PAL_AG_POS_FLOAT double
+#define PAL_AG_POS_NAME AgentGrid_SetSquarePosition
+#include "agentgrid_position_template.h"
+#undef PAL_AG_POS_NAME
+#undef PAL_AG_POS_FLOAT
+#undef PAL_AG_POS_TYPE
 
 static int32_t AgentGrid_PointToI(const AgentGrid *grid, double x, double y, double z) {
     int32_t xi = (int32_t)floor(x);
@@ -1271,22 +1257,13 @@ static int AgentGrid32_Grow(AgentGrid32 *g) {
     g->aliveAgents=alive;g->deadAgents=dead;g->capacity=next;
     return 1;
 }
-static void AgentGrid32_SetSquarePosition(AgentGrid32 *g,int32_t agent,int32_t location) {
-    if (!g->dimension) return;
-    int32_t coords[3]={0,0,0};
-    if (g->dimension==1) coords[0]=location;
-    else if (g->dimension==2) {
-        coords[0]=location/g->dimensions[1];
-        coords[1]=location%g->dimensions[1];
-    } else {
-        int32_t yz=g->dimensions[1]*g->dimensions[2];
-        coords[0]=location/yz;
-        coords[1]=(location%yz)/g->dimensions[2];
-        coords[2]=location%g->dimensions[2];
-    }
-    for (int32_t d=0;d<g->dimension;d++)
-        g->floatProperties[(size_t)agent*g->nFloatProperties+d]=(float)coords[d]+0.5f;
-}
+#define PAL_AG_POS_TYPE AgentGrid32
+#define PAL_AG_POS_FLOAT float
+#define PAL_AG_POS_NAME AgentGrid32_SetSquarePosition
+#include "agentgrid_position_template.h"
+#undef PAL_AG_POS_NAME
+#undef PAL_AG_POS_FLOAT
+#undef PAL_AG_POS_TYPE
 PAL_API int32_t pal_ag32_new_i(uintptr_t handle,int32_t location) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
     if (!g) return PAL_NULL;
