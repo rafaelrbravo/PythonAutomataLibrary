@@ -246,7 +246,6 @@ def main():
     
             print(Population(cells))
     
-        print(tick)
         Draw(cells,pix,snapshot*SIDE_LEN)
         win.Update()
     
