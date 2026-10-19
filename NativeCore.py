@@ -5184,6 +5184,8 @@ class _AgentGrid32Native:
     def _SQToI(self, x, y=-1, z=-1):
         if self.nDims == 0: raise ValueError("square coordinates require a spatial grid")
         coords = (x, y, z)
+        if self.nDims > 1 and y == -1 or self.nDims > 2 and z == -1:
+            raise ValueError("missing AgentGrid square coordinate")
         for axis in range(self.nDims):
             value = coords[axis]
             if not isinstance(value, (int, np.integer)) or isinstance(value, (bool, np.bool_)) or value < 0 or value >= self.dimensions[axis]:
