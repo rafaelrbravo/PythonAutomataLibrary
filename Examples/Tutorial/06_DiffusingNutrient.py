@@ -8,12 +8,12 @@ NUTRIENT_COLORS = (BLACK, pal.RGB(255, 255, 255))
 
 MOORE = pal.MooreHood(2, excludeCenter=True)
 
-def Draw(cells, pix):
+def Draw(cells: pal.AgentGrid, pix: pal.Pix):
     pix[:] = BLACK
     for agent in cells.All():
         pix[cells.I(agent)] = RED
 
-def Setup(cells):
+def Setup(cells: pal.AgentGrid):
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
 @pal.njit(cache=True)
@@ -32,14 +32,14 @@ def Step(cells: pal.AgentGrid, empty: pal.IList):
             site = empty.Random()
             cells.MoveSQ(agent, cells.ItoX(site), cells.ItoY(site))
 
-def StepNutrient(cells, nutrient):
+def StepNutrient(cells: pal.AgentGrid, nutrient: pal.PDEgrid):
     for agent in cells.All():
         x, y = cells.XSQ(agent), cells.YSQ(agent)
         nutrient[x, y] = max(0.0, nutrient[x, y] - 0.2)
     nutrient.Diffusion(0.1, xMinBC=1.0, xMaxBC=1.0, yMinBC=1.0, yMaxBC=1.0)
     nutrient.Update()
 
-def DrawNutrient(nutrient, pix):
+def DrawNutrient(nutrient: pal.PDEgrid, pix: pal.Pix):
     for i in range(len(nutrient)):
         pix[i] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[i])))
 
