@@ -496,3 +496,19 @@ def test_float32_agentgrid_square_movement_and_bounds():
         agent = grid.NewAgent(1)
         assert grid.Move(agent, 3)
         assert grid.AtI(3) == agent
+
+
+def test_float32_agentgrid_square_occupancy_and_stacking():
+    with core._NewAgentGrid32((3, 4), isStackable=True) as grid:
+        first = grid.NewAgentSQ(1, 2)
+        second = grid.NewAgentSQ(1, 2)
+        assert grid.CountSQ(1, 2) == 2
+        assert grid.AtSQ(1, 2) in (first, second)
+        assert grid.CountSQ(0, 0) == 0
+        assert grid.MoveSQ(second, 2, 1)
+        assert grid.CountSQ(1, 2) == 1
+        assert grid.CountSQ(2, 1) == 1
+        assert grid.Dispose(first)
+        assert grid.CountSQ(1, 2) == 0
+        with pytest.raises(IndexError):
+            grid.AtSQ(3, 0)
