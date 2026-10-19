@@ -625,3 +625,22 @@ def test_public_pdegrid_dtype_dispatch_and_numba_access():
             core.NewPDEgrid([3], dtype=np.int32)
     finally:
         core._UseFastMode = original
+
+
+def test_pdegrid32_safe_addition_rejects_result_overflow_atomically():
+    original = core._UseFastMode
+    core._UseFastMode = lambda: False
+    try:
+        grid = core.NewPDEgrid([2], dtype=np.float32)
+        try:
+            grid.SetI(0, 3e38)
+            with pytest.raises(ValueError, match="overflow"):
+                grid.AddI(1e38, 0)
+            assert grid.GetI(0) == pytest.approx(3e38, rel=1e-6)
+            grid.AddI(-1e38, 0)
+            grid.Update()
+            assert grid.GetI(0) == pytest.approx(2e38, rel=1e-6)
+        finally:
+            core._pd32_free(grid._ptr)
+    finally:
+        core._UseFastMode = original
