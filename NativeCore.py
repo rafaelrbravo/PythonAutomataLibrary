@@ -652,7 +652,7 @@ def _BCFloat64Overload(bc):
         def impl(bc): return bc
         return impl
     if isinstance(bc, types.Array):
-        def impl(bc): return np.ascontiguousarray(bc,dtype=np.float64)
+        def impl(bc): return np.ascontiguousarray(bc.astype(np.float64))
         return impl
 
 def _BCPointer(bc, gridPtr, slot):
