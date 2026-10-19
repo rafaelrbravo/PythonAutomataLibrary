@@ -460,3 +460,21 @@ def test_agentgrid32_internal_factory_geometry():
     with core._NewAgentGrid32((), numAgentProps=1) as grid:
         assert grid.nDims == 0
         assert len(grid) == 0
+
+
+def test_float32_agentgrid_square_construction_and_bounds():
+    with core._NewAgentGrid32((3, 4), numAgentProps=1) as grid:
+        agent = grid.NewAgentSQ(1, 2)
+        assert agent >= 0
+        assert grid.AtI(6) == agent
+        assert grid.GetPop() == 1
+        with pytest.raises(ValueError):
+            grid.NewAgent(2)
+        for coords in [(-1, 2), (3, 0), (0, 4), (1.5, 2)]:
+            with pytest.raises(IndexError):
+                grid.NewAgentSQ(*coords)
+        with pytest.raises(ValueError):
+            grid.NewAgentSQ(1)
+    with core._NewAgentGrid32((4,), numAgentProps=1) as grid:
+        agent = grid.NewAgent(2)
+        assert grid.AtI(2) == agent
