@@ -5272,7 +5272,9 @@ class _AgentGrid32Native:
         if not np.isfinite(value) or not np.isfinite(np.float32(value)):
             raise ValueError("AgentGrid float32 property increment must be finite")
         current = _ag32_get_property(self._ptr, agent, self.nDims + prop)
-        if not np.isfinite(current) or not np.isfinite(np.float32(float(current) + float(value))):
+        if not np.isfinite(current):
+            return False
+        if not np.isfinite(np.float32(float(current) + float(value))):
             raise ValueError("AgentGrid float32 property addition would overflow")
         return bool(_ag32_add_property(self._ptr, agent, self.nDims + prop, np.float32(value)))
 
