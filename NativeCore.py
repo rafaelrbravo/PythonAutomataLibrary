@@ -5543,13 +5543,15 @@ def _NewPDEgrid32(dimensions):
 
 
 def NewPDEgrid(dimensions, dtype=np.float64):
-    """Create a 1D–3D float64 lattice field supporting diffusion and advection."""
+    """Create a 1D–3D lattice field with float32 or float64 storage."""
     try:
         requested_dtype = np.dtype(dtype)
     except (TypeError, ValueError):
-        raise ValueError('PDEgrid dtype must be float64') from None
+        raise ValueError('PDEgrid dtype must be float32 or float64') from None
+    if requested_dtype == np.dtype(np.float32):
+        return _NewPDEgrid32(dimensions)
     if requested_dtype != np.dtype(np.float64):
-        raise ValueError('PDEgrid currently supports only float64; float32 native backend is not yet implemented')
+        raise ValueError('PDEgrid dtype must be float32 or float64')
     dims = _dimensions_array(dimensions)
     fast=_UseFastMode()
     ptr = _pd_new(dims.ctypes.data_as(_I32_PTR), len(dims))
