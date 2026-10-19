@@ -569,3 +569,33 @@ def test_pdegrid32_safe_reverse_coordinates_reject_invalid_indices():
             core._pd32_free(grid._ptr)
     finally:
         core._UseFastMode = original
+
+
+def test_pdegrid32_safe_linear_access_validates_indices_and_values():
+    original = core._UseFastMode
+    core._UseFastMode = lambda: False
+    try:
+        grid = core._NewPDEgrid32([3])
+        try:
+            assert grid.SetI(1, 1.25)
+            assert grid.GetI(1) == pytest.approx(1.25)
+            grid.AddI(0.5, 1)
+            grid.Update()
+            assert grid.GetI(1) == pytest.approx(1.75)
+            for invalid in (-1, 3, np.nan, np.inf, 0.5):
+                with pytest.raises((ValueError, IndexError)):
+                    grid.GetI(invalid)
+                with pytest.raises((ValueError, IndexError)):
+                    grid.SetI(invalid, 2)
+                with pytest.raises((ValueError, IndexError)):
+                    grid.AddI(2, invalid)
+            for invalid in (np.nan, np.inf):
+                with pytest.raises(ValueError):
+                    grid.SetI(1, invalid)
+                with pytest.raises(ValueError):
+                    grid.AddI(invalid, 1)
+            assert grid.GetI(1) == pytest.approx(1.75)
+        finally:
+            core._pd32_free(grid._ptr)
+    finally:
+        core._UseFastMode = original
