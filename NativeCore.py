@@ -5201,8 +5201,10 @@ class _AgentGrid32Native:
 def _NewAgentGrid32(dimensions, numAgentProps=0, isStackable=False):
     """Internal float32 factory for native backend validation only."""
     dims = _dimensions_array(dimensions, allowZero=True)
-    if not isinstance(numAgentProps, (int, np.integer)) or numAgentProps < 0 or numAgentProps > np.iinfo(np.int32).max-len(dims):
+    if not isinstance(numAgentProps, (int, np.integer)) or isinstance(numAgentProps, (bool, np.bool_)) or numAgentProps < 0 or numAgentProps > np.iinfo(np.int32).max-len(dims):
         raise ValueError("numAgentProps must be a nonnegative int32")
+    if isStackable is not True and isStackable is not False and isStackable != 0 and isStackable != 1:
+        raise ValueError("isStackable must be boolean")
     ptr = _ag32_new(dims.ctypes.data_as(_I32_PTR), len(dims), int(numAgentProps), int(isStackable))
     if not ptr:
         raise MemoryError("unable to allocate float32 AgentGrid")
