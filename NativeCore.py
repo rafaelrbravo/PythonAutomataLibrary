@@ -5195,7 +5195,16 @@ class _AgentGrid32Native:
             location = location*self.dimensions[axis]+coords[axis]
         return location
 
+    def _CheckLocation(self, location):
+        if not isinstance(location, (int, np.integer)) or isinstance(location, (bool, np.bool_)):
+            raise ValueError("AgentGrid location must be an integer")
+        if self.nDims == 0:
+            if location != -2147483648: raise IndexError("nonspatial AgentGrid requires PAL_NULL location")
+        elif location < 0 or location >= len(self):
+            raise IndexError("AgentGrid location out of bounds")
+
     def NewAgentI(self, location):
+        self._CheckLocation(location)
         return _ag32_new_i(self._ptr, location)
 
     def NewAgent(self, location):
@@ -5210,6 +5219,7 @@ class _AgentGrid32Native:
         return _ag32_new_pt(self._ptr, np.float32(x), np.float32(y), np.float32(z))
 
     def MoveI(self, agent, location):
+        self._CheckLocation(location)
         return bool(_ag32_move_i(self._ptr, agent, location))
 
     def Move(self, agent, location):
@@ -5236,9 +5246,11 @@ class _AgentGrid32Native:
         return bool(_ag32_add_property(self._ptr, agent, prop, np.float32(value)))
 
     def AtI(self, location):
+        self._CheckLocation(location)
         return _ag32_at_i(self._ptr, location)
 
     def CountI(self, location):
+        self._CheckLocation(location)
         return _ag32_count_i(self._ptr, location)
 
     def AtSQ(self, x, y=-1, z=-1):
