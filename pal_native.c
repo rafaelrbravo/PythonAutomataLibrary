@@ -456,8 +456,8 @@ PAL_API int32_t pal_ag_toi_safe(uintptr_t h,int32_t x,int32_t y,int32_t z){Agent
 PAL_API int32_t pal_ag_itox_safe(uintptr_t h,int32_t i){AgentGrid*g=(AgentGrid*)h;if(g->dimension<1||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==1?i:g->dimension==2?i/g->dimensions[1]:i/(g->dimensions[1]*g->dimensions[2]);}
 PAL_API int32_t pal_ag_itoy_safe(uintptr_t h,int32_t i){AgentGrid*g=(AgentGrid*)h;if(g->dimension<2||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_ag_itoz_safe(uintptr_t h,int32_t i){AgentGrid*g=(AgentGrid*)h;if(g->dimension<3||i<0||i>=g->length)return PAL_BAD_I;return i%g->dimensions[2];}
-PAL_API int32_t pal_ag_pop(uintptr_t handle) { return ((AgentGrid *)handle)->population; }
-PAL_API int32_t pal_ag_len(uintptr_t handle) { return ((AgentGrid *)handle)->length; }
+
+
 PAL_API int32_t pal_ag_toi(uintptr_t handle, int32_t x, int32_t y, int32_t z) {
     return AgentGrid_ToI((AgentGrid *)handle, x, y, z);
 }
@@ -622,7 +622,11 @@ PAL_API int32_t pal_ag_all_id(uintptr_t handle, int32_t position) {
 #define PAL_AG_PREFIX pal_ag_
 #define PAL_AG_OCC_LAST last_i
 #define PAL_AG_OCC_NFLOAT nfloatprops
+#define PAL_AG_OCC_POP pop
+#define PAL_AG_OCC_LEN len
 #include "agentgrid_occupancy_template.h"
+#undef PAL_AG_OCC_LEN
+#undef PAL_AG_OCC_POP
 #undef PAL_AG_OCC_NFLOAT
 #undef PAL_AG_OCC_LAST
 #undef PAL_AG_PREFIX
@@ -1396,14 +1400,16 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
     g->generation++;
     return 1;
 }
-PAL_API int32_t pal_ag32_population(uintptr_t handle) {
-    return handle ? ((AgentGrid32 *)handle)->population : 0;
-}
+
 #define PAL_AG_TYPE AgentGrid32
 #define PAL_AG_PREFIX pal_ag32_
 #define PAL_AG_OCC_LAST at_i
 #define PAL_AG_OCC_NFLOAT float_property_count
+#define PAL_AG_OCC_POP population
+#define PAL_AG_OCC_LEN length
 #include "agentgrid_occupancy_template.h"
+#undef PAL_AG_OCC_LEN
+#undef PAL_AG_OCC_POP
 #undef PAL_AG_OCC_NFLOAT
 #undef PAL_AG_OCC_LAST
 #undef PAL_AG_PREFIX
@@ -1421,9 +1427,7 @@ PAL_API int32_t pal_ag32_population(uintptr_t handle) {
 PAL_API int32_t pal_ag32_capacity(uintptr_t handle) {
     return handle ? ((AgentGrid32 *)handle)->capacity : 0;
 }
-PAL_API int32_t pal_ag32_length(uintptr_t handle) {
-    return handle ? ((AgentGrid32 *)handle)->length : 0;
-}
+
 
 PAL_API float *pal_ag32_float_data(uintptr_t handle) {
     return handle ? ((AgentGrid32 *)handle)->floatProperties : NULL;
