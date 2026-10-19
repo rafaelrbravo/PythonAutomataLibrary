@@ -33,5 +33,5 @@ def test_compiled_float64_position():
         grid.Move(agent, 10.0 - 1e-8, 5.0)
         return grid.X(agent)
 
-    grid = pal.NewAgentGrid(dimensions=(10, 10))
+    grid = pal.NewAgentGrid(dimensions=(10, 10), isStackable=True)
     assert run(grid) == 10.0 - 1e-8
