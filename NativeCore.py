@@ -5520,6 +5520,9 @@ class _PDEgrid32SafePython:
     def AddI(self,value,i):
         self._CheckI(i)
         if not np.isfinite(value) or abs(value)>3.4028234663852886e38: raise ValueError("PDEgrid value must be finite and representable as float32")
+        current = _pd32_geti(self._ptr,i)
+        if not np.isfinite(current) or abs(current + value)>3.4028234663852886e38:
+            raise ValueError("PDEgrid addition would overflow float32 storage")
         _pd32_addi(self._ptr,i,value)
 
 
