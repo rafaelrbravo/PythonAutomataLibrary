@@ -459,3 +459,17 @@ def test_internal_float32_pdegrid_jitclass_in_compiled_model(safe):
         core._UseFastMode = previous
         if "grid" in locals():
             core._pd32_free(grid._ptr)
+
+
+def test_pdegrid32_add_coordinates_in_compiled_jitclass():
+    from NativeCore import _NewPDEgrid32
+
+    grid = _NewPDEgrid32([3, 4])
+
+    @core.nb.njit
+    def run(g):
+        g.Add(0.75, 1, 2)
+        g.Update()
+        return g[1, 2]
+
+    assert run(grid) == pytest.approx(0.75, abs=1e-6)
