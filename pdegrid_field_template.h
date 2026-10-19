@@ -12,6 +12,40 @@
 #define PAL_PD_JOIN(a,b) PAL_PD_JOIN2(a,b)
 #define PAL_PD_FN(name) PAL_PD_JOIN(PAL_PD_PREFIX,name)
 
+/* Conservative face-flux diffusion, with one edge contribution per face.
+ * Both precision variants use double arithmetic for coefficients. */
+#ifdef PAL_PD_DIFFUSION
+PAL_API int32_t PAL_PD_FN(PAL_PD_DIFFUSION)(uintptr_t handle,double rate) {
+    PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
+    if (!grid || !isfinite(rate) || rate<0.0 || !isfinite(grid->dt) || grid->dt<0.0) return 0;
+    const int32_t ny=grid->dimension>1?grid->dimensions[1]:1;
+    const int32_t nz=grid->dimension>2?grid->dimensions[2]:1;
+    const int32_t stride[3]={ny*nz,nz,1};
+    const double spacing[3]={grid->dx,grid->dy,grid->dz};
+    double factors[3]={0.0,0.0,0.0}, stability=0.0;
+    for (int32_t axis=0;axis<grid->dimension;axis++) {
+        if (!isfinite(spacing[axis]) || spacing[axis]<=0.0) return 0;
+        factors[axis]=rate*grid->dt/(spacing[axis]*spacing[axis]);
+        if (!isfinite(factors[axis])) return 0;
+        if (grid->dimensions[axis]>1) stability+=factors[axis];
+    }
+    if (stability>0.5000005) return 0;
+    for (int32_t axis=0;axis<grid->dimension;axis++) {
+        const int32_t size=grid->dimensions[axis],step=stride[axis];
+        if (size==1 || factors[axis]==0.0) continue;
+        for (int32_t i=0;i<grid->length;i++) {
+            const int32_t coordinate=(i/step)%size;
+            if (coordinate==size-1 && !grid->wrap[axis]) continue;
+            const int32_t j=coordinate==size-1?i-(size-1)*step:i+step;
+            const PAL_PD_FLOAT flux=(PAL_PD_FLOAT)(factors[axis]*((double)grid->field[j]-grid->field[i]));
+            grid->deltas[i]+=flux;
+            grid->deltas[j]-=flux;
+        }
+    }
+    return 1;
+}
+#endif
+
 PAL_API int32_t PAL_PD_FN(dim)(uintptr_t handle,int32_t d) {
     PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
     return grid && d>=0 && d<grid->dimension ? grid->dimensions[d] : PAL_NULL;
