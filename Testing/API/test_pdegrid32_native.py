@@ -547,3 +547,25 @@ def test_pdegrid32_wrap_helpers_match_periodic_and_fixed_boundaries():
                     core._pd32_free(grid._ptr)
     finally:
         core._UseFastMode = original
+
+
+def test_pdegrid32_safe_reverse_coordinates_reject_invalid_indices():
+    from NativeCore import _NewPDEgrid32
+
+    original = core._UseFastMode
+    core._UseFastMode = lambda: False
+    try:
+        grid = _NewPDEgrid32([3])
+        try:
+            assert grid.ItoX(2) == 2
+            for invalid in (-1, 3, np.nan, np.inf, 0.5):
+                with pytest.raises((ValueError, IndexError)):
+                    grid.ItoX(invalid)
+            with pytest.raises(ValueError):
+                grid.ItoY(0)
+            with pytest.raises(ValueError):
+                grid.ItoZ(0)
+        finally:
+            core._pd32_free(grid._ptr)
+    finally:
+        core._UseFastMode = original
