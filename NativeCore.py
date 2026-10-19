@@ -5188,6 +5188,15 @@ class _AgentGrid32Native:
     def SetProperty(self, agent, prop, value):
         return bool(_ag32_set_property(self._ptr, agent, prop, np.float32(value)))
 
+    def AddProperty(self, agent, prop, value):
+        return bool(_ag32_add_property(self._ptr, agent, prop, np.float32(value)))
+
+    def AtI(self, location):
+        return _ag32_at_i(self._ptr, location)
+
+    def CountI(self, location):
+        return _ag32_count_i(self._ptr, location)
+
 
 def _NewAgentGrid32(dimensions, numAgentProps=0, isStackable=False):
     """Internal float32 factory for native backend validation only."""
