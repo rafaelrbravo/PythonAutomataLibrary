@@ -173,3 +173,20 @@ def test_pdegrid32_rectangular_regions():
         np.testing.assert_array_equal(out, np.full(12, 4.5, dtype=np.float32))
     finally:
         core._pd32_free(handle)
+
+def test_pdegrid32_conservative_upwind_advection():
+    dims = np.array([-5], dtype=np.int32)
+    handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1)
+    assert handle
+    try:
+        assert core._pd32_seti(handle, 2, ctypes.c_float(1.0)) == 1
+        assert core._pd32_advection(handle, 0.25, 0.0, 0.0) == 1
+        core._pd32_update(handle)
+        assert core._pd32_geti(handle, 2) == pytest.approx(0.75)
+        assert core._pd32_geti(handle, 3) == pytest.approx(0.25)
+        assert core._pd32_advection(handle, 1.1, 0.0, 0.0) == 0
+        core._pd32_update(handle)
+        assert core._pd32_geti(handle, 2) == pytest.approx(0.75)
+        assert core._pd32_geti(handle, 3) == pytest.approx(0.25)
+    finally:
+        core._pd32_free(handle)
