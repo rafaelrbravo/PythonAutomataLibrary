@@ -141,7 +141,7 @@ def CountTypes(grid:pal.AgentGrid):
 
 
 def main():
-    pal.FastMode()
+    # pal.FastMode()
 
     draw,win=pal.StartOpenGLWindow(xDim=X,yDim=Y,title="Off Lattice Example")
     pal.Seed(0)
