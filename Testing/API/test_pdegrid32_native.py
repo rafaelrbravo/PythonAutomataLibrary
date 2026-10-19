@@ -225,3 +225,23 @@ def test_pdegrid32_mask_uses_sign_not_magnitude():
         assert core._pd32_geti(handle, 2) == 0.0
     finally:
         core._pd32_free(handle)
+
+def test_pdegrid32_variable_rate_harmonic_diffusion():
+    dims = np.array([4], dtype=np.int32)
+    handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1)
+    assert handle
+    try:
+        assert core._pd32_seti(handle, 1, ctypes.c_float(1.0)) == 1
+        rates = np.array([0.0, 0.2, 0.1, 0.0], dtype=np.float32)
+        ptr = rates.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
+        assert core._pd32_diffuse_field(handle, ptr) == 1
+        core._pd32_update(handle)
+        expected = 2 * 0.2 * 0.1 / (0.2 + 0.1)
+        assert core._pd32_geti(handle, 1) == pytest.approx(1 - expected, abs=1e-6)
+        assert core._pd32_geti(handle, 2) == pytest.approx(expected, abs=1e-6)
+        rates[3] = np.nan
+        assert core._pd32_diffuse_field(handle, ptr) == 0
+        core._pd32_update(handle)
+        assert core._pd32_geti(handle, 2) == pytest.approx(expected, abs=1e-6)
+    finally:
+        core._pd32_free(handle)
