@@ -136,3 +136,29 @@ def test_agentgrid32_movement_updates_occupancy_and_coordinates():
         assert core._ag32_at_i(handle, 2) == blocker
     finally:
         core._ag32_free(handle)
+
+def test_agentgrid32_stackable_lifecycle_move_and_counts():
+    dims = np.array([3], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1, 1, 1)
+    assert handle
+    try:
+        a = core._ag32_new_i(handle, 0)
+        b = core._ag32_new_i(handle, 0)
+        c = core._ag32_new_i(handle, 0)
+        assert (a, b, c) == (0, 1, 2)
+        assert core._ag32_count_i(handle, 0) == 3
+        assert core._ag32_at_i(handle, 0) == c
+        assert core._ag32_dispose(handle, b) == 1
+        assert core._ag32_count_i(handle, 0) == 2
+        assert core._ag32_move_i(handle, a, 1) == 1
+        assert core._ag32_count_i(handle, 0) == 1
+        assert core._ag32_count_i(handle, 1) == 1
+        assert core._ag32_move_i(handle, c, 1) == 1
+        assert core._ag32_count_i(handle, 1) == 2
+        assert core._ag32_at_i(handle, 1) == c
+        assert core._ag32_dispose(handle, c) == 1
+        assert core._ag32_at_i(handle, 1) == a
+        assert core._ag32_count_i(handle, 1) == 1
+        assert core._ag32_population(handle) == 1
+    finally:
+        core._ag32_free(handle)
