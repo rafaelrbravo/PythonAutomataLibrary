@@ -1439,6 +1439,14 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
 
 
 
+#define PAL_PD_TYPE PDEGrid32
+#define PAL_PD_FLOAT float
+#define PAL_PD_PREFIX pal_pd32_
+#include "pdegrid_field_template.h"
+#undef PAL_PD_PREFIX
+#undef PAL_PD_FLOAT
+#undef PAL_PD_TYPE
+
 PAL_API uintptr_t pal_pd32_new(const int32_t *dimensions, int32_t dimension) {
     if (dimension < 1 || dimension > 3 || dimensions == NULL) return 0;
     PDEGrid32 *grid = (PDEGrid32 *)calloc(1, sizeof(PDEGrid32));
@@ -1496,21 +1504,9 @@ PAL_API void pal_pd32_addi(uintptr_t handle, int32_t i, float value) {
     if (i >= 0 && i < grid->length) grid->deltas[i] += value;
 }
 
-PAL_API void pal_pd32_update(uintptr_t handle) {
-    PDEGrid32 *grid = (PDEGrid32 *)handle;
-    for (int32_t i = 0; i < grid->length; i++) {
-        grid->field[i] += grid->deltas[i];
-        grid->deltas[i] = 0.0f;
-    }
-}
 
-PAL_API void pal_pd32_clear(uintptr_t handle, float value) {
-    PDEGrid32 *grid = (PDEGrid32 *)handle;
-    for (int32_t i = 0; i < grid->length; i++) {
-        grid->field[i] = value;
-        grid->deltas[i] = 0.0f;
-    }
-}
+
+
 
 /* Float32 field accessors and conservative nearest-neighbor diffusion. */
 PAL_API int32_t pal_pd32_dim(uintptr_t handle, int32_t d) {
@@ -1792,6 +1788,14 @@ PAL_API int32_t pal_pd32_itoz(uintptr_t handle, int32_t i) {
     return i % grid->dimensions[2];
 }
 
+#define PAL_PD_TYPE PDEGrid
+#define PAL_PD_FLOAT double
+#define PAL_PD_PREFIX pal_pd_
+#include "pdegrid_field_template.h"
+#undef PAL_PD_PREFIX
+#undef PAL_PD_FLOAT
+#undef PAL_PD_TYPE
+
 PAL_API uintptr_t pal_pd_new(const int32_t *dimensions, int32_t dimension) {
     if (dimension < 1 || dimension > 3) return 0;
     PDEGrid *grid = (PDEGrid *)calloc(1, sizeof(PDEGrid));
@@ -1840,13 +1844,7 @@ PAL_API void pal_pd_seti_(uintptr_t h,int32_t i,double v){((PDEGrid*)h)->field[i
 PAL_API void pal_pd_addi(uintptr_t handle, int32_t i, double value) { ((PDEGrid *)handle)->deltas[i] += value; }
 PAL_API void pal_pd_set(uintptr_t handle,int32_t x,int32_t y,int32_t z,double value) { PDEGrid *g=(PDEGrid *)handle; g->field[PDEGrid_ToI(g,x,y,z)]=value; }
 PAL_API void pal_pd_add(uintptr_t handle,int32_t x,int32_t y,int32_t z,double value) { PDEGrid *g=(PDEGrid *)handle; g->deltas[PDEGrid_ToI(g,x,y,z)]+=value; }
-PAL_API void pal_pd_update(uintptr_t handle) {
-    PDEGrid *grid = (PDEGrid *)handle;
-    for (int32_t i = 0; i < grid->length; i++) {
-        grid->field[i] += grid->deltas[i];
-        grid->deltas[i] = 0.0;
-    }
-}
+
 PAL_API void pal_pd_steps(uintptr_t handle, double dt, double dx, double dy, double dz) {
     PDEGrid *grid = (PDEGrid *)handle;
     grid->dt = dt; grid->dx = dx; grid->dy = dy; grid->dz = dz;
@@ -1857,10 +1855,7 @@ PAL_API double pal_pd_voxel(uintptr_t handle) {
     if (grid->dimension == 2) return grid->dx * grid->dy;
     return grid->dx * grid->dy * grid->dz;
 }
-PAL_API void pal_pd_clear(uintptr_t handle, double value) {
-    PDEGrid *grid = (PDEGrid *)handle;
-    for (int32_t i = 0; i < grid->length; i++) { grid->field[i] = value; grid->deltas[i] = 0.0; }
-}
+
 
 /* Explicit diffusion with zero-flux boundaries on non-wrapped axes. */
 
