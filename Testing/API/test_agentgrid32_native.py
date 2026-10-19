@@ -162,3 +162,36 @@ def test_agentgrid32_stackable_lifecycle_move_and_counts():
         assert core._ag32_population(handle) == 1
     finally:
         core._ag32_free(handle)
+
+def test_agentgrid32_stackable_randomized_invariants():
+    rng = np.random.default_rng(20261019)
+    dims = np.array([8], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1, 1, 1)
+    assert handle
+    locations = {}
+    try:
+        for step in range(1500):
+            action = int(rng.integers(3))
+            if action == 0 or not locations:
+                cell = int(rng.integers(8))
+                agent = core._ag32_new_i(handle, cell)
+                assert agent >= 0
+                locations[agent] = cell
+            elif action == 1:
+                agent = int(rng.choice(list(locations)))
+                cell = int(rng.integers(8))
+                assert core._ag32_move_i(handle, agent, cell) == 1
+                locations[agent] = cell
+            else:
+                agent = int(rng.choice(list(locations)))
+                assert core._ag32_dispose(handle, agent) == 1
+                del locations[agent]
+            assert core._ag32_population(handle) == len(locations)
+            for cell in range(8):
+                assert core._ag32_count_i(handle, cell) == sum(v == cell for v in locations.values())
+                head = core._ag32_at_i(handle, cell)
+                assert (head == -1) == (core._ag32_count_i(handle, cell) == 0)
+                if head != -1:
+                    assert locations[head] == cell
+    finally:
+        core._ag32_free(handle)
