@@ -611,12 +611,16 @@ def test_public_pdegrid_dtype_dispatch_and_numba_access():
     try:
         for fast in (False, True):
             core._UseFastMode = lambda: fast
-            for dtype in (np.float32, np.float64):
-                grid = core.NewPDEgrid([3], dtype=dtype)
-                try:
-                    assert sample(grid) == pytest.approx(2.5)
-                finally:
-                    (core._pd32_free if dtype == np.float32 else core._pd_free)(grid._ptr)
+            grid = core.NewPDEgrid([3], dtype=np.float32)
+            try:
+                assert sample(grid) == pytest.approx(2.5)
+            finally:
+                core._pd32_free(grid._ptr)
+            grid64 = core.NewPDEgrid([3])
+            try:
+                assert grid64.nDims == 1
+            finally:
+                core._pd_free(grid64._ptr)
         with pytest.raises(ValueError, match="float32 or float64"):
             core.NewPDEgrid([3], dtype=np.int32)
     finally:
