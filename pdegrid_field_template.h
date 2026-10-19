@@ -55,6 +55,13 @@ PAL_API void PAL_PD_FN(steps)(uintptr_t handle,double dt,double dx,double dy,dou
     PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
     grid->dt=dt; grid->dx=dx; grid->dy=dy; grid->dz=dz;
 }
+#ifdef PAL_PD_STEP_GETTERS
+PAL_API double PAL_PD_FN(dt)(uintptr_t handle) { return ((PAL_PD_TYPE *)handle)->dt; }
+PAL_API double PAL_PD_FN(dx)(uintptr_t handle) { return ((PAL_PD_TYPE *)handle)->dx; }
+PAL_API double PAL_PD_FN(dy)(uintptr_t handle) { return ((PAL_PD_TYPE *)handle)->dy; }
+PAL_API double PAL_PD_FN(dz)(uintptr_t handle) { return ((PAL_PD_TYPE *)handle)->dz; }
+#endif
+
 PAL_API double PAL_PD_FN(voxel)(uintptr_t handle) {
     PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
     if (grid->dimension==1) return grid->dx;
