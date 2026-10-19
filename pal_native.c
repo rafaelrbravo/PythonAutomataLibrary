@@ -1511,20 +1511,9 @@ PAL_API int32_t pal_pd32_dim(uintptr_t handle, int32_t d) {
     return d >= 0 && d < grid->dimension ? grid->dimensions[d] : PAL_NULL;
 }
 
-PAL_API void pal_pd32_steps(uintptr_t handle, double dt, double dx, double dy, double dz) {
-    PDEGrid32 *grid = (PDEGrid32 *)handle;
-    grid->dt = dt;
-    grid->dx = dx;
-    grid->dy = dy;
-    grid->dz = dz;
-}
 
-PAL_API double pal_pd32_voxel(uintptr_t handle) {
-    PDEGrid32 *grid = (PDEGrid32 *)handle;
-    if (grid->dimension == 1) return grid->dx;
-    if (grid->dimension == 2) return grid->dx * grid->dy;
-    return grid->dx * grid->dy * grid->dz;
-}
+
+
 
 PAL_API int32_t pal_pd32_advection(uintptr_t handle, double velocityX, double velocityY, double velocityZ) {
     PDEGrid32 *grid = (PDEGrid32 *)handle;
@@ -1842,16 +1831,8 @@ PAL_API void pal_pd_addi(uintptr_t handle, int32_t i, double value) { ((PDEGrid 
 PAL_API void pal_pd_set(uintptr_t handle,int32_t x,int32_t y,int32_t z,double value) { PDEGrid *g=(PDEGrid *)handle; g->field[PDEGrid_ToI(g,x,y,z)]=value; }
 PAL_API void pal_pd_add(uintptr_t handle,int32_t x,int32_t y,int32_t z,double value) { PDEGrid *g=(PDEGrid *)handle; g->deltas[PDEGrid_ToI(g,x,y,z)]+=value; }
 
-PAL_API void pal_pd_steps(uintptr_t handle, double dt, double dx, double dy, double dz) {
-    PDEGrid *grid = (PDEGrid *)handle;
-    grid->dt = dt; grid->dx = dx; grid->dy = dy; grid->dz = dz;
-}
-PAL_API double pal_pd_voxel(uintptr_t handle) {
-    PDEGrid *grid = (PDEGrid *)handle;
-    if (grid->dimension == 1) return grid->dx;
-    if (grid->dimension == 2) return grid->dx * grid->dy;
-    return grid->dx * grid->dy * grid->dz;
-}
+
+
 
 
 /* Explicit diffusion with zero-flux boundaries on non-wrapped axes. */
