@@ -119,10 +119,11 @@ def test_compiled_pdegrid32_native_bindings():
 def test_compiled_pdegrid32_coordinate_access():
     @core.nb.njit
     def run(handle):
-        assert core._pd32_set(handle, 1, 2, 0, np.float32(1.25)) == 1
-        assert core._pd32_add(handle, 1, 2, 0, np.float32(0.5)) == 1
+        i = core._pd32_toi(handle, 1, 2, 0)
+        assert core._pd32_seti(handle, i, np.float32(1.25)) == 1
+        core._pd32_addi(handle, i, np.float32(0.5))
         core._pd32_update(handle)
-        return core._pd32_get(handle, 1, 2, 0)
+        return core._pd32_geti(handle, i)
 
     dims = np.array([4, 4], dtype=np.int32)
     handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 2)
