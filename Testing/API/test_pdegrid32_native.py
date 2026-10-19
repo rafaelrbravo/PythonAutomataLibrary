@@ -210,3 +210,18 @@ def test_pdegrid32_masked_diffusion_blocks_flux_and_rejects_invalid_mask():
         assert core._pd32_geti(handle, 2) == pytest.approx(0.9, abs=1e-6)
     finally:
         core._pd32_free(handle)
+
+def test_pdegrid32_mask_uses_sign_not_magnitude():
+    dims = np.array([4], dtype=np.int32)
+    handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1)
+    assert handle
+    try:
+        assert core._pd32_seti(handle, 1, ctypes.c_float(1.0)) == 1
+        mask = np.array([0.0, 3.0, -1.0, 0.0], dtype=np.float32)
+        assert core._pd32_diffuse_mask(handle, 0.1, mask.ctypes.data_as(ctypes.POINTER(ctypes.c_float))) == 1
+        core._pd32_update(handle)
+        assert core._pd32_geti(handle, 0) == pytest.approx(0.1, abs=1e-6)
+        assert core._pd32_geti(handle, 1) == pytest.approx(0.9, abs=1e-6)
+        assert core._pd32_geti(handle, 2) == 0.0
+    finally:
+        core._pd32_free(handle)
