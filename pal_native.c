@@ -498,7 +498,15 @@ PAL_API int32_t pal_ag_alive_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*
 PAL_API int32_t pal_ag_nagents(uintptr_t handle) { return ((AgentGrid *)handle)->nAgents; }
 PAL_API int32_t *pal_ag_grid_data(uintptr_t handle) { return ((AgentGrid *)handle)->grid; }
 PAL_API int32_t *pal_ag_int_data(uintptr_t handle) { return ((AgentGrid *)handle)->intProperties; }
-PAL_API double *pal_ag_float_data(uintptr_t handle) { return ((AgentGrid *)handle)->floatProperties; }
+#define PAL_AG_TYPE AgentGrid
+#define PAL_AG_FLOAT double
+#define PAL_AG_PREFIX pal_ag_
+#define PAL_AG_DATA_ONLY
+#include "agentgrid_properties_template.h"
+#undef PAL_AG_DATA_ONLY
+#undef PAL_AG_PREFIX
+#undef PAL_AG_FLOAT
+#undef PAL_AG_TYPE
 
 PAL_API int32_t pal_ag_stackable(uintptr_t handle) { return ((AgentGrid *)handle)->stackable; }
 PAL_API int32_t pal_ag_wrap(uintptr_t handle, int32_t dimension) { AgentGrid*g=(AgentGrid*)handle; return dimension>=0&&dimension<g->dimension?g->wrap[dimension]:0; }
@@ -1429,9 +1437,7 @@ PAL_API int32_t pal_ag32_capacity(uintptr_t handle) {
 }
 
 
-PAL_API float *pal_ag32_float_data(uintptr_t handle) {
-    return handle ? ((AgentGrid32 *)handle)->floatProperties : NULL;
-}
+
 
 PAL_API uintptr_t pal_pd32_new(const int32_t *dimensions, int32_t dimension) {
     if (dimension < 1 || dimension > 3 || dimensions == NULL) return 0;
