@@ -75,3 +75,22 @@ def test_agentgrid32_single_occupancy_lifecycle_and_reuse():
         assert compiled_cycle(handle) == 2
     finally:
         core._ag32_free(handle)
+
+def test_agentgrid32_grows_without_losing_properties():
+    dims = np.array([1200], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1, 1, 0)
+    assert handle
+    try:
+        for location in range(1100):
+            agent = core._ag32_new_i(handle, location)
+            assert agent == location
+            assert core._ag32_set_property(handle, agent, 1, np.float32(location + 0.5))
+        assert core._ag32_capacity(handle) >= 1100
+        assert core._ag32_population(handle) == 1100
+        for agent in (0, 499, 999, 1099):
+            assert core._ag32_get_property(handle, agent, 1) == np.float32(agent + 0.5)
+            assert core._ag32_at_i(handle, agent) == agent
+        assert core._ag32_dispose(handle, 1001) == 1
+        assert core._ag32_new_i(handle, 1150) == 1001
+    finally:
+        core._ag32_free(handle)
