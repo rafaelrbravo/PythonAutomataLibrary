@@ -574,3 +574,23 @@ def test_float32_agentgrid_dead_agent_properties_are_inaccessible():
         assert not grid.AddProperty(agent, 0, 1.0)
         assert np.isnan(grid.GetProperty(agent, 0))
         assert not grid.SetProperty(agent + 100, 0, 4.0)
+
+
+def test_float32_agentgrid_dispose_alive_list_and_reuse():
+    with core._NewAgentGrid32((8,), numAgentProps=1) as grid:
+        agents = [grid.NewAgent(i) for i in range(5)]
+        assert grid.GetPop() == 5
+        assert grid.Dispose(agents[1])
+        assert grid.GetPop() == 4
+        assert grid.Dispose(agents[4])
+        assert grid.GetPop() == 3
+        assert not grid.Dispose(agents[1])
+        reused = grid.NewAgent(6)
+        assert reused in (agents[1], agents[4])
+        assert grid.GetPop() == 4
+        assert grid.AtI(6) == reused
+        for agent in (agents[0], agents[2], agents[3], reused):
+            assert grid.Dispose(agent)
+        assert grid.GetPop() == 0
+        assert grid.NewAgent(7) >= 0
+        assert grid.GetPop() == 1
