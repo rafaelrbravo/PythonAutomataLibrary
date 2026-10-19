@@ -37,6 +37,12 @@ PAL_API int32_t PAL_AG_FN(add_property)(uintptr_t handle,int32_t agent,int32_t p
     g->floatProperties[i]=next;
     return 1;
 }
+
+PAL_API PAL_AG_FLOAT *PAL_AG_FN(float_data)(uintptr_t handle) {
+    PAL_AG_TYPE *grid=(PAL_AG_TYPE *)handle;
+    return grid ? grid->floatProperties : NULL;
+}
+
 #undef PAL_AG_FN
 #undef PAL_AG_JOIN
 #undef PAL_AG_JOIN2
