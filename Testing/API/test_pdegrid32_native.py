@@ -280,3 +280,20 @@ def test_pdegrid32_jitclass_integer_indexing():
             assert compiled_index(grid) == pytest.approx(3.25)
         finally:
             core._pd32_free(handle)
+
+def test_pdegrid32_coordinate_tuple_indexing():
+    dims = np.array([3, 4], dtype=np.int32)
+    for cls in (core._PDEgrid32Safe, core._PDEgrid32Fast):
+        handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 2)
+        assert handle
+        try:
+            grid = cls(handle, 2, 3, 4, -1, 12, False, False, False)
+            grid[1, 2] = np.float32(4.5)
+            assert grid[1, 2] == pytest.approx(4.5)
+            @core.nb.njit
+            def compiled_coordinates(g):
+                g[2, 3] = np.float32(1.25)
+                return g[2, 3]
+            assert compiled_coordinates(grid) == pytest.approx(1.25)
+        finally:
+            core._pd32_free(handle)
