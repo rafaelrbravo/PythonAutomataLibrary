@@ -389,3 +389,22 @@ def test_agentgrid32_nonspatial_population_recycles_and_resets_properties():
         assert core._ag32_population(handle) == 2
     finally:
         core._ag32_free(handle)
+
+
+def test_agentgrid32_compiled_stackable_point_creation():
+    dims = np.array([2, 2], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 2, 1, 1)
+    assert handle
+    try:
+        @core.nb.njit
+        def compiled_create(h):
+            a = core._ag32_new_pt(h, np.float32(0.125), np.float32(1.25), np.float32(0))
+            b = core._ag32_new_pt(h, np.float32(0.875), np.float32(1.75), np.float32(0))
+            return a, b, core._ag32_count_i(h, 1), core._ag32_at_i(h, 1)
+        assert compiled_create(handle) == (0, 1, 2, 1)
+        assert core._ag32_get_property(handle, 0, 0) == np.float32(0.125)
+        assert core._ag32_get_property(handle, 1, 1) == np.float32(1.75)
+        assert core._ag32_dispose(handle, 1) == 1
+        assert core._ag32_at_i(handle, 1) == 0
+    finally:
+        core._ag32_free(handle)
