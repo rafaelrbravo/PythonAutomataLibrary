@@ -239,3 +239,22 @@ def test_agentgrid32_compiled_stackable_lifecycle():
         assert core._ag32_at_i(handle, 2) == 0
     finally:
         core._ag32_free(handle)
+
+
+def test_agentgrid32_compiled_3d_movement_preserves_float32_centers():
+    dims = np.array([3, 4, 5], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 3, 1, 0)
+    assert handle
+    try:
+        @core.nb.njit
+        def compiled_move(h):
+            agent = core._ag32_new_i(h, 0)
+            moved = core._ag32_move_i(h, agent, 59)
+            return (moved, core._ag32_at_i(h, 0), core._ag32_at_i(h, 59),
+                    core._ag32_get_property(h, agent, 0),
+                    core._ag32_get_property(h, agent, 1),
+                    core._ag32_get_property(h, agent, 2))
+        assert compiled_move(handle) == (1, -1, 0, 2.5, 3.5, 4.5)
+        assert core._ag32_population(handle) == 1
+    finally:
+        core._ag32_free(handle)
