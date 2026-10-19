@@ -94,3 +94,21 @@ def test_agentgrid32_grows_without_losing_properties():
         assert core._ag32_new_i(handle, 1150) == 1001
     finally:
         core._ag32_free(handle)
+
+def test_agentgrid32_square_coordinates_are_float32_centers():
+    for dims, location, expected in (
+        ((5,), 3, (3.5,)),
+        ((3, 4), 6, (1.5, 2.5)),
+        ((2, 3, 4), 17, (1.5, 1.5, 1.5)),
+    ):
+        dimensions = np.array(dims, dtype=np.int32)
+        handle = core._ag32_new(dimensions.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), len(dims), 1, 0)
+        assert handle
+        try:
+            agent = core._ag32_new_i(handle, location)
+            assert agent == 0
+            for axis, value in enumerate(expected):
+                assert core._ag32_get_property(handle, agent, axis) == np.float32(value)
+            assert core._ag32_get_property(handle, agent, len(dims)) == np.float32(0)
+        finally:
+            core._ag32_free(handle)
