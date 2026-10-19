@@ -70,3 +70,26 @@ def test_diffusion_adi_face_array_boundary_matches_scalar(dimensions, axis, face
     array.Update()
 
     np.testing.assert_allclose(array[:], scalar[:], rtol=2e-6, atol=2e-6)
+
+
+@pytest.mark.parametrize("operation", ["Diffusion", "DiffusionADI", "Advection"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_pde_boundary_array_dtype_matches_scalar(operation, dtype):
+    dimensions = (5, 6)
+    scalar = pal.NewPDEgrid(dimensions)
+    array = pal.NewPDEgrid(dimensions)
+    for field in (scalar, array):
+        field.SetTimeSpaceStep(0.1, 1.0, 1.0, 1.0)
+        field[:] = np.arange(len(field), dtype=np.float64) % 7
+
+    boundary = {"xMaxBC": 1.25}
+    array_boundary = {"xMaxBC": np.full(6, 1.25, dtype=dtype)}
+    if operation == "Advection":
+        scalar.Advection(0.2, **boundary)
+        array.Advection(0.2, **array_boundary)
+    else:
+        getattr(scalar, operation)(0.2, **boundary)
+        getattr(array, operation)(0.2, **array_boundary)
+    scalar.Update()
+    array.Update()
+    np.testing.assert_allclose(array[:], scalar[:], rtol=2e-6, atol=2e-6)
