@@ -29,3 +29,22 @@ def test_agentgrid32_rejects_invalid_geometry():
         dimensions = np.array(dims, dtype=np.int32)
         handle = core._ag32_new(dimensions.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), len(dims), 1, 0)
         assert not handle
+
+def test_agentgrid32_property_operations_are_float32():
+    dims = np.array([4], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1, 2, 0)
+    assert handle
+    try:
+        assert core._ag32_set_property(handle, 0, 1, np.float32(1.25)) == 1
+        assert core._ag32_add_property(handle, 0, 1, np.float32(0.5)) == 1
+        assert core._ag32_get_property(handle, 0, 1) == np.float32(1.75)
+        assert core._ag32_set_property(handle, 0, 3, np.float32(2)) == 0
+        assert core._ag32_add_property(handle, -1, 1, np.float32(1)) == 0
+        @core.nb.njit
+        def compiled_property(h):
+            core._ag32_set_property(h, 0, 2, np.float32(3.5))
+            core._ag32_add_property(h, 0, 2, np.float32(0.25))
+            return core._ag32_get_property(h, 0, 2)
+        assert compiled_property(handle) == np.float32(3.75)
+    finally:
+        core._ag32_free(handle)
