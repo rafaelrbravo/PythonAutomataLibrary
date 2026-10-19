@@ -505,3 +505,24 @@ def test_pdegrid32_safe_steps_reject_invalid_values():
             core._pd32_free(grid._ptr)
     finally:
         core._UseFastMode = original
+
+
+def test_pdegrid32_step_accessors_compiled_in_both_modes():
+    from NativeCore import _NewPDEgrid32
+
+    @core.nb.njit
+    def read_steps(grid):
+        return grid.Dt(), grid.Dx(), grid.Dy(), grid.Dz()
+
+    original = core._UseFastMode
+    try:
+        for fast in (False, True):
+            core._UseFastMode = lambda: fast
+            grid = _NewPDEgrid32([2, 3, 4])
+            try:
+                grid.SetTimeSpaceStep(0.5, 1.5, 2.5, 3.5)
+                assert read_steps(grid) == pytest.approx((0.5, 1.5, 2.5, 3.5))
+            finally:
+                core._pd32_free(grid._ptr)
+    finally:
+        core._UseFastMode = original
