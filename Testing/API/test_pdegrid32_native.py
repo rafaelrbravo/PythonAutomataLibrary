@@ -115,3 +115,20 @@ def test_compiled_pdegrid32_native_bindings():
         assert run(handle) == pytest.approx(0.6, abs=1e-6)
     finally:
         core._pd32_free(handle)
+
+def test_compiled_pdegrid32_coordinate_access():
+    @core.nb.njit
+    def run(handle):
+        assert core._pd32_set(handle, 1, 2, 0, np.float32(1.25)) == 1
+        assert core._pd32_add(handle, 1, 2, 0, np.float32(0.5)) == 1
+        core._pd32_update(handle)
+        return core._pd32_get(handle, 1, 2, 0)
+
+    dims = np.array([4, 4], dtype=np.int32)
+    handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 2)
+    assert handle
+    try:
+        assert run(handle) == pytest.approx(1.75)
+        assert core._pd32_set(handle, 5, 0, 0, ctypes.c_float(2.0)) == 0
+    finally:
+        core._pd32_free(handle)
