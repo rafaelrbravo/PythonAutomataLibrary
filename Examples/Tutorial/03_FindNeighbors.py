@@ -7,16 +7,16 @@ RED = pal.RGB(255, 0, 0)
 
 MOORE = pal.MooreHood(2, excludeCenter=True)
 
-def Draw(cells, pix):
+def Draw(cells: pal.AgentGrid, pix: pal.Pix):
     pix[:] = BLACK
     for agent in cells.All():
         pix[cells.I(agent)] = RED
 
-def Setup(cells):
+def Setup(cells: pal.AgentGrid):
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
 
-def EmptyNeighbors(cells, agent, empty):
+def EmptyNeighbors(cells: pal.AgentGrid, agent, empty: pal.IList):
     empty.Clear()
     for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
         if cells.counts[x, y] == 0:
