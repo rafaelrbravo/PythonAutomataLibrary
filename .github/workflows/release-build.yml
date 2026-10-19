@@ -110,30 +110,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            artifact: wheels-ubuntu-latest
-          - os: windows-latest
-            artifact: wheels-windows-latest
-          - os: macos-15
-            artifact: wheels-macos-15
-          - os: macos-15-intel
-            artifact: wheels-macos-15-intel
+        os: [ubuntu-latest, windows-latest, macos-15, macos-15-intel]
+        python-version: ['3.10', '3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
+          name: wheels-${{ matrix.os }}
           path: wheelhouse
-      - name: Test same wheel on supported Python versions
-        shell: bash
-        run: |
-          for version in 3.10 3.11 3.12 3.13; do
-            echo "Testing Python $version"
-          done
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: ${{ matrix.python-version }}
       - name: Install wheel without source builds and smoke test
         shell: bash
         run: |
