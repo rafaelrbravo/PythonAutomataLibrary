@@ -1299,6 +1299,39 @@ PAL_API int32_t pal_pd32_advection(uintptr_t handle, double velocityX, double ve
     return 1;
 }
 
+PAL_API int32_t pal_pd32_diffuse_mask(uintptr_t handle, double rate, const float *mask) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (!mask || !isfinite(rate) || rate < 0.0 || !isfinite(grid->dt) || grid->dt < 0.0) return 0;
+    const int32_t ny = grid->dimension > 1 ? grid->dimensions[1] : 1;
+    const int32_t nz = grid->dimension > 2 ? grid->dimensions[2] : 1;
+    const int32_t stride[3] = {ny * nz, nz, 1};
+    const double spacing[3] = {grid->dx, grid->dy, grid->dz};
+    double factors[3] = {0.0, 0.0, 0.0};
+    double stability = 0.0;
+    for (int32_t i=0; i<grid->length; i++) if (!isfinite(mask[i]) || mask[i] < 0.0f || mask[i] > 1.0f) return 0;
+    for (int32_t axis=0; axis<grid->dimension; axis++) {
+        if (!isfinite(spacing[axis]) || spacing[axis] <= 0.0) return 0;
+        factors[axis] = rate * grid->dt / (spacing[axis] * spacing[axis]);
+        if (!isfinite(factors[axis])) return 0;
+        if (grid->dimensions[axis] > 1) stability += factors[axis];
+    }
+    if (stability > 0.5) return 0;
+    for (int32_t axis=0; axis<grid->dimension; axis++) {
+        const int32_t size=grid->dimensions[axis], step=stride[axis];
+        if (size <= 1 || factors[axis] == 0.0) continue;
+        for (int32_t i=0; i<grid->length; i++) {
+            const int32_t coordinate=(i/step)%size;
+            if (coordinate == size-1 && !grid->wrap[axis]) continue;
+            const int32_t j=coordinate == size-1 ? i-(size-1)*step : i+step;
+            const double permeability=(double)mask[i]*mask[j];
+            const float flux=(float)(factors[axis]*permeability*((double)grid->field[j]-grid->field[i]));
+            grid->deltas[i] += flux;
+            grid->deltas[j] -= flux;
+        }
+    }
+    return 1;
+}
+
 PAL_API int32_t pal_pd32_diffuse(uintptr_t handle, double rate) {
     PDEGrid32 *grid = (PDEGrid32 *)handle;
     if (!isfinite(rate) || rate < 0.0 || !isfinite(grid->dt) || grid->dt < 0.0) return 0;
