@@ -589,7 +589,7 @@ def test_pdegrid32_safe_linear_access_validates_indices_and_values():
                     grid.SetI(invalid, 2)
                 with pytest.raises((ValueError, IndexError)):
                     grid.AddI(2, invalid)
-            for invalid in (np.nan, np.inf):
+            for invalid in (np.nan, np.inf, 1e100, -1e100):
                 with pytest.raises(ValueError):
                     grid.SetI(1, invalid)
                 with pytest.raises(ValueError):
