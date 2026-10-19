@@ -478,3 +478,21 @@ def test_float32_agentgrid_square_construction_and_bounds():
     with core._NewAgentGrid32((4,), numAgentProps=1) as grid:
         agent = grid.NewAgent(2)
         assert grid.AtI(2) == agent
+
+
+def test_float32_agentgrid_square_movement_and_bounds():
+    with core._NewAgentGrid32((3, 4), numAgentProps=1) as grid:
+        agent = grid.NewAgentSQ(1, 2)
+        assert grid.MoveSQ(agent, 2, 1)
+        assert grid.AtI(9) == agent
+        assert grid.AtI(6) != agent
+        with pytest.raises(ValueError):
+            grid.Move(agent, 1)
+        for coords in [(-1, 2), (3, 0), (0, 4), (1.5, 2)]:
+            with pytest.raises(IndexError):
+                grid.MoveSQ(agent, *coords)
+        assert grid.AtI(9) == agent
+    with core._NewAgentGrid32((4,), numAgentProps=1) as grid:
+        agent = grid.NewAgent(1)
+        assert grid.Move(agent, 3)
+        assert grid.AtI(3) == agent
