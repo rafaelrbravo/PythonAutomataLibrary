@@ -642,6 +642,19 @@ def _CheckBCValueOverload(bc, gridPtr, dimension, axis):
                 if not np.isfinite(v): raise ValueError("boundary values must be finite")
         return impl
 
+def _BCFloat64(bc):
+    if bc is None or np.isscalar(bc): return bc
+    return np.ascontiguousarray(bc,dtype=np.float64)
+
+@overload(_BCFloat64)
+def _BCFloat64Overload(bc):
+    if isinstance(bc, (types.NoneType, types.Number)):
+        def impl(bc): return bc
+        return impl
+    if isinstance(bc, types.Array):
+        def impl(bc): return np.ascontiguousarray(bc,dtype=np.float64)
+        return impl
+
 def _BCPointer(bc, gridPtr, slot):
     if bc is None: return 0
     if np.isscalar(bc): return _pd_bc_scalar(gridPtr,slot,bc)
@@ -2851,6 +2864,7 @@ class _PDEgridSafePython:
     def DiffusionADI(self, rateConstant, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         if not np.isfinite(rateConstant) or rateConstant<0: raise ValueError("diffusion rate must be finite and nonnegative")
         self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         ok=_pd_diffusion_adi(self._ptr,rateConstant,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok<0: raise MemoryError("ADI scratch allocation failed")
     def DiffusionRadialCircle(self, rateConstant, outerBC=None):
@@ -2968,6 +2982,7 @@ class _PDEgridFastPython:
         rx=np.asarray(rateConstantsX,dtype=np.float64).reshape(len(self)); ry=np.empty(0,dtype=np.float64) if rateConstantsY is None else np.asarray(rateConstantsY,dtype=np.float64).reshape(len(self)); rz=np.empty(0,dtype=np.float64) if rateConstantsZ is None else np.asarray(rateConstantsZ,dtype=np.float64).reshape(len(self))
         _pd_diffusion_interfaces_fast(self._ptr,rx.ctypes.data,0 if ry.size==0 else ry.ctypes.data,0 if rz.size==0 else rz.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
     def DiffusionADI(self, rateConstant, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         ok=_pd_diffusion_adi(self._ptr,rateConstant,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok<0: raise MemoryError("ADI scratch allocation failed")
     def DiffusionRadialCircle(self, rateConstant, outerBC=None):
@@ -3293,6 +3308,7 @@ def _olPDEScalarTransportAt(g,op,a,b,c,x0,x1,y0,y1,z0,z1,line):
                 if g._dimension>2: _CheckBCValue(z0,g._ptr,g._dimension,2); _CheckBCValue(z1,g._ptr,g._dimension,2)
                 elif z0 is not None or z1 is not None: raise ValueError("grid does not have Z boundary conditions"+sx)
             if o==0:
+                x0=_BCFloat64(x0); x1=_BCFloat64(x1); y0=_BCFloat64(y0); y1=_BCFloat64(y1); z0=_BCFloat64(z0); z1=_BCFloat64(z1)
                 ok=_pd_diffusion_adi(g._ptr,a,_BCPointer(x0,g._ptr,0),_BCPointer(x1,g._ptr,1),_BCPointer(y0,g._ptr,2),_BCPointer(y1,g._ptr,3),_BCPointer(z0,g._ptr,4),_BCPointer(z1,g._ptr,5))
                 if safe and ok<0: raise MemoryError("ADI scratch allocation failed"+sx)
             else:
