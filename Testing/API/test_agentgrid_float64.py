@@ -15,8 +15,8 @@ def test_float64_agent_property():
     grid = pal.NewAgentGrid(dimensions=(10, 10), numAgentProps=1)
     agent = grid.NewAgent(5.0, 5.0)
     value = 1.0 + 1e-10
-    grid.SetProp(agent, 0, value)
-    assert grid.GetProp(agent, 0) == value
+    grid[agent, 0] = value
+    assert grid[agent, 0] == value
 
 
 def test_float64_position():
