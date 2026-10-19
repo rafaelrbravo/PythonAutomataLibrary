@@ -408,3 +408,20 @@ def test_agentgrid32_compiled_stackable_point_creation():
         assert core._ag32_at_i(handle, 1) == 0
     finally:
         core._ag32_free(handle)
+
+
+def test_agentgrid32_internal_factory_manages_native_lifetime():
+    with core._NewAgentGrid32((3, 4), numAgentProps=1, isStackable=False) as grid:
+        assert grid.GetPop() == 0
+        a = grid.NewAgentPT(1.25, 2.75)
+        assert a == 0
+        assert grid.GetPop() == 1
+        assert grid.GetProperty(a, 0) == np.float32(1.25)
+        assert grid.SetProperty(a, 2, 7.5)
+        assert grid.GetProperty(a, 2) == np.float32(7.5)
+        assert grid.MovePT(a, 2.125, 3.5)
+        assert grid.GetProperty(a, 1) == np.float32(3.5)
+        assert grid.Dispose(a)
+        assert grid.GetPop() == 0
+    assert grid._ptr == 0
+    grid.Close()
