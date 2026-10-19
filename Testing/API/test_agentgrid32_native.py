@@ -440,3 +440,13 @@ def test_agentgrid32_internal_wrapper_stackable_occupancy_and_property_add():
         assert grid.CountI(1) == 1
         assert grid.AtI(1) == a
         assert grid.CountI(2) == 1
+
+
+def test_agentgrid32_internal_factory_rejects_invalid_options():
+    import pytest
+    for props in (-1, 1.5, True, 2**31):
+        with pytest.raises(ValueError, match="numAgentProps"):
+            core._NewAgentGrid32((2, 2), numAgentProps=props)
+    for stackable in (-1, 2, 0.5, "yes"):
+        with pytest.raises(ValueError, match="isStackable"):
+            core._NewAgentGrid32((2, 2), isStackable=stackable)
