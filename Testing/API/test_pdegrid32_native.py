@@ -120,7 +120,8 @@ def test_compiled_pdegrid32_coordinate_access():
     @core.nb.njit
     def run(handle):
         i = core._pd32_toi(handle, 1, 2, 0)
-        assert core._pd32_seti(handle, i, np.float32(1.25)) == 1
+        if core._pd32_seti(handle, i, np.float32(1.25)) != 1:
+            raise ValueError('native float32 PDEgrid set failed')
         core._pd32_addi(handle, i, np.float32(0.5))
         core._pd32_update(handle)
         return core._pd32_geti(handle, i)
