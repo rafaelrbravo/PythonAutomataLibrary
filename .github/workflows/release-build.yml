@@ -214,6 +214,8 @@ jobs:
       - name: Verify collected distributions
         working-directory: release-assets
         shell: python {0}
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
         run: |
           from pathlib import Path
           from zipfile import ZipFile
@@ -222,8 +224,10 @@ jobs:
           sources = list(Path('.').glob('*.tar.gz'))
           assert len(wheels) == 4, f'Expected 4 platform wheels, got {len(wheels)}'
           assert len(sources) == 1, 'Expected one source archive'
+          import os
           import tomllib
-          version = tomllib.loads(Path('../pyproject.toml').read_text())['project']['version']
+          tag = os.environ.get('RELEASE_TAG', '')
+          version = tag[1:] if tag.startswith('v') else tomllib.loads(Path('../pyproject.toml').read_text())['project']['version']
           assert all(wheel.name.startswith(f'pythonautomatalibrary-{version}-') for wheel in wheels), 'Release wheel version mismatch'
           assert sources[0].name == f'pythonautomatalibrary-{version}.tar.gz', 'Release source version mismatch'
           with tarfile.open(sources[0], 'r:gz') as archive:
