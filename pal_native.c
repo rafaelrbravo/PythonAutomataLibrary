@@ -1442,7 +1442,9 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
 #define PAL_PD_TYPE PDEGrid32
 #define PAL_PD_FLOAT float
 #define PAL_PD_PREFIX pal_pd32_
+#define PAL_PD_DIFFUSION diffuse
 #include "pdegrid_field_template.h"
+#undef PAL_PD_DIFFUSION
 #undef PAL_PD_PREFIX
 #undef PAL_PD_FLOAT
 #undef PAL_PD_TYPE
@@ -1614,38 +1616,7 @@ PAL_API int32_t pal_pd32_diffuse_mask(uintptr_t handle, double rate, const float
     return 1;
 }
 
-PAL_API int32_t pal_pd32_diffuse(uintptr_t handle, double rate) {
-    PDEGrid32 *grid = (PDEGrid32 *)handle;
-    if (!isfinite(rate) || rate < 0.0 || !isfinite(grid->dt) || grid->dt < 0.0) return 0;
-    const int32_t ny = grid->dimension > 1 ? grid->dimensions[1] : 1;
-    const int32_t nz = grid->dimension > 2 ? grid->dimensions[2] : 1;
-    const int32_t stride[3] = {ny * nz, nz, 1};
-    const double spacing[3] = {grid->dx, grid->dy, grid->dz};
-    double factors[3] = {0.0, 0.0, 0.0};
-    double stability = 0.0;
-    for (int32_t axis = 0; axis < grid->dimension; axis++) {
-        if (!isfinite(spacing[axis]) || spacing[axis] <= 0.0) return 0;
-        factors[axis] = rate * grid->dt / (spacing[axis] * spacing[axis]);
-        if (!isfinite(factors[axis])) return 0;
-        if (grid->dimensions[axis] > 1) stability += factors[axis];
-    }
-    /* Explicit diffusion is monotone for sum(rate*dt/dx^2) <= 1/2. */
-    if (stability > 0.5) return 0;
-    for (int32_t axis = 0; axis < grid->dimension; axis++) {
-        const int32_t size = grid->dimensions[axis];
-        const int32_t step = stride[axis];
-        if (size == 1 || factors[axis] == 0.0) continue;
-        for (int32_t i = 0; i < grid->length; i++) {
-            const int32_t coordinate = (i / step) % size;
-            if (coordinate == size - 1 && !grid->wrap[axis]) continue;
-            const int32_t j = coordinate == size - 1 ? i - (size - 1) * step : i + step;
-            const float flux = (float)(factors[axis] * ((double)grid->field[j] - grid->field[i]));
-            grid->deltas[i] += flux;
-            grid->deltas[j] -= flux;
-        }
-    }
-    return 1;
-}
+
 
 PAL_API int32_t pal_pd32_toi(uintptr_t handle, int32_t x, int32_t y, int32_t z) {
     PDEGrid32 *grid = (PDEGrid32 *)handle;
@@ -1769,7 +1740,9 @@ PAL_API int32_t pal_pd32_itoz(uintptr_t handle, int32_t i) {
 #define PAL_PD_TYPE PDEGrid
 #define PAL_PD_FLOAT double
 #define PAL_PD_PREFIX pal_pd_
+#define PAL_PD_DIFFUSION diffusion
 #include "pdegrid_field_template.h"
+#undef PAL_PD_DIFFUSION
 #undef PAL_PD_PREFIX
 #undef PAL_PD_FLOAT
 #undef PAL_PD_TYPE
@@ -1838,48 +1811,7 @@ PAL_API void pal_pd_region_get(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int3
 }
 PAL_API void pal_pd_region_set_scalar(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,double v){PDEGrid*g=(PDEGrid*)h;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++)g->field[PDEGrid_ToI(g,x,y,z)]=v;}
 PAL_API void pal_pd_region_set_array(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,const double*in){PDEGrid*g=(PDEGrid*)h;int32_t k=0;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++,k++)g->field[PDEGrid_ToI(g,x,y,z)]=in[k];}
-PAL_API int32_t pal_pd_diffusion(uintptr_t handle, double rate) {
-    PDEGrid *grid = (PDEGrid *)handle;
-    double sx = grid->dt * rate / (grid->dx * grid->dx);
-    double sy = grid->dimension > 1 ? grid->dt * rate / (grid->dy * grid->dy) : 0.0;
-    double sz = grid->dimension > 2 ? grid->dt * rate / (grid->dz * grid->dz) : 0.0;
-    if (2.0 * (sx + sy + sz) > 1.000001) return 0;
 
-    int32_t yMax = grid->dimension > 1 ? grid->dimensions[1] : 1;
-    int32_t zMax = grid->dimension > 2 ? grid->dimensions[2] : 1;
-
-    for (int32_t x = 0; x < grid->dimensions[0]; x++) {
-        for (int32_t y = 0; y < yMax; y++) {
-            for (int32_t z = 0; z < zMax; z++) {
-                int32_t i = PDEGrid_ToI(grid, x, y, z);
-                double center = grid->field[i];
-                double delta = 0.0;
-
-                int32_t low = PDEGrid_Wrap(grid, x - 1, 0);
-                int32_t high = PDEGrid_Wrap(grid, x + 1, 0);
-                if (low != PAL_NULL) delta += sx * (grid->field[PDEGrid_ToI(grid, low, y, z)] - center);
-                if (high != PAL_NULL) delta += sx * (grid->field[PDEGrid_ToI(grid, high, y, z)] - center);
-
-                if (grid->dimension > 1) {
-                    low = PDEGrid_Wrap(grid, y - 1, 1);
-                    high = PDEGrid_Wrap(grid, y + 1, 1);
-                    if (low != PAL_NULL) delta += sy * (grid->field[PDEGrid_ToI(grid, x, low, z)] - center);
-                    if (high != PAL_NULL) delta += sy * (grid->field[PDEGrid_ToI(grid, x, high, z)] - center);
-                }
-
-                if (grid->dimension > 2) {
-                    low = PDEGrid_Wrap(grid, z - 1, 2);
-                    high = PDEGrid_Wrap(grid, z + 1, 2);
-                    if (low != PAL_NULL) delta += sz * (grid->field[PDEGrid_ToI(grid, x, y, low)] - center);
-                    if (high != PAL_NULL) delta += sz * (grid->field[PDEGrid_ToI(grid, x, y, high)] - center);
-                }
-
-                grid->deltas[i] += delta;
-            }
-        }
-    }
-    return 1;
-}
 
 /* Extended PDEgrid API. Face BC pointers are NULL for zero-flux; otherwise
  * arrays laid out over the corresponding face. Wrapped axes ignore face BCs. */
