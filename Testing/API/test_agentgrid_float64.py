@@ -36,6 +36,18 @@ def test_compiled_near_upper_boundary_all_axes():
     assert grid.X(agent) == 100.0 - 1e-8
     assert grid.Y(agent) == 100.0 - 1e-8
 
+
+def test_compiled_near_upper_boundary_3d():
+    @pal.njit
+    def move_3d(grid, agent):
+        grid.Move(agent, 100.0 - 1e-8, 100.0 - 1e-8, 100.0 - 1e-8)
+
+    grid = pal.NewAgentGrid(dimensions=(100, 100, 100), isStackable=True)
+    agent = grid.NewAgent(50.0, 50.0, 50.0)
+    move_3d(grid, agent)
+    assert (grid.X(agent), grid.Y(agent), grid.Z(agent)) == (100.0 - 1e-8,) * 3
+
+
 def test_float64_agent_property():
     grid = pal.NewAgentGrid(dimensions=(10, 10), numAgentProps=1)
     agent = grid.NewAgent(5.0, 5.0)
