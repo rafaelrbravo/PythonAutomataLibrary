@@ -1415,7 +1415,9 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
 #define PAL_AG_OCC_NFLOAT float_property_count
 #define PAL_AG_OCC_POP population
 #define PAL_AG_OCC_LEN length
+#define PAL_AG_OCC_CAPACITY capacity
 #include "agentgrid_occupancy_template.h"
+#undef PAL_AG_OCC_CAPACITY
 #undef PAL_AG_OCC_LEN
 #undef PAL_AG_OCC_POP
 #undef PAL_AG_OCC_NFLOAT
@@ -1432,9 +1434,7 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
 #undef PAL_AG_FLOAT
 #undef PAL_AG_TYPE
 
-PAL_API int32_t pal_ag32_capacity(uintptr_t handle) {
-    return handle ? ((AgentGrid32 *)handle)->capacity : 0;
-}
+
 
 
 
