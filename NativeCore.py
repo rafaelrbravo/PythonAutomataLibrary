@@ -528,6 +528,13 @@ _pg_region_set_array_fast = _bind("pal_pg_region_set_array_", _I32, _PTR, _I32, 
 
 # PDEgrid C API
 # Independent native float32 PDEGrid entrypoints (not yet public constructor dispatch).
+_ag32_new = _bind("pal_ag32_new", _PTR, _I32_PTR, _I32, _I32, _I32)
+_ag32_free = _bind("pal_ag32_free", None, _PTR)
+_ag32_capacity = _bind("pal_ag32_capacity", _I32, _PTR)
+_ag32_length = _bind("pal_ag32_length", _I32, _PTR)
+_ag32_float_property_count = _bind("pal_ag32_float_property_count", _I32, _PTR)
+_ag32_float_data = _bind("pal_ag32_float_data", _F32_PTR, _PTR)
+
 _pd32_new = _bind("pal_pd32_new", _PTR, _I32_PTR, _I32)
 _pd32_free = _bind("pal_pd32_free", None, _PTR)
 _pd32_len = _bind("pal_pd32_len", _I32, _PTR)
