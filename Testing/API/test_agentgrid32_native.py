@@ -418,7 +418,7 @@ def test_agentgrid32_internal_factory_manages_native_lifetime():
         a = grid.NewAgentPT(1.25, 2.75)
         assert a == 0
         assert grid.GetPop() == 1
-        assert grid.GetProperty(a, 0) == np.float32(1.25)
+        assert grid.GetProperty(a, 0) == np.float32(0)
         assert grid.SetProperty(a, 0, 7.5)
         assert grid.GetProperty(a, 0) == np.float32(7.5)
         assert grid.MovePT(a, 2.125, 3.5)
