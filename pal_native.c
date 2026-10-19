@@ -1243,6 +1243,53 @@ PAL_API void pal_pd32_clear(uintptr_t handle, float value) {
     }
 }
 
+/* Float32 field accessors and conservative nearest-neighbor diffusion. */
+PAL_API int32_t pal_pd32_dim(uintptr_t handle, int32_t d) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    return d >= 0 && d < grid->dimension ? grid->dimensions[d] : PAL_NULL;
+}
+
+PAL_API void pal_pd32_steps(uintptr_t handle, double dt, double dx, double dy, double dz) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    grid->dt = dt;
+    grid->dx = dx;
+    grid->dy = dy;
+    grid->dz = dz;
+}
+
+PAL_API double pal_pd32_voxel(uintptr_t handle) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (grid->dimension == 1) return grid->dx;
+    if (grid->dimension == 2) return grid->dx * grid->dy;
+    return grid->dx * grid->dy * grid->dz;
+}
+
+PAL_API int32_t pal_pd32_diffuse(uintptr_t handle, double rate) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (!isfinite(rate) || rate < 0.0 || !isfinite(grid->dt) || grid->dt < 0.0) return 0;
+    const int32_t ny = grid->dimension > 1 ? grid->dimensions[1] : 1;
+    const int32_t nz = grid->dimension > 2 ? grid->dimensions[2] : 1;
+    const int32_t stride[3] = {ny * nz, nz, 1};
+    const double spacing[3] = {grid->dx, grid->dy, grid->dz};
+    for (int32_t axis = 0; axis < grid->dimension; axis++) {
+        const int32_t size = grid->dimensions[axis];
+        const int32_t step = stride[axis];
+        if (!isfinite(spacing[axis]) || spacing[axis] <= 0.0) return 0;
+        const double factor = rate * grid->dt / (spacing[axis] * spacing[axis]);
+        if (!isfinite(factor)) return 0;
+        for (int32_t i = 0; i < grid->length; i++) {
+            const int32_t coordinate = (i / step) % size;
+            if (coordinate == size - 1 && !grid->wrap[axis]) continue;
+            if (size == 1) continue;
+            const int32_t j = coordinate == size - 1 ? i - (size - 1) * step : i + step;
+            const float flux = (float)(factor * ((double)grid->field[j] - grid->field[i]));
+            grid->deltas[i] += flux;
+            grid->deltas[j] -= flux;
+        }
+    }
+    return 1;
+}
+
 PAL_API uintptr_t pal_pd_new(const int32_t *dimensions, int32_t dimension) {
     if (dimension < 1 || dimension > 3) return 0;
     PDEGrid *grid = (PDEGrid *)calloc(1, sizeof(PDEGrid));
