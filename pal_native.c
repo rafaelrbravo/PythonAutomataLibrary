@@ -1487,10 +1487,7 @@ PAL_API float *pal_pd32_delta_data(uintptr_t handle) {
     return ((PDEGrid32 *)handle)->deltas;
 }
 
-PAL_API float pal_pd32_geti(uintptr_t handle, int32_t i) {
-    PDEGrid32 *grid = (PDEGrid32 *)handle;
-    return i >= 0 && i < grid->length ? grid->field[i] : NAN;
-}
+
 
 PAL_API int32_t pal_pd32_seti(uintptr_t handle, int32_t i, float value) {
     PDEGrid32 *grid = (PDEGrid32 *)handle;
@@ -1836,7 +1833,7 @@ PAL_API int32_t pal_pd_itox_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if
 PAL_API int32_t pal_pd_itoy_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<2||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_pd_itoz_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<3||i<0||i>=g->length)return PAL_BAD_I;return i%g->dimensions[2];}
 PAL_API int32_t pal_pd_toi(uintptr_t handle, int32_t x, int32_t y, int32_t z) { return PDEGrid_ToI((PDEGrid *)handle, x, y, z); }
-PAL_API double pal_pd_geti(uintptr_t handle, int32_t i) { PDEGrid*g=(PDEGrid*)handle; return i>=0&&i<g->length?g->field[i]:NAN; }
+
 PAL_API double pal_pd_get(uintptr_t handle,int32_t x,int32_t y,int32_t z) { PDEGrid *g=(PDEGrid *)handle; return g->field[PDEGrid_ToI(g,x,y,z)]; }
 PAL_API int32_t pal_pd_seti(uintptr_t handle, int32_t i, double value) { PDEGrid*g=(PDEGrid*)handle; if(i<0||i>=g->length||!isfinite(value))return 0;g->field[i]=value;return 1; }
 PAL_API double pal_pd_geti_(uintptr_t h,int32_t i){return ((PDEGrid*)h)->field[i];}
