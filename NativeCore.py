@@ -2906,7 +2906,6 @@ class _PDEgridSafePython:
         xv=np.asarray(xVels,dtype=np.float64).reshape(len(self)); yv=np.empty(0,dtype=np.float64) if yVels is None else np.asarray(yVels,dtype=np.float64).reshape(len(self)); zv=np.empty(0,dtype=np.float64) if zVels is None else np.asarray(zVels,dtype=np.float64).reshape(len(self))
         xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         if interfaces: ok=_pd_advection_interfaces(self._ptr,xv.ctypes.data,0 if yv.size==0 else yv.ctypes.data,0 if zv.size==0 else zv.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
-        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         else: ok=_pd_advection_field(self._ptr,xv.ctypes.data,0 if yv.size==0 else yv.ctypes.data,0 if zv.size==0 else zv.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok<0: raise ValueError("advection velocities must be finite")
         if ok==0: raise ValueError("advection CFL condition violated")
@@ -3012,7 +3011,6 @@ class _PDEgridFastPython:
         xv=np.asarray(xVels,dtype=np.float64).reshape(len(self)); yv=np.empty(0,dtype=np.float64) if yVels is None else np.asarray(yVels,dtype=np.float64).reshape(len(self)); zv=np.empty(0,dtype=np.float64) if zVels is None else np.asarray(zVels,dtype=np.float64).reshape(len(self))
         xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         if interfaces: _pd_advection_interfaces_fast(self._ptr,xv.ctypes.data,0 if yv.size==0 else yv.ctypes.data,0 if zv.size==0 else zv.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
-        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         else: _pd_advection_field_fast(self._ptr,xv.ctypes.data,0 if yv.size==0 else yv.ctypes.data,0 if zv.size==0 else zv.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
 
 _PDEgridFast=_jitclass([("_ptr",uint64),("_dimension",int32),("_xDim",int32),("_yDim",int32),("_zDim",int32),("_length",int32),("_wrapX",types.boolean),("_wrapY",types.boolean),("_wrapZ",types.boolean)])(_PDEgridFastPython)
