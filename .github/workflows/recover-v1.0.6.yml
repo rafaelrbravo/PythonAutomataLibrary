@@ -1,0 +1,108 @@
+name: Recover PAL v1.0.6 release
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pal-recover-v1.0.6
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check existing tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          actual="$(gh api repos/${{ github.repository }}/git/ref/tags/v1.0.6 --jq .object.sha)"
+          test "$actual" = "4b5c2a59b48d413aca1d6c9f7ab660d6f748d009"
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39290154045
+          github-token: ${{ github.token }}
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39290154045
+          github-token: ${{ github.token }}
+          name: source-distribution
+          path: dist
+      - name: Verify recovered release distributions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+          import tarfile
+          p = Path("dist")
+          wheels = list(p.glob("*.whl"))
+          sdists = list(p.glob("*.tar.gz"))
+          assert len(wheels) == 4 and len(sdists) == 1, (wheels, sdists)
+          assert all(w.name.startswith("pythonautomatalibrary-1.0.6-") for w in wheels), wheels
+          assert sdists[0].name == "pythonautomatalibrary-1.0.6.tar.gz", sdists
+          assert sum("macosx" in w.name for w in wheels) == 2
+          assert sum("manylinux" in w.name for w in wheels) == 1
+          assert sum("win_amd64" in w.name for w in wheels) == 1
+          for w in wheels:
+              assert "-py3-none-" in w.name, w
+              with ZipFile(w) as z:
+                  names = z.namelist()
+                  suffix = "pal_native.dll" if "win_amd64" in w.name else ("libpal_native.dylib" if "macosx" in w.name else "libpal_native.so")
+                  native = [n for n in names if n.endswith(("pal_native.dll", "libpal_native.dylib", "libpal_native.so"))]
+                  assert len(native) == 1 and native[0].endswith(suffix), (w, native)
+                  assert not any(".data/purelib/" in n for n in names), w
+                  wheel_info = next(n for n in names if n.endswith(".dist-info/WHEEL"))
+                  assert "Root-Is-Purelib: false" in z.read(wheel_info).decode(), w
+          with tarfile.open(sdists[0], "r:gz") as z:
+              names = z.getnames()
+              for required in ("pal_native.c", "setup.py", "pyproject.toml", "README.md", "build_native.py"):
+                  assert any(n.endswith("/" + required) for n in names), required
+              assert not any(n.lower().endswith((".dll", ".so", ".dylib", ".pyd")) for n in names)
+          print("Validated recovered v1.0.6 artifacts")
+          PY
+      - name: Generate checksums
+        run: cd dist && sha256sum *.whl *.tar.gz > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: recovered-pal-v1.0.6
+          path: dist/*
+          if-no-files-found: error
+  github-release:
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: recovered-pal-v1.0.6
+          path: dist
+      - name: Publish existing-tag GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v1.0.6 --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload v1.0.6 dist/* --repo "${{ github.repository }}" --clobber
+          else
+            gh release create v1.0.6 dist/* --repo "${{ github.repository }}" --verify-tag --generate-notes
+          fi
+  pypi:
+    needs: github-release
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/PythonAutomataLibrary/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: recovered-pal-v1.0.6
+          path: dist
+      - name: Verify checksums
+        run: cd dist && sha256sum --check SHA256SUMS.txt
+      - run: rm dist/SHA256SUMS.txt
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
