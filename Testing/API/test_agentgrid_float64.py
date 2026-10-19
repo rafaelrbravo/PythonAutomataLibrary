@@ -11,6 +11,31 @@ def test_near_upper_boundary_move():
     assert grid.X(agent) == x
 
 
+
+def test_near_upper_boundary_all_axes():
+    for dimensions in ((100,), (100, 100), (100, 100, 100)):
+        grid = pal.NewAgentGrid(dimensions=dimensions, isStackable=True)
+        agent = grid.NewAgent(*([50.0] * len(dimensions)))
+        point = [100.0 - 1e-8] * len(dimensions)
+        grid.Move(agent, *point)
+        assert grid.X(agent) == point[0]
+        if len(dimensions) > 1:
+            assert grid.Y(agent) == point[1]
+        if len(dimensions) > 2:
+            assert grid.Z(agent) == point[2]
+
+
+def test_compiled_near_upper_boundary_all_axes():
+    @pal.njit
+    def move_2d(grid, agent):
+        grid.Move(agent, 100.0 - 1e-8, 100.0 - 1e-8)
+
+    grid = pal.NewAgentGrid(dimensions=(100, 100), isStackable=True)
+    agent = grid.NewAgent(50.0, 50.0)
+    move_2d(grid, agent)
+    assert grid.X(agent) == 100.0 - 1e-8
+    assert grid.Y(agent) == 100.0 - 1e-8
+
 def test_float64_agent_property():
     grid = pal.NewAgentGrid(dimensions=(10, 10), numAgentProps=1)
     agent = grid.NewAgent(5.0, 5.0)
