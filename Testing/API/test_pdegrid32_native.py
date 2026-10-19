@@ -369,19 +369,20 @@ def test_shared_diffusion_precision_parity_and_mass_conservation(dimensions):
         seti = _native(prefix + "seti", i32, ptr, i32, scalar)
         diffuse = _native(prefix + method, i32, ptr, ctypes.c_double)
         update = _native(prefix + "update", None, ptr)
-        field_ptr = _native(prefix + "field_data", ctypes.POINTER(scalar), ptr)
+        geti = _native(prefix + "geti", scalar, ptr, i32)
         handle = new((i32 * len(dimensions))(*dimensions), len(dimensions))
         assert handle
         try:
-            field = np.ctypeslib.as_array(field_ptr(handle), shape=(size,))
+            
             initial = np.linspace(0.25, 1.25, size, dtype=dtype)
             for i, value in enumerate(initial):
                 assert seti(handle, i, scalar(value)) == 1
-            mass_before = field.sum(dtype=np.float64)
+            mass_before = initial.sum(dtype=np.float64)
             assert diffuse(handle, 0.05) == 1
             update(handle)
-            assert field.sum(dtype=np.float64) == pytest.approx(mass_before, abs=2e-5)
-            results.append(field.copy())
+            values = np.array([geti(handle, i) for i in range(size)], dtype=dtype)
+            assert values.sum(dtype=np.float64) == pytest.approx(mass_before, abs=2e-5)
+            results.append(values)
         finally:
             free(handle)
     np.testing.assert_allclose(results[0], results[1], atol=3e-6, rtol=3e-6)
