@@ -1299,6 +1299,23 @@ PAL_API int32_t pal_ag32_new_i(uintptr_t handle,int32_t location) {
     g->generation++;
     return agent;
 }
+PAL_API int32_t pal_ag32_move_i(uintptr_t handle,int32_t agent,int32_t destination) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || !g->dimension || g->stackable || agent<0 || agent>=g->nAgents ||
+        destination<0 || destination>=g->length) return 0;
+    size_t base=(size_t)agent*N_AGENT_INT_PROPERTIES;
+    if (!g->intProperties[base+AGENT_ALIVE]) return 0;
+    int32_t source=g->intProperties[base+AGENT_LOCATION];
+    if (source==destination) return 1;
+    if (g->grid[destination]!=PAL_NULL || source<0 || source>=g->length ||
+        g->grid[source]!=agent) return 0;
+    g->grid[source]=PAL_NULL;
+    g->grid[destination]=agent;
+    g->intProperties[base+AGENT_LOCATION]=destination;
+    AgentGrid32_SetSquarePosition(g,agent,destination);
+    g->generation++;
+    return 1;
+}
 PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
     if (!g || agent<0 || agent>=g->nAgents) return 0;
