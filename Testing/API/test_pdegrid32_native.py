@@ -312,3 +312,15 @@ def test_pdegrid32_safe_coordinate_validation():
             grid[1.5, 0] = np.float32(1.0)
     finally:
         core._pd32_free(handle)
+
+def test_internal_pdegrid32_factory_respects_geometry_and_dtype():
+    for dims in ((5,), (3, 4), (2, 3, 4), (-5,)):
+        grid = core._NewPDEgrid32(dims)
+        try:
+            assert len(grid) == int(np.prod(np.abs(dims)))
+            assert grid.nDims == len(dims)
+            assert grid.wrapX == (dims[0] < 0)
+            grid[0] = np.float32(1.5)
+            assert grid[0] == pytest.approx(1.5)
+        finally:
+            core._pd32_free(grid._ptr)
