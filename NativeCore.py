@@ -5213,7 +5213,41 @@ class _PDEgrid32FastPython:
     def Advection(self,vx,vy=0.0,vz=0.0):
         if not _pd32_advection(self._ptr,vx,vy,vz): raise ValueError("invalid advection velocity or unstable time step")
 
-class _PDEgrid32SafePython(_PDEgrid32FastPython):
+class _PDEgrid32SafePython:
+    def __init__(self, ptr, dimension, xDim, yDim, zDim, length, wrapX, wrapY, wrapZ):
+        self._ptr=ptr; self._dimension=dimension; self._xDim=xDim; self._yDim=yDim; self._zDim=zDim
+        self._length=length; self._wrapX=wrapX; self._wrapY=wrapY; self._wrapZ=wrapZ
+
+    def __len__(self): return self._length
+    @property
+    def xDim(self): return self._xDim
+    @property
+    def yDim(self): return self._yDim
+    @property
+    def zDim(self): return self._zDim
+    @property
+    def nDims(self): return self._dimension
+    @property
+    def wrapX(self): return self._wrapX
+    @property
+    def wrapY(self): return self._wrapY
+    @property
+    def wrapZ(self): return self._wrapZ
+    def ToI(self,x,y=-1,z=-1): return _pd32_toi(self._ptr,x,y,z)
+    def ItoX(self,i): return _pd32_itox(self._ptr,i)
+    def ItoY(self,i): return _pd32_itoy(self._ptr,i)
+    def ItoZ(self,i): return _pd32_itoz(self._ptr,i)
+    def GetI(self,i): return _pd32_geti(self._ptr,i)
+    def SetI(self,i,value): return _pd32_seti(self._ptr,i,value)
+    def AddI(self,value,i): _pd32_addi(self._ptr,i,value)
+    def Update(self): _pd32_update(self._ptr)
+    def Reset(self): _pd32_clear(self._ptr,0.0)
+    def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0): _pd32_steps(self._ptr,dt,dx,dy,dz)
+    def Diffusion(self,rateConstant):
+        if not _pd32_diffuse(self._ptr,rateConstant): raise ValueError("invalid diffusion rate or unstable time step")
+    def Advection(self,vx,vy=0.0,vz=0.0):
+        if not _pd32_advection(self._ptr,vx,vy,vz): raise ValueError("invalid advection velocity or unstable time step")
+
     def _CheckI(self,i):
         if not np.isfinite(i) or i!=int(i) or i<0 or i>=self._length: raise IndexError("PDEgrid index out of bounds")
     def GetI(self,i):
@@ -5227,6 +5261,7 @@ class _PDEgrid32SafePython(_PDEgrid32FastPython):
         self._CheckI(i)
         if not np.isfinite(value): raise ValueError("PDEgrid value must be finite")
         _pd32_addi(self._ptr,i,value)
+
 
 _PDEgrid32Spec=[("_ptr",uint64),("_dimension",int32),("_xDim",int32),("_yDim",int32),("_zDim",int32),("_length",int32),("_wrapX",types.boolean),("_wrapY",types.boolean),("_wrapZ",types.boolean)]
 _PDEgrid32Fast=_jitclass(_PDEgrid32Spec)(_PDEgrid32FastPython)
