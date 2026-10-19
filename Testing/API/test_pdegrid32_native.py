@@ -132,3 +132,22 @@ def test_compiled_pdegrid32_coordinate_access():
         assert core._pd32_set(handle, 5, 0, 0, ctypes.c_float(2.0)) == 0
     finally:
         core._pd32_free(handle)
+
+def test_pdegrid32_linear_slices_and_atomic_validation():
+    dims = np.array([6], dtype=np.int32)
+    handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1)
+    assert handle
+    try:
+        values = np.array([1.25, 2.5, 3.75], dtype=np.float32)
+        out = np.empty(3, dtype=np.float32)
+        assert core._pd32_linear_set_array(handle, 1, 4, values.ctypes.data_as(ctypes.POINTER(ctypes.c_float))) == 1
+        core._pd32_linear_get(handle, 1, 4, out.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
+        np.testing.assert_array_equal(out, values)
+        bad = np.array([5.0, np.nan, 7.0], dtype=np.float32)
+        assert core._pd32_linear_set_array(handle, 1, 4, bad.ctypes.data_as(ctypes.POINTER(ctypes.c_float))) == 0
+        core._pd32_linear_get(handle, 1, 4, out.ctypes.data_as(ctypes.POINTER(ctypes.c_float)))
+        np.testing.assert_array_equal(out, values)
+        assert core._pd32_linear_set_scalar(handle, 2, 4, ctypes.c_float(8.0)) == 1
+        assert core._pd32_geti(handle, 3) == 8.0
+    finally:
+        core._pd32_free(handle)
