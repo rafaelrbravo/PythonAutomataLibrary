@@ -2,6 +2,7 @@
 import ctypes
 
 import numpy as np
+import pytest
 import NativeCore as core
 
 
@@ -35,6 +36,7 @@ def test_agentgrid32_property_operations_are_float32():
     handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1, 2, 0)
     assert handle
     try:
+        assert core._ag32_new_i(handle, 0) == 0
         assert core._ag32_set_property(handle, 0, 1, np.float32(1.25)) == 1
         assert core._ag32_add_property(handle, 0, 1, np.float32(0.5)) == 1
         assert core._ag32_get_property(handle, 0, 1) == np.float32(1.75)
@@ -417,8 +419,8 @@ def test_agentgrid32_internal_factory_manages_native_lifetime():
         assert a == 0
         assert grid.GetPop() == 1
         assert grid.GetProperty(a, 0) == np.float32(1.25)
-        assert grid.SetProperty(a, 2, 7.5)
-        assert grid.GetProperty(a, 2) == np.float32(7.5)
+        assert grid.SetProperty(a, 0, 7.5)
+        assert grid.GetProperty(a, 0) == np.float32(7.5)
         assert grid.MovePT(a, 2.125, 3.5)
         assert grid.GetProperty(a, 1) == np.float32(3.5)
         assert grid.Dispose(a)
@@ -433,9 +435,9 @@ def test_agentgrid32_internal_wrapper_stackable_occupancy_and_property_add():
         b = grid.NewAgentPT(1.75)
         assert grid.CountI(1) == 2
         assert grid.AtI(1) == b
-        assert grid.SetProperty(a, 1, 1.25)
-        assert grid.AddProperty(a, 1, 0.5)
-        assert grid.GetProperty(a, 1) == np.float32(1.75)
+        assert grid.SetProperty(a, 0, 1.25)
+        assert grid.AddProperty(a, 0, 0.5)
+        assert grid.GetProperty(a, 0) == np.float32(1.75)
         assert grid.MoveI(b, 2)
         assert grid.CountI(1) == 1
         assert grid.AtI(1) == a
