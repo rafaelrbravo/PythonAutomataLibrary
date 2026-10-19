@@ -11,6 +11,9 @@ on:
       - '.github/workflows/conda-smoke.yml'
   pull_request:
     branches: [main]
+concurrency:
+  group: conda-smoke-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 jobs:
   conda-build:
     strategy:
