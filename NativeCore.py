@@ -5209,6 +5209,25 @@ class _AgentGrid32Native:
     def MoveI(self, agent, location):
         return bool(_ag32_move_i(self._ptr, agent, location))
 
+    def Move(self, agent, location):
+        if self.nDims != 1:
+            raise ValueError("Move requires a one-dimensional AgentGrid; use MoveSQ or MovePT")
+        return self.MoveI(agent, location)
+
+    def MoveSQ(self, agent, x, y=-1, z=-1):
+        if self.nDims == 0: raise ValueError("MoveSQ requires a spatial grid")
+        coords = (x, y, z)
+        for axis in range(self.nDims):
+            value = coords[axis]
+            if not isinstance(value, (int, np.integer)) or isinstance(value, (bool, np.bool_)) or value < 0 or value >= self.dimensions[axis]:
+                raise IndexError("AgentGrid coordinate out of bounds")
+        if any(coords[axis] != -1 for axis in range(self.nDims, 3)):
+            raise ValueError("unexpected AgentGrid coordinate")
+        location = x
+        for axis in range(1, self.nDims):
+            location = location*self.dimensions[axis]+coords[axis]
+        return self.MoveI(agent, location)
+
     def MovePT(self, agent, x, y=0, z=0):
         return bool(_ag32_move_pt(self._ptr, agent, np.float32(x), np.float32(y), np.float32(z)))
 
