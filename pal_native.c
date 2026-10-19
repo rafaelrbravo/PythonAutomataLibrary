@@ -1307,6 +1307,23 @@ PAL_API int32_t pal_pd32_toi(uintptr_t handle, int32_t x, int32_t y, int32_t z) 
     return (x * grid->dimensions[1] + y) * grid->dimensions[2] + z;
 }
 
+PAL_API float pal_pd32_get(uintptr_t handle, int32_t x, int32_t y, int32_t z) {
+    const int32_t i = pal_pd32_toi(handle, x, y, z);
+    return i == PAL_NULL ? NAN : pal_pd32_geti(handle, i);
+}
+
+PAL_API int32_t pal_pd32_set(uintptr_t handle, int32_t x, int32_t y, int32_t z, float value) {
+    const int32_t i = pal_pd32_toi(handle, x, y, z);
+    return i == PAL_NULL ? 0 : pal_pd32_seti(handle, i, value);
+}
+
+PAL_API int32_t pal_pd32_add(uintptr_t handle, int32_t x, int32_t y, int32_t z, float value) {
+    const int32_t i = pal_pd32_toi(handle, x, y, z);
+    if (i == PAL_NULL || !isfinite(value)) return 0;
+    pal_pd32_addi(handle, i, value);
+    return 1;
+}
+
 PAL_API int32_t pal_pd32_itox(uintptr_t handle, int32_t i) {
     PDEGrid32 *grid = (PDEGrid32 *)handle;
     if (i < 0 || i >= grid->length) return PAL_NULL;
