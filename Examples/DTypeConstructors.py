@@ -14,12 +14,13 @@ def main():
     counts8 = pal.NewPopGrid((4, 4), dtype=np.uint8)
     counts64 = pal.NewPopGrid((4, 4), dtype=np.int64)
 
+    lattice[1, 2] = 3.5
     field64[1, 2] = 2.5
     field32[1, 2] = 2.5
     agent = agents64.NewAgentSQ(1, 2)
     agents64.SetProperty(agent, 0, 1.25)
 
-    print("Grid:", lattice.xDim, lattice.yDim)
+    print("Grid float64:", lattice[1, 2])
     print("PDEgrid float64:", field64[1, 2])
     print("PDEgrid float32:", field32[1, 2])
     print("AgentGrid float64 property:", agents64.GetProperty(agent, 0))
