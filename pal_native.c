@@ -1170,6 +1170,84 @@ PAL_API void pal_pd32_free(uintptr_t handle) {
     free(grid);
 }
 
+/* Independent float32 AgentGrid allocation backend. Public dispatch is deferred
+ * until lifecycle, occupancy, and property operations are implemented. */
+typedef struct {
+    int32_t dimension, dimensions[3], wrap[3], length, stackable;
+    int32_t nUserProperties, nFloatProperties, capacity;
+    int32_t population, nAgents, nDead;
+    uint64_t generation;
+    float *floatProperties;
+    int32_t *intProperties, *aliveAgents, *deadAgents, *grid, *counts;
+} AgentGrid32;
+
+PAL_API void pal_ag32_free(uintptr_t handle) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g) return;
+    free(g->floatProperties);
+    free(g->intProperties);
+    free(g->aliveAgents);
+    free(g->deadAgents);
+    free(g->grid);
+    free(g->counts);
+    free(g);
+}
+
+PAL_API uintptr_t pal_ag32_new(const int32_t *dimensions, int32_t dimension,
+                                int32_t nUserProperties, int32_t stackable) {
+    if (dimension < 0 || dimension > 3 || nUserProperties < 0 ||
+        nUserProperties > INT32_MAX-dimension || (dimension && !dimensions)) return 0;
+    AgentGrid32 *g=(AgentGrid32 *)calloc(1,sizeof(AgentGrid32));
+    if (!g) return 0;
+    g->dimension=dimension;
+    g->stackable=stackable!=0;
+    g->nUserProperties=nUserProperties;
+    g->nFloatProperties=dimension+nUserProperties;
+    g->capacity=1000;
+    g->length=dimension ? 1 : 0;
+    for (int32_t axis=0;axis<dimension;axis++) {
+        int64_t raw=dimensions[axis], size=raw<0 ? -raw : raw;
+        if (size<=0 || size>INT32_MAX || g->length>INT32_MAX/size) {
+            pal_ag32_free((uintptr_t)g);return 0;
+        }
+        g->wrap[axis]=raw<0;
+        g->dimensions[axis]=(int32_t)size;
+        g->length*=(int32_t)size;
+    }
+    const size_t capacity=(size_t)g->capacity;
+    const size_t props=(size_t)g->nFloatProperties;
+    if (props && capacity>SIZE_MAX/props/sizeof(float)) {
+        pal_ag32_free((uintptr_t)g);return 0;
+    }
+    g->floatProperties=(float *)calloc(capacity*(props ? props : 1),sizeof(float));
+    g->intProperties=(int32_t *)calloc(capacity*N_AGENT_INT_PROPERTIES,sizeof(int32_t));
+    g->aliveAgents=(int32_t *)calloc(capacity,sizeof(int32_t));
+    g->deadAgents=(int32_t *)calloc(capacity,sizeof(int32_t));
+    if (g->length) {
+        g->grid=(int32_t *)malloc((size_t)g->length*sizeof(int32_t));
+        g->counts=(int32_t *)calloc((size_t)g->length,sizeof(int32_t));
+    }
+    if (!g->floatProperties || !g->intProperties || !g->aliveAgents ||
+        !g->deadAgents || (g->length && (!g->grid || !g->counts))) {
+        pal_ag32_free((uintptr_t)g);return 0;
+    }
+    for (int32_t i=0;i<g->length;i++) g->grid[i]=PAL_NULL;
+    return (uintptr_t)g;
+}
+
+PAL_API int32_t pal_ag32_capacity(uintptr_t handle) {
+    return handle ? ((AgentGrid32 *)handle)->capacity : 0;
+}
+PAL_API int32_t pal_ag32_length(uintptr_t handle) {
+    return handle ? ((AgentGrid32 *)handle)->length : 0;
+}
+PAL_API int32_t pal_ag32_float_property_count(uintptr_t handle) {
+    return handle ? ((AgentGrid32 *)handle)->nFloatProperties : 0;
+}
+PAL_API float *pal_ag32_float_data(uintptr_t handle) {
+    return handle ? ((AgentGrid32 *)handle)->floatProperties : NULL;
+}
+
 PAL_API uintptr_t pal_pd32_new(const int32_t *dimensions, int32_t dimension) {
     if (dimension < 1 || dimension > 3 || dimensions == NULL) return 0;
     PDEGrid32 *grid = (PDEGrid32 *)calloc(1, sizeof(PDEGrid32));
