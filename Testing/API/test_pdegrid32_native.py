@@ -151,3 +151,25 @@ def test_pdegrid32_linear_slices_and_atomic_validation():
         assert core._pd32_geti(handle, 3) == 8.0
     finally:
         core._pd32_free(handle)
+
+def test_pdegrid32_rectangular_regions():
+    dims = np.array([4, 5, 3], dtype=np.int32)
+    handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 3)
+    assert handle
+    args = (handle, 1, 3, 2, 5, 1, 3)
+    try:
+        values = np.arange(12, dtype=np.float32) + 1
+        out = np.empty_like(values)
+        assert core._pd32_region_set_array(*args, values.ctypes.data_as(ctypes.POINTER(ctypes.c_float))) == 1
+        assert core._pd32_region_get(*args, out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))) == 1
+        np.testing.assert_array_equal(out, values)
+        bad = values.copy()
+        bad[7] = np.nan
+        assert core._pd32_region_set_array(*args, bad.ctypes.data_as(ctypes.POINTER(ctypes.c_float))) == 0
+        assert core._pd32_region_get(*args, out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))) == 1
+        np.testing.assert_array_equal(out, values)
+        assert core._pd32_region_set_scalar(*args, ctypes.c_float(4.5)) == 1
+        assert core._pd32_region_get(*args, out.ctypes.data_as(ctypes.POINTER(ctypes.c_float))) == 1
+        np.testing.assert_array_equal(out, np.full(12, 4.5, dtype=np.float32))
+    finally:
+        core._pd32_free(handle)
