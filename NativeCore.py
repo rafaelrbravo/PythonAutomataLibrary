@@ -5257,19 +5257,19 @@ class _AgentGrid32Native:
 
     def GetProperty(self, agent, prop):
         self._CheckProperty(prop)
-        return _ag32_get_property(self._ptr, agent, prop)
+        return _ag32_get_property(self._ptr, agent, self.nDims + prop)
 
     def SetProperty(self, agent, prop, value):
         self._CheckProperty(prop)
         if not np.isfinite(value) or not np.isfinite(np.float32(value)):
             raise ValueError("AgentGrid float32 property must be finite")
-        return bool(_ag32_set_property(self._ptr, agent, prop, np.float32(value)))
+        return bool(_ag32_set_property(self._ptr, agent, self.nDims + prop, np.float32(value)))
 
     def AddProperty(self, agent, prop, value):
         self._CheckProperty(prop)
         if not np.isfinite(value) or not np.isfinite(np.float32(value)):
             raise ValueError("AgentGrid float32 property increment must be finite")
-        return bool(_ag32_add_property(self._ptr, agent, prop, np.float32(value)))
+        return bool(_ag32_add_property(self._ptr, agent, self.nDims + prop, np.float32(value)))
 
     def AtI(self, location):
         self._CheckLocation(location)
