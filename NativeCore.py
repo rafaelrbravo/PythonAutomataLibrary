@@ -5190,16 +5190,18 @@ class _AgentGrid32Native:
         return self.NewAgentI(location)
 
     def NewAgentSQ(self, x, y=-1, z=-1):
-        if self.nDims == 1:
-            if y != -1 or z != -1: raise ValueError("1D AgentGrid expects x only")
-            return self.NewAgentI(x)
-        if self.nDims == 2:
-            if y == -1 or z != -1: raise ValueError("2D AgentGrid expects x,y")
-            return self.NewAgentI(x*self.dimensions[1]+y)
-        if self.nDims == 3:
-            if y == -1 or z == -1: raise ValueError("3D AgentGrid expects x,y,z")
-            return self.NewAgentI((x*self.dimensions[1]+y)*self.dimensions[2]+z)
-        raise ValueError("NewAgentSQ requires a spatial grid")
+        if self.nDims == 0: raise ValueError("NewAgentSQ requires a spatial grid")
+        coords = (x, y, z)
+        for axis in range(self.nDims):
+            value = coords[axis]
+            if not isinstance(value, (int, np.integer)) or isinstance(value, (bool, np.bool_)) or value < 0 or value >= self.dimensions[axis]:
+                raise IndexError("AgentGrid coordinate out of bounds")
+        if any(coords[axis] != -1 for axis in range(self.nDims, 3)):
+            raise ValueError("unexpected AgentGrid coordinate")
+        location = x
+        for axis in range(1, self.nDims):
+            location = location*self.dimensions[axis]+coords[axis]
+        return self.NewAgentI(location)
 
     def NewAgentPT(self, x, y=0, z=0):
         return _ag32_new_pt(self._ptr, np.float32(x), np.float32(y), np.float32(z))
