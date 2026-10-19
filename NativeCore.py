@@ -5323,6 +5323,9 @@ class _PDEgrid32FastPython:
     def Update(self): _pd32_update(self._ptr)
     def Reset(self): _pd32_clear(self._ptr,0.0)
     def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0): _pd32_steps(self._ptr,dt,dx,dy,dz)
+    def InWrapX(self,value): return value % self._xDim
+    def InWrapY(self,value): return value % self._yDim
+    def InWrapZ(self,value): return value % self._zDim
     def Dt(self): return _pd32_dt(self._ptr)
     def Dx(self): return _pd32_dx(self._ptr)
     def Dy(self): return _pd32_dy(self._ptr)
@@ -5394,6 +5397,17 @@ class _PDEgrid32SafePython:
         if not np.isfinite(dt) or not np.isfinite(dx) or not np.isfinite(dy) or not np.isfinite(dz) or dt<=0 or dx<=0 or dy<=0 or dz<=0:
             raise ValueError("time and space steps must be finite and positive")
         _pd32_steps(self._ptr,dt,dx,dy,dz)
+    def InWrapX(self,value):
+        if not np.isfinite(value) or value!=int(value) or value<np.iinfo(np.int32).min or value>np.iinfo(np.int32).max: raise ValueError("index must be an int32 integer")
+        return value % self._xDim
+    def InWrapY(self,value):
+        if self._dimension<2: raise ValueError("InWrapY requires a 2D or 3D PDEgrid")
+        if not np.isfinite(value) or value!=int(value) or value<np.iinfo(np.int32).min or value>np.iinfo(np.int32).max: raise ValueError("index must be an int32 integer")
+        return value % self._yDim
+    def InWrapZ(self,value):
+        if self._dimension<3: raise ValueError("InWrapZ requires a 3D PDEgrid")
+        if not np.isfinite(value) or value!=int(value) or value<np.iinfo(np.int32).min or value>np.iinfo(np.int32).max: raise ValueError("index must be an int32 integer")
+        return value % self._zDim
     def Dt(self): return _pd32_dt(self._ptr)
     def Dx(self): return _pd32_dx(self._ptr)
     def Dy(self):
