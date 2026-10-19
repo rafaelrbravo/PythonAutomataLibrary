@@ -26,17 +26,6 @@ def test_float64_position():
     assert grid.X(agent) == x
 
 
-def test_compiled_float64_position():
-    @pal.njit
-    def run(grid):
-        agent = grid.NewAgent(5.0 + 1e-10, 5.0)
-        grid.Move(agent, 10.0 - 1e-8, 5.0)
-        return grid.X(agent)
-
-    grid = pal.NewAgentGrid(dimensions=(10, 10), isStackable=True)
-    assert run(grid) == 10.0 - 1e-8
-
-
 def test_compiled_float64_new_agent_only():
     @pal.njit
     def run(grid):
@@ -66,3 +55,15 @@ def test_compiled_float64_move_only():
     agent = grid.NewAgent(5.0, 5.0)
     run(grid, agent)
     assert grid.X(agent) == 10.0 - 1e-8
+
+
+def test_compiled_float64_position():
+    @pal.njit
+    def run(grid):
+        agent = grid.NewAgent(5.0 + 1e-10, 5.0)
+        grid.Move(agent, 10.0 - 1e-8, 5.0)
+        return grid.X(agent)
+
+    grid = pal.NewAgentGrid(dimensions=(10, 10), isStackable=True)
+    assert run(grid) == 10.0 - 1e-8
+
