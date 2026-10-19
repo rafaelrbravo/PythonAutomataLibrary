@@ -12,6 +12,11 @@
 #define PAL_PD_JOIN(a,b) PAL_PD_JOIN2(a,b)
 #define PAL_PD_FN(name) PAL_PD_JOIN(PAL_PD_PREFIX,name)
 
+PAL_API PAL_PD_FLOAT PAL_PD_FN(geti)(uintptr_t handle,int32_t i) {
+    PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
+    return grid && i>=0 && i<grid->length ? grid->field[i] : (PAL_PD_FLOAT)NAN;
+}
+
 PAL_API void PAL_PD_FN(update)(uintptr_t handle) {
     PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
     for (int32_t i=0;i<grid->length;i++) {
