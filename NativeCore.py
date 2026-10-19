@@ -5456,21 +5456,18 @@ class _PDEgrid32SafePython:
         if self._dimension<3: raise ValueError("ItoZ requires a 3D PDEgrid")
         self._CheckI(i)
         return _pd32_itoz(self._ptr,i)
-    def GetI(self,i): return _pd32_geti(self._ptr,i)
     def __getitem__(self,i):
         if isinstance(i,tuple):
             if len(i)==2: return self.GetI(self.ToI(i[0],i[1]))
             if len(i)==3: return self.GetI(self.ToI(i[0],i[1],i[2]))
             raise IndexError('PDEgrid expects one to three coordinates')
         return self.GetI(i)
-    def SetI(self,i,value): return _pd32_seti(self._ptr,i,value)
     def __setitem__(self,i,value):
         if isinstance(i,tuple):
             if len(i)==2: self.SetI(self.ToI(i[0],i[1]),value)
             elif len(i)==3: self.SetI(self.ToI(i[0],i[1],i[2]),value)
             else: raise IndexError('PDEgrid expects one to three coordinates')
         else: self.SetI(i,value)
-    def AddI(self,value,i): _pd32_addi(self._ptr,i,value)
     def Add(self,value,x,y=-1,z=-1):
         self.AddI(value,self.ToI(x,y,z))
     def Update(self): _pd32_update(self._ptr)
