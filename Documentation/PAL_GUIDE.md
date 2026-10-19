@@ -52,7 +52,7 @@ import PythonAutomataLibrary as pal
 
 SIZE = 30
 
-def Setup(cells):
+def Setup(cells: pal.AgentGrid):
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
 
@@ -81,12 +81,12 @@ SIZE = 30
 BLACK = pal.RGB(0, 0, 0)
 RED = pal.RGB(255, 0, 0)
 
-def Draw(cells, pix):
+def Draw(cells: pal.AgentGrid, pix: pal.Pix):
     pix[:] = BLACK
     for agent in cells.All():
         pix[cells.I(agent)] = RED
 
-def Setup(cells):
+def Setup(cells: pal.AgentGrid):
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
 
@@ -116,7 +116,7 @@ An `IList` is PAL's reusable list of integers. We use it to collect empty neighb
 ```python
 MOORE = pal.MooreHood(2, excludeCenter=True)
 
-def EmptyNeighbors(cells, agent, empty):
+def EmptyNeighbors(cells: pal.AgentGrid, agent: int, empty: pal.IList):
     empty.Clear()
     for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
         if cells.counts[x, y] == 0:
@@ -139,7 +139,7 @@ Each cell takes a random walk: at every timestep, it chooses one available empty
 Continue with the program modified in stage 3, retaining `MOORE`, `EmptyNeighbors`, and the reusable `empty` list. Remove the optional diagnostic `print` if you added it. Define the following `Step` function alongside `Draw` and `Setup`:
 
 ```python
-def Step(cells, empty):
+def Step(cells: pal.AgentGrid, empty: pal.IList):
     for agent in cells.All(shuffle=True):
         EmptyNeighbors(cells, agent, empty)
         if len(empty):
@@ -204,7 +204,7 @@ nutrient[:] = 1.0
 The initial concentration is 1 everywhere. Each timestep, cells remove nutrient locally and the boundaries maintain an exterior concentration of 1:
 
 ```python
-def StepNutrient(cells, nutrient):
+def StepNutrient(cells: pal.AgentGrid, nutrient: pal.PDEgrid):
     for agent in cells.All():
         x, y = cells.XSQ(agent), cells.YSQ(agent)
         nutrient[x, y] = max(0.0, nutrient[x, y] - 0.2)
