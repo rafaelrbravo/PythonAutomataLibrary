@@ -526,3 +526,24 @@ def test_pdegrid32_step_accessors_compiled_in_both_modes():
                 core._pd32_free(grid._ptr)
     finally:
         core._UseFastMode = original
+
+
+def test_pdegrid32_wrap_helpers_match_periodic_and_fixed_boundaries():
+    from NativeCore import _NewPDEgrid32
+
+    @core.nb.njit
+    def run(g):
+        return g.InWrapX(-1), g.InWrapX(4), g.InWrapY(-1), g.InWrapY(3)
+
+    original = core._UseFastMode
+    try:
+        for fast in (False, True):
+            core._UseFastMode = lambda: fast
+            for dims, expected in [([4, 3], (-2147483648, -2147483648, -2147483648, -2147483648)), ([-4, -3], (3, 0, 2, 0))]:
+                grid = _NewPDEgrid32(dims)
+                try:
+                    assert run(grid) == expected
+                finally:
+                    core._pd32_free(grid._ptr)
+    finally:
+        core._UseFastMode = original
