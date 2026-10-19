@@ -20,7 +20,7 @@ MUT_PROB1=2e-6
 MUT_PROB2=2e-6
 
 INIT_POP=1000
-TIMESTEPS=4001
+TIMESTEPS=5000
 
 WHITE=pal.RGB(255,255,255)
 
@@ -221,7 +221,7 @@ def main():
     mn=pal.NewMultinomial()
 
     pix,win=pal.StartPixWindow(
-        xDim=SIDE_LEN*4,
+        xDim=SIDE_LEN*5,
         yDim=SIDE_LEN,
         scale=2,
         title="Population Tumor"
@@ -234,19 +234,21 @@ def main():
 
     pal.AwaitWindows()
 
+    snapshot=0
     for tick in range(TIMESTEPS):
         if not win.IsOpen():
             break
         
         Step(cells,sums,mn)
     
-        if (tick+1)%1000==0:
-            snapshot=(tick+1)//1000-1
+        if (tick)%1000==0:
+            snapshot=(tick)//1000
     
             print(Population(cells))
     
-            Draw(cells,pix,snapshot*SIDE_LEN)
-            win.Update()
+        print(tick)
+        Draw(cells,pix,snapshot*SIDE_LEN)
+        win.Update()
     
     
     win.Save("PopulationGrid.png")
