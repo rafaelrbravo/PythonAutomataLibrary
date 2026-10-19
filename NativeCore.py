@@ -5075,7 +5075,7 @@ def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
 def NewPopGrid(dimensions, dtype=np.int64):
     """Create population counts with an explicit integer storage dtype.
 
-    Supported native field types: uint8, uint16, uint32, int64.
+    Supported native field types: int8, int16, int32, int64, uint8, uint16, uint32.
     The delta buffer uses a wider signed type where necessary.
     """
     dims = _dimensions_array(dimensions)
@@ -5084,13 +5084,16 @@ def NewPopGrid(dimensions, dtype=np.int64):
     except (TypeError, ValueError):
         raise ValueError("unsupported PopGrid dtype")
     capacities = {
+        np.dtype(np.int8): -8,
+        np.dtype(np.int16): -16,
+        np.dtype(np.int32): -32,
         np.dtype(np.uint8): np.iinfo(np.uint8).max,
         np.dtype(np.uint16): np.iinfo(np.uint16).max,
         np.dtype(np.uint32): np.iinfo(np.uint32).max,
         np.dtype(np.int64): np.iinfo(np.int64).max,
     }
     if requested not in capacities:
-        raise ValueError("PopGrid dtype must be uint8, uint16, uint32, or int64")
+        raise ValueError("PopGrid dtype must be int8, int16, int32, int64, uint8, uint16, or uint32")
     fast = _UseFastMode()
     ptr = _pg_new(dims.ctypes.data_as(_I32_PTR), len(dims), capacities[requested])
     if not ptr: raise MemoryError("unable to allocate PopGrid")
