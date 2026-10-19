@@ -5251,13 +5251,24 @@ class _AgentGrid32Native:
     def Dispose(self, agent):
         return bool(_ag32_dispose(self._ptr, agent))
 
+    def _CheckProperty(self, prop):
+        if not isinstance(prop, (int, np.integer)) or isinstance(prop, (bool, np.bool_)) or prop < 0 or prop >= self.numAgentProps:
+            raise IndexError("AgentGrid property index out of bounds")
+
     def GetProperty(self, agent, prop):
+        self._CheckProperty(prop)
         return _ag32_get_property(self._ptr, agent, prop)
 
     def SetProperty(self, agent, prop, value):
+        self._CheckProperty(prop)
+        if not np.isfinite(value) or not np.isfinite(np.float32(value)):
+            raise ValueError("AgentGrid float32 property must be finite")
         return bool(_ag32_set_property(self._ptr, agent, prop, np.float32(value)))
 
     def AddProperty(self, agent, prop, value):
+        self._CheckProperty(prop)
+        if not np.isfinite(value) or not np.isfinite(np.float32(value)):
+            raise ValueError("AgentGrid float32 property increment must be finite")
         return bool(_ag32_add_property(self._ptr, agent, prop, np.float32(value)))
 
     def AtI(self, location):
