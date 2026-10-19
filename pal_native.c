@@ -1278,9 +1278,9 @@ static void AgentGrid32_SetSquarePosition(AgentGrid32 *g,int32_t agent,int32_t l
 }
 PAL_API int32_t pal_ag32_new_i(uintptr_t handle,int32_t location) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
-    if (!g || g->stackable) return PAL_NULL;
+    if (!g) return PAL_NULL;
     if (g->dimension) {
-        if (location<0 || location>=g->length || g->grid[location]!=PAL_NULL) return PAL_NULL;
+        if (location<0 || location>=g->length || (!g->stackable && g->grid[location]!=PAL_NULL)) return PAL_NULL;
     } else if (location!=PAL_NULL) return PAL_NULL;
     if (g->nDead==0 && g->nAgents>=g->capacity && !AgentGrid32_Grow(g)) return PAL_NULL;
     int32_t agent=g->nDead ? g->deadAgents[--g->nDead] : g->nAgents++;
@@ -1293,6 +1293,12 @@ PAL_API int32_t pal_ag32_new_i(uintptr_t handle,int32_t location) {
         g->floatProperties[(size_t)agent*g->nFloatProperties+p]=0.0f;
     g->aliveAgents[g->population++]=agent;
     if (g->dimension) {
+        if (g->stackable) {
+            int32_t previous=g->grid[location];
+            g->intProperties[base+AGENT_PREV]=previous;
+            if (previous!=PAL_NULL) g->intProperties[(size_t)previous*N_AGENT_INT_PROPERTIES+AGENT_NEXT]=agent;
+            g->counts[location]++;
+        }
         g->grid[location]=agent;
         AgentGrid32_SetSquarePosition(g,agent,location);
     }
@@ -1301,15 +1307,26 @@ PAL_API int32_t pal_ag32_new_i(uintptr_t handle,int32_t location) {
 }
 PAL_API int32_t pal_ag32_move_i(uintptr_t handle,int32_t agent,int32_t destination) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
-    if (!g || !g->dimension || g->stackable || agent<0 || agent>=g->nAgents ||
+    if (!g || !g->dimension || agent<0 || agent>=g->nAgents ||
         destination<0 || destination>=g->length) return 0;
     size_t base=(size_t)agent*N_AGENT_INT_PROPERTIES;
     if (!g->intProperties[base+AGENT_ALIVE]) return 0;
     int32_t source=g->intProperties[base+AGENT_LOCATION];
     if (source==destination) return 1;
-    if (g->grid[destination]!=PAL_NULL || source<0 || source>=g->length ||
-        g->grid[source]!=agent) return 0;
-    g->grid[source]=PAL_NULL;
+    if ((!g->stackable && g->grid[destination]!=PAL_NULL) || source<0 || source>=g->length) return 0;
+    if (g->stackable) {
+        int32_t prev=g->intProperties[base+AGENT_PREV];
+        int32_t next=g->intProperties[base+AGENT_NEXT];
+        if (prev!=PAL_NULL) g->intProperties[(size_t)prev*N_AGENT_INT_PROPERTIES+AGENT_NEXT]=next;
+        if (next!=PAL_NULL) g->intProperties[(size_t)next*N_AGENT_INT_PROPERTIES+AGENT_PREV]=prev;
+        if (g->grid[source]==agent) g->grid[source]=prev;
+        g->counts[source]--;
+        prev=g->grid[destination];
+        g->intProperties[base+AGENT_PREV]=prev;
+        g->intProperties[base+AGENT_NEXT]=PAL_NULL;
+        if (prev!=PAL_NULL) g->intProperties[(size_t)prev*N_AGENT_INT_PROPERTIES+AGENT_NEXT]=agent;
+        g->counts[destination]++;
+    } else g->grid[source]=PAL_NULL;
     g->grid[destination]=agent;
     g->intProperties[base+AGENT_LOCATION]=destination;
     AgentGrid32_SetSquarePosition(g,agent,destination);
@@ -1322,7 +1339,16 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
     size_t base=(size_t)agent*N_AGENT_INT_PROPERTIES;
     if (!g->intProperties[base+AGENT_ALIVE]) return 0;
     int32_t loc=g->intProperties[base+AGENT_LOCATION];
-    if (g->dimension && loc>=0 && loc<g->length && g->grid[loc]==agent) g->grid[loc]=PAL_NULL;
+    if (g->dimension && loc>=0 && loc<g->length) {
+        if (g->stackable) {
+            int32_t prev=g->intProperties[base+AGENT_PREV];
+            int32_t next=g->intProperties[base+AGENT_NEXT];
+            if (prev!=PAL_NULL) g->intProperties[(size_t)prev*N_AGENT_INT_PROPERTIES+AGENT_NEXT]=next;
+            if (next!=PAL_NULL) g->intProperties[(size_t)next*N_AGENT_INT_PROPERTIES+AGENT_PREV]=prev;
+            if (g->grid[loc]==agent) g->grid[loc]=prev;
+            g->counts[loc]--;
+        } else if (g->grid[loc]==agent) g->grid[loc]=PAL_NULL;
+    }
     int32_t pos=g->intProperties[base+AGENT_ALIVE_POSITION];
     int32_t last=g->aliveAgents[--g->population];
     g->aliveAgents[pos]=last;
@@ -1335,6 +1361,11 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
 }
 PAL_API int32_t pal_ag32_population(uintptr_t handle) {
     return handle ? ((AgentGrid32 *)handle)->population : 0;
+}
+PAL_API int32_t pal_ag32_count_i(uintptr_t handle,int32_t location) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || location<0 || location>=g->length) return 0;
+    return g->stackable ? g->counts[location] : (g->grid[location]!=PAL_NULL);
 }
 PAL_API int32_t pal_ag32_at_i(uintptr_t handle,int32_t location) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
