@@ -1,12 +1,11 @@
 import PythonAutomataLibrary as pal
-from numba import njit
 
 X=10
 Y=10
 SCALE=100
 
 
-@njit(cache=True)
+@pal.njit(cache=True)
 def Draw(pix:pal.Pix):
     pix[4,4]=pal.RGB(
         int(pal.Random()*256),
