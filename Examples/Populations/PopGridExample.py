@@ -38,7 +38,7 @@ def Draw(cells:pal.PopGrid,pix:pal.Pix):
 
 
 def main():
-    pal.FastMode()
+    # pal.FastMode()
 
     pix,win=pal.StartPixWindow(xDim=X,yDim=Y,scale=SCALE)
 
