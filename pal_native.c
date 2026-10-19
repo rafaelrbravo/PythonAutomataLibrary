@@ -1238,13 +1238,35 @@ PAL_API uintptr_t pal_ag32_new(const int32_t *dimensions, int32_t dimension,
 /* Float32 agent property access uses true float storage, not double casts. */
 /* Initial AgentGrid32 lifecycle: single-occupancy and nonspatial grids.
  * Stackable agent creation is added separately with linked-list semantics. */
+static int AgentGrid32_Grow(AgentGrid32 *g) {
+    if (g->capacity>INT32_MAX/2) return 0;
+    int32_t old=g->capacity, next=old*2;
+    size_t props=(size_t)g->nFloatProperties, n=(size_t)next;
+    if (props && n>SIZE_MAX/props/sizeof(float)) return 0;
+    float *f=(float *)calloc(n*(props ? props : 1),sizeof(float));
+    int32_t *ip=(int32_t *)calloc(n*N_AGENT_INT_PROPERTIES,sizeof(int32_t));
+    int32_t *alive=(int32_t *)calloc(n,sizeof(int32_t));
+    int32_t *dead=(int32_t *)calloc(n,sizeof(int32_t));
+    if (!f || !ip || !alive || !dead) {
+        free(f);free(ip);free(alive);free(dead);return 0;
+    }
+    if (props) memcpy(f,g->floatProperties,(size_t)old*props*sizeof(float));
+    memcpy(ip,g->intProperties,(size_t)old*N_AGENT_INT_PROPERTIES*sizeof(int32_t));
+    memcpy(alive,g->aliveAgents,(size_t)g->population*sizeof(int32_t));
+    memcpy(dead,g->deadAgents,(size_t)g->nDead*sizeof(int32_t));
+    free(g->floatProperties);free(g->intProperties);
+    free(g->aliveAgents);free(g->deadAgents);
+    g->floatProperties=f;g->intProperties=ip;
+    g->aliveAgents=alive;g->deadAgents=dead;g->capacity=next;
+    return 1;
+}
 PAL_API int32_t pal_ag32_new_i(uintptr_t handle,int32_t location) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
     if (!g || g->stackable) return PAL_NULL;
     if (g->dimension) {
         if (location<0 || location>=g->length || g->grid[location]!=PAL_NULL) return PAL_NULL;
     } else if (location!=PAL_NULL) return PAL_NULL;
-    if (g->nDead==0 && g->nAgents>=g->capacity) return PAL_NULL;
+    if (g->nDead==0 && g->nAgents>=g->capacity && !AgentGrid32_Grow(g)) return PAL_NULL;
     int32_t agent=g->nDead ? g->deadAgents[--g->nDead] : g->nAgents++;
     size_t base=(size_t)agent*N_AGENT_INT_PROPERTIES;
     for (int32_t p=0;p<N_AGENT_INT_PROPERTIES;p++) g->intProperties[base+p]=PAL_NULL;
