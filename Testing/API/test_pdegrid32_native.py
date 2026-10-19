@@ -324,3 +324,31 @@ def test_internal_pdegrid32_factory_respects_geometry_and_dtype():
             assert grid[0] == pytest.approx(1.5)
         finally:
             core._pd32_free(grid._ptr)
+
+def test_pdegrid32_jitclass_mask_and_field_diffusion():
+    for cls in (core._PDEgrid32Safe, core._PDEgrid32Fast):
+        dims = np.array([5], dtype=np.int32)
+        handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 1)
+        assert handle
+        try:
+            grid = cls(handle, 1, 5, -1, -1, 5, False, False, False)
+            grid[2] = np.float32(1.0)
+            grid.DiffusionMask(0.1, np.array([0, 0, 0, -1, 0], dtype=np.float32))
+            grid.Update()
+            assert grid[1] == pytest.approx(0.1, abs=1e-6)
+            assert grid[3] == 0.0
+            grid.Reset()
+            grid[2] = np.float32(1.0)
+            grid.DiffusionField(np.array([0, 0.1, 0.2, 0.0, 0], dtype=np.float32))
+            grid.Update()
+            assert grid[1] == pytest.approx(2 * 0.1 * 0.2 / 0.3, abs=1e-6)
+            @core.nb.njit
+            def compiled_mask(g, m):
+                g.Reset()
+                g[2] = np.float32(1.0)
+                g.DiffusionMask(0.1, m)
+                g.Update()
+                return g[1]
+            assert compiled_mask(grid, np.array([0, 0, 0, -1, 0], dtype=np.float32)) == pytest.approx(0.1, abs=1e-6)
+        finally:
+            core._pd32_free(handle)
