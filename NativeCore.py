@@ -5382,7 +5382,10 @@ class _PDEgrid32SafePython:
         self.AddI(value,self.ToI(x,y,z))
     def Update(self): _pd32_update(self._ptr)
     def Reset(self): _pd32_clear(self._ptr,0.0)
-    def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0): _pd32_steps(self._ptr,dt,dx,dy,dz)
+    def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0):
+        if not np.isfinite(dt) or not np.isfinite(dx) or not np.isfinite(dy) or not np.isfinite(dz) or dt<=0 or dx<=0 or dy<=0 or dz<=0:
+            raise ValueError("time and space steps must be finite and positive")
+        _pd32_steps(self._ptr,dt,dx,dy,dz)
     def Diffusion(self,rateConstant):
         if not _pd32_diffuse(self._ptr,rateConstant): raise ValueError("invalid diffusion rate or unstable time step")
     def DiffusionMask(self,rateConstant,mask):
