@@ -3321,8 +3321,8 @@ def _olPDEScalarTransportAt(g,op,a,b,c,x0,x1,y0,y1,z0,z1,line):
                 elif y0 is not None or y1 is not None: raise ValueError("1D grids do not have Y boundary conditions"+sx)
                 if g._dimension>2: _CheckBCValue(z0,g._ptr,g._dimension,2); _CheckBCValue(z1,g._ptr,g._dimension,2)
                 elif z0 is not None or z1 is not None: raise ValueError("grid does not have Z boundary conditions"+sx)
+            x0=_BCFloat64(x0); x1=_BCFloat64(x1); y0=_BCFloat64(y0); y1=_BCFloat64(y1); z0=_BCFloat64(z0); z1=_BCFloat64(z1)
             if o==0:
-                x0=_BCFloat64(x0); x1=_BCFloat64(x1); y0=_BCFloat64(y0); y1=_BCFloat64(y1); z0=_BCFloat64(z0); z1=_BCFloat64(z1)
                 ok=_pd_diffusion_adi(g._ptr,a,_BCPointer(x0,g._ptr,0),_BCPointer(x1,g._ptr,1),_BCPointer(y0,g._ptr,2),_BCPointer(y1,g._ptr,3),_BCPointer(z0,g._ptr,4),_BCPointer(z1,g._ptr,5))
                 if safe and ok<0: raise MemoryError("ADI scratch allocation failed"+sx)
             else:
@@ -3339,6 +3339,8 @@ def _olPDERadialAt(g,r,bc,sphere,line):
             if safe:
                 if not np.isfinite(r) or r<0: raise ValueError("diffusion rate must be finite and nonnegative"+sx)
                 _CheckBCValue(bc,g._ptr,g._dimension,0)
+            bc=_BCFloat64(bc)
+            if safe:
                 ok=_pd_diffusion_radial_sphere(g._ptr,r,_BCPointer(bc,g._ptr,1)) if sp else _pd_diffusion_radial_circle(g._ptr,r,_BCPointer(bc,g._ptr,1))
                 if ok<0: raise ValueError(("DiffusionRadialSphere" if sp else "DiffusionRadialCircle")+" requires a non-wrapped 1D grid with at least 2 points"+sx)
                 if ok==0: raise ValueError(("radial sphere" if sp else "radial circle")+" diffusion stability condition violated"+sx)
@@ -3359,9 +3361,12 @@ def _olPDEDiffusionAt(g,r,x0,x1,y0,y1,z0,z1,line):
                 elif y0 is not None or y1 is not None: raise ValueError("1D grids do not have Y boundary conditions"+sx)
                 if g._dimension>2: _CheckBCValue(z0,g._ptr,g._dimension,2); _CheckBCValue(z1,g._ptr,g._dimension,2)
                 elif z0 is not None or z1 is not None: raise ValueError("grid does not have Z boundary conditions"+sx)
+                x0=_BCFloat64(x0); x1=_BCFloat64(x1); y0=_BCFloat64(y0); y1=_BCFloat64(y1); z0=_BCFloat64(z0); z1=_BCFloat64(z1)
                 ok=_pd_diffusion_bc(g._ptr,r,_BCPointer(x0,g._ptr,0),_BCPointer(x1,g._ptr,1),_BCPointer(y0,g._ptr,2),_BCPointer(y1,g._ptr,3),_BCPointer(z0,g._ptr,4),_BCPointer(z1,g._ptr,5))
                 if ok==0: raise ValueError("explicit diffusion stability condition violated"+sx)
-            else:_pd_diffusion_bc_fast(g._ptr,r,_BCPointer(x0,g._ptr,0),_BCPointer(x1,g._ptr,1),_BCPointer(y0,g._ptr,2),_BCPointer(y1,g._ptr,3),_BCPointer(z0,g._ptr,4),_BCPointer(z1,g._ptr,5))
+            else:
+                x0=_BCFloat64(x0); x1=_BCFloat64(x1); y0=_BCFloat64(y0); y1=_BCFloat64(y1); z0=_BCFloat64(z0); z1=_BCFloat64(z1)
+                _pd_diffusion_bc_fast(g._ptr,r,_BCPointer(x0,g._ptr,0),_BCPointer(x1,g._ptr,1),_BCPointer(y0,g._ptr,2),_BCPointer(y1,g._ptr,3),_BCPointer(z0,g._ptr,4),_BCPointer(z1,g._ptr,5))
         return impl
 
 
