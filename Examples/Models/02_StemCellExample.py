@@ -1,7 +1,5 @@
 import PythonAutomataLibrary as pal
 
-# pal.FastMode()
-
 X=200
 Y=200
 SCALE=5
