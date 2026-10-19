@@ -60,3 +60,25 @@ def test_native_pdegrid32_diffusion_conserves_mass(dimensions):
         assert np.all(field >= 0.0)
     finally:
         free(handle)
+
+def test_native_pdegrid32_unstable_diffusion_does_not_mutate_deltas():
+    ptr = ctypes.c_uint64
+    i32 = ctypes.c_int32
+    f32 = ctypes.c_float
+    new = _native("pal_pd32_new", ptr, ctypes.POINTER(i32), i32)
+    free = _native("pal_pd32_free", None, ptr)
+    set_value = _native("pal_pd32_seti", i32, ptr, i32, f32)
+    diffuse = _native("pal_pd32_diffuse", i32, ptr, ctypes.c_double)
+    update = _native("pal_pd32_update", None, ptr)
+    field_ptr = _native("pal_pd32_field_data", ctypes.POINTER(f32), ptr)
+    handle = new((i32 * 2)(5, 5), 2)
+    assert handle
+    try:
+        field = np.ctypeslib.as_array(field_ptr(handle), shape=(25,))
+        assert set_value(handle, 12, f32(1.0)) == 1
+        assert diffuse(handle, 0.3) == 0  # 2 * 0.3 > explicit stability limit
+        update(handle)
+        assert field[12] == 1.0
+        assert np.count_nonzero(field) == 1
+    finally:
+        free(handle)
