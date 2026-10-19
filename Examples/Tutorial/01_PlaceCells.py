@@ -2,7 +2,7 @@ import PythonAutomataLibrary as pal
 
 SIZE = 30
 
-def Setup(cells):
+def Setup(cells: pal.AgentGrid):
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
 def main():
