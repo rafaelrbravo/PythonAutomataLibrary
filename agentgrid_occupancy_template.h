@@ -28,6 +28,16 @@ PAL_API int32_t PAL_AG_OCC_FN(PAL_AG_OCC_NFLOAT)(uintptr_t handle) {
     return grid ? grid->nFloatProperties : 0;
 }
 
+
+PAL_API int32_t PAL_AG_OCC_FN(PAL_AG_OCC_POP)(uintptr_t handle) {
+    PAL_AG_TYPE *grid=(PAL_AG_TYPE *)handle;
+    return grid ? grid->population : 0;
+}
+PAL_API int32_t PAL_AG_OCC_FN(PAL_AG_OCC_LEN)(uintptr_t handle) {
+    PAL_AG_TYPE *grid=(PAL_AG_TYPE *)handle;
+    return grid ? grid->length : 0;
+}
+
 #undef PAL_AG_OCC_FN
 #undef PAL_AG_OCC_JOIN
 #undef PAL_AG_OCC_JOIN2
