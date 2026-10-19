@@ -28,6 +28,13 @@ PAL_API double PAL_PD_FN(voxel)(uintptr_t handle) {
     return grid->dx*grid->dy*grid->dz;
 }
 
+PAL_API int32_t PAL_PD_FN(seti)(uintptr_t handle,int32_t i,PAL_PD_FLOAT value) {
+    PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
+    if (!grid || i<0 || i>=grid->length || !isfinite(value)) return 0;
+    grid->field[i]=value;
+    return 1;
+}
+
 PAL_API PAL_PD_FLOAT PAL_PD_FN(geti)(uintptr_t handle,int32_t i) {
     PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
     return grid && i>=0 && i<grid->length ? grid->field[i] : (PAL_PD_FLOAT)NAN;
