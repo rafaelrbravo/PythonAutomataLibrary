@@ -5,12 +5,12 @@ SIZE = 30
 BLACK = pal.RGB(0, 0, 0)
 RED = pal.RGB(255, 0, 0)
 
-def Draw(cells, pix):
+def Draw(cells: pal.AgentGrid, pix: pal.Pix):
     pix[:] = BLACK
     for agent in cells.All():
         pix[cells.I(agent)] = RED
 
-def Setup(cells):
+def Setup(cells: pal.AgentGrid):
     for x, y in ((14, 14), (15, 14), (14, 15), (15, 15)):
         cells.NewAgentSQ(x, y)
 def main():
