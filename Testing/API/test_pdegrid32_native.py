@@ -82,3 +82,18 @@ def test_native_pdegrid32_unstable_diffusion_does_not_mutate_deltas():
         assert np.count_nonzero(field) == 1
     finally:
         free(handle)
+
+def test_bound_pdegrid32_functions():
+    dims = np.array([4, 4], dtype=np.int32)
+    handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 2)
+    assert handle
+    try:
+        assert core._pd32_len(handle) == 16
+        assert core._pd32_dim(handle, 0) == 4
+        assert core._pd32_toi(handle, 1, 1, 0) == 5
+        assert core._pd32_seti(handle, 5, ctypes.c_float(1.0)) == 1
+        assert core._pd32_diffuse(handle, 0.1) == 1
+        core._pd32_update(handle)
+        assert core._pd32_geti(handle, 5) == pytest.approx(0.6, abs=1e-6)
+    finally:
+        core._pd32_free(handle)
