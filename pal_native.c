@@ -1349,15 +1349,8 @@ PAL_API int32_t pal_ag32_move_pt(uintptr_t handle,int32_t agent,float x,float y,
     if (!g || !g->dimension || agent<0 || agent>=g->nAgents ||
         !g->intProperties[(size_t)agent*N_AGENT_INT_PROPERTIES+AGENT_ALIVE]) return 0;
     float coords[3]={x,y,z};
-    int32_t squares[3]={0,0,0};
-    for (int32_t axis=0;axis<g->dimension;axis++) {
-        if (!isfinite(coords[axis]) || coords[axis]<0.0f ||
-            (double)coords[axis]>=(double)g->dimensions[axis]) return 0;
-        squares[axis]=(int32_t)floor((double)coords[axis]);
-    }
-    int32_t location=squares[0];
-    if (g->dimension>1) location=location*g->dimensions[1]+squares[1];
-    if (g->dimension>2) location=location*g->dimensions[2]+squares[2];
+    int32_t location=AgentGrid32_PointToI(g,coords);
+    if (location==PAL_NULL) return 0;
     int32_t old=g->intProperties[(size_t)agent*N_AGENT_INT_PROPERTIES+AGENT_LOCATION];
     if (location!=old && !pal_ag32_move_i(handle,agent,location)) return 0;
     for (int32_t axis=0;axis<g->dimension;axis++)
@@ -1365,10 +1358,8 @@ PAL_API int32_t pal_ag32_move_pt(uintptr_t handle,int32_t agent,float x,float y,
     g->generation++;
     return 1;
 }
-PAL_API int32_t pal_ag32_new_pt(uintptr_t handle,float x,float y,float z) {
-    AgentGrid32 *g=(AgentGrid32 *)handle;
+static int32_t AgentGrid32_PointToI(const AgentGrid32 *g,const float coords[3]) {
     if (!g || !g->dimension) return PAL_NULL;
-    float coords[3]={x,y,z};
     int32_t location=0;
     for (int32_t axis=0;axis<g->dimension;axis++) {
         if (!isfinite(coords[axis]) || coords[axis]<0.0f ||
@@ -1376,6 +1367,13 @@ PAL_API int32_t pal_ag32_new_pt(uintptr_t handle,float x,float y,float z) {
         int32_t square=(int32_t)floor((double)coords[axis]);
         location=axis==0 ? square : location*g->dimensions[axis]+square;
     }
+    return location;
+}
+PAL_API int32_t pal_ag32_new_pt(uintptr_t handle,float x,float y,float z) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    float coords[3]={x,y,z};
+    int32_t location=AgentGrid32_PointToI(g,coords);
+    if (location==PAL_NULL) return PAL_NULL;
     int32_t agent=pal_ag32_new_i(handle,location);
     if (agent==PAL_NULL) return PAL_NULL;
     for (int32_t axis=0;axis<g->dimension;axis++)
