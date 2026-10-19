@@ -14,6 +14,7 @@
 #define PAL_AG_JOIN(a,b) PAL_AG_JOIN2(a,b)
 #define PAL_AG_FN(name) PAL_AG_JOIN(PAL_AG_PREFIX,name)
 
+#ifndef PAL_AG_DATA_ONLY
 PAL_API int32_t PAL_AG_FN(set_property)(uintptr_t handle,int32_t agent,int32_t property,PAL_AG_FLOAT value) {
     PAL_AG_TYPE *g=(PAL_AG_TYPE *)handle;
     if (!g || agent<0 || agent>=g->capacity || property<0 ||
@@ -38,6 +39,7 @@ PAL_API int32_t PAL_AG_FN(add_property)(uintptr_t handle,int32_t agent,int32_t p
     return 1;
 }
 
+#endif /* PAL_AG_DATA_ONLY */
 PAL_API PAL_AG_FLOAT *PAL_AG_FN(float_data)(uintptr_t handle) {
     PAL_AG_TYPE *grid=(PAL_AG_TYPE *)handle;
     return grid ? grid->floatProperties : NULL;
