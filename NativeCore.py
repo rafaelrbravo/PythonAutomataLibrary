@@ -5144,6 +5144,62 @@ def _StaticGeometry(dims):
     wrapX=bool(dims[0]<0) if d>0 else False; wrapY=bool(dims[1]<0) if d>1 else False; wrapZ=bool(dims[2]<0) if d>2 else False
     return x,y,z,length,wrapX,wrapY,wrapZ
 
+class _AgentGrid32Native:
+    """Internal float32 native handle; not yet the public AgentGrid API."""
+
+    def __init__(self, ptr, dimensions, numAgentProps, stackable):
+        self._ptr = ptr
+        self.dimensions = tuple(int(abs(d)) for d in dimensions)
+        self.numAgentProps = numAgentProps
+        self.stackable = stackable
+
+    def Close(self):
+        if self._ptr:
+            _ag32_free(self._ptr)
+            self._ptr = 0
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.Close()
+
+    def GetPop(self):
+        return _ag32_population(self._ptr)
+
+    def NewAgentI(self, location):
+        return _ag32_new_i(self._ptr, location)
+
+    def NewAgentPT(self, x, y=0, z=0):
+        return _ag32_new_pt(self._ptr, np.float32(x), np.float32(y), np.float32(z))
+
+    def MoveI(self, agent, location):
+        return bool(_ag32_move_i(self._ptr, agent, location))
+
+    def MovePT(self, agent, x, y=0, z=0):
+        return bool(_ag32_move_pt(self._ptr, agent, np.float32(x), np.float32(y), np.float32(z)))
+
+    def Dispose(self, agent):
+        return bool(_ag32_dispose(self._ptr, agent))
+
+    def GetProperty(self, agent, prop):
+        return _ag32_get_property(self._ptr, agent, prop)
+
+    def SetProperty(self, agent, prop, value):
+        return bool(_ag32_set_property(self._ptr, agent, prop, np.float32(value)))
+
+
+def _NewAgentGrid32(dimensions, numAgentProps=0, isStackable=False):
+    """Internal float32 factory for native backend validation only."""
+    dims = _dimensions_array(dimensions, allowZero=True)
+    if not isinstance(numAgentProps, (int, np.integer)) or numAgentProps < 0 or numAgentProps > np.iinfo(np.int32).max-len(dims):
+        raise ValueError("numAgentProps must be a nonnegative int32")
+    ptr = _ag32_new(dims.ctypes.data_as(_I32_PTR), len(dims), int(numAgentProps), int(isStackable))
+    if not ptr:
+        raise MemoryError("unable to allocate float32 AgentGrid")
+    return _AgentGrid32Native(ptr, dims, int(numAgentProps), bool(isStackable))
+
+
 def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False, dtype=np.float64):
     """Create an agent grid with optional per-agent float properties and site stacking.
 
