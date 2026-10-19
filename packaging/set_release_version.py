@@ -4,12 +4,10 @@ from pathlib import Path
 import re
 import sys
 
-from packaging.version import Version
-
 tag = os.environ.get("RELEASE_TAG", "")
 if not re.fullmatch(r"v[0-9]+\.[0-9]+\.[0-9]+", tag):
     raise SystemExit(f"Expected final release tag vMAJOR.MINOR.PATCH, got {tag!r}")
-version = str(Version(tag[1:]))
+version = tag[1:]
 path = Path("pyproject.toml")
 contents = path.read_text(encoding="utf-8")
 updated, count = re.subn(r'(?m)^(version\s*=\s*")[^"]+(")$', lambda m: m.group(1) + version + m.group(2), contents)
