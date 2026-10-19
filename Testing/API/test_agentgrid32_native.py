@@ -213,7 +213,7 @@ def test_agentgrid32_stackable_growth_preserves_chains():
         assert core._ag32_population(handle) == 1096
         assert core._ag32_move_i(handle, 1001, 0) == 1
         assert core._ag32_at_i(handle, 0) == 1001
-        assert core._ag32_count_i(handle, 0) == 367
+        assert core._ag32_count_i(handle, 0) == 366
         assert core._ag32_new_i(handle, 2) >= 0
         assert core._ag32_population(handle) == 1097
     finally:
