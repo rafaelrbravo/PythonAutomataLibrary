@@ -1,4 +1,7 @@
 include pal_native.c
+include agentgrid_properties_template.h
+include agentgrid_occupancy_template.h
+include pdegrid_field_template.h
 include build_native.py
 include README.md
 recursive-exclude * __pycache__ *.py[cod]
