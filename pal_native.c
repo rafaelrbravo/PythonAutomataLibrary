@@ -1399,9 +1399,12 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
     }
     int32_t pos=g->intProperties[base+AGENT_ALIVE_POSITION];
     int32_t last=g->aliveAgents[--g->population];
-    g->aliveAgents[pos]=last;
-    g->intProperties[(size_t)last*N_AGENT_INT_PROPERTIES+AGENT_ALIVE_POSITION]=pos;
+    if (pos<g->population) {
+        g->aliveAgents[pos]=last;
+        g->intProperties[(size_t)last*N_AGENT_INT_PROPERTIES+AGENT_ALIVE_POSITION]=pos;
+    }
     g->intProperties[base+AGENT_ALIVE]=0;
+    g->intProperties[base+AGENT_ALIVE_POSITION]=PAL_NULL;
     g->intProperties[base+AGENT_LOCATION]=PAL_NULL;
     g->deadAgents[g->nDead++]=agent;
     g->generation++;
