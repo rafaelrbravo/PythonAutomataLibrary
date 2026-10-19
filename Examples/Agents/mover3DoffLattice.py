@@ -4,7 +4,7 @@ import PythonAutomataLibrary as pal
 X=10
 Y=10
 Z=10
-SCALE=50
+WINDOW_SIZE=500
 TIMESTEPS=10000
 
 BLUE=pal.RGB(0,0,255)
@@ -52,7 +52,7 @@ def Draw(grid:pal.AgentGrid,agent,draw:pal.OpenGLDraw):
 def main():
     # pal.FastMode()
 
-    draw,win=pal.StartOpenGLWindow(xDim=X,yDim=Y,zDim=Z,scale=SCALE,title="3D")
+    draw,win=pal.StartOpenGLWindow(xDim=X,yDim=Y,zDim=Z,width=WINDOW_SIZE,height=WINDOW_SIZE,title="3D")
     win.Background(BLUE)
     win.Borders(1,BLACK)
 
