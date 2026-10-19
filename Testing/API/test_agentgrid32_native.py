@@ -320,3 +320,27 @@ def test_agentgrid32_stackable_point_move_keeps_occupancy_chains():
         assert core._ag32_count_i(handle, 1) == 1
     finally:
         core._ag32_free(handle)
+
+
+def test_agentgrid32_point_creation_python_and_compiled():
+    dims = np.array([3, 4], dtype=np.int32)
+    handle = core._ag32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 2, 1, 0)
+    assert handle
+    try:
+        a = core._ag32_new_pt(handle, np.float32(1.25), np.float32(2.75), np.float32(0))
+        assert a == 0
+        assert core._ag32_at_i(handle, 6) == a
+        assert core._ag32_get_property(handle, a, 0) == np.float32(1.25)
+        assert core._ag32_get_property(handle, a, 1) == np.float32(2.75)
+        assert core._ag32_new_pt(handle, np.float32(1.5), np.float32(2.5), np.float32(0)) == -1
+        assert core._ag32_new_pt(handle, np.float32(np.nan), np.float32(0), np.float32(0)) == -1
+        assert core._ag32_population(handle) == 1
+        @core.nb.njit
+        def compiled_new(h):
+            return core._ag32_new_pt(h, np.float32(2.125), np.float32(3.875), np.float32(0))
+        b = compiled_new(handle)
+        assert b == 1
+        assert core._ag32_at_i(handle, 11) == b
+        assert core._ag32_get_property(handle, b, 1) == np.float32(3.875)
+    finally:
+        core._ag32_free(handle)
