@@ -527,6 +527,26 @@ _pg_region_set_array = _bind("pal_pg_region_set_array", _I32, _PTR, _I32, _I32, 
 _pg_region_set_array_fast = _bind("pal_pg_region_set_array_", _I32, _PTR, _I32, _I32, _I32, _I32, _I32, _I32, _I64_PTR)
 
 # PDEgrid C API
+# Independent native float32 PDEGrid entrypoints (not yet public constructor dispatch).
+_pd32_new = _bind("pal_pd32_new", _PTR, _I32_PTR, _I32)
+_pd32_free = _bind("pal_pd32_free", None, _PTR)
+_pd32_len = _bind("pal_pd32_len", _I32, _PTR)
+_pd32_dim = _bind("pal_pd32_dim", _I32, _PTR, _I32)
+_pd32_toi = _bind("pal_pd32_toi", _I32, _PTR, _I32, _I32, _I32)
+_pd32_itox = _bind("pal_pd32_itox", _I32, _PTR, _I32)
+_pd32_itoy = _bind("pal_pd32_itoy", _I32, _PTR, _I32)
+_pd32_itoz = _bind("pal_pd32_itoz", _I32, _PTR, _I32)
+_pd32_field_data = _bind("pal_pd32_field_data", _F32_PTR, _PTR)
+_pd32_delta_data = _bind("pal_pd32_delta_data", _F32_PTR, _PTR)
+_pd32_geti = _bind("pal_pd32_geti", _F32, _PTR, _I32)
+_pd32_seti = _bind("pal_pd32_seti", _I32, _PTR, _I32, _F32)
+_pd32_addi = _bind("pal_pd32_addi", None, _PTR, _I32, _F32)
+_pd32_update = _bind("pal_pd32_update", None, _PTR)
+_pd32_clear = _bind("pal_pd32_clear", None, _PTR, _F32)
+_pd32_steps = _bind("pal_pd32_steps", None, _PTR, _F64, _F64, _F64, _F64)
+_pd32_voxel = _bind("pal_pd32_voxel", _F64, _PTR)
+_pd32_diffuse = _bind("pal_pd32_diffuse", _I32, _PTR, _F64)
+
 _pd_new = _bind("pal_pd_new", _PTR, _I32_PTR, _I32)
 _pd_free = _bind("pal_pd_free", None, _PTR)
 _pd_dim = _bind("pal_pd_dim", _I32, _PTR, _I32)
