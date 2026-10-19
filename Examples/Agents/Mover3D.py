@@ -5,7 +5,7 @@ X=10
 Y=10
 Z=10
 SCALE_2D=20
-SCALE_3D=50
+WINDOW_3D_SIZE=500
 TIMESTEPS=10000
 
 COLORSCALE=(pal.RGB(0,0,255),pal.RGB(0,255,255),pal.RGB(0,255,0),pal.RGB(255,255,0),pal.RGB(255,0,0))
@@ -49,7 +49,7 @@ def main():
     # pal.FastMode()
 
     pix,win2D=pal.StartPixWindow(xDim=X,yDim=Y,scale=SCALE_2D)
-    draw,win3D=pal.StartOpenGLWindow(xDim=X,yDim=Y,zDim=Z,scale=SCALE_3D)
+    draw,win3D=pal.StartOpenGLWindow(xDim=X,yDim=Y,zDim=Z,width=WINDOW_3D_SIZE,height=WINDOW_3D_SIZE)
     win3D.Borders(1,WHITE)
 
     grid=pal.NewAgentGrid(dimensions=(X,Y,Z),numAgentProps=0,isStackable=False)
