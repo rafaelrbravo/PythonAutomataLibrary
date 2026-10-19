@@ -5314,6 +5314,8 @@ class _PDEgrid32FastPython:
             else: raise IndexError('PDEgrid expects one to three coordinates')
         else: self.SetI(i,value)
     def AddI(self,value,i): _pd32_addi(self._ptr,i,value)
+    def Add(self,value,x,y=-1,z=-1):
+        self.AddI(value,self.ToI(x,y,z))
     def Update(self): _pd32_update(self._ptr)
     def Reset(self): _pd32_clear(self._ptr,0.0)
     def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0): _pd32_steps(self._ptr,dt,dx,dy,dz)
@@ -5376,6 +5378,8 @@ class _PDEgrid32SafePython:
             else: raise IndexError('PDEgrid expects one to three coordinates')
         else: self.SetI(i,value)
     def AddI(self,value,i): _pd32_addi(self._ptr,i,value)
+    def Add(self,value,x,y=-1,z=-1):
+        self.AddI(value,self.ToI(x,y,z))
     def Update(self): _pd32_update(self._ptr)
     def Reset(self): _pd32_clear(self._ptr,0.0)
     def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0): _pd32_steps(self._ptr,dt,dx,dy,dz)
