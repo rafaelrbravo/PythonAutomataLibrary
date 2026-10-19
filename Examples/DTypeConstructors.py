@@ -7,7 +7,7 @@ import PythonAutomataLibrary as pal
 
 
 def main():
-    lattice = pal.NewGrid((4, 4))
+    lattice = pal.NewGrid((4, 4), dtype=np.float64)
     field64 = pal.NewPDEgrid((4, 4))
     field32 = pal.NewPDEgrid((4, 4), dtype=np.float32)
     agents64 = pal.NewAgentGrid((4, 4), numAgentProps=1)
