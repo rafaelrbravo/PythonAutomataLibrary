@@ -2874,12 +2874,14 @@ class _PDEgridSafePython:
     def DiffusionRadialCircle(self, rateConstant, outerBC=None):
         if not np.isfinite(rateConstant) or rateConstant<0: raise ValueError("diffusion rate must be finite and nonnegative")
         self._CheckBC(outerBC,0)
+        outerBC=_BCFloat64(outerBC)
         ok=_pd_diffusion_radial_circle(self._ptr,rateConstant,_BCPointer(outerBC,self._ptr,1))
         if ok<0: raise ValueError("DiffusionRadialCircle requires a non-wrapped 1D grid with at least 2 points")
         if ok==0: raise ValueError("radial circle diffusion stability condition violated")
     def DiffusionRadialSphere(self, rateConstant, outerBC=None):
         if not np.isfinite(rateConstant) or rateConstant<0: raise ValueError("diffusion rate must be finite and nonnegative")
         self._CheckBC(outerBC,0)
+        outerBC=_BCFloat64(outerBC)
         ok=_pd_diffusion_radial_sphere(self._ptr,rateConstant,_BCPointer(outerBC,self._ptr,1))
         if ok<0: raise ValueError("DiffusionRadialSphere requires a non-wrapped 1D grid with at least 2 points")
         if ok==0: raise ValueError("radial sphere diffusion stability condition violated")
@@ -2996,8 +2998,10 @@ class _PDEgridFastPython:
         ok=_pd_diffusion_adi(self._ptr,rateConstant,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok<0: raise MemoryError("ADI scratch allocation failed")
     def DiffusionRadialCircle(self, rateConstant, outerBC=None):
+        outerBC=_BCFloat64(outerBC)
         ok=_pd_diffusion_radial_circle_fast(self._ptr,rateConstant,_BCPointer(outerBC,self._ptr,1))
     def DiffusionRadialSphere(self, rateConstant, outerBC=None):
+        outerBC=_BCFloat64(outerBC)
         ok=_pd_diffusion_radial_sphere_fast(self._ptr,rateConstant,_BCPointer(outerBC,self._ptr,1))
 
     def Advection(self, vx, vy=0.0, vz=0.0, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
