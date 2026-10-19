@@ -49,7 +49,7 @@ def Draw(grid:pal.AgentGrid,pix:pal.Pix):
 
 
 def main():
-    pal.FastMode()
+    # pal.FastMode()
 
     pix,win=pal.StartPixWindow(xDim=X,yDim=Y,scale=SCALE)
     grid=pal.NewAgentGrid(dimensions=(X,Y),numAgentProps=0,isStackable=False)
