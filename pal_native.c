@@ -1344,6 +1344,17 @@ PAL_API int32_t pal_ag32_move_i(uintptr_t handle,int32_t agent,int32_t destinati
     g->generation++;
     return 1;
 }
+static int32_t AgentGrid32_PointToI(const AgentGrid32 *g,const float coords[3]) {
+    if (!g || !g->dimension) return PAL_NULL;
+    int32_t location=0;
+    for (int32_t axis=0;axis<g->dimension;axis++) {
+        if (!isfinite(coords[axis]) || coords[axis]<0.0f ||
+            (double)coords[axis]>=(double)g->dimensions[axis]) return PAL_NULL;
+        int32_t square=(int32_t)floor((double)coords[axis]);
+        location=axis==0 ? square : location*g->dimensions[axis]+square;
+    }
+    return location;
+}
 PAL_API int32_t pal_ag32_move_pt(uintptr_t handle,int32_t agent,float x,float y,float z) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
     if (!g || !g->dimension || agent<0 || agent>=g->nAgents ||
@@ -1358,17 +1369,7 @@ PAL_API int32_t pal_ag32_move_pt(uintptr_t handle,int32_t agent,float x,float y,
     g->generation++;
     return 1;
 }
-static int32_t AgentGrid32_PointToI(const AgentGrid32 *g,const float coords[3]) {
-    if (!g || !g->dimension) return PAL_NULL;
-    int32_t location=0;
-    for (int32_t axis=0;axis<g->dimension;axis++) {
-        if (!isfinite(coords[axis]) || coords[axis]<0.0f ||
-            (double)coords[axis]>=(double)g->dimensions[axis]) return PAL_NULL;
-        int32_t square=(int32_t)floor((double)coords[axis]);
-        location=axis==0 ? square : location*g->dimensions[axis]+square;
-    }
-    return location;
-}
+
 PAL_API int32_t pal_ag32_new_pt(uintptr_t handle,float x,float y,float z) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
     float coords[3]={x,y,z};
