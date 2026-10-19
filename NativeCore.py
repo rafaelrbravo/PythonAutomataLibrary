@@ -271,18 +271,18 @@ _U8_PTR = ctypes.POINTER(ctypes.c_uint8)
 
 
 def _BCArray(bc, expected):
-    if bc is None: return np.empty(0,dtype=np.float32)
-    if np.isscalar(bc): return np.full(expected,bc,dtype=np.float32)
+    if bc is None: return np.empty(0,dtype=np.float64)
+    if np.isscalar(bc): return np.full(expected,bc,dtype=np.float64)
     return bc
 
 @overload(_BCArray)
 def _BCArrayOverload(bc, expected):
     if isinstance(bc, types.NoneType):
-        def impl(bc, expected): return np.empty(0,dtype=np.float32)
+        def impl(bc, expected): return np.empty(0,dtype=np.float64)
         return impl
     if isinstance(bc, types.Number):
         def impl(bc, expected):
-            out=np.empty(expected,dtype=np.float32)
+            out=np.empty(expected,dtype=np.float64)
             out[:]=bc
             return out
         return impl
@@ -295,14 +295,14 @@ def _NumbaCType(cType):
     if cType is _PTR: return types.uint64
     if cType is _I32: return types.int32
     if cType is _I64: return types.int64
-    if cType is _F32: return types.float32
+    if cType is _F32: return types.float64
     if cType is _F64: return types.float64
     if cType is _U32: return types.uint32
     if cType is _U8: return types.uint8
     if cType is _SIZE: return types.uintp
     if cType is _I32_PTR: return types.CPointer(types.int32)
     if cType is _I64_PTR: return types.CPointer(types.int64)
-    if cType is _F32_PTR: return types.CPointer(types.float32)
+    if cType is _F32_PTR: return types.CPointer(types.float64)
     if cType is _F64_PTR: return types.CPointer(types.float64)
     if cType is _U8_PTR: return types.CPointer(types.uint8)
     raise TypeError("unsupported PAL native C type: %r" % (cType,))
@@ -539,50 +539,50 @@ _pd_toi_safe = _bind("pal_pd_toi_safe", _I32, _PTR, _I32, _I32, _I32)
 _pd_itox_safe = _bind("pal_pd_itox_safe", _I32, _PTR, _I32)
 _pd_itoy_safe = _bind("pal_pd_itoy_safe", _I32, _PTR, _I32)
 _pd_itoz_safe = _bind("pal_pd_itoz_safe", _I32, _PTR, _I32)
-_pd_geti = _bind("pal_pd_geti", _F32, _PTR, _I32)
-_pd_get = _bind("pal_pd_get", _F32, _PTR, _I32, _I32, _I32)
-_pd_seti = _bind("pal_pd_seti", _I32, _PTR, _I32, _F32)
-_pd_geti_fast = _bind("pal_pd_geti_", _F32, _PTR, _I32)
-_pd_seti_fast = _bind("pal_pd_seti_", None, _PTR, _I32, _F32)
-_pd_addi = _bind("pal_pd_addi", None, _PTR, _I32, _F32)
-_pd_set = _bind("pal_pd_set", None, _PTR, _I32, _I32, _I32, _F32)
-_pd_add = _bind("pal_pd_add", None, _PTR, _I32, _I32, _I32, _F32)
+_pd_geti = _bind("pal_pd_geti", _F64, _PTR, _I32)
+_pd_get = _bind("pal_pd_get", _F64, _PTR, _I32, _I32, _I32)
+_pd_seti = _bind("pal_pd_seti", _I32, _PTR, _I32, _F64)
+_pd_geti_fast = _bind("pal_pd_geti_", _F64, _PTR, _I32)
+_pd_seti_fast = _bind("pal_pd_seti_", None, _PTR, _I32, _F64)
+_pd_addi = _bind("pal_pd_addi", None, _PTR, _I32, _F64)
+_pd_set = _bind("pal_pd_set", None, _PTR, _I32, _I32, _I32, _F64)
+_pd_add = _bind("pal_pd_add", None, _PTR, _I32, _I32, _I32, _F64)
 _pd_update = _bind("pal_pd_update", None, _PTR)
-_pd_steps = _bind("pal_pd_steps", None, _PTR, _F32, _F32, _F32, _F32)
-_pd_voxel = _bind("pal_pd_voxel", _F32, _PTR)
-_pd_clear = _bind("pal_pd_clear", None, _PTR, _F32)
-_pd_diffusion = _bind("pal_pd_diffusion", _I32, _PTR, _F32)
+_pd_steps = _bind("pal_pd_steps", None, _PTR, _F64, _F64, _F64, _F64)
+_pd_voxel = _bind("pal_pd_voxel", _F64, _PTR)
+_pd_clear = _bind("pal_pd_clear", None, _PTR, _F64)
+_pd_diffusion = _bind("pal_pd_diffusion", _I32, _PTR, _F64)
 _pd_inwrap_x = _bind("pal_pd_inwrap_x", _I32, _PTR, _I32)
 _pd_inwrap_y = _bind("pal_pd_inwrap_y", _I32, _PTR, _I32)
 _pd_inwrap_z = _bind("pal_pd_inwrap_z", _I32, _PTR, _I32)
 _pd_iswrap = _bind("pal_pd_iswrap", _I32, _PTR, _I32)
-_pd_dx = _bind("pal_pd_dx", _F32, _PTR)
-_pd_dy = _bind("pal_pd_dy", _F32, _PTR)
-_pd_dz = _bind("pal_pd_dz", _F32, _PTR)
-_pd_dt = _bind("pal_pd_dt", _F32, _PTR)
+_pd_dx = _bind("pal_pd_dx", _F64, _PTR)
+_pd_dy = _bind("pal_pd_dy", _F64, _PTR)
+_pd_dz = _bind("pal_pd_dz", _F64, _PTR)
+_pd_dt = _bind("pal_pd_dt", _F64, _PTR)
 _pd_copy = _bind("pal_pd_copy", None, _PTR, _PTR)
-_pd_linear_get = _bind("pal_pd_linear_get", None, _PTR, _I32, _I32, _F32_PTR)
-_pd_region_get = _bind("pal_pd_region_get", None, _PTR, _I32, _I32, _I32, _I32, _I32, _I32, _F32_PTR)
-_pd_linear_set_scalar = _bind("pal_pd_linear_set_scalar", None, _PTR, _I32, _I32, _F32)
-_pd_linear_set_array = _bind("pal_pd_linear_set_array", None, _PTR, _I32, _I32, _F32_PTR)
-_pd_region_set_scalar = _bind("pal_pd_region_set_scalar", None, _PTR, _I32, _I32, _I32, _I32, _I32, _I32, _F32)
-_pd_region_set_array = _bind("pal_pd_region_set_array", None, _PTR, _I32, _I32, _I32, _I32, _I32, _I32, _F32_PTR)
-_pd_bc_scalar = _bind("pal_pd_bc_scalar", _PTR, _PTR, _I32, _F32)
-_pd_diffusion_bc = _bind("pal_pd_diffusion_bc", _I32, _PTR, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
-_pd_diffusion_bc_fast = _bind("pal_pd_diffusion_bc_fast", _I32, _PTR, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
-_pd_diffusion_mask = _bind("pal_pd_diffusion_mask", _I32, _PTR, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
-_pd_diffusion_mask_fast = _bind("pal_pd_diffusion_mask_fast", _I32, _PTR, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
+_pd_linear_get = _bind("pal_pd_linear_get", None, _PTR, _I32, _I32, _F64_PTR)
+_pd_region_get = _bind("pal_pd_region_get", None, _PTR, _I32, _I32, _I32, _I32, _I32, _I32, _F64_PTR)
+_pd_linear_set_scalar = _bind("pal_pd_linear_set_scalar", None, _PTR, _I32, _I32, _F64)
+_pd_linear_set_array = _bind("pal_pd_linear_set_array", None, _PTR, _I32, _I32, _F64_PTR)
+_pd_region_set_scalar = _bind("pal_pd_region_set_scalar", None, _PTR, _I32, _I32, _I32, _I32, _I32, _I32, _F64)
+_pd_region_set_array = _bind("pal_pd_region_set_array", None, _PTR, _I32, _I32, _I32, _I32, _I32, _I32, _F64_PTR)
+_pd_bc_scalar = _bind("pal_pd_bc_scalar", _PTR, _PTR, _I32, _F64)
+_pd_diffusion_bc = _bind("pal_pd_diffusion_bc", _I32, _PTR, _F64, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
+_pd_diffusion_bc_fast = _bind("pal_pd_diffusion_bc_fast", _I32, _PTR, _F64, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
+_pd_diffusion_mask = _bind("pal_pd_diffusion_mask", _I32, _PTR, _F64, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
+_pd_diffusion_mask_fast = _bind("pal_pd_diffusion_mask_fast", _I32, _PTR, _F64, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_diffusion_field = _bind("pal_pd_diffusion_field", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_diffusion_field_fast = _bind("pal_pd_diffusion_field_fast", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_diffusion_interfaces = _bind("pal_pd_diffusion_interfaces", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_diffusion_interfaces_fast = _bind("pal_pd_diffusion_interfaces_fast", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
-_pd_diffusion_radial_circle = _bind("pal_pd_diffusion_radial_circle", _I32, _PTR, _F32, _PTR)
-_pd_diffusion_radial_circle_fast = _bind("pal_pd_diffusion_radial_circle_fast", _I32, _PTR, _F32, _PTR)
-_pd_diffusion_radial_sphere = _bind("pal_pd_diffusion_radial_sphere", _I32, _PTR, _F32, _PTR)
-_pd_diffusion_radial_sphere_fast = _bind("pal_pd_diffusion_radial_sphere_fast", _I32, _PTR, _F32, _PTR)
-_pd_diffusion_adi = _bind("pal_pd_diffusion_adi", _I32, _PTR, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
-_pd_advection = _bind("pal_pd_advection", _I32, _PTR, _F32, _F32, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
-_pd_advection_fast = _bind("pal_pd_advection_fast", _I32, _PTR, _F32, _F32, _F32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
+_pd_diffusion_radial_circle = _bind("pal_pd_diffusion_radial_circle", _I32, _PTR, _F64, _PTR)
+_pd_diffusion_radial_circle_fast = _bind("pal_pd_diffusion_radial_circle_fast", _I32, _PTR, _F64, _PTR)
+_pd_diffusion_radial_sphere = _bind("pal_pd_diffusion_radial_sphere", _I32, _PTR, _F64, _PTR)
+_pd_diffusion_radial_sphere_fast = _bind("pal_pd_diffusion_radial_sphere_fast", _I32, _PTR, _F64, _PTR)
+_pd_diffusion_adi = _bind("pal_pd_diffusion_adi", _I32, _PTR, _F64, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
+_pd_advection = _bind("pal_pd_advection", _I32, _PTR, _F64, _F64, _F64, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
+_pd_advection_fast = _bind("pal_pd_advection_fast", _I32, _PTR, _F64, _F64, _F64, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_advection_field = _bind("pal_pd_advection_field", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_advection_field_fast = _bind("pal_pd_advection_field_fast", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
 _pd_advection_interfaces = _bind("pal_pd_advection_interfaces", _I32, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR, _PTR)
@@ -613,7 +613,7 @@ def _CheckBCValue(bc, gridPtr, dimension, axis):
     for d in range(dimension):
         if d != axis: expected *= _pd_dim(gridPtr,d)
     if bc.size != expected: raise ValueError("boundary array size does not match grid face")
-    if bc.dtype != np.float32: raise ValueError("boundary arrays must use dtype float32")
+    if bc.dtype != np.float64: raise ValueError("boundary arrays must use dtype float64")
     if not bc.flags.c_contiguous: raise ValueError("boundary arrays must be C-contiguous")
     for v in bc.flat:
         if not np.isfinite(v): raise ValueError("boundary values must be finite")
@@ -629,7 +629,7 @@ def _CheckBCValueOverload(bc, gridPtr, dimension, axis):
             if not np.isfinite(bc): raise ValueError("boundary values must be finite")
         return impl
     if isinstance(bc, types.Array):
-        if bc.dtype != types.float32 or bc.layout != "C":
+        if bc.dtype != types.float64 or bc.layout != "C":
             def impl(bc, gridPtr, dimension, axis): raise ValueError("boundary arrays must be C-contiguous float32 arrays")
             return impl
         def impl(bc, gridPtr, dimension, axis):
@@ -1476,7 +1476,7 @@ def _make_getslice_overload(dtype,linearFn,regionFn):
     return ol
 
 @overload(_PDEGetSlice)
-def _olPDEGetSlice(grid,key,safe): return _make_getslice_overload(np.float32,_pd_linear_get,_pd_region_get)(grid,key,safe)
+def _olPDEGetSlice(grid,key,safe): return _make_getslice_overload(np.float64,_pd_linear_get,_pd_region_get)(grid,key,safe)
 @overload(_PopGetSlice)
 def _olPopGetSlice(grid,key,safe): return _make_getslice_overload(np.int64,_pg_linear_get,_pg_region_get)(grid,key,safe)
 @overload(_CountsGetSlice)
