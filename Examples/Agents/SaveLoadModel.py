@@ -5,6 +5,7 @@ import PythonAutomataLibrary as pal
 X=100
 Y=100
 SCALE=10
+RESTART_SEED=1234
 DEATH_PROB=0.01
 BIRTH_PROB=0.2
 
@@ -65,12 +66,16 @@ def main():
     while win.IsOpen():
         if step==100:
             savedState=pickle.dumps({"grid":grid,"empty":empty,"step":step})
+            # PAL does not pickle its RNG state; restart a known stream here.
+            pal.Seed(RESTART_SEED)
 
         if step==200 and savedState is not None and loads<3:
             state=pickle.loads(savedState)
             grid=state["grid"]
             empty=state["empty"]
             step=state["step"]
+            # Replay the same random stream after restoring the saved model.
+            pal.Seed(RESTART_SEED)
             loads+=1
 
         Step(grid,empty)
