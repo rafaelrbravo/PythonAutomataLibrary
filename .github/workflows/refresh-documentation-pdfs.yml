@@ -12,7 +12,7 @@ on:
       - '.github/workflows/refresh-documentation-pdfs.yml'
 concurrency:
   group: pal-docs-refresh-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 permissions:
   contents: write
 jobs:
