@@ -25,8 +25,9 @@ def Step(grid:pal.AgentGrid):
         angle=pal.Random()*2*np.pi
         dist=np.sqrt(pal.Random())*MOVE_RAD
 
-        x=grid.X(agent)+np.cos(angle)*dist
-        y=grid.Y(agent)+np.sin(angle)*dist
+        # Native Move receives float32 coordinates; validate at that precision.
+        x=np.float32(grid.X(agent)+np.cos(angle)*dist)
+        y=np.float32(grid.Y(agent)+np.sin(angle)*dist)
 
         if x<0 or x>=X:
             x=grid.X(agent)
