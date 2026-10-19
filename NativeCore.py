@@ -5301,6 +5301,20 @@ _PDEgrid32Fast=_jitclass(_PDEgrid32Spec)(_PDEgrid32FastPython)
 _PDEgrid32Safe=_jitclass(_PDEgrid32Spec)(_PDEgrid32SafePython)
 
 
+def _NewPDEgrid32(dimensions):
+    """Internal native float32 factory; public dispatch awaits API parity."""
+    dims = _dimensions_array(dimensions)
+    ptr = _pd32_new(dims.ctypes.data_as(_I32_PTR), len(dims))
+    if not ptr: raise MemoryError("unable to allocate float32 PDEgrid")
+    x,y,z,n,wrapX,wrapY,wrapZ = _StaticGeometry(dims)
+    cls = _PDEgrid32Fast if _UseFastMode() else _PDEgrid32Safe
+    try:
+        return cls(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ)
+    except Exception:
+        _pd32_free(ptr)
+        raise
+
+
 def NewPDEgrid(dimensions, dtype=np.float64):
     """Create a 1D–3D float64 lattice field supporting diffusion and advection."""
     try:
