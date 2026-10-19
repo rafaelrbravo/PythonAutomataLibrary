@@ -1299,6 +1299,45 @@ PAL_API int32_t pal_pd32_advection(uintptr_t handle, double velocityX, double ve
     return 1;
 }
 
+/* Variable-rate conservative diffusion, harmonic interface conductivity. */
+PAL_API int32_t pal_pd32_diffuse_field(uintptr_t handle, const float *rates) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (!rates || !isfinite(grid->dt) || grid->dt < 0.0) return 0;
+    const int32_t ny = grid->dimension > 1 ? grid->dimensions[1] : 1;
+    const int32_t nz = grid->dimension > 2 ? grid->dimensions[2] : 1;
+    const int32_t stride[3] = {ny * nz, nz, 1};
+    const double spacing[3] = {grid->dx, grid->dy, grid->dz};
+    double factors[3] = {0.0, 0.0, 0.0};
+    double maxrate = 0.0;
+    for (int32_t i=0; i<grid->length; i++) {
+        if (!isfinite(rates[i]) || rates[i] < 0.0f) return 0;
+        if (rates[i] > maxrate) maxrate = rates[i];
+    }
+    double stability = 0.0;
+    for (int32_t axis=0; axis<grid->dimension; axis++) {
+        if (!isfinite(spacing[axis]) || spacing[axis] <= 0.0) return 0;
+        factors[axis] = grid->dt / (spacing[axis] * spacing[axis]);
+        if (!isfinite(factors[axis])) return 0;
+        if (grid->dimensions[axis] > 1) stability += factors[axis] * maxrate;
+    }
+    if (stability > 0.5) return 0;
+    for (int32_t axis=0; axis<grid->dimension; axis++) {
+        const int32_t size=grid->dimensions[axis], step=stride[axis];
+        if (size <= 1 || factors[axis] == 0.0) continue;
+        for (int32_t i=0; i<grid->length; i++) {
+            const int32_t coordinate=(i/step)%size;
+            if (coordinate == size-1 && !grid->wrap[axis]) continue;
+            const int32_t j=coordinate == size-1 ? i-(size-1)*step : i+step;
+            const double a=rates[i], b=rates[j];
+            const double harmonic=(a>0.0 && b>0.0) ? 2.0*a*b/(a+b) : 0.0;
+            const float flux=(float)(factors[axis]*harmonic*((double)grid->field[j]-grid->field[i]));
+            grid->deltas[i] += flux;
+            grid->deltas[j] -= flux;
+        }
+    }
+    return 1;
+}
+
 PAL_API int32_t pal_pd32_diffuse_mask(uintptr_t handle, double rate, const float *mask) {
     PDEGrid32 *grid = (PDEGrid32 *)handle;
     if (!mask || !isfinite(rate) || rate < 0.0 || !isfinite(grid->dt) || grid->dt < 0.0) return 0;
