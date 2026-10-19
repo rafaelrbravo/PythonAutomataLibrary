@@ -1308,7 +1308,7 @@ PAL_API int32_t pal_pd32_diffuse_mask(uintptr_t handle, double rate, const float
     const double spacing[3] = {grid->dx, grid->dy, grid->dz};
     double factors[3] = {0.0, 0.0, 0.0};
     double stability = 0.0;
-    for (int32_t i=0; i<grid->length; i++) if (!isfinite(mask[i]) || mask[i] < 0.0f || mask[i] > 1.0f) return 0;
+    for (int32_t i=0; i<grid->length; i++) if (!isfinite(mask[i])) return 0;
     for (int32_t axis=0; axis<grid->dimension; axis++) {
         if (!isfinite(spacing[axis]) || spacing[axis] <= 0.0) return 0;
         factors[axis] = rate * grid->dt / (spacing[axis] * spacing[axis]);
@@ -1323,7 +1323,7 @@ PAL_API int32_t pal_pd32_diffuse_mask(uintptr_t handle, double rate, const float
             const int32_t coordinate=(i/step)%size;
             if (coordinate == size-1 && !grid->wrap[axis]) continue;
             const int32_t j=coordinate == size-1 ? i-(size-1)*step : i+step;
-            const double permeability=(double)mask[i]*mask[j];
+            const double permeability=(mask[i] >= 0.0f && mask[j] >= 0.0f) ? 1.0 : 0.0;
             const float flux=(float)(factors[axis]*permeability*((double)grid->field[j]-grid->field[i]));
             grid->deltas[i] += flux;
             grid->deltas[j] -= flux;
