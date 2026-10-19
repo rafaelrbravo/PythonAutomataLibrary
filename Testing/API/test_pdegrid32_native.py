@@ -481,3 +481,27 @@ def test_pdegrid32_add_coordinates_in_compiled_jitclass():
                 core._pd32_free(grid._ptr)
     finally:
         core._UseFastMode = original
+
+
+def test_pdegrid32_safe_steps_reject_invalid_values():
+    from NativeCore import _NewPDEgrid32
+
+    original = core._UseFastMode
+    core._UseFastMode = lambda: False
+    try:
+        grid = _NewPDEgrid32([4])
+        try:
+            for invalid in (0.0, -1.0, np.nan, np.inf):
+                with pytest.raises(ValueError):
+                    grid.SetTimeSpaceStep(1.0, invalid)
+                with pytest.raises(ValueError):
+                    grid.SetTimeSpaceStep(invalid, 1.0)
+            grid.SetTimeSpaceStep(0.5, 2.0)
+            grid[1] = 1.0
+            grid.Diffusion(0.1)
+            grid.Update()
+            assert grid[0] == pytest.approx(0.0125, abs=1e-6)
+        finally:
+            core._pd32_free(grid._ptr)
+    finally:
+        core._UseFastMode = original
