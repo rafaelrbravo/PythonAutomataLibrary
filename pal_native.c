@@ -1239,7 +1239,7 @@ PAL_API int32_t pal_pd_diffusion(uintptr_t handle, double rate) {
     double sx = grid->dt * rate / (grid->dx * grid->dx);
     double sy = grid->dimension > 1 ? grid->dt * rate / (grid->dy * grid->dy) : 0.0;
     double sz = grid->dimension > 2 ? grid->dt * rate / (grid->dz * grid->dz) : 0.0;
-    if (2.0 * (sx + sy + sz) > 1.000001f) return 0;
+    if (2.0 * (sx + sy + sz) > 1.000001) return 0;
 
     int32_t yMax = grid->dimension > 1 ? grid->dimensions[1] : 1;
     int32_t zMax = grid->dimension > 2 ? grid->dimensions[2] : 1;
@@ -1294,7 +1294,7 @@ static int PDEGrid_ExplicitStable(const PDEGrid*g,double rate){
     double s=2.0*rate*g->dt/(g->dx*g->dx);
     if(g->dimension>1)s+=2.0*rate*g->dt/(g->dy*g->dy);
     if(g->dimension>2)s+=2.0*rate*g->dt/(g->dz*g->dz);
-    return s<=1.000001f;
+    return s<=1.000001;
 }
 PAL_API int32_t pal_pd_inwrap_x(uintptr_t h,int32_t v){return PDEGrid_InWrap((PDEGrid*)h,v,0);}
 PAL_API int32_t pal_pd_inwrap_y(uintptr_t h,int32_t v){return PDEGrid_InWrap((PDEGrid*)h,v,1);}
@@ -1319,7 +1319,7 @@ static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,double rate,const double*x0,c
             else{axis=n>=3?2.0*w:0.0;double lo=w+(bc0[a]?2.0*w:0.0),hi=w+(bc1[a]?2.0*w:0.0);if(lo>axis)axis=lo;if(hi>axis)axis=hi;}
             diffusionCourant+=axis;
         }
-        if(diffusionCourant>1.000001f)return 0;
+        if(diffusionCourant>1.000001)return 0;
     }
     double *restrict f=g->field,*restrict d=g->deltas;
     if(D==1){
@@ -1396,7 +1396,7 @@ static int32_t PDEGrid_DiffusionField(PDEGrid*g,uintptr_t rh,uintptr_t x0h,uintp
     /* Safe mode is transactional: validate the entire rate field and CFL bound before touching deltas. */
     if(checked){
         for(int32_t i=0;i<g->length;i++)if(r[i]<0||!isfinite(r[i]))return -1;
-        for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};double sum=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a);double rr=0,mult=1.0;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;int j=PDEGrid_ToI(g,xx,yy,zz);rr=PDEGrid_Harmonic(r[i],r[j]);}else{double*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;rr=r[i];mult=2.0;}sum+=rr*ds[a]*mult;}if(sum>1.000001f)return 0;}
+        for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};double sum=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a);double rr=0,mult=1.0;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;int j=PDEGrid_ToI(g,xx,yy,zz);rr=PDEGrid_Harmonic(r[i],r[j]);}else{double*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;rr=r[i];mult=2.0;}sum+=rr*ds[a]*mult;}if(sum>1.000001)return 0;}
     }
     for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;double c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}double rr,nv,mult=1.0;if(j>=0){rr=PDEGrid_Harmonic(r[i],r[j]);nv=g->field[j];}else{double*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;rr=r[i];nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0;}v+=(nv-c)*rr*ds[a]*mult;}g->deltas[i]+=v;}return 1;
 }
@@ -1406,7 +1406,7 @@ static int32_t PDEGrid_DiffusionInterfaces(PDEGrid*g,uintptr_t rxh,uintptr_t ryh
     /* Validate every interface and every local stability sum before accumulating any delta. */
     if(checked){
         for(int a=0;a<g->dimension;a++){if(!rr[a])return -1;for(int32_t i=0;i<g->length;i++)if(rr[a][i]<0||!isfinite(rr[a][i]))return -1;}
-        for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};double sum=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a),ri=i;double mult=1.0;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;int j=PDEGrid_ToI(g,xx,yy,zz);if(sg<0)ri=j;}else{double*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;mult=2.0;}sum+=rr[a][ri]*ds[a]*mult;}if(sum>1.000001f)return 0;}
+        for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};double sum=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a),ri=i;double mult=1.0;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;int j=PDEGrid_ToI(g,xx,yy,zz);if(sg<0)ri=j;}else{double*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;mult=2.0;}sum+=rr[a][ri]*ds[a]*mult;}if(sum>1.000001)return 0;}
     }
     for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;double c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,ri=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}double nv,mult=1.0;if(j>=0){if(sg<0)ri=j;nv=g->field[j];}else{double*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0;}double rate=rr[a][ri];v+=(nv-c)*rate*ds[a]*mult;}g->deltas[i]+=v;}return 1;
 }
@@ -1436,7 +1436,7 @@ PAL_API int32_t pal_pd_diffusion_radial_sphere_fast(uintptr_t h,double rate,uint
 static int32_t PDEGrid_AdvectionUniform(PDEGrid*g,const double uv[3],double*bc0[3],double*bc1[3],int checked){
     const int D=g->dimension,X=g->dimensions[0],Y=D>1?g->dimensions[1]:1,Z=D>2?g->dimensions[2]:1;
     const int xs=Y*Z,ys=Z;const double ds[3]={g->dt/g->dx,g->dt/g->dy,g->dt/g->dz};
-    if(checked){double cfl=0.0;for(int a=0;a<D;a++){double v=uv[a];if(!isfinite(v))return -1;int n=g->dimensions[a];if(g->wrap[a]||n>1||(v>0.0?bc1[a]:v<0.0?bc0[a]:0))cfl+=fabsf(v)*ds[a];}if(cfl>1.000001f)return 0;}
+    if(checked){double cfl=0.0;for(int a=0;a<D;a++){double v=uv[a];if(!isfinite(v))return -1;int n=g->dimensions[a];if(g->wrap[a]||n>1||(v>0.0?bc1[a]:v<0.0?bc0[a]:0))cfl+=fabs(v)*ds[a];}if(cfl>1.000001)return 0;}
     double *restrict f=g->field,*restrict d=g->deltas;
     const double ax=uv[0]*ds[0],ay=D>1?uv[1]*ds[1]:0.0,az=D>2?uv[2]*ds[2]:0.0;
     if(D==1){
@@ -1491,12 +1491,12 @@ static int32_t PDEGrid_Advection(PDEGrid*g,int mode,double uv[3],double*vf[3],do
             for(int a=0;a<g->dimension;a++){
                 double vel=uv[a];if(!isfinite(vel))return -1;
                 int n=g->dimensions[a];
-                if(g->wrap[a]||n>1||(vel>0.0?bc1[a]:vel<0.0?bc0[a]:0))advectionCourant+=fabsf(vel)*ds[a];
+                if(g->wrap[a]||n>1||(vel>0.0?bc1[a]:vel<0.0?bc0[a]:0))advectionCourant+=fabs(vel)*ds[a];
             }
-            if(advectionCourant>1.000001f)return 0;
+            if(advectionCourant>1.000001)return 0;
         }else{
             for(int a=0;a<g->dimension;a++){if(!vf[a])return -1;for(int32_t i=0;i<g->length;i++)if(!isfinite(vf[a][i]))return -1;}
-            for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};double localCourant=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a),j=-1,fi=i;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;j=PDEGrid_ToI(g,xx,yy,zz);if(sg<0)fi=j;}else if(!(sg<0?bc0[a]:bc1[a]))continue;double vel=mode==2?vf[a][fi]:(j>=0?.5f*(vf[a][i]+vf[a][j]):vf[a][i]);double oriented=sg*vel;if(oriented>0)localCourant+=oriented*ds[a];}if(localCourant>1.000001f)return 0;}
+            for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};double localCourant=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a),j=-1,fi=i;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;j=PDEGrid_ToI(g,xx,yy,zz);if(sg<0)fi=j;}else if(!(sg<0?bc0[a]:bc1[a]))continue;double vel=mode==2?vf[a][fi]:(j>=0?.5f*(vf[a][i]+vf[a][j]):vf[a][i]);double oriented=sg*vel;if(oriented>0)localCourant+=oriented*ds[a];}if(localCourant>1.000001)return 0;}
         }
     }
     for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;double c=g->field[i],delta=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,fi=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}if(j>=0){if(sg<0)fi=j;}else if(!(sg<0?bc0[a]:bc1[a]))continue;double vel=mode==2?vf[a][fi]:(j>=0?.5f*(vf[a][i]+vf[a][j]):vf[a][i]);double oriented=sg*vel;if(oriented>0)delta-=oriented*c*ds[a];else if(oriented<0){double src=j>=0?g->field[j]:PDEGrid_BC(g,(sg<0?bc0[a]:bc1[a]),PDEGrid_FaceIndex(g,a,x,y,z));delta+=(-oriented)*src*ds[a];}}g->deltas[i]+=delta;}return 1;
