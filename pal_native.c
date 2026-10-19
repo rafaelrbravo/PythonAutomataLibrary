@@ -1260,6 +1260,22 @@ static int AgentGrid32_Grow(AgentGrid32 *g) {
     g->aliveAgents=alive;g->deadAgents=dead;g->capacity=next;
     return 1;
 }
+static void AgentGrid32_SetSquarePosition(AgentGrid32 *g,int32_t agent,int32_t location) {
+    if (!g->dimension) return;
+    int32_t coords[3]={0,0,0};
+    if (g->dimension==1) coords[0]=location;
+    else if (g->dimension==2) {
+        coords[0]=location/g->dimensions[1];
+        coords[1]=location%g->dimensions[1];
+    } else {
+        int32_t yz=g->dimensions[1]*g->dimensions[2];
+        coords[0]=location/yz;
+        coords[1]=(location%yz)/g->dimensions[2];
+        coords[2]=location%g->dimensions[2];
+    }
+    for (int32_t d=0;d<g->dimension;d++)
+        g->floatProperties[(size_t)agent*g->nFloatProperties+d]=(float)coords[d]+0.5f;
+}
 PAL_API int32_t pal_ag32_new_i(uintptr_t handle,int32_t location) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
     if (!g || g->stackable) return PAL_NULL;
@@ -1276,7 +1292,10 @@ PAL_API int32_t pal_ag32_new_i(uintptr_t handle,int32_t location) {
     for (int32_t p=0;p<g->nFloatProperties;p++)
         g->floatProperties[(size_t)agent*g->nFloatProperties+p]=0.0f;
     g->aliveAgents[g->population++]=agent;
-    if (g->dimension) g->grid[location]=agent;
+    if (g->dimension) {
+        g->grid[location]=agent;
+        AgentGrid32_SetSquarePosition(g,agent,location);
+    }
     g->generation++;
     return agent;
 }
