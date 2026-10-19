@@ -21,6 +21,22 @@ PAL provides:
 
 PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL objects to select the unchecked high-performance implementations after a model has been validated.
 
+## Quick start
+
+Install PAL:
+
+```bash
+python -m pip install PythonAutomataLibrary
+```
+
+Copy the bundled examples and PDF manuals to an editable `PAL-Examples/` folder in your current directory:
+
+```bash
+python -m PythonAutomataLibrary.ExampleInstaller
+```
+
+Run an example script from `PAL-Examples/`. For a guided first model, see the [PAL Guide](Documentation/PAL_GUIDE.md).
+
 ## Documentation
 
 - [PAL Guide](Documentation/PAL_GUIDE.md) ([PDF](Documentation/PAL_GUIDE.pdf)) — first model, worked modeling workflows, and detailed API behavior.
@@ -30,35 +46,20 @@ PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL 
 - `Examples/` — complete working models.
 - [Testing](Testing/README.md) — correctness, API, integration, and regression tests, with local and CI run instructions.
 
-## Installation
+## Installation details
 
-Install PAL from PyPI (including visualization dependencies):
+PyPI wheels include the native core for Windows, Linux, and macOS, so manual compilation is unnecessary. The standard installation includes visualization dependencies. See [PAL on PyPI](https://pypi.org/project/PythonAutomataLibrary/) and [distribution details](Documentation/DISTRIBUTION.md).
 
-```text
-python -m pip install PythonAutomataLibrary
-```
+Advanced users who only need a minimal headless installation can skip declared dependencies and install the core requirements explicitly:
 
-For a minimal headless installation, install without dependencies and add only the core requirements:
-
-```text
+```bash
 python -m pip install --no-deps PythonAutomataLibrary
 python -m pip install numpy numba
 ```
 
-Note that `--no-deps` skips all dependencies, not just visualization; this minimal installation is for advanced users and may be reported as missing dependencies by `pip check`.
+Note that `--no-deps` skips *all* declared dependencies, not only visualization. As a result, `pip check` may report missing dependencies.
 
-Release wheels bundle the native core for Windows, Linux, and macOS, without manual compilation. PAL v1.0.0 is [published on PyPI](https://pypi.org/project/PythonAutomataLibrary/). See [distribution details](Documentation/DISTRIBUTION.md).
-
-## Examples
-
-Install PAL, then copy its bundled examples into a new, editable folder in your current directory:
-
-```text
-python -m pip install PythonAutomataLibrary
-python -m PythonAutomataLibrary.ExampleInstaller
-```
-
-To choose a different parent directory, pass its path, for example `python -m PythonAutomataLibrary.ExampleInstaller ~/Documents` (or `python -m PythonAutomataLibrary.ExampleInstaller "C:\\Users\\YourName\\Documents"` on Windows). This creates `PAL-Examples/` inside the chosen directory, with runnable examples and a `Documentation/` folder containing the PAL PDF manuals, without downloading from GitHub. The command refuses to overwrite an existing `PAL-Examples/` folder. Run individual Python scripts from that folder; examples requiring a graphical display should be run on a desktop computer.
+To install examples in a different parent directory, pass its path, such as `python -m PythonAutomataLibrary.ExampleInstaller ~/Documents` or `python -m PythonAutomataLibrary.ExampleInstaller "C:\\Users\\YourName\\Documents"` on Windows. The installer creates `PAL-Examples/` with runnable scripts and a `Documentation/` directory of PDF manuals, without downloading from GitHub; it refuses to overwrite an existing `PAL-Examples/` folder. Graphical examples require a desktop display.
 
 ## Build from source
 
