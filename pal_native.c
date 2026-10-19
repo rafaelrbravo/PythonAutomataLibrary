@@ -315,12 +315,13 @@ static int32_t AgentGrid_PointToI(const AgentGrid *grid, double x, double y, dou
     return AgentGrid_ToI(grid, xi, yi, zi);
 }
 
-static int AgentGrid_PointInBounds(const AgentGrid *grid, double x, double y, double z) {
-    if (!isfinite(x) || x < 0.0 || x >= (double)grid->dimensions[0]) return 0;
-    if (grid->dimension > 1 && (!isfinite(y) || y < 0.0 || y >= (double)grid->dimensions[1])) return 0;
-    if (grid->dimension > 2 && (!isfinite(z) || z < 0.0 || z >= (double)grid->dimensions[2])) return 0;
-    return 1;
-}
+#define PAL_AG_BOUNDS_TYPE AgentGrid
+#define PAL_AG_BOUNDS_FLOAT double
+#define PAL_AG_BOUNDS_NAME AgentGrid_PointInBounds
+#include "agentgrid_point_bounds_template.h"
+#undef PAL_AG_BOUNDS_NAME
+#undef PAL_AG_BOUNDS_FLOAT
+#undef PAL_AG_BOUNDS_TYPE
 
 #define PAL_AG_POINT_TYPE AgentGrid
 #define PAL_AG_POINT_FLOAT double
@@ -1323,12 +1324,18 @@ PAL_API int32_t pal_ag32_move_i(uintptr_t handle,int32_t agent,int32_t destinati
     g->generation++;
     return 1;
 }
+#define PAL_AG_BOUNDS_TYPE AgentGrid32
+#define PAL_AG_BOUNDS_FLOAT float
+#define PAL_AG_BOUNDS_NAME AgentGrid32_PointInBounds
+#include "agentgrid_point_bounds_template.h"
+#undef PAL_AG_BOUNDS_NAME
+#undef PAL_AG_BOUNDS_FLOAT
+#undef PAL_AG_BOUNDS_TYPE
 static int32_t AgentGrid32_PointToI(const AgentGrid32 *g,const float coords[3]) {
     if (!g || !g->dimension) return PAL_NULL;
+    if (!AgentGrid32_PointInBounds(g,coords[0],coords[1],coords[2])) return PAL_NULL;
     int32_t location=0;
     for (int32_t axis=0;axis<g->dimension;axis++) {
-        if (!isfinite(coords[axis]) || coords[axis]<0.0f ||
-            (double)coords[axis]>=(double)g->dimensions[axis]) return PAL_NULL;
         int32_t square=(int32_t)floor((double)coords[axis]);
         location=axis==0 ? square : location*g->dimensions[axis]+square;
     }
