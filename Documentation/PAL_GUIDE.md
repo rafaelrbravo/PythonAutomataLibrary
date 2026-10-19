@@ -287,7 +287,7 @@ def Draw(cells: pal.PopGrid, pix: pal.Pix):
         if cells[i]:
             pix[i] = RED
 
-def DrawNutrient(nutrient, pix):
+def DrawNutrient(nutrient: pal.PDEgrid, pix: pal.Pix):
     for i in range(len(nutrient)):
         pix[i] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[i])))
 
@@ -909,7 +909,7 @@ To display the nutrient field introduced in tutorial stage 6, use a second pixel
 ```python
 NUTRIENT_COLORS = (pal.RGB(0, 0, 0), pal.RGB(255, 255, 255))
 
-def DrawNutrient(nutrient, pix):
+def DrawNutrient(nutrient: pal.PDEgrid, pix: pal.Pix):
     for i in range(len(nutrient)):
         pix[i] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[i])))
 
