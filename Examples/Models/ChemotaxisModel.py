@@ -126,7 +126,7 @@ def Draw(grid:pal.AgentGrid,grass:pal.PDEgrid,draw:pal.OpenGLDraw):
 
 
 def main():
-    pal.FastMode()
+    # pal.FastMode()
 
     draw,win=pal.StartOpenGLWindow(xDim=X,yDim=Y,title="Chemotaxis")
     grid=pal.NewAgentGrid(dimensions=(X,Y),numAgentProps=2,isStackable=True)
