@@ -35,3 +35,34 @@ def test_compiled_float64_position():
 
     grid = pal.NewAgentGrid(dimensions=(10, 10), isStackable=True)
     assert run(grid) == 10.0 - 1e-8
+
+
+def test_compiled_float64_new_agent_only():
+    @pal.njit
+    def run(grid):
+        return grid.NewAgent(5.0 + 1e-10, 5.0)
+
+    grid = pal.NewAgentGrid(dimensions=(10, 10), isStackable=True)
+    agent = run(grid)
+    assert grid.X(agent) == 5.0 + 1e-10
+
+
+def test_compiled_float64_read_position_only():
+    @pal.njit
+    def run(grid, agent):
+        return grid.X(agent)
+
+    grid = pal.NewAgentGrid(dimensions=(10, 10), isStackable=True)
+    agent = grid.NewAgent(5.0 + 1e-10, 5.0)
+    assert run(grid, agent) == 5.0 + 1e-10
+
+
+def test_compiled_float64_move_only():
+    @pal.njit
+    def run(grid, agent):
+        grid.Move(agent, 10.0 - 1e-8, 5.0)
+
+    grid = pal.NewAgentGrid(dimensions=(10, 10), isStackable=True)
+    agent = grid.NewAgent(5.0, 5.0)
+    run(grid, agent)
+    assert grid.X(agent) == 10.0 - 1e-8
