@@ -217,7 +217,7 @@ Draw the nutrient concentration with a grayscale `ColorScale`. Define the colors
 ```python
 NUTRIENT_COLORS = (BLACK, pal.RGB(255, 255, 255))
 
-def DrawNutrient(nutrient, pix):
+def DrawNutrient(nutrient: pal.PDEgrid, pix: pal.Pix):
     for i in range(len(nutrient)):
         pix[i] = pal.ColorScale(NUTRIENT_COLORS, max(0.0, min(1.0, nutrient[i])))
 ```
@@ -891,6 +891,8 @@ Choose `PixWindow` for a two-dimensional lattice view where each site or pixel i
 pix, window = pal.StartPixWindow(30, 30, scale=12, title="PAL")
 ```
 
+**Return type:** `StartPixWindow(...) -> tuple[pal.Pix, pal.PixWindow]`. The first returned object, `pix`, has type `pal.Pix`; the second, `window`, has type `pal.PixWindow`. Use these public types when annotating functions that accept either object, for example `def Draw(pix: pal.Pix): ...` or `def Refresh(window: pal.PixWindow): ...`.
+
 This creates a 30 × 30 pixel buffer and a display window, with each model pixel enlarged for visibility. Set `headless=True` when generating frames without an on-screen window.
 
 `pix` is a write-oriented pixel buffer, not a general-purpose numeric `Grid`: it supports assignment but does not expose a public pixel-read API. Assign integer RGB colors by coordinate or linear index. For example, to color one site red and then display it:
@@ -955,6 +957,8 @@ Choose `OpenGLWindow` to draw circles, boxes, and lines, including in 3D. Unlike
 ```python
 draw, window = pal.StartOpenGLWindow(30, 30, width=800, height=800, title="PAL")
 ```
+
+**Return type:** `StartOpenGLWindow(...) -> tuple[pal.OpenGLDraw, pal.OpenGLWindow]`. The first returned object, `draw`, has type `pal.OpenGLDraw`; the second, `window`, has type `pal.OpenGLWindow`. Use these public types in function signatures, for example `def Draw(draw: pal.OpenGLDraw): ...` or `def Refresh(window: pal.OpenGLWindow): ...`.
 
 This opens an 800 × 800 window displaying a 30 × 30-unit 2D drawing area. Supply `zDim` for a three-dimensional scene; `headless=True` requests off-screen rendering.
 
