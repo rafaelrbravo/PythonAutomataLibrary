@@ -1506,10 +1506,7 @@ PAL_API void pal_pd32_addi(uintptr_t handle, int32_t i, float value) {
 
 
 /* Float32 field accessors and conservative nearest-neighbor diffusion. */
-PAL_API int32_t pal_pd32_dim(uintptr_t handle, int32_t d) {
-    PDEGrid32 *grid = (PDEGrid32 *)handle;
-    return d >= 0 && d < grid->dimension ? grid->dimensions[d] : PAL_NULL;
-}
+
 
 
 
@@ -1809,10 +1806,7 @@ PAL_API void pal_pd_free(uintptr_t handle) {
     if (grid == NULL) return;
     free(grid->field); free(grid->deltas); free(grid);
 }
-PAL_API int32_t pal_pd_dim(uintptr_t handle, int32_t d) {
-    PDEGrid *grid = (PDEGrid *)handle;
-    return d >= 0 && d < grid->dimension ? grid->dimensions[d] : PAL_NULL;
-}
+
 PAL_API int32_t pal_pd_len(uintptr_t handle) { return ((PDEGrid *)handle)->length; }
 PAL_API int32_t pal_pd_itox(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;return g->dimension==1?i:g->dimension==2?i/g->dimensions[1]:i/(g->dimensions[1]*g->dimensions[2]);}
 PAL_API int32_t pal_pd_itoy(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
