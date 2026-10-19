@@ -323,9 +323,9 @@ static void AgentGrid_SetSquarePosition(AgentGrid *grid, int32_t agent, int32_t 
 }
 
 static int32_t AgentGrid_PointToI(const AgentGrid *grid, double x, double y, double z) {
-    int32_t xi = (int32_t)floorf(x);
-    int32_t yi = grid->dimension > 1 ? (int32_t)floorf(y) : 0;
-    int32_t zi = grid->dimension > 2 ? (int32_t)floorf(z) : 0;
+    int32_t xi = (int32_t)floor(x);
+    int32_t yi = grid->dimension > 1 ? (int32_t)floor(y) : 0;
+    int32_t zi = grid->dimension > 2 ? (int32_t)floor(z) : 0;
     return AgentGrid_ToI(grid, xi, yi, zi);
 }
 
