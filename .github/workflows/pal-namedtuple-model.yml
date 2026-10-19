@@ -6,6 +6,9 @@ on:
       - 'Testing/API/test_namedtuple_model.py'
       - '.github/workflows/pal-namedtuple-model.yml'
   workflow_dispatch:
+concurrency:
+  group: pal-namedtuple-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 jobs:
   namedtuple-model:
     runs-on: ubuntu-latest
