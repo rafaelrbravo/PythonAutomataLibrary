@@ -512,3 +512,17 @@ def test_float32_agentgrid_square_occupancy_and_stacking():
         assert grid.CountSQ(1, 2) == 0
         with pytest.raises(IndexError):
             grid.AtSQ(3, 0)
+
+
+def test_float32_agentgrid_linear_index_validation():
+    with core._NewAgentGrid32((3, 4), isStackable=True) as grid:
+        agent = grid.NewAgentI(6)
+        for invalid in (-1, 12, 1.5, float("nan"), True):
+            for operation in (lambda: grid.NewAgentI(invalid),
+                              lambda: grid.MoveI(agent, invalid),
+                              lambda: grid.AtI(invalid),
+                              lambda: grid.CountI(invalid)):
+                with pytest.raises((ValueError, IndexError)):
+                    operation()
+        assert grid.AtI(6) == agent
+        assert grid.CountI(6) == 1
