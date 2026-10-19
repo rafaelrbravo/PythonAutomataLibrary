@@ -5052,12 +5052,14 @@ def _StaticGeometry(dims):
     wrapX=bool(dims[0]<0) if d>0 else False; wrapY=bool(dims[1]<0) if d>1 else False; wrapZ=bool(dims[2]<0) if d>2 else False
     return x,y,z,length,wrapX,wrapY,wrapZ
 
-def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
+def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False, dtype=np.float64):
     """Create an agent grid with optional per-agent float properties and site stacking.
 
     Empty dimensions select a nonspatial population. Negative axis lengths
     enable wrapping. `numAgentProps` counts float properties per agent.
     """
+    if np.dtype(dtype) != np.dtype(np.float64):
+        raise ValueError('AgentGrid currently supports only float64; float32 native backend is not yet implemented')
     dims = _dimensions_array(dimensions,allowZero=True)
     try: props=float(numAgentProps)
     except (TypeError,ValueError,OverflowError): raise ValueError("numAgentProps must be a nonnegative int32")
@@ -5098,8 +5100,10 @@ def NewPopGrid(dimensions, dtype=np.int64):
     return _PopGridFast(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ) if fast else _PopGridSafe(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ)
 
 
-def NewPDEgrid(dimensions):
-    """Create a 1D–3D float32 lattice field supporting diffusion and advection."""
+def NewPDEgrid(dimensions, dtype=np.float64):
+    """Create a 1D–3D float64 lattice field supporting diffusion and advection."""
+    if np.dtype(dtype) != np.dtype(np.float64):
+        raise ValueError('PDEgrid currently supports only float64; float32 native backend is not yet implemented')
     dims = _dimensions_array(dimensions)
     fast=_UseFastMode()
     ptr = _pd_new(dims.ctypes.data_as(_I32_PTR), len(dims))
