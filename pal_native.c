@@ -1236,6 +1236,52 @@ PAL_API uintptr_t pal_ag32_new(const int32_t *dimensions, int32_t dimension,
 }
 
 /* Float32 agent property access uses true float storage, not double casts. */
+/* Initial AgentGrid32 lifecycle: single-occupancy and nonspatial grids.
+ * Stackable agent creation is added separately with linked-list semantics. */
+PAL_API int32_t pal_ag32_new_i(uintptr_t handle,int32_t location) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || g->stackable) return PAL_NULL;
+    if (g->dimension) {
+        if (location<0 || location>=g->length || g->grid[location]!=PAL_NULL) return PAL_NULL;
+    } else if (location!=PAL_NULL) return PAL_NULL;
+    if (g->nDead==0 && g->nAgents>=g->capacity) return PAL_NULL;
+    int32_t agent=g->nDead ? g->deadAgents[--g->nDead] : g->nAgents++;
+    size_t base=(size_t)agent*N_AGENT_INT_PROPERTIES;
+    for (int32_t p=0;p<N_AGENT_INT_PROPERTIES;p++) g->intProperties[base+p]=PAL_NULL;
+    g->intProperties[base+AGENT_ALIVE]=1;
+    g->intProperties[base+AGENT_LOCATION]=g->dimension ? location : PAL_NULL;
+    g->intProperties[base+AGENT_ALIVE_POSITION]=g->population;
+    for (int32_t p=0;p<g->nFloatProperties;p++)
+        g->floatProperties[(size_t)agent*g->nFloatProperties+p]=0.0f;
+    g->aliveAgents[g->population++]=agent;
+    if (g->dimension) g->grid[location]=agent;
+    g->generation++;
+    return agent;
+}
+PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || agent<0 || agent>=g->nAgents) return 0;
+    size_t base=(size_t)agent*N_AGENT_INT_PROPERTIES;
+    if (!g->intProperties[base+AGENT_ALIVE]) return 0;
+    int32_t loc=g->intProperties[base+AGENT_LOCATION];
+    if (g->dimension && loc>=0 && loc<g->length && g->grid[loc]==agent) g->grid[loc]=PAL_NULL;
+    int32_t pos=g->intProperties[base+AGENT_ALIVE_POSITION];
+    int32_t last=g->aliveAgents[--g->population];
+    g->aliveAgents[pos]=last;
+    g->intProperties[(size_t)last*N_AGENT_INT_PROPERTIES+AGENT_ALIVE_POSITION]=pos;
+    g->intProperties[base+AGENT_ALIVE]=0;
+    g->intProperties[base+AGENT_LOCATION]=PAL_NULL;
+    g->deadAgents[g->nDead++]=agent;
+    g->generation++;
+    return 1;
+}
+PAL_API int32_t pal_ag32_population(uintptr_t handle) {
+    return handle ? ((AgentGrid32 *)handle)->population : 0;
+}
+PAL_API int32_t pal_ag32_at_i(uintptr_t handle,int32_t location) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    return g && location>=0 && location<g->length ? g->grid[location] : PAL_NULL;
+}
 PAL_API int32_t pal_ag32_set_property(uintptr_t handle,int32_t agent,int32_t property,float value) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
     if (!g || agent<0 || agent>=g->capacity || property<0 ||
