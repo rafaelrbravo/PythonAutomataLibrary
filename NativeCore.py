@@ -572,6 +572,10 @@ _pd32_update = _bind("pal_pd32_update", None, _PTR)
 _pd32_clear = _bind("pal_pd32_clear", None, _PTR, _F32)
 _pd32_steps = _bind("pal_pd32_steps", None, _PTR, _F64, _F64, _F64, _F64)
 _pd32_voxel = _bind("pal_pd32_voxel", _F64, _PTR)
+_pd32_dt = _bind("pal_pd32_dt", _F64, _PTR)
+_pd32_dx = _bind("pal_pd32_dx", _F64, _PTR)
+_pd32_dy = _bind("pal_pd32_dy", _F64, _PTR)
+_pd32_dz = _bind("pal_pd32_dz", _F64, _PTR)
 _pd32_diffuse = _bind("pal_pd32_diffuse", _I32, _PTR, _F64)
 _pd32_diffuse_mask = _bind("pal_pd32_diffuse_mask", _I32, _PTR, _F64, _F32_PTR)
 _pd32_diffuse_field = _bind("pal_pd32_diffuse_field", _I32, _PTR, _F32_PTR)
@@ -5319,6 +5323,10 @@ class _PDEgrid32FastPython:
     def Update(self): _pd32_update(self._ptr)
     def Reset(self): _pd32_clear(self._ptr,0.0)
     def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0): _pd32_steps(self._ptr,dt,dx,dy,dz)
+    def Dt(self): return _pd32_dt(self._ptr)
+    def Dx(self): return _pd32_dx(self._ptr)
+    def Dy(self): return _pd32_dy(self._ptr)
+    def Dz(self): return _pd32_dz(self._ptr)
     def Diffusion(self,rateConstant):
         if not _pd32_diffuse(self._ptr,rateConstant): raise ValueError("invalid diffusion rate or unstable time step")
     def DiffusionMask(self,rateConstant,mask):
@@ -5386,6 +5394,14 @@ class _PDEgrid32SafePython:
         if not np.isfinite(dt) or not np.isfinite(dx) or not np.isfinite(dy) or not np.isfinite(dz) or dt<=0 or dx<=0 or dy<=0 or dz<=0:
             raise ValueError("time and space steps must be finite and positive")
         _pd32_steps(self._ptr,dt,dx,dy,dz)
+    def Dt(self): return _pd32_dt(self._ptr)
+    def Dx(self): return _pd32_dx(self._ptr)
+    def Dy(self):
+        if self._dimension<2: raise ValueError("Dy requires a 2D or 3D grid")
+        return _pd32_dy(self._ptr)
+    def Dz(self):
+        if self._dimension<3: raise ValueError("Dz requires a 3D grid")
+        return _pd32_dz(self._ptr)
     def Diffusion(self,rateConstant):
         if not _pd32_diffuse(self._ptr,rateConstant): raise ValueError("invalid diffusion rate or unstable time step")
     def DiffusionMask(self,rateConstant,mask):
