@@ -37,6 +37,24 @@ python -m PythonAutomataLibrary.ExampleInstaller
 
 Run an example script from `PAL-Examples/`. For a guided first model, see the [PAL Guide](Documentation/PAL_GUIDE.md).
 
+## PDE field precision
+
+PDE fields use `float64` storage by default. Select `float32` explicitly when lower memory use is preferable:
+
+```python
+import numpy as np
+import PythonAutomataLibrary as pal
+
+field64 = pal.NewPDEgrid((32, 32))
+field32 = pal.NewPDEgrid((32, 32), dtype=np.float32)
+field32[4, 5] = 1.25
+field32.SetTimeSpaceStep(0.1, 1.0)
+field32.Diffusion(0.2)
+field32.Update()
+```
+
+The float32 PDE backend is under active API-parity validation. The default float64 path remains unchanged.
+
 ## Documentation
 
 - [PAL Guide](Documentation/PAL_GUIDE.md) ([PDF](Documentation/PAL_GUIDE.pdf)) — first model, worked modeling workflows, and detailed API behavior.
