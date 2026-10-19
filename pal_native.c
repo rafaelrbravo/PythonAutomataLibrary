@@ -992,7 +992,7 @@ PAL_API void pal_ag_counts_region(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,i
 /* PopGrid                                                                    */
 /* ========================================================================== */
 
-typedef enum { PG_FIELD_U8=1, PG_FIELD_U16=2, PG_FIELD_U32=4, PG_FIELD_I64=8, PG_FIELD_I8=1, PG_FIELD_I16=2, PG_FIELD_I32=4 } PopFieldType;
+typedef enum { PG_FIELD_U8=1, PG_FIELD_U16=2, PG_FIELD_U32=4, PG_FIELD_I64=8 } PopFieldType;
 typedef enum { PG_DELTA_I16=2, PG_DELTA_I32=4, PG_DELTA_I64=8 } PopDeltaType;
 
 typedef struct {
@@ -1014,12 +1014,12 @@ static int32_t PopGrid_ToI(const PopGrid *grid, int32_t x, int32_t y, int32_t z)
     return (x * grid->dimensions[1] + y) * grid->dimensions[2] + z;
 }
 static int64_t PopGrid_FieldGet(const PopGrid *g,int32_t i){
-    switch(g->fieldType){case PG_FIELD_U8:return g->capacity<0?((int8_t*)g->field)[i]:((uint8_t*)g->field)[i];case PG_FIELD_U16:return g->capacity<0?((int16_t*)g->field)[i]:((uint16_t*)g->field)[i];case PG_FIELD_U32:return g->capacity<0?((int32_t*)g->field)[i]:((uint32_t*)g->field)[i];default:return ((int64_t*)g->field)[i];}
+    switch(g->fieldType){case PG_FIELD_U8:return ((uint8_t*)g->field)[i];case PG_FIELD_U16:return ((uint16_t*)g->field)[i];case PG_FIELD_U32:return ((uint32_t*)g->field)[i];default:return ((int64_t*)g->field)[i];}
 }
 static void PopGrid_FieldSet(PopGrid *g,int32_t i,int64_t v){
-    switch(g->fieldType){case PG_FIELD_U8:if(g->capacity<0)((int8_t*)g->field)[i]=(int8_t)v;else ((uint8_t*)g->field)[i]=(uint8_t)v;break;case PG_FIELD_U16:if(g->capacity<0)((int16_t*)g->field)[i]=(int16_t)v;else ((uint16_t*)g->field)[i]=(uint16_t)v;break;case PG_FIELD_U32:if(g->capacity<0)((int32_t*)g->field)[i]=(int32_t)v;else ((uint32_t*)g->field)[i]=(uint32_t)v;break;default:((int64_t*)g->field)[i]=v;}
+    switch(g->fieldType){case PG_FIELD_U8:((uint8_t*)g->field)[i]=(uint8_t)v;break;case PG_FIELD_U16:((uint16_t*)g->field)[i]=(uint16_t)v;break;case PG_FIELD_U32:((uint32_t*)g->field)[i]=(uint32_t)v;break;default:((int64_t*)g->field)[i]=v;}
 }
-static int64_t PopGrid_FieldMax(const PopGrid *g){switch(g->fieldType){case PG_FIELD_U8:return g->capacity<0?INT8_MAX:UINT8_MAX;case PG_FIELD_U16:return g->capacity<0?INT16_MAX:UINT16_MAX;case PG_FIELD_U32:return g->capacity<0?INT32_MAX:UINT32_MAX;default:return INT64_MAX;}}
+static int64_t PopGrid_FieldMax(const PopGrid *g){switch(g->fieldType){case PG_FIELD_U8:return UINT8_MAX;case PG_FIELD_U16:return UINT16_MAX;case PG_FIELD_U32:return UINT32_MAX;default:return INT64_MAX;}}
 static int64_t PopGrid_DeltaGet(const PopGrid *g,int32_t i){
     switch(g->deltaType){case PG_DELTA_I16:return ((int16_t*)g->deltas)[i];case PG_DELTA_I32:return ((int32_t*)g->deltas)[i];default:return ((int64_t*)g->deltas)[i];}
 }
@@ -1035,14 +1035,11 @@ static int PopGrid_DeltaFits(const PopGrid *g,int64_t current,int64_t add,int64_
 }
 
 PAL_API uintptr_t pal_pg_new(const int32_t *dimensions, int32_t dimension, int64_t capacity) {
-    if (dimension < 1 || dimension > 3 || (capacity<0 && capacity!=-8 && capacity!=-16 && capacity!=-32)) return 0;
+    if (dimension < 1 || dimension > 3 || capacity < 0) return 0;
     PopGrid *grid = (PopGrid *)calloc(1, sizeof(PopGrid)); if (!grid) return 0;
     grid->dimension=dimension; grid->capacity=capacity; grid->length=1;
     for(int32_t d=0;d<dimension;d++){int32_t value=dimensions[d];grid->wrap[d]=value<0;grid->dimensions[d]=value<0?-value:value;if(grid->dimensions[d]<=0){free(grid);return 0;}grid->length*=grid->dimensions[d];}
-    if(capacity==-8){grid->fieldType=PG_FIELD_I8;grid->deltaType=PG_DELTA_I16;}
-    else if(capacity==-16){grid->fieldType=PG_FIELD_I16;grid->deltaType=PG_DELTA_I32;}
-    else if(capacity==-32){grid->fieldType=PG_FIELD_I32;grid->deltaType=PG_DELTA_I64;}
-    else if(capacity<=UINT8_MAX){grid->fieldType=PG_FIELD_U8;grid->deltaType=PG_DELTA_I16;}
+    if(capacity<=UINT8_MAX){grid->fieldType=PG_FIELD_U8;grid->deltaType=PG_DELTA_I16;}
     else if(capacity<=UINT16_MAX){grid->fieldType=PG_FIELD_U16;grid->deltaType=PG_DELTA_I32;}
     else if((uint64_t)capacity<=UINT32_MAX){grid->fieldType=PG_FIELD_U32;grid->deltaType=PG_DELTA_I64;}
     else {grid->fieldType=PG_FIELD_I64;grid->deltaType=PG_DELTA_I64;}
