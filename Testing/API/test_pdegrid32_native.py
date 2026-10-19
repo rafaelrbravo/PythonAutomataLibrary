@@ -645,3 +645,24 @@ def test_pdegrid32_safe_addition_rejects_result_overflow_atomically():
             core._pd32_free(grid._ptr)
     finally:
         core._UseFastMode = original
+
+
+def test_dtype_constructor_example_runs_in_both_modes(capsys):
+    """Keep the new dtype showcase executable as constructor APIs evolve."""
+    import runpy
+    from pathlib import Path
+
+    example = Path(__file__).resolve().parents[2] / "Examples" / "DTypeConstructors.py"
+    original = core._UseFastMode
+    try:
+        for fast in (False, True):
+            core._UseFastMode = lambda: fast
+            namespace = runpy.run_path(str(example), run_name="dtype_example_test")
+            namespace["main"]()
+            output = capsys.readouterr().out
+            assert "Grid float64: 3.5" in output
+            assert "PDEgrid float32: 2.5" in output
+            assert "PDEgrid float64: 2.5" in output
+            assert "AgentGrid float64 property: 1.25" in output
+    finally:
+        core._UseFastMode = original
