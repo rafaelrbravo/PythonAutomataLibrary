@@ -1345,6 +1345,56 @@ PAL_API int32_t pal_pd32_linear_set_scalar(uintptr_t handle, int32_t i0, int32_t
     return 1;
 }
 
+/* Rectangular float32 field access, in x-major row-major order. */
+static int32_t pal_pd32_region_valid(const PDEGrid32 *grid, int32_t x0, int32_t x1, int32_t y0, int32_t y1, int32_t z0, int32_t z1) {
+    if (x0 < 0 || x1 < x0 || x1 > grid->dimensions[0]) return 0;
+    if (grid->dimension < 2) { if (y0 != 0 || y1 != 1) return 0; }
+    else if (y0 < 0 || y1 < y0 || y1 > grid->dimensions[1]) return 0;
+    if (grid->dimension < 3) { if (z0 != 0 || z1 != 1) return 0; }
+    else if (z0 < 0 || z1 < z0 || z1 > grid->dimensions[2]) return 0;
+    return 1;
+}
+
+PAL_API int32_t pal_pd32_region_get(uintptr_t handle, int32_t x0, int32_t x1, int32_t y0, int32_t y1, int32_t z0, int32_t z1, float *out) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (!out || !pal_pd32_region_valid(grid,x0,x1,y0,y1,z0,z1)) return 0;
+    const int32_t ny = grid->dimension > 1 ? grid->dimensions[1] : 1;
+    const int32_t nz = grid->dimension > 2 ? grid->dimensions[2] : 1;
+    size_t k = 0;
+    for (int32_t x=x0; x<x1; x++)
+        for (int32_t y=y0; y<y1; y++)
+            for (int32_t z=z0; z<z1; z++)
+                out[k++] = grid->field[((size_t)x*ny+y)*nz+z];
+    return 1;
+}
+
+PAL_API int32_t pal_pd32_region_set_array(uintptr_t handle, int32_t x0, int32_t x1, int32_t y0, int32_t y1, int32_t z0, int32_t z1, const float *values) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (!values || !pal_pd32_region_valid(grid,x0,x1,y0,y1,z0,z1)) return 0;
+    const size_t n=(size_t)(x1-x0)*(size_t)(y1-y0)*(size_t)(z1-z0);
+    for (size_t k=0; k<n; k++) if (!isfinite(values[k])) return 0;
+    const int32_t ny = grid->dimension > 1 ? grid->dimensions[1] : 1;
+    const int32_t nz = grid->dimension > 2 ? grid->dimensions[2] : 1;
+    size_t k=0;
+    for (int32_t x=x0; x<x1; x++)
+        for (int32_t y=y0; y<y1; y++)
+            for (int32_t z=z0; z<z1; z++)
+                grid->field[((size_t)x*ny+y)*nz+z] = values[k++];
+    return 1;
+}
+
+PAL_API int32_t pal_pd32_region_set_scalar(uintptr_t handle, int32_t x0, int32_t x1, int32_t y0, int32_t y1, int32_t z0, int32_t z1, float value) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (!isfinite(value) || !pal_pd32_region_valid(grid,x0,x1,y0,y1,z0,z1)) return 0;
+    const int32_t ny = grid->dimension > 1 ? grid->dimensions[1] : 1;
+    const int32_t nz = grid->dimension > 2 ? grid->dimensions[2] : 1;
+    for (int32_t x=x0; x<x1; x++)
+        for (int32_t y=y0; y<y1; y++)
+            for (int32_t z=z0; z<z1; z++)
+                grid->field[((size_t)x*ny+y)*nz+z] = value;
+    return 1;
+}
+
 PAL_API int32_t pal_pd32_itox(uintptr_t handle, int32_t i) {
     PDEGrid32 *grid = (PDEGrid32 *)handle;
     if (i < 0 || i >= grid->length) return PAL_NULL;
