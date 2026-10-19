@@ -295,7 +295,7 @@ def _NumbaCType(cType):
     if cType is _PTR: return types.uint64
     if cType is _I32: return types.int32
     if cType is _I64: return types.int64
-    if cType is _F32: return types.float64
+    if cType is _F32: return types.float32
     if cType is _F64: return types.float64
     if cType is _U32: return types.uint32
     if cType is _U8: return types.uint8
