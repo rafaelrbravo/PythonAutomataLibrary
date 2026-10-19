@@ -15,6 +15,13 @@ PAL_API int32_t PAL_AG_OCC_FN(count_i)(uintptr_t handle,int32_t location) {
     return grid->stackable ? grid->counts[location] : (grid->grid[location]!=PAL_NULL);
 }
 
+
+PAL_API int32_t PAL_AG_OCC_FN(PAL_AG_OCC_LAST)(uintptr_t handle,int32_t location) {
+    PAL_AG_TYPE *grid=(PAL_AG_TYPE *)handle;
+    if (!grid || location<0 || location>=grid->length) return PAL_NULL;
+    return grid->grid[location];
+}
+
 #undef PAL_AG_OCC_FN
 #undef PAL_AG_OCC_JOIN
 #undef PAL_AG_OCC_JOIN2
