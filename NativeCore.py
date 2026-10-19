@@ -613,7 +613,7 @@ def _CheckBCValue(bc, gridPtr, dimension, axis):
     for d in range(dimension):
         if d != axis: expected *= _pd_dim(gridPtr,d)
     if bc.size != expected: raise ValueError("boundary array size does not match grid face")
-    if bc.dtype != np.float64: raise ValueError("boundary arrays must use dtype float64")
+    if bc.dtype not in (np.float32, np.float64): raise ValueError("boundary arrays must use float32 or float64")
     if not bc.flags.c_contiguous: raise ValueError("boundary arrays must be C-contiguous")
     for v in bc.flat:
         if not np.isfinite(v): raise ValueError("boundary values must be finite")
@@ -629,8 +629,8 @@ def _CheckBCValueOverload(bc, gridPtr, dimension, axis):
             if not np.isfinite(bc): raise ValueError("boundary values must be finite")
         return impl
     if isinstance(bc, types.Array):
-        if bc.dtype != types.float64 or bc.layout != "C":
-            def impl(bc, gridPtr, dimension, axis): raise ValueError("boundary arrays must be C-contiguous float32 arrays")
+        if bc.dtype not in (types.float32, types.float64) or bc.layout != "C":
+            def impl(bc, gridPtr, dimension, axis): raise ValueError("boundary arrays must be C-contiguous float64 arrays")
             return impl
         def impl(bc, gridPtr, dimension, axis):
             if _pd_iswrap(gridPtr,axis): raise ValueError("boundary conditions cannot be specified on a wrapped axis")
