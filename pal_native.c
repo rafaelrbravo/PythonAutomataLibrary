@@ -1150,6 +1150,99 @@ static int32_t PDEGrid_Wrap(const PDEGrid *grid, int32_t value, int32_t dimensio
     return value;
 }
 
+/* Independent float32 PDE storage. Higher-level kernels and Python bindings follow. */
+typedef struct {
+    int32_t dimension;
+    int32_t dimensions[3];
+    int32_t wrap[3];
+    int32_t length;
+    float *field;
+    float *deltas;
+    double dt, dx, dy, dz;
+    double scalarBC[6];
+} PDEGrid32;
+
+PAL_API void pal_pd32_free(uintptr_t handle) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (grid == NULL) return;
+    free(grid->field);
+    free(grid->deltas);
+    free(grid);
+}
+
+PAL_API uintptr_t pal_pd32_new(const int32_t *dimensions, int32_t dimension) {
+    if (dimension < 1 || dimension > 3 || dimensions == NULL) return 0;
+    PDEGrid32 *grid = (PDEGrid32 *)calloc(1, sizeof(PDEGrid32));
+    if (grid == NULL) return 0;
+    grid->dimension = dimension;
+    int64_t length = 1;
+    for (int32_t d = 0; d < dimension; d++) {
+        int64_t value = dimensions[d];
+        int64_t size = value < 0 ? -value : value;
+        if (size <= 0 || size > INT32_MAX || length > INT32_MAX / size) {
+            pal_pd32_free((uintptr_t)grid);
+            return 0;
+        }
+        grid->wrap[d] = value < 0;
+        grid->dimensions[d] = (int32_t)size;
+        length *= size;
+    }
+    grid->length = (int32_t)length;
+    grid->field = (float *)calloc((size_t)length, sizeof(float));
+    grid->deltas = (float *)calloc((size_t)length, sizeof(float));
+    if (grid->field == NULL || grid->deltas == NULL) {
+        pal_pd32_free((uintptr_t)grid);
+        return 0;
+    }
+    grid->dt = grid->dx = grid->dy = grid->dz = 1.0;
+    return (uintptr_t)grid;
+}
+
+PAL_API int32_t pal_pd32_len(uintptr_t handle) {
+    return ((PDEGrid32 *)handle)->length;
+}
+
+PAL_API float *pal_pd32_field_data(uintptr_t handle) {
+    return ((PDEGrid32 *)handle)->field;
+}
+
+PAL_API float *pal_pd32_delta_data(uintptr_t handle) {
+    return ((PDEGrid32 *)handle)->deltas;
+}
+
+PAL_API float pal_pd32_geti(uintptr_t handle, int32_t i) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    return i >= 0 && i < grid->length ? grid->field[i] : NAN;
+}
+
+PAL_API int32_t pal_pd32_seti(uintptr_t handle, int32_t i, float value) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (i < 0 || i >= grid->length || !isfinite(value)) return 0;
+    grid->field[i] = value;
+    return 1;
+}
+
+PAL_API void pal_pd32_addi(uintptr_t handle, int32_t i, float value) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (i >= 0 && i < grid->length) grid->deltas[i] += value;
+}
+
+PAL_API void pal_pd32_update(uintptr_t handle) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    for (int32_t i = 0; i < grid->length; i++) {
+        grid->field[i] += grid->deltas[i];
+        grid->deltas[i] = 0.0f;
+    }
+}
+
+PAL_API void pal_pd32_clear(uintptr_t handle, float value) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    for (int32_t i = 0; i < grid->length; i++) {
+        grid->field[i] = value;
+        grid->deltas[i] = 0.0f;
+    }
+}
+
 PAL_API uintptr_t pal_pd_new(const int32_t *dimensions, int32_t dimension) {
     if (dimension < 1 || dimension > 3) return 0;
     PDEGrid *grid = (PDEGrid *)calloc(1, sizeof(PDEGrid));
