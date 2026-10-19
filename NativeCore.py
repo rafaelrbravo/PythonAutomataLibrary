@@ -2833,6 +2833,7 @@ class _PDEgridSafePython:
     def Diffusion(self, rateConstant, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         if not np.isfinite(rateConstant) or rateConstant<0: raise ValueError("diffusion rate must be finite and nonnegative")
         self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         ok=_pd_diffusion_bc(self._ptr,rateConstant,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok==0: raise ValueError("explicit diffusion stability condition violated")
     def DiffusionMask(self, rateConstant, mask, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
@@ -2840,6 +2841,7 @@ class _PDEgridSafePython:
         self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
         if mask.size != len(self): raise ValueError("mask shape must match grid dimensions")
         maskF=np.asarray(mask,dtype=np.float64).reshape(len(self))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         ok=_pd_diffusion_mask(self._ptr,rateConstant,maskF.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok<0: raise ValueError("mask values must be finite")
         if ok==0: raise ValueError("explicit diffusion stability condition violated")
@@ -2847,6 +2849,7 @@ class _PDEgridSafePython:
         if rateConstants.size != len(self): raise ValueError("rateConstants shape must match grid dimensions")
         self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
         ratesF=np.asarray(rateConstants,dtype=np.float64).reshape(len(self))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         ok=_pd_diffusion_field(self._ptr,ratesF.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok<0: raise ValueError("rate constants must be finite and nonnegative")
         if ok==0: raise ValueError("explicit diffusion stability condition violated")
@@ -2858,6 +2861,7 @@ class _PDEgridSafePython:
         if self._dimension>2 and (rateConstantsZ is None or rateConstantsZ.size!=len(self)): raise ValueError("rateConstantsZ shape must match grid dimensions")
         self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
         rx=np.asarray(rateConstantsX,dtype=np.float64).reshape(len(self)); ry=np.empty(0,dtype=np.float64) if rateConstantsY is None else np.asarray(rateConstantsY,dtype=np.float64).reshape(len(self)); rz=np.empty(0,dtype=np.float64) if rateConstantsZ is None else np.asarray(rateConstantsZ,dtype=np.float64).reshape(len(self))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         ok=_pd_diffusion_interfaces(self._ptr,rx.ctypes.data,0 if ry.size==0 else ry.ctypes.data,0 if rz.size==0 else rz.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok<0: raise ValueError("rate constants must be finite and nonnegative")
         if ok==0: raise ValueError("explicit diffusion stability condition violated")
@@ -2885,6 +2889,7 @@ class _PDEgridSafePython:
         if self._dimension==1 and (vy!=0 or vz!=0): raise ValueError("1D Advection accepts vx only")
         if self._dimension==2 and vz!=0: raise ValueError("2D Advection accepts vx and vy only")
         self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         ok=_pd_advection(self._ptr,vx,vy,vz,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok==0: raise ValueError("advection CFL condition violated")
     def AdvectionField(self, xVels, yVels=None, zVels=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
@@ -2899,7 +2904,9 @@ class _PDEgridSafePython:
         if self._dimension>2 and (zVels is None or zVels.size!=len(self)): raise ValueError("z velocity shape must match grid dimensions")
         self._CheckBCs(xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC)
         xv=np.asarray(xVels,dtype=np.float64).reshape(len(self)); yv=np.empty(0,dtype=np.float64) if yVels is None else np.asarray(yVels,dtype=np.float64).reshape(len(self)); zv=np.empty(0,dtype=np.float64) if zVels is None else np.asarray(zVels,dtype=np.float64).reshape(len(self))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         if interfaces: ok=_pd_advection_interfaces(self._ptr,xv.ctypes.data,0 if yv.size==0 else yv.ctypes.data,0 if zv.size==0 else zv.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         else: ok=_pd_advection_field(self._ptr,xv.ctypes.data,0 if yv.size==0 else yv.ctypes.data,0 if zv.size==0 else zv.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
         if ok<0: raise ValueError("advection velocities must be finite")
         if ok==0: raise ValueError("advection CFL condition violated")
@@ -2970,16 +2977,20 @@ class _PDEgridFastPython:
         elif z0 is not None or z1 is not None: raise ValueError("grid does not have Z boundary conditions")
 
     def Diffusion(self, rateConstant, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         _pd_diffusion_bc_fast(self._ptr,rateConstant,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
     def DiffusionMask(self, rateConstant, mask, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         if not np.isfinite(rateConstant) or rateConstant<0: raise ValueError("diffusion rate must be finite and nonnegative")
         maskF=np.asarray(mask,dtype=np.float64).reshape(len(self))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         _pd_diffusion_mask_fast(self._ptr,rateConstant,maskF.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
     def DiffusionField(self, rateConstants, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         ratesF=np.asarray(rateConstants,dtype=np.float64).reshape(len(self))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         _pd_diffusion_field_fast(self._ptr,ratesF.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
     def DiffusionInterfaces(self, rateConstantsX, rateConstantsY=None, rateConstantsZ=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         rx=np.asarray(rateConstantsX,dtype=np.float64).reshape(len(self)); ry=np.empty(0,dtype=np.float64) if rateConstantsY is None else np.asarray(rateConstantsY,dtype=np.float64).reshape(len(self)); rz=np.empty(0,dtype=np.float64) if rateConstantsZ is None else np.asarray(rateConstantsZ,dtype=np.float64).reshape(len(self))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         _pd_diffusion_interfaces_fast(self._ptr,rx.ctypes.data,0 if ry.size==0 else ry.ctypes.data,0 if rz.size==0 else rz.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
     def DiffusionADI(self, rateConstant, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
@@ -2991,6 +3002,7 @@ class _PDEgridFastPython:
         ok=_pd_diffusion_radial_sphere_fast(self._ptr,rateConstant,_BCPointer(outerBC,self._ptr,1))
 
     def Advection(self, vx, vy=0.0, vz=0.0, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         _pd_advection_fast(self._ptr,vx,vy,vz,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
     def AdvectionField(self, xVels, yVels=None, zVels=None, xMinBC=None, xMaxBC=None, yMinBC=None, yMaxBC=None, zMinBC=None, zMaxBC=None):
         self._AdvectionArrays(xVels,yVels,zVels,xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC,False)
@@ -2998,7 +3010,9 @@ class _PDEgridFastPython:
         self._AdvectionArrays(xVels,yVels,zVels,xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC,True)
     def _AdvectionArrays(self,xVels,yVels,zVels,xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC,interfaces):
         xv=np.asarray(xVels,dtype=np.float64).reshape(len(self)); yv=np.empty(0,dtype=np.float64) if yVels is None else np.asarray(yVels,dtype=np.float64).reshape(len(self)); zv=np.empty(0,dtype=np.float64) if zVels is None else np.asarray(zVels,dtype=np.float64).reshape(len(self))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         if interfaces: _pd_advection_interfaces_fast(self._ptr,xv.ctypes.data,0 if yv.size==0 else yv.ctypes.data,0 if zv.size==0 else zv.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
+        xMinBC=_BCFloat64(xMinBC); xMaxBC=_BCFloat64(xMaxBC); yMinBC=_BCFloat64(yMinBC); yMaxBC=_BCFloat64(yMaxBC); zMinBC=_BCFloat64(zMinBC); zMaxBC=_BCFloat64(zMaxBC)
         else: _pd_advection_field_fast(self._ptr,xv.ctypes.data,0 if yv.size==0 else yv.ctypes.data,0 if zv.size==0 else zv.ctypes.data,_BCPointer(xMinBC,self._ptr,0),_BCPointer(xMaxBC,self._ptr,1),_BCPointer(yMinBC,self._ptr,2),_BCPointer(yMaxBC,self._ptr,3),_BCPointer(zMinBC,self._ptr,4),_BCPointer(zMaxBC,self._ptr,5))
 
 _PDEgridFast=_jitclass([("_ptr",uint64),("_dimension",int32),("_xDim",int32),("_yDim",int32),("_zDim",int32),("_length",int32),("_wrapX",types.boolean),("_wrapY",types.boolean),("_wrapZ",types.boolean)])(_PDEgridFastPython)
