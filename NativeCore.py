@@ -652,6 +652,9 @@ def _BCFloat64Overload(bc):
         def impl(bc): return bc
         return impl
     if isinstance(bc, types.Array):
+        if bc.dtype == types.float64:
+            def impl(bc): return np.ascontiguousarray(bc)
+            return impl
         def impl(bc): return np.ascontiguousarray(bc.astype(np.float64))
         return impl
 
