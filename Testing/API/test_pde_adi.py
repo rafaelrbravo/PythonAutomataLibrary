@@ -93,3 +93,26 @@ def test_pde_boundary_array_dtype_matches_scalar(operation, dtype):
     scalar.Update()
     array.Update()
     np.testing.assert_allclose(array[:], scalar[:], rtol=2e-6, atol=2e-6)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_compiled_diffusion_adi_boundary_array_matches_scalar(dtype):
+    scalar = pal.NewPDEgrid((5, 6))
+    array = pal.NewPDEgrid((5, 6))
+    for field in (scalar, array):
+        field.SetTimeSpaceStep(0.1, 1.0, 1.0, 1.0)
+        field[:] = np.arange(len(field), dtype=np.float64) % 7
+
+    @pal.njit
+    def step_scalar(field):
+        field.DiffusionADI(0.2, xMaxBC=1.25)
+        field.Update()
+
+    @pal.njit
+    def step_array(field, boundary):
+        field.DiffusionADI(0.2, xMaxBC=boundary)
+        field.Update()
+
+    step_scalar(scalar)
+    step_array(array, np.full(6, 1.25, dtype=dtype))
+    np.testing.assert_allclose(array[:], scalar[:], rtol=2e-6, atol=2e-6)
