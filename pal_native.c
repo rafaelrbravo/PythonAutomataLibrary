@@ -1290,6 +1290,37 @@ PAL_API int32_t pal_pd32_diffuse(uintptr_t handle, double rate) {
     return 1;
 }
 
+PAL_API int32_t pal_pd32_toi(uintptr_t handle, int32_t x, int32_t y, int32_t z) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (x < 0 || x >= grid->dimensions[0]) return PAL_NULL;
+    if (grid->dimension > 1 && (y < 0 || y >= grid->dimensions[1])) return PAL_NULL;
+    if (grid->dimension > 2 && (z < 0 || z >= grid->dimensions[2])) return PAL_NULL;
+    if (grid->dimension == 1) return x;
+    if (grid->dimension == 2) return x * grid->dimensions[1] + y;
+    return (x * grid->dimensions[1] + y) * grid->dimensions[2] + z;
+}
+
+PAL_API int32_t pal_pd32_itox(uintptr_t handle, int32_t i) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (i < 0 || i >= grid->length) return PAL_NULL;
+    if (grid->dimension == 1) return i;
+    if (grid->dimension == 2) return i / grid->dimensions[1];
+    return i / (grid->dimensions[1] * grid->dimensions[2]);
+}
+
+PAL_API int32_t pal_pd32_itoy(uintptr_t handle, int32_t i) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (i < 0 || i >= grid->length || grid->dimension < 2) return PAL_NULL;
+    if (grid->dimension == 2) return i % grid->dimensions[1];
+    return (i / grid->dimensions[2]) % grid->dimensions[1];
+}
+
+PAL_API int32_t pal_pd32_itoz(uintptr_t handle, int32_t i) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (i < 0 || i >= grid->length || grid->dimension < 3) return PAL_NULL;
+    return i % grid->dimensions[2];
+}
+
 PAL_API uintptr_t pal_pd_new(const int32_t *dimensions, int32_t dimension) {
     if (dimension < 1 || dimension > 3) return 0;
     PDEGrid *grid = (PDEGrid *)calloc(1, sizeof(PDEGrid));
