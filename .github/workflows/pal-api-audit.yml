@@ -20,6 +20,9 @@ on:
     branches:
       - main
       - fix/diffusion-mask-boundary-conditions
+concurrency:
+  group: pal-api-audit-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'workflow_run' }}
 jobs:
   api-audit:
     if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
