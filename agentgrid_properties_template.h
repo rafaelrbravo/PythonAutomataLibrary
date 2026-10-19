@@ -17,20 +17,20 @@
 #ifndef PAL_AG_DATA_ONLY
 PAL_API int32_t PAL_AG_FN(set_property)(uintptr_t handle,int32_t agent,int32_t property,PAL_AG_FLOAT value) {
     PAL_AG_TYPE *g=(PAL_AG_TYPE *)handle;
-    if (!g || agent<0 || agent>=g->capacity || property<0 ||
+    if (!g || agent<0 || agent>=g->nAgents || !g->intProperties[(size_t)agent*N_AGENT_INT_PROPERTIES+AGENT_ALIVE] || property<0 ||
         property>=g->nFloatProperties || !isfinite(value)) return 0;
     g->floatProperties[(size_t)agent*g->nFloatProperties+property]=value;
     return 1;
 }
 PAL_API PAL_AG_FLOAT PAL_AG_FN(get_property)(uintptr_t handle,int32_t agent,int32_t property) {
     PAL_AG_TYPE *g=(PAL_AG_TYPE *)handle;
-    if (!g || agent<0 || agent>=g->capacity || property<0 ||
+    if (!g || agent<0 || agent>=g->nAgents || !g->intProperties[(size_t)agent*N_AGENT_INT_PROPERTIES+AGENT_ALIVE] || property<0 ||
         property>=g->nFloatProperties) return NAN;
     return g->floatProperties[(size_t)agent*g->nFloatProperties+property];
 }
 PAL_API int32_t PAL_AG_FN(add_property)(uintptr_t handle,int32_t agent,int32_t property,PAL_AG_FLOAT delta) {
     PAL_AG_TYPE *g=(PAL_AG_TYPE *)handle;
-    if (!g || agent<0 || agent>=g->capacity || property<0 ||
+    if (!g || agent<0 || agent>=g->nAgents || !g->intProperties[(size_t)agent*N_AGENT_INT_PROPERTIES+AGENT_ALIVE] || property<0 ||
         property>=g->nFloatProperties || !isfinite(delta)) return 0;
     size_t i=(size_t)agent*g->nFloatProperties+property;
     PAL_AG_FLOAT next=g->floatProperties[i]+delta;
