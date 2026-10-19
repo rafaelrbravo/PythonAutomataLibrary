@@ -618,12 +618,11 @@ PAL_API int32_t pal_ag_all_id(uintptr_t handle, int32_t position) {
     return grid->aliveAgents[position];
 }
 
-PAL_API int32_t pal_ag_count_i(uintptr_t handle, int32_t location) {
-    AgentGrid *grid = (AgentGrid *)handle;
-    if (location < 0 || location >= grid->length) return 0;
-    if (grid->stackable) return grid->counts[location];
-    return grid->grid[location] != PAL_NULL;
-}
+#define PAL_AG_TYPE AgentGrid
+#define PAL_AG_PREFIX pal_ag_
+#include "agentgrid_occupancy_template.h"
+#undef PAL_AG_PREFIX
+#undef PAL_AG_TYPE
 
 PAL_API int32_t pal_ag_last_i(uintptr_t handle, int32_t location) {
     AgentGrid *grid = (AgentGrid *)handle;
@@ -1400,11 +1399,11 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
 PAL_API int32_t pal_ag32_population(uintptr_t handle) {
     return handle ? ((AgentGrid32 *)handle)->population : 0;
 }
-PAL_API int32_t pal_ag32_count_i(uintptr_t handle,int32_t location) {
-    AgentGrid32 *g=(AgentGrid32 *)handle;
-    if (!g || location<0 || location>=g->length) return 0;
-    return g->stackable ? g->counts[location] : (g->grid[location]!=PAL_NULL);
-}
+#define PAL_AG_TYPE AgentGrid32
+#define PAL_AG_PREFIX pal_ag32_
+#include "agentgrid_occupancy_template.h"
+#undef PAL_AG_PREFIX
+#undef PAL_AG_TYPE
 PAL_API int32_t pal_ag32_at_i(uintptr_t handle,int32_t location) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
     return g && location>=0 && location<g->length ? g->grid[location] : PAL_NULL;
