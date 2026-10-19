@@ -21,13 +21,13 @@ def EmptyNeighbors(cells: pal.AgentGrid, agent, empty: pal.IList):
     for x, y in cells.Hood(MOORE, cells.XSQ(agent), cells.YSQ(agent)):
         if cells.counts[x, y] == 0:
             empty.Append(cells.ToI(x, y))
-    return empty
 
 def main():
     cells = pal.NewAgentGrid((SIZE, SIZE), isStackable=False)
     Setup(cells)
     empty = pal.NewIList()
-    print(EmptyNeighbors(cells, cells.All()[0], empty).All())
+    EmptyNeighbors(cells, cells.All()[0], empty)
+    print(empty.All())
     pix, window = pal.StartPixWindow(SIZE, SIZE, scale=12, title="Cells")
     Draw(cells, pix)
     window.Update()
