@@ -557,6 +557,8 @@ _pd32_voxel = _bind("pal_pd32_voxel", _F64, _PTR)
 _pd32_diffuse = _bind("pal_pd32_diffuse", _I32, _PTR, _F64)
 _pd32_diffuse_mask = _bind("pal_pd32_diffuse_mask", _I32, _PTR, _F64, _F32_PTR)
 _pd32_diffuse_field = _bind("pal_pd32_diffuse_field", _I32, _PTR, _F32_PTR)
+_pd32_diffuse_mask_addr = _bind("pal_pd32_diffuse_mask", _I32, _PTR, _F64, _PTR)
+_pd32_diffuse_field_addr = _bind("pal_pd32_diffuse_field", _I32, _PTR, _PTR)
 _pd32_advection = _bind("pal_pd32_advection", _I32, _PTR, _F64, _F64, _F64)
 
 _pd_new = _bind("pal_pd_new", _PTR, _I32_PTR, _I32)
@@ -5222,6 +5224,12 @@ class _PDEgrid32FastPython:
     def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0): _pd32_steps(self._ptr,dt,dx,dy,dz)
     def Diffusion(self,rateConstant):
         if not _pd32_diffuse(self._ptr,rateConstant): raise ValueError("invalid diffusion rate or unstable time step")
+    def DiffusionMask(self,rateConstant,mask):
+        values=np.asarray(mask,dtype=np.float32).reshape(self._length)
+        if not _pd32_diffuse_mask_addr(self._ptr,rateConstant,values.ctypes.data): raise ValueError("invalid diffusion mask, rate, or unstable time step")
+    def DiffusionField(self,rateConstants):
+        values=np.asarray(rateConstants,dtype=np.float32).reshape(self._length)
+        if not _pd32_diffuse_field_addr(self._ptr,values.ctypes.data): raise ValueError("invalid diffusion field or unstable time step")
     def Advection(self,vx,vy=0.0,vz=0.0):
         if not _pd32_advection(self._ptr,vx,vy,vz): raise ValueError("invalid advection velocity or unstable time step")
 
@@ -5278,6 +5286,12 @@ class _PDEgrid32SafePython:
     def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0): _pd32_steps(self._ptr,dt,dx,dy,dz)
     def Diffusion(self,rateConstant):
         if not _pd32_diffuse(self._ptr,rateConstant): raise ValueError("invalid diffusion rate or unstable time step")
+    def DiffusionMask(self,rateConstant,mask):
+        values=np.asarray(mask,dtype=np.float32).reshape(self._length)
+        if not _pd32_diffuse_mask_addr(self._ptr,rateConstant,values.ctypes.data): raise ValueError("invalid diffusion mask, rate, or unstable time step")
+    def DiffusionField(self,rateConstants):
+        values=np.asarray(rateConstants,dtype=np.float32).reshape(self._length)
+        if not _pd32_diffuse_field_addr(self._ptr,values.ctypes.data): raise ValueError("invalid diffusion field or unstable time step")
     def Advection(self,vx,vy=0.0,vz=0.0):
         if not _pd32_advection(self._ptr,vx,vy,vz): raise ValueError("invalid advection velocity or unstable time step")
 
