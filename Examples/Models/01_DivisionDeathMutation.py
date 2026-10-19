@@ -1,7 +1,5 @@
 import PythonAutomataLibrary as pal
 
-# pal.FastMode()
-
 X=1000
 Y=1000
 SCALE=1
