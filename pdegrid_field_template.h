@@ -12,6 +12,11 @@
 #define PAL_PD_JOIN(a,b) PAL_PD_JOIN2(a,b)
 #define PAL_PD_FN(name) PAL_PD_JOIN(PAL_PD_PREFIX,name)
 
+PAL_API int32_t PAL_PD_FN(dim)(uintptr_t handle,int32_t d) {
+    PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
+    return grid && d>=0 && d<grid->dimension ? grid->dimensions[d] : PAL_NULL;
+}
+
 PAL_API void PAL_PD_FN(steps)(uintptr_t handle,double dt,double dx,double dy,double dz) {
     PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
     grid->dt=dt; grid->dx=dx; grid->dy=dy; grid->dz=dz;
