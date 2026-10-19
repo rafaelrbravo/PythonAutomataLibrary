@@ -12,6 +12,17 @@
 #define PAL_PD_JOIN(a,b) PAL_PD_JOIN2(a,b)
 #define PAL_PD_FN(name) PAL_PD_JOIN(PAL_PD_PREFIX,name)
 
+PAL_API void PAL_PD_FN(steps)(uintptr_t handle,double dt,double dx,double dy,double dz) {
+    PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
+    grid->dt=dt; grid->dx=dx; grid->dy=dy; grid->dz=dz;
+}
+PAL_API double PAL_PD_FN(voxel)(uintptr_t handle) {
+    PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
+    if (grid->dimension==1) return grid->dx;
+    if (grid->dimension==2) return grid->dx*grid->dy;
+    return grid->dx*grid->dy*grid->dz;
+}
+
 PAL_API PAL_PD_FLOAT PAL_PD_FN(geti)(uintptr_t handle,int32_t i) {
     PAL_PD_TYPE *grid=(PAL_PD_TYPE *)handle;
     return grid && i>=0 && i<grid->length ? grid->field[i] : (PAL_PD_FLOAT)NAN;
