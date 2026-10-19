@@ -1324,6 +1324,27 @@ PAL_API int32_t pal_pd32_add(uintptr_t handle, int32_t x, int32_t y, int32_t z, 
     return 1;
 }
 
+PAL_API void pal_pd32_linear_get(uintptr_t handle, int32_t i0, int32_t i1, float *out) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (i0 < 0 || i1 < i0 || i1 > grid->length || out == NULL) return;
+    memcpy(out, grid->field + i0, (size_t)(i1 - i0) * sizeof(float));
+}
+
+PAL_API int32_t pal_pd32_linear_set_array(uintptr_t handle, int32_t i0, int32_t i1, const float *values) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (i0 < 0 || i1 < i0 || i1 > grid->length || values == NULL) return 0;
+    for (int32_t i = i0; i < i1; i++) if (!isfinite(values[i - i0])) return 0;
+    memcpy(grid->field + i0, values, (size_t)(i1 - i0) * sizeof(float));
+    return 1;
+}
+
+PAL_API int32_t pal_pd32_linear_set_scalar(uintptr_t handle, int32_t i0, int32_t i1, float value) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (i0 < 0 || i1 < i0 || i1 > grid->length || !isfinite(value)) return 0;
+    for (int32_t i = i0; i < i1; i++) grid->field[i] = value;
+    return 1;
+}
+
 PAL_API int32_t pal_pd32_itox(uintptr_t handle, int32_t i) {
     PDEGrid32 *grid = (PDEGrid32 *)handle;
     if (i < 0 || i >= grid->length) return PAL_NULL;
