@@ -542,3 +542,24 @@ def test_float32_agentgrid_point_creation_and_movement():
         with pytest.raises(ValueError):
             grid.NewAgentPT(1, 2, 1)
         assert grid.AtSQ(2, 1) == agent
+
+
+def test_float32_agentgrid_property_validation():
+    with core._NewAgentGrid32((3,), numAgentProps=2) as grid:
+        agent = grid.NewAgent(1)
+        assert grid.SetProperty(agent, 0, 1.25)
+        assert grid.AddProperty(agent, 0, 0.5)
+        assert grid.GetProperty(agent, 0) == pytest.approx(1.75)
+        for invalid in (-1, 2, 0.5, True):
+            with pytest.raises(IndexError):
+                grid.GetProperty(agent, invalid)
+            with pytest.raises(IndexError):
+                grid.SetProperty(agent, invalid, 1)
+            with pytest.raises(IndexError):
+                grid.AddProperty(agent, invalid, 1)
+        for invalid in (float("nan"), float("inf"), 1e100):
+            with pytest.raises(ValueError):
+                grid.SetProperty(agent, 0, invalid)
+            with pytest.raises(ValueError):
+                grid.AddProperty(agent, 0, invalid)
+        assert grid.GetProperty(agent, 0) == pytest.approx(1.75)
