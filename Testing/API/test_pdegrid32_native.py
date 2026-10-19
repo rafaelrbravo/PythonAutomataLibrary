@@ -297,3 +297,18 @@ def test_pdegrid32_coordinate_tuple_indexing():
             assert compiled_coordinates(grid) == pytest.approx(1.25)
         finally:
             core._pd32_free(handle)
+
+def test_pdegrid32_safe_coordinate_validation():
+    dims = np.array([3, 4], dtype=np.int32)
+    handle = core._pd32_new(dims.ctypes.data_as(ctypes.POINTER(ctypes.c_int32)), 2)
+    assert handle
+    try:
+        grid = core._PDEgrid32Safe(handle, 2, 3, 4, -1, 12, False, False, False)
+        with pytest.raises(IndexError):
+            grid[3, 0] = np.float32(1.0)
+        with pytest.raises(IndexError):
+            grid[-1, 0] = np.float32(1.0)
+        with pytest.raises(ValueError):
+            grid[1.5, 0] = np.float32(1.0)
+    finally:
+        core._pd32_free(handle)
