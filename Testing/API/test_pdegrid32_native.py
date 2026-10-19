@@ -599,3 +599,25 @@ def test_pdegrid32_safe_linear_access_validates_indices_and_values():
             core._pd32_free(grid._ptr)
     finally:
         core._UseFastMode = original
+
+
+def test_public_pdegrid_dtype_dispatch_and_numba_access():
+    @core.nb.njit
+    def sample(grid):
+        grid.SetI(1, 2.5)
+        return grid.GetI(1)
+
+    original = core._UseFastMode
+    try:
+        for fast in (False, True):
+            core._UseFastMode = lambda: fast
+            for dtype in (np.float32, np.float64):
+                grid = core.NewPDEgrid([3], dtype=dtype)
+                try:
+                    assert sample(grid) == pytest.approx(2.5)
+                finally:
+                    (core._pd32_free if dtype == np.float32 else core._pd_free)(grid._ptr)
+        with pytest.raises(ValueError, match="float32 or float64"):
+            core.NewPDEgrid([3], dtype=np.int32)
+    finally:
+        core._UseFastMode = original
