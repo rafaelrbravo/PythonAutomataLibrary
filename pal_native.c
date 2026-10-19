@@ -620,15 +620,13 @@ PAL_API int32_t pal_ag_all_id(uintptr_t handle, int32_t position) {
 
 #define PAL_AG_TYPE AgentGrid
 #define PAL_AG_PREFIX pal_ag_
+#define PAL_AG_OCC_LAST last_i
 #include "agentgrid_occupancy_template.h"
+#undef PAL_AG_OCC_LAST
 #undef PAL_AG_PREFIX
 #undef PAL_AG_TYPE
 
-PAL_API int32_t pal_ag_last_i(uintptr_t handle, int32_t location) {
-    AgentGrid *grid = (AgentGrid *)handle;
-    if (location < 0 || location >= grid->length) return PAL_NULL;
-    return grid->grid[location];
-}
+
 
 PAL_API int32_t pal_ag_move_i(uintptr_t handle, int32_t agent, int32_t location) {
     AgentGrid *grid = (AgentGrid *)handle;
@@ -1401,13 +1399,12 @@ PAL_API int32_t pal_ag32_population(uintptr_t handle) {
 }
 #define PAL_AG_TYPE AgentGrid32
 #define PAL_AG_PREFIX pal_ag32_
+#define PAL_AG_OCC_LAST at_i
 #include "agentgrid_occupancy_template.h"
+#undef PAL_AG_OCC_LAST
 #undef PAL_AG_PREFIX
 #undef PAL_AG_TYPE
-PAL_API int32_t pal_ag32_at_i(uintptr_t handle,int32_t location) {
-    AgentGrid32 *g=(AgentGrid32 *)handle;
-    return g && location>=0 && location<g->length ? g->grid[location] : PAL_NULL;
-}
+
 /* First precision instantiation; float64 will migrate to the same template. */
 #define PAL_AG_TYPE AgentGrid32
 #define PAL_AG_FLOAT float
