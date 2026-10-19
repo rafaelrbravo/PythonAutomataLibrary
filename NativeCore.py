@@ -5245,7 +5245,16 @@ class _PDEgrid32SafePython:
     def wrapY(self): return self._wrapY
     @property
     def wrapZ(self): return self._wrapZ
-    def ToI(self,x,y=-1,z=-1): return _pd32_toi(self._ptr,x,y,z)
+    def ToI(self,x,y=-1,z=-1):
+        if not np.isfinite(x) or x!=int(x): raise ValueError('coordinates must be finite integers')
+        if self._dimension==1:
+            if y!=-1 or z!=-1: raise ValueError('1D PDEgrid requires x only')
+        elif self._dimension==2:
+            if not np.isfinite(y) or y!=int(y) or z!=-1: raise ValueError('2D PDEgrid requires x,y')
+        else:
+            if not np.isfinite(y) or not np.isfinite(z) or y!=int(y) or z!=int(z): raise ValueError('3D PDEgrid requires x,y,z')
+        if x<0 or x>=self._xDim or self._dimension>1 and (y<0 or y>=self._yDim) or self._dimension>2 and (z<0 or z>=self._zDim): raise IndexError('PDEgrid coordinate out of bounds')
+        return _pd32_toi(self._ptr,x,y,z)
     def ItoX(self,i): return _pd32_itox(self._ptr,i)
     def ItoY(self,i): return _pd32_itoy(self._ptr,i)
     def ItoZ(self,i): return _pd32_itoz(self._ptr,i)
