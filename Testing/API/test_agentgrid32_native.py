@@ -526,3 +526,19 @@ def test_float32_agentgrid_linear_index_validation():
                     operation()
         assert grid.AtI(6) == agent
         assert grid.CountI(6) == 1
+
+
+def test_float32_agentgrid_point_creation_and_movement():
+    with core._NewAgentGrid32((3, 4), numAgentProps=1) as grid:
+        agent = grid.NewAgentPT(1.25, 2.5)
+        assert grid.AtSQ(1, 2) == agent
+        assert grid.MovePT(agent, 2.25, 1.5)
+        assert grid.AtSQ(2, 1) == agent
+        for coords in [(-0.5, 1), (3, 1), (float("nan"), 1), (float("inf"), 1), (1, 4)]:
+            with pytest.raises((ValueError, IndexError)):
+                grid.NewAgentPT(*coords)
+            with pytest.raises((ValueError, IndexError)):
+                grid.MovePT(agent, *coords)
+        with pytest.raises(ValueError):
+            grid.NewAgentPT(1, 2, 1)
+        assert grid.AtSQ(2, 1) == agent
