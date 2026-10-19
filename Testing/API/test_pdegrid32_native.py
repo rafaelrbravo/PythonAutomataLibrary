@@ -411,3 +411,28 @@ def test_shared_diffusion_periodic_edge_transfer(prefix, scalar, method):
             assert get(handle, 1) == pytest.approx(0.1, abs=1e-6)
         finally:
             free(handle)
+
+
+@pytest.mark.parametrize("prefix,scalar,method", [
+    ("pal_pd32_", ctypes.c_float, "diffuse"),
+    ("pal_pd_", ctypes.c_double, "diffusion"),
+])
+def test_shared_diffusion_invalid_rate_is_atomic(prefix, scalar, method):
+    ptr, i32 = ctypes.c_uint64, ctypes.c_int32
+    new = _native(prefix + "new", ptr, ctypes.POINTER(i32), i32)
+    free = _native(prefix + "free", None, ptr)
+    seti = _native(prefix + "seti", i32, ptr, i32, scalar)
+    diffuse = _native(prefix + method, i32, ptr, ctypes.c_double)
+    update = _native(prefix + "update", None, ptr)
+    geti = _native(prefix + "geti", scalar, ptr, i32)
+    handle = new((i32 * 2)(5, 5), 2)
+    assert handle
+    try:
+        assert seti(handle, 12, scalar(1.0)) == 1
+        for rate in (-0.1, float("nan"), float("inf"), 0.3):
+            assert diffuse(handle, rate) == 0
+        update(handle)
+        assert geti(handle, 12) == pytest.approx(1.0)
+        assert sum(geti(handle, i) for i in range(25)) == pytest.approx(1.0)
+    finally:
+        free(handle)
