@@ -352,3 +352,61 @@ def test_pdegrid32_jitclass_mask_and_field_diffusion():
             assert compiled_mask(grid, np.array([0, 0, 0, -1, 0], dtype=np.float32)) == pytest.approx(0.1, abs=1e-6)
         finally:
             core._pd32_free(handle)
+
+
+@pytest.mark.parametrize("dimensions", [(7,), (-7,), (4, 5), (-4, 5), (3, -4, 5), (1, 5)])
+def test_shared_diffusion_precision_parity_and_mass_conservation(dimensions):
+    """The shared face-flux kernel must agree across storage precisions."""
+    ptr, i32 = ctypes.c_uint64, ctypes.c_int32
+    size = int(np.prod(np.abs(dimensions)))
+    results = []
+    for prefix, scalar, dtype, method in (
+        ("pal_pd32_", ctypes.c_float, np.float32, "diffuse"),
+        ("pal_pd_", ctypes.c_double, np.float64, "diffusion"),
+    ):
+        new = _native(prefix + "new", ptr, ctypes.POINTER(i32), i32)
+        free = _native(prefix + "free", None, ptr)
+        seti = _native(prefix + "seti", i32, ptr, i32, scalar)
+        diffuse = _native(prefix + method, i32, ptr, ctypes.c_double)
+        update = _native(prefix + "update", None, ptr)
+        field_ptr = _native(prefix + "field_data", ctypes.POINTER(scalar), ptr)
+        handle = new((i32 * len(dimensions))(*dimensions), len(dimensions))
+        assert handle
+        try:
+            field = np.ctypeslib.as_array(field_ptr(handle), shape=(size,))
+            initial = np.linspace(0.25, 1.25, size, dtype=dtype)
+            for i, value in enumerate(initial):
+                assert seti(handle, i, scalar(value)) == 1
+            mass_before = field.sum(dtype=np.float64)
+            assert diffuse(handle, 0.05) == 1
+            update(handle)
+            assert field.sum(dtype=np.float64) == pytest.approx(mass_before, abs=2e-5)
+            results.append(field.copy())
+        finally:
+            free(handle)
+    np.testing.assert_allclose(results[0], results[1], atol=3e-6, rtol=3e-6)
+
+
+@pytest.mark.parametrize("prefix,scalar,method", [
+    ("pal_pd32_", ctypes.c_float, "diffuse"),
+    ("pal_pd_", ctypes.c_double, "diffusion"),
+])
+def test_shared_diffusion_periodic_edge_transfer(prefix, scalar, method):
+    ptr, i32 = ctypes.c_uint64, ctypes.c_int32
+    new = _native(prefix + "new", ptr, ctypes.POINTER(i32), i32)
+    free = _native(prefix + "free", None, ptr)
+    seti = _native(prefix + "seti", i32, ptr, i32, scalar)
+    diffuse = _native(prefix + method, i32, ptr, ctypes.c_double)
+    update = _native(prefix + "update", None, ptr)
+    get = _native(prefix + "geti", scalar, ptr, i32)
+    for signed_dim, expected_last in ((-5, 0.1), (5, 0.0)):
+        handle = new((i32 * 1)(signed_dim), 1)
+        assert handle
+        try:
+            assert seti(handle, 0, scalar(1.0)) == 1
+            assert diffuse(handle, 0.1) == 1
+            update(handle)
+            assert get(handle, 4) == pytest.approx(expected_last, abs=1e-6)
+            assert get(handle, 1) == pytest.approx(0.1, abs=1e-6)
+        finally:
+            free(handle)
