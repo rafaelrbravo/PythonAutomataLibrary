@@ -5184,6 +5184,23 @@ class _AgentGrid32Native:
     def NewAgentI(self, location):
         return _ag32_new_i(self._ptr, location)
 
+    def NewAgent(self, location):
+        if self.nDims != 1:
+            raise ValueError("NewAgent requires a one-dimensional AgentGrid; use NewAgentSQ or NewAgentPT")
+        return self.NewAgentI(location)
+
+    def NewAgentSQ(self, x, y=-1, z=-1):
+        if self.nDims == 1:
+            if y != -1 or z != -1: raise ValueError("1D AgentGrid expects x only")
+            return self.NewAgentI(x)
+        if self.nDims == 2:
+            if y == -1 or z != -1: raise ValueError("2D AgentGrid expects x,y")
+            return self.NewAgentI(x*self.dimensions[1]+y)
+        if self.nDims == 3:
+            if y == -1 or z == -1: raise ValueError("3D AgentGrid expects x,y,z")
+            return self.NewAgentI((x*self.dimensions[1]+y)*self.dimensions[2]+z)
+        raise ValueError("NewAgentSQ requires a spatial grid")
+
     def NewAgentPT(self, x, y=0, z=0):
         return _ag32_new_pt(self._ptr, np.float32(x), np.float32(y), np.float32(z))
 
