@@ -568,6 +568,7 @@ _pd32_linear_set_scalar = _bind("pal_pd32_linear_set_scalar", _I32, _PTR, _I32, 
 _pd32_geti = _bind("pal_pd32_geti", _F32, _PTR, _I32)
 _pd32_seti = _bind("pal_pd32_seti", _I32, _PTR, _I32, _F32)
 _pd32_addi = _bind("pal_pd32_addi", None, _PTR, _I32, _F32)
+_pd32_addi_checked = _bind("pal_pd32_addi_checked", _I32, _PTR, _I32, _F32)
 _pd32_update = _bind("pal_pd32_update", None, _PTR)
 _pd32_clear = _bind("pal_pd32_clear", None, _PTR, _F32)
 _pd32_steps = _bind("pal_pd32_steps", None, _PTR, _F64, _F64, _F64, _F64)
@@ -5529,10 +5530,8 @@ class _PDEgrid32SafePython:
     def AddI(self,value,i):
         self._CheckI(i)
         if not np.isfinite(value) or abs(value)>3.4028234663852886e38: raise ValueError("PDEgrid value must be finite and representable as float32")
-        current = _pd32_geti(self._ptr,i)
-        if not np.isfinite(current) or abs(current + value)>3.4028234663852886e38:
+        if not _pd32_addi_checked(self._ptr,i,value):
             raise ValueError("PDEgrid addition would overflow float32 storage")
-        _pd32_addi(self._ptr,i,value)
 
 
 _PDEgrid32Spec=[("_ptr",uint64),("_dimension",int32),("_xDim",int32),("_yDim",int32),("_zDim",int32),("_length",int32),("_wrapX",types.boolean),("_wrapY",types.boolean),("_wrapZ",types.boolean)]
