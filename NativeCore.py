@@ -5410,6 +5410,39 @@ class _AgentGrid32Native:
         self._ValidateAgent(agent)
         return bool(_ag32_dispose(self._ptr, agent))
 
+    def _AgentCoordinate(self, agent, axis):
+        self._RequireOpen()
+        self._ValidateAgent(agent)
+        if axis >= self.nDims: raise ValueError("coordinate axis unavailable on AgentGrid")
+        value = _ag32_get_property(self._ptr, agent, axis)
+        if not np.isfinite(value):
+            raise ValueError("agent coordinate unavailable")
+        return float(value)
+
+    def X(self, agent):
+        return self._AgentCoordinate(agent, 0)
+
+    def Y(self, agent):
+        return self._AgentCoordinate(agent, 1)
+
+    def Z(self, agent):
+        return self._AgentCoordinate(agent, 2)
+
+    def XSQ(self, agent):
+        return int(np.floor(self.X(agent)))
+
+    def YSQ(self, agent):
+        return int(np.floor(self.Y(agent)))
+
+    def ZSQ(self, agent):
+        return int(np.floor(self.Z(agent)))
+
+    def I(self, agent):
+        if self.nDims == 1: return self.ToI(self.XSQ(agent))
+        if self.nDims == 2: return self.ToI(self.XSQ(agent), self.YSQ(agent))
+        if self.nDims == 3: return self.ToI(self.XSQ(agent), self.YSQ(agent), self.ZSQ(agent))
+        raise ValueError("I requires a spatial AgentGrid")
+
     def _CheckProperty(self, prop):
         if not isinstance(prop, (int, np.integer)) or isinstance(prop, (bool, np.bool_)) or prop < 0 or prop >= self.numAgentProps:
             raise IndexError("AgentGrid property index out of bounds")
