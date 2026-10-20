@@ -1502,7 +1502,10 @@ PAL_API int32_t pal_pd32_addi_checked(uintptr_t handle, int32_t i, float value) 
     double resulting = (double)grid->field[i] + pending;
     if (!isfinite(pending) || !isfinite(resulting) ||
         fabs(pending) > FLT_MAX || fabs(resulting) > FLT_MAX) return 0;
-    grid->deltas[i] = (float)pending;
+    float rounded_pending = (float)pending;
+    if (!isfinite(rounded_pending) ||
+        fabs((double)grid->field[i] + (double)rounded_pending) > FLT_MAX) return 0;
+    grid->deltas[i] = rounded_pending;
     return 1;
 }
 
