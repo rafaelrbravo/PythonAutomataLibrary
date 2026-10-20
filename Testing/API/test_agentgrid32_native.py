@@ -904,3 +904,13 @@ def test_float32_agentgrid_continuous_wrap_rejects_nonnumeric_values(bad_value):
         with pytest.raises(ValueError, match="numeric"):
             grid.InWrapX(bad_value)
         assert grid.InWrapX(-0.25) == pytest.approx(3.75)
+
+
+@pytest.mark.parametrize("bad_value", ["1", None, True, complex(1, 0)])
+def test_float32_agentgrid_displacement_rejects_nonnumeric_values(bad_value):
+    with core.NewAgentGrid((-4,), dtype=np.float32) as grid:
+        with pytest.raises(ValueError, match="numeric"):
+            grid.DispWrapX(bad_value, 1.0)
+        with pytest.raises(ValueError, match="numeric"):
+            grid.DispWrapX(1.0, bad_value)
+        assert grid.DispWrapX(3.5, 0.5) == pytest.approx(1.0)
