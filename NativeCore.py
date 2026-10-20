@@ -5544,10 +5544,11 @@ _PDEgrid32Safe=_jitclass(_PDEgrid32Spec)(_PDEgrid32SafePython)
 def _NewPDEgrid32(dimensions):
     """Internal native float32 factory; public dispatch awaits API parity."""
     dims = _dimensions_array(dimensions)
+    fast = _UseFastMode()
     ptr = _pd32_new(dims.ctypes.data_as(_I32_PTR), len(dims))
     if not ptr: raise MemoryError("unable to allocate float32 PDEgrid")
     x,y,z,n,wrapX,wrapY,wrapZ = _StaticGeometry(dims)
-    cls = _PDEgrid32Fast if _UseFastMode() else _PDEgrid32Safe
+    cls = _PDEgrid32Fast if fast else _PDEgrid32Safe
     try:
         return cls(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ)
     except Exception:
