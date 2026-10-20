@@ -543,6 +543,7 @@ _ag32_population = _bind("pal_ag32_population", _I32, _PTR)
 _ag32_at_i = _bind("pal_ag32_at_i", _I32, _PTR, _I32)
 _ag32_count_i = _bind("pal_ag32_count_i", _I32, _PTR, _I32)
 _ag32_prev_agent = _bind("pal_ag32_prev_agent", _I32, _PTR, _I32)
+_ag32_copy_alive = _bind("pal_ag32_copy_alive", _I32, _PTR, _I32_PTR, _I32)
 _ag32_set_property = _bind("pal_ag32_set_property", _I32, _PTR, _I32, _I32, _F32)
 _ag32_get_property = _bind("pal_ag32_get_property", _F32, _PTR, _I32, _I32)
 _ag32_add_property = _bind("pal_ag32_add_property", _I32, _PTR, _I32, _I32, _F32)
@@ -5311,6 +5312,17 @@ class _AgentGrid32Native:
     def GetPop(self):
         self._RequireOpen()
         return _ag32_population(self._ptr)
+
+    def All(self, shuffle=False):
+        """Return a snapshot of living agent handles, optionally shuffled."""
+        self._RequireOpen()
+        count = self.GetPop()
+        out = np.empty(count, dtype=np.int32)
+        if _ag32_copy_alive(self._ptr, out.ctypes.data_as(_I32_PTR), count) != count:
+            raise RuntimeError("unable to snapshot float32 AgentGrid agents")
+        if shuffle:
+            np.random.shuffle(out)
+        return out
 
     @property
     def nDims(self):
