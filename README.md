@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/1385841661.svg)](https://doi.org/10.5281/zenodo.23439298)
 
-PAL is a Python modeling library for high-performance agent-based, lattice population, and PDE models. Model code uses a compact object-oriented API and can be compiled with `@pal.njit`; PAL keeps performance-sensitive state and algorithms in a precompiled native core.
+PAL is a Python implementation of the [Hybrid Automata Library (HAL)](https://github.com/MathOnco/HAL), originally developed in Java and described in [Bravo et al., *PLOS Computational Biology* (2020)](https://doi.org/10.1371/journal.pcbi.1007635). PAL builds directly on HAL's modeling framework and design, providing high-performance agent-based, lattice population, and PDE modeling in Python. Model code uses a compact object-oriented API and can be compiled with `@pal.njit`; performance-sensitive state and algorithms run in a precompiled native core.
 
 ## Installation and examples
 
@@ -101,4 +101,6 @@ For reproducibility, report the specific PAL version used in your study.
 
 GitHub's **Cite this repository** button provides citation formats from [CITATION.cff](CITATION.cff).
 
-PAL is based on the Hybrid Automata Library (HAL). Please also acknowledge or cite HAL when its underlying ideas or algorithms are relevant to your work.
+PAL is a Python implementation of the [Hybrid Automata Library (HAL)](https://github.com/MathOnco/HAL) and builds substantially on that work. Please also cite the original HAL paper:
+
+> Bravo, R. R., et al. (2020). *Hybrid Automata Library: A flexible platform for hybrid modeling with real-time visualization.* PLOS Computational Biology, 16(3), e1007635. https://doi.org/10.1371/journal.pcbi.1007635
