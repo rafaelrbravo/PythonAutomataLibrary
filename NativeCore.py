@@ -2213,6 +2213,7 @@ class _AgentGridSafePython:
         if not _ag_setp_safe(self._ptr,agent,propId,value): raise ValueError("invalid agent, property, or value")
 
     def ToI(self,x,y=-1,z=-1):
+        if self._dimension==0: raise ValueError("ToI requires a spatial AgentGrid")
         self._CheckCoords(x,y,z)
         if x<0 or x>=self.xDim or self._dimension>1 and (y<0 or y>=self.yDim) or self._dimension>2 and (z<0 or z>=self.zDim): raise IndexError("coordinate out of bounds")
         v=_ag_toi_safe(self._ptr,x,y,z)
