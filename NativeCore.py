@@ -5408,6 +5408,18 @@ class _AgentGrid32Native:
         if not isinstance(prop, (int, np.integer)) or isinstance(prop, (bool, np.bool_)) or prop < 0 or prop >= self.numAgentProps:
             raise IndexError("AgentGrid property index out of bounds")
 
+    @staticmethod
+    def _FiniteFloat32(value, description):
+        if not isinstance(value, (int, float, np.integer, np.floating)) or isinstance(value, (bool, np.bool_)):
+            raise ValueError(description + " must be numeric")
+        if not np.isfinite(value):
+            raise ValueError(description + " must be finite")
+        with np.errstate(over="ignore", invalid="ignore"):
+            converted = np.float32(value)
+        if not np.isfinite(converted):
+            raise ValueError(description + " is outside float32 range")
+        return converted
+
     def GetProperty(self, agent, prop):
         self._RequireOpen()
         self._ValidateAgent(agent)
@@ -5418,9 +5430,8 @@ class _AgentGrid32Native:
         self._RequireOpen()
         self._ValidateAgent(agent)
         self._CheckProperty(prop)
-        if not np.isfinite(value) or not np.isfinite(np.float32(value)):
-            raise ValueError("AgentGrid float32 property must be finite")
-        return bool(_ag32_set_property(self._ptr, agent, self.nDims + prop, np.float32(value)))
+        converted = self._FiniteFloat32(value, "AgentGrid property")
+        return bool(_ag32_set_property(self._ptr, agent, self.nDims + prop, converted))
 
     def __getitem__(self, key):
         """Read a float32 agent property using grid[agent, property]."""
@@ -5439,14 +5450,15 @@ class _AgentGrid32Native:
         self._RequireOpen()
         self._ValidateAgent(agent)
         self._CheckProperty(prop)
-        if not np.isfinite(value) or not np.isfinite(np.float32(value)):
-            raise ValueError("AgentGrid float32 property increment must be finite")
+        converted = self._FiniteFloat32(value, "AgentGrid property increment")
         current = _ag32_get_property(self._ptr, agent, self.nDims + prop)
         if not np.isfinite(current):
             return False
-        if not np.isfinite(np.float32(float(current) + float(value))):
+        with np.errstate(over="ignore", invalid="ignore"):
+            result = np.float32(float(current) + float(converted))
+        if not np.isfinite(result):
             raise ValueError("AgentGrid float32 property addition would overflow")
-        return bool(_ag32_add_property(self._ptr, agent, self.nDims + prop, np.float32(value)))
+        return bool(_ag32_add_property(self._ptr, agent, self.nDims + prop, converted))
 
     def AtI(self, location):
         self._RequireOpen()
