@@ -1428,6 +1428,13 @@ PAL_API int32_t pal_ag32_prev_agent(uintptr_t handle, int32_t agent) {
     return g->intProperties[base+AGENT_PREV];
 }
 
+/* Report whether a float32 agent handle is alive, including reused slots. */
+PAL_API int32_t pal_ag32_alive(uintptr_t handle, int32_t agent) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || agent<0 || agent>=g->nAgents) return PAL_NULL;
+    return g->intProperties[(size_t)agent*N_AGENT_INT_PROPERTIES+AGENT_ALIVE] ? 1 : 0;
+}
+
 /* Copy living handles in snapshot order; never expose reallocatable native memory. */
 PAL_API int32_t pal_ag32_copy_alive(uintptr_t handle, int32_t *out, int32_t capacity) {
     AgentGrid32 *g=(AgentGrid32 *)handle;
