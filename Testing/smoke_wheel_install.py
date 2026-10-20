@@ -36,6 +36,9 @@ def main():
             'p=pathlib.Path(pal.__file__).resolve(); '
             f't=pathlib.Path({str(target)!r}).resolve(); '
             'assert p.is_relative_to(t), (p,t); '
+            'docs=p.parent / "Documentation"; '
+            'assert (docs / "PAL_GUIDE.md").is_file(); '
+            'assert (docs / "PAL_GUIDE.pdf").is_file(); '
             'print("PASS: wheel-installed PAL imports from", p)'
         )
         result = subprocess.run([sys.executable, '-c', code], cwd=tmp,
