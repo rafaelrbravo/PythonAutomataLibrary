@@ -890,3 +890,9 @@ def test_public_float32_agentgrid_rejects_invalid_property_values(bad_value):
         with pytest.raises(ValueError):
             grid.AddProperty(agent, 0, bad_value)
         assert grid.GetProperty(agent, 0) == pytest.approx(2.5)
+
+
+def test_float32_nonspatial_agentgrid_rejects_index_to_x_conversion():
+    with core.NewAgentGrid((), dtype=np.float32) as grid:
+        with pytest.raises(ValueError, match="spatial"):
+            grid.ItoX(-2147483648)
