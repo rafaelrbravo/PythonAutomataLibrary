@@ -105,8 +105,8 @@ def test_snapshot_query_allows_disposal_and_popgrid_accumulation(api):
 
 def test_agent_rgb_property_draws_without_explicit_cast(api):
     """Packed RGB survives float64 agent storage and implicit uint32 drawing writes."""
-    from PixWindow import Pix
-    from OpenGLWindow import OpenGLDraw
+    from PythonAutomataLibrary.PixWindow import Pix
+    from PythonAutomataLibrary.OpenGLWindow import OpenGLDraw
 
     grid = api.NewAgentGrid((4, 4), numAgentProps=1)
     pixels = Pix(np.zeros((4, 4), dtype=np.uint32))
