@@ -1,4 +1,4 @@
-"""Native float32 AgentGrid allocation tests; public float32 API is not enabled."""
+"""Native float32 AgentGrid allocation and public Python API regression tests."""
 import ctypes
 
 import numpy as np
@@ -813,3 +813,27 @@ def test_public_float32_agentgrid_closed_handle_rejects_native_calls():
     for operation in operations:
         with pytest.raises(RuntimeError, match="closed"):
             operation()
+
+
+@pytest.mark.parametrize("bad_agent", [-1, 2**40, 0.5, True, float("nan")])
+def test_public_float32_agentgrid_rejects_invalid_agent_ids(bad_agent):
+    with core.NewAgentGrid((4,), numAgentProps=1, dtype=np.float32) as grid:
+        grid.NewAgentI(0)
+        operations = [
+            lambda: grid.MoveI(bad_agent, 1),
+            lambda: grid.MovePT(bad_agent, 1.5),
+            lambda: grid.Dispose(bad_agent),
+            lambda: grid.GetProperty(bad_agent, 0),
+            lambda: grid.SetProperty(bad_agent, 0, 1.0),
+            lambda: grid.AddProperty(bad_agent, 0, 1.0),
+        ]
+        for operation in operations:
+            with pytest.raises(ValueError, match="agent id"):
+                operation()
+
+
+def test_public_float32_agentgrid_cannot_reenter_closed_context():
+    grid = core.NewAgentGrid((4,), dtype=np.float32)
+    grid.Close()
+    with pytest.raises(RuntimeError, match="closed"):
+        grid.__enter__()
