@@ -1428,6 +1428,14 @@ PAL_API int32_t pal_ag32_prev_agent(uintptr_t handle, int32_t agent) {
     return g->intProperties[base+AGENT_PREV];
 }
 
+/* Copy living handles in snapshot order; never expose reallocatable native memory. */
+PAL_API int32_t pal_ag32_copy_alive(uintptr_t handle, int32_t *out, int32_t capacity) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || capacity<0 || (g->population>0 && (!out || capacity<g->population))) return PAL_NULL;
+    if (g->population>0) memcpy(out,g->aliveAgents,(size_t)g->population*sizeof(int32_t));
+    return g->population;
+}
+
 /* First precision instantiation; float64 will migrate to the same template. */
 #define PAL_AG_TYPE AgentGrid32
 #define PAL_AG_FLOAT float
