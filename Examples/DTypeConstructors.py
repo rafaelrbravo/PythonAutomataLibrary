@@ -20,13 +20,13 @@ def main():
     field64[1, 2] = 2.5
     field32[1, 2] = 2.5
     agent = agents64.NewAgentSQ(1, 2)
-    agents64.SetProperty(agent, 0, 1.25)
+    agents64[agent, 0] = 1.25
 
     print("Grid float64:", lattice[1, 2])
     print("Grid float32:", lattice32[1, 2])
     print("PDEgrid float64:", field64[1, 2])
     print("PDEgrid float32:", field32[1, 2])
-    print("AgentGrid float64 property:", agents64.GetProperty(agent, 0))
+    print("AgentGrid float64 property:", agents64[agent, 0])
     print("PopGrid uint8 and int64:", counts8.xDim, counts64.xDim)
 
 
