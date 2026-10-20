@@ -683,6 +683,7 @@ def test_dtype_constructor_example_runs_in_both_modes(capsys):
             assert "PDEgrid float32: 2.5" in output
             assert "PDEgrid float64: 2.5" in output
             assert "AgentGrid float64 property: 1.25" in output
+            assert "AgentGrid float32 property: 1.25" in output
     finally:
         core._UseFastMode = original
 
