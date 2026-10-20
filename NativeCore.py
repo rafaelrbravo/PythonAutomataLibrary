@@ -5159,6 +5159,7 @@ class _AgentGrid32Native:
     def __init__(self, ptr, dimensions, numAgentProps, stackable):
         self._ptr = ptr
         self.dimensions = tuple(int(abs(d)) for d in dimensions)
+        self._wrapped = tuple(bool(d < 0) for d in dimensions)
         self.numAgentProps = numAgentProps
         self.stackable = stackable
 
@@ -5187,6 +5188,36 @@ class _AgentGrid32Native:
     def zDim(self):
         if self.nDims < 3: raise ValueError("zDim requires a 3D grid")
         return self.dimensions[2]
+
+    @property
+    def wrapX(self):
+        return self._wrapped[0] if self.nDims >= 1 else False
+
+    @property
+    def wrapY(self):
+        return self._wrapped[1] if self.nDims >= 2 else False
+
+    @property
+    def wrapZ(self):
+        return self._wrapped[2] if self.nDims >= 3 else False
+
+    def ToI(self, x, y=-1, z=-1):
+        """Convert lattice coordinates to a linear index."""
+        return self._SQToI(x, y, z)
+
+    def ItoX(self, i):
+        self._CheckLocation(i)
+        return i // (self.dimensions[1] * self.dimensions[2] if self.nDims == 3 else self.dimensions[1] if self.nDims == 2 else 1)
+
+    def ItoY(self, i):
+        if self.nDims < 2: raise ValueError("ItoY requires a 2D or 3D AgentGrid")
+        self._CheckLocation(i)
+        return (i // self.dimensions[2]) % self.dimensions[1] if self.nDims == 3 else i % self.dimensions[1]
+
+    def ItoZ(self, i):
+        if self.nDims < 3: raise ValueError("ItoZ requires a 3D AgentGrid")
+        self._CheckLocation(i)
+        return i % self.dimensions[2]
 
     def GetPop(self):
         return _ag32_population(self._ptr)
