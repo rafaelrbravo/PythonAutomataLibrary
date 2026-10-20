@@ -5324,6 +5324,10 @@ class _AgentGrid32Native:
             np.random.shuffle(out)
         return out
 
+    def Iter(self):
+        """Iterate a snapshot of living agent handles."""
+        return iter(self.All())
+
     @property
     def nDims(self):
         return len(self.dimensions)
@@ -5529,7 +5533,7 @@ class _AgentGrid32Native:
         return self.CountI(self._SQToI(x, y, z))
 
     def AgentsAt(self, x, y=-1, z=-1):
-        """Return agent IDs at a lattice site for nonstackable float32 grids."""
+        """Return all agent IDs occupying a lattice site, newest first."""
         agent = self.AtSQ(x, y, z)
         if not self.stackable:
             return () if agent < 0 else (agent,)
