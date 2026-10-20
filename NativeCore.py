@@ -5227,25 +5227,38 @@ class _AgentGrid32Native:
         self._CheckLocation(i)
         return i % self.dimensions[2]
 
-    def InWrapX(self, value):
-        if self.nDims < 1: raise ValueError("InWrapX requires a spatial AgentGrid")
+    def InWrapSQX(self, value):
+        if self.nDims < 1: raise ValueError("InWrapSQX requires a spatial AgentGrid")
         return self._WrapCoordinate(value, 0)
 
-    def InWrapY(self, value):
-        if self.nDims < 2: raise ValueError("InWrapY requires a 2D or 3D AgentGrid")
+    def InWrapSQY(self, value):
+        if self.nDims < 2: raise ValueError("InWrapSQY requires a 2D or 3D AgentGrid")
         return self._WrapCoordinate(value, 1)
 
-    def InWrapZ(self, value):
-        if self.nDims < 3: raise ValueError("InWrapZ requires a 3D AgentGrid")
+    def InWrapSQZ(self, value):
+        if self.nDims < 3: raise ValueError("InWrapSQZ requires a 3D AgentGrid")
         return self._WrapCoordinate(value, 2)
+
+    def InWrapX(self, value):
+        return self._WrapPoint(value, 0)
+
+    def InWrapY(self, value):
+        return self._WrapPoint(value, 1)
+
+    def InWrapZ(self, value):
+        return self._WrapPoint(value, 2)
+
+    def _WrapPoint(self, value, axis):
+        if axis >= self.nDims: raise ValueError("invalid AgentGrid dimension")
+        if not np.isfinite(value): raise ValueError("point coordinate must be finite")
+        dim = self.dimensions[axis]
+        return float(value % dim) if self._wrapped[axis] else float(value)
 
     def _WrapCoordinate(self, value, axis):
         if not isinstance(value, (int, np.integer)) or isinstance(value, (bool, np.bool_)) or value < np.iinfo(np.int32).min or value > np.iinfo(np.int32).max:
             raise ValueError("coordinate must be an int32 integer")
         dim = self.dimensions[axis]
-        if self._wrapped[axis]:
-            return int(value % dim)
-        return int(value) if 0 <= value < dim else -2147483648
+        return int(value % dim) if self._wrapped[axis] else int(value)
 
     def GetPop(self):
         return _ag32_population(self._ptr)
