@@ -53,10 +53,10 @@ def test_agentgrid_rejects_nonboolean_stackable(api, stackable):
         api.NewAgentGrid((2,), isStackable=stackable)
 
 
-@pytest.mark.parametrize("capacity", [-1, 1.5, np.nan, np.inf, 2**63])
-def test_popgrid_rejects_invalid_capacity(api, capacity):
+@pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.uint64, np.float32, np.float64, None, "not-a-dtype"])
+def test_popgrid_rejects_invalid_dtype(api, dtype):
     with pytest.raises(ValueError):
-        api.NewPopGrid((2,), capacity=capacity)
+        api.NewPopGrid((2,), dtype=dtype)
 
 
 def test_agentgrid_allows_zero_dimensional_nonspatial_grid(api):
