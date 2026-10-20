@@ -1012,3 +1012,15 @@ def test_public_agentgrid32_all_snapshot_and_shuffle():
         assert sorted(grid.All().tolist()) == [0, 1, 3, 4, 5]
     finally:
         grid.Close()
+
+
+def test_public_agentgrid32_iter_snapshot():
+    grid = core.NewAgentGrid((5,), dtype=np.float32)
+    try:
+        agents = [grid.NewAgentSQ(i) for i in range(3)]
+        iterator = grid.Iter()
+        grid.Dispose(agents[1])
+        assert list(iterator) == agents
+        assert list(grid.Iter()) == [agents[0], agents[2]]
+    finally:
+        grid.Close()
