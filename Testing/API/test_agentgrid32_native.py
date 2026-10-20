@@ -878,3 +878,15 @@ def test_public_float32_agentgrid_rejects_nonnumeric_points(coordinate):
         agent = grid.NewAgentPT(0.5)
         with pytest.raises(ValueError, match="numeric"):
             grid.MovePT(agent, coordinate)
+
+
+@pytest.mark.parametrize("bad_value", ["1", None, True, complex(1, 0), float("nan"), 1e100])
+def test_public_float32_agentgrid_rejects_invalid_property_values(bad_value):
+    with core.NewAgentGrid((4,), numAgentProps=1, dtype=np.float32) as grid:
+        agent = grid.NewAgentI(0)
+        grid.SetProperty(agent, 0, 2.5)
+        with pytest.raises(ValueError):
+            grid.SetProperty(agent, 0, bad_value)
+        with pytest.raises(ValueError):
+            grid.AddProperty(agent, 0, bad_value)
+        assert grid.GetProperty(agent, 0) == pytest.approx(2.5)
