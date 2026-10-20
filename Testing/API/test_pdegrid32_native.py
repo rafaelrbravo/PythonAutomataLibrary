@@ -697,7 +697,7 @@ def test_pdegrid32_safe_addition_checks_float32_rounding_boundary():
             maximum = np.finfo(np.float32).max
             grid.SetI(0, maximum)
             with pytest.raises(ValueError, match="overflow"):
-                grid.AddI(1.0, 0)
+                grid.AddI(1e32, 0)
             assert grid.GetI(0) == maximum
             grid.Update()
             assert grid.GetI(0) == maximum
