@@ -789,3 +789,27 @@ def test_public_float32_agentgrid_periodic_displacement():
             grid.DispWrapY(0, 1)
         with pytest.raises(ValueError):
             grid.DispWrapZ(0, 1)
+
+
+def test_public_float32_agentgrid_closed_handle_rejects_native_calls():
+    grid = core.NewAgentGrid((4,), numAgentProps=1, dtype=np.float32)
+    assert grid.capacity >= 0
+    agent = grid.NewAgentI(0)
+    grid.Close()
+    operations = [
+        lambda: grid.GetPop(),
+        lambda: grid.capacity,
+        lambda: grid.NewAgentI(0),
+        lambda: grid.NewAgentPT(0.5),
+        lambda: grid.MoveI(agent, 1),
+        lambda: grid.MovePT(agent, 1.5),
+        lambda: grid.Dispose(agent),
+        lambda: grid.GetProperty(agent, 0),
+        lambda: grid.SetProperty(agent, 0, 1.0),
+        lambda: grid.AddProperty(agent, 0, 1.0),
+        lambda: grid.AtI(0),
+        lambda: grid.CountI(0),
+    ]
+    for operation in operations:
+        with pytest.raises(RuntimeError, match="closed"):
+            operation()
