@@ -1652,8 +1652,7 @@ PAL_API int32_t pal_pd32_set(uintptr_t handle, int32_t x, int32_t y, int32_t z, 
 PAL_API int32_t pal_pd32_add(uintptr_t handle, int32_t x, int32_t y, int32_t z, float value) {
     const int32_t i = pal_pd32_toi(handle, x, y, z);
     if (i == PAL_NULL || !isfinite(value)) return 0;
-    pal_pd32_addi(handle, i, value);
-    return 1;
+    return pal_pd32_addi_checked(handle, i, value);
 }
 
 PAL_API void pal_pd32_linear_get(uintptr_t handle, int32_t i0, int32_t i1, float *out) {
