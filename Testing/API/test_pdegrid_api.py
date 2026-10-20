@@ -342,3 +342,45 @@ def test_python_njit_pdegrid_advection_parity(api, shape, velocities):
     compiled_work(jit)
     np.testing.assert_allclose(jit[:], py[:], rtol=0, atol=1e-7)
 
+
+
+@pytest.mark.parametrize("shape", [(4,), (2, 3)])
+def test_float64_scalar_and_python_slice_precision(api, shape):
+    g = api.NewPDEgrid(shape)
+    value = 1.0 + 2.0**-40
+    g[0] = value if len(shape) == 1 else 0.0
+    if len(shape) == 2:
+        g[0, 0] = value
+    result = np.asarray(g[:])
+    assert result.dtype == np.float64
+    assert result.flat[0] == value
+
+
+@pytest.mark.parametrize("shape", [(4,), (2, 3)])
+def test_float64_compiled_slice_roundtrip(api, shape):
+    g = api.NewPDEgrid(shape)
+    values = np.arange(np.prod(shape), dtype=np.float64).reshape(shape) + (1.0 + 2.0**-40)
+
+    @api.njit
+    def roundtrip(grid, data):
+        grid[:] = data.reshape(data.size)
+        return grid[:]
+
+    result = roundtrip(g, values)
+    assert result.dtype == np.float64
+    np.testing.assert_array_equal(np.asarray(result).reshape(shape), values)
+    np.testing.assert_array_equal(np.asarray(g[:]).reshape(shape), values)
+
+
+def test_float64_compiled_region_slice_roundtrip(api):
+    g = api.NewPDEgrid((2, 3))
+    values = np.arange(6, dtype=np.float64).reshape(2, 3) + (1.0 + 2.0**-40)
+
+    @api.njit
+    def roundtrip(grid, data):
+        grid[:, :] = data
+        return grid[:, :]
+
+    result = roundtrip(g, values)
+    assert result.dtype == np.float64
+    np.testing.assert_array_equal(result, values)
