@@ -5164,9 +5164,17 @@ class _AgentGrid32Native:
         self.stackable = stackable
 
     def Close(self):
-        if self._ptr:
-            _ag32_free(self._ptr)
+        ptr = self._ptr
+        if ptr:
             self._ptr = 0
+            _ag32_free(ptr)
+
+    def __del__(self):
+        # Python-facing float32 grids own their native allocation. Unlike the
+        # jitclass handles, they must also release it when no context manager
+        # was used. Close() is idempotent and clears the pointer first.
+        if getattr(self, "_ptr", 0):
+            self.Close()
 
     def __enter__(self):
         return self
