@@ -666,3 +666,22 @@ def test_dtype_constructor_example_runs_in_both_modes(capsys):
             assert "AgentGrid float64 property: 1.25" in output
     finally:
         core._UseFastMode = original
+
+
+def test_pdegrid32_safe_repeated_pending_additions_do_not_overflow():
+    original = core._UseFastMode
+    core._UseFastMode = lambda: False
+    try:
+        grid = core.NewPDEgrid((2,), dtype=np.float32)
+        try:
+            grid.SetI(0, 1e38)
+            grid.AddI(1e38, 0)
+            grid.AddI(1e38, 0)
+            with pytest.raises(ValueError, match="overflow"):
+                grid.AddI(1e38, 0)
+            grid.Update()
+            assert grid.GetI(0) == pytest.approx(3e38, rel=1e-6)
+        finally:
+            core._pd32_free(grid._ptr)
+    finally:
+        core._UseFastMode = original
