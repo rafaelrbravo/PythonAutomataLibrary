@@ -1493,6 +1493,18 @@ PAL_API void pal_pd32_addi(uintptr_t handle, int32_t i, float value) {
     if (i >= 0 && i < grid->length) grid->deltas[i] += value;
 }
 
+/* Check accumulated pending deltas and the resulting field before mutating. */
+PAL_API int32_t pal_pd32_addi_checked(uintptr_t handle, int32_t i, float value) {
+    PDEGrid32 *grid = (PDEGrid32 *)handle;
+    if (!grid || i < 0 || i >= grid->length || !isfinite(value)) return 0;
+    double pending = (double)grid->deltas[i] + (double)value;
+    double resulting = (double)grid->field[i] + pending;
+    if (!isfinite(pending) || !isfinite(resulting) ||
+        fabs(pending) > FLT_MAX || fabs(resulting) > FLT_MAX) return 0;
+    grid->deltas[i] = (float)pending;
+    return 1;
+}
+
 
 
 
