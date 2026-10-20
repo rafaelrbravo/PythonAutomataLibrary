@@ -542,6 +542,7 @@ _ag32_move_pt = _bind("pal_ag32_move_pt", _I32, _PTR, _I32, _F32, _F32, _F32)
 _ag32_population = _bind("pal_ag32_population", _I32, _PTR)
 _ag32_at_i = _bind("pal_ag32_at_i", _I32, _PTR, _I32)
 _ag32_count_i = _bind("pal_ag32_count_i", _I32, _PTR, _I32)
+_ag32_prev_agent = _bind("pal_ag32_prev_agent", _I32, _PTR, _I32)
 _ag32_set_property = _bind("pal_ag32_set_property", _I32, _PTR, _I32, _I32, _F32)
 _ag32_get_property = _bind("pal_ag32_get_property", _F32, _PTR, _I32, _I32)
 _ag32_add_property = _bind("pal_ag32_add_property", _I32, _PTR, _I32, _I32, _F32)
@@ -5517,10 +5518,14 @@ class _AgentGrid32Native:
 
     def AgentsAt(self, x, y=-1, z=-1):
         """Return agent IDs at a lattice site for nonstackable float32 grids."""
-        if self.stackable:
-            raise NotImplementedError("float32 stackable AgentGrid iteration is not yet supported")
         agent = self.AtSQ(x, y, z)
-        return () if agent < 0 else (agent,)
+        if not self.stackable:
+            return () if agent < 0 else (agent,)
+        agents = []
+        while agent >= 0:
+            agents.append(agent)
+            agent = _ag32_prev_agent(self._ptr, agent)
+        return tuple(agents)
 
 
 
