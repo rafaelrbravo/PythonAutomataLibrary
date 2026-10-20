@@ -968,7 +968,10 @@ def test_public_agentgrid32_agents_at_stackable_not_silently_truncated():
     try:
         grid.NewAgentSQ(1)
         grid.NewAgentSQ(1)
-        with pytest.raises(NotImplementedError):
-            tuple(grid.AgentsAt(1))
+        assert tuple(grid.AgentsAt(1)) == (1, 0)
+        grid.Dispose(1)
+        assert tuple(grid.AgentsAt(1)) == (0,)
+        grid.Dispose(0)
+        assert tuple(grid.AgentsAt(1)) == ()
     finally:
         grid.Close()
