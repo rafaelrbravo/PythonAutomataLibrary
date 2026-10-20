@@ -5072,25 +5072,24 @@ def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
 
 
 
-def NewPopGrid(dimensions, capacity=None):
-    """Create integer population counts; `capacity` selects the smallest suitable per-site storage type."""
+def NewPopGrid(dimensions, dtype=np.int64):
+    """Create integer population counts using uint8, uint16, uint32, or int64 storage.
+
+    Deltas use int16, int32, int64, or int64 respectively.
+    """
     dims = _dimensions_array(dimensions)
-    if capacity is None: cap=np.iinfo(np.int64).max
-    else:
-        try: raw=float(capacity)
-        except (TypeError,ValueError,OverflowError): raise ValueError("capacity must be a nonnegative int64")
-        if not np.isfinite(raw) or raw!=int(raw): raise ValueError("capacity must be a nonnegative int64")
-        cap=int(capacity)
-        if cap<0 or cap>np.iinfo(np.int64).max: raise ValueError("capacity must be a nonnegative int64")
-    fast=_UseFastMode()
-    ptr = _pg_new(dims.ctypes.data_as(_I32_PTR), len(dims), cap)
+    dt = np.dtype(dtype)
+    fieldTypes = {np.dtype(np.uint8): 1, np.dtype(np.uint16): 2, np.dtype(np.uint32): 4, np.dtype(np.int64): 8}
+    if dt not in fieldTypes: raise ValueError("PopGrid dtype must be uint8, uint16, uint32, or int64")
+    fast = _UseFastMode()
+    ptr = _pg_new(dims.ctypes.data_as(_I32_PTR), len(dims), fieldTypes[dt])
     if not ptr: raise MemoryError("unable to allocate PopGrid")
-    x,y,z,n,wrapX,wrapY,wrapZ=_StaticGeometry(dims)
+    x,y,z,n,wrapX,wrapY,wrapZ = _StaticGeometry(dims)
     return _PopGridFast(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ) if fast else _PopGridSafe(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ)
 
 
 def NewPDEgrid(dimensions):
-    """Create a 1D–3D float32 lattice field supporting diffusion and advection."""
+    """Create a 1D–3D float64 lattice field supporting diffusion and advection."""
     dims = _dimensions_array(dimensions)
     fast=_UseFastMode()
     ptr = _pd_new(dims.ctypes.data_as(_I32_PTR), len(dims))
