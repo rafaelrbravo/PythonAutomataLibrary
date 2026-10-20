@@ -4,24 +4,7 @@
 
 PAL is a Python modeling library for high-performance agent-based, lattice population, and PDE models. Model code uses a compact object-oriented API and can be compiled with `@pal.njit`; PAL keeps performance-sensitive state and algorithms in a precompiled native core.
 
-```python
-import PythonAutomataLibrary as pal
-```
-
-PAL provides:
-
-- `Grid`: typed 1D/2D/3D lattice data.
-- `AgentGrid`: lattice or continuous-position agents with identity and properties.
-- `PopGrid`: integer lattice populations without individual agent identity.
-- `PDEgrid`: diffusion/advection fields.
-- `IList`: reusable integer query results.
-- `Multinomial`: binomial/multinomial sampling.
-- `PixWindow` and `OpenGLWindow`: 2D/3D visualization.
-- `@pal.njit`: Numba compilation with PAL-specific source transformation and diagnostics.
-
-PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL objects to select the unchecked high-performance implementations after a model has been validated.
-
-## Quick start
+## Installation and examples
 
 Install PAL:
 
@@ -45,6 +28,25 @@ Run an example script from `PAL-Examples/`. For a guided first model, see the [P
 - [Cheatsheet](Documentation/CHEATSHEET.md) ([PDF](Documentation/CHEATSHEET.pdf)) — compact one-page lookup for common operations.
 - `Examples/` — complete working models.
 - [Testing](Testing/README.md) — correctness, API, integration, and regression tests, with local and CI run instructions.
+
+## Features
+
+```python
+import PythonAutomataLibrary as pal
+```
+
+PAL provides:
+
+- `Grid`: typed 1D/2D/3D lattice data.
+- `AgentGrid`: lattice or continuous-position agents with identity and properties.
+- `PopGrid`: integer lattice populations without individual agent identity.
+- `PDEgrid`: diffusion/advection fields.
+- `IList`: reusable integer query results.
+- `Multinomial`: binomial/multinomial sampling.
+- `PixWindow` and `OpenGLWindow`: 2D/3D visualization.
+- `@pal.njit`: Numba compilation with PAL-specific source transformation and diagnostics.
+
+PAL runs in safe mode by default. Call `pal.FastMode()` before constructing PAL objects to select the unchecked high-performance implementations after a model has been validated.
 
 ## Installation details
 
