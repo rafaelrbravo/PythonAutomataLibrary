@@ -713,3 +713,40 @@ def test_public_float32_agentgrid_coordinate_roundtrip_and_wrap_flags(dims):
         else:
             with pytest.raises(ValueError):
                 grid.ItoZ(index)
+
+
+def test_public_float32_agentgrid_close_is_idempotent(monkeypatch):
+    grid = core.NewAgentGrid((4,), dtype=np.float32)
+    original_free = core._ag32_free
+    released = []
+
+    def tracked_free(ptr):
+        released.append(ptr)
+        original_free(ptr)
+
+    monkeypatch.setattr(core, "_ag32_free", tracked_free)
+    grid.Close()
+    grid.Close()
+    grid.__del__()
+    assert len(released) == 1
+    assert grid._ptr == 0
+
+
+def test_public_float32_agentgrid_releases_native_allocation_on_gc(monkeypatch):
+    import gc
+    import weakref
+
+    original_free = core._ag32_free
+    released = []
+
+    def tracked_free(ptr):
+        released.append(ptr)
+        original_free(ptr)
+
+    monkeypatch.setattr(core, "_ag32_free", tracked_free)
+    grid = core.NewAgentGrid((4,), dtype=np.float32)
+    reference = weakref.ref(grid)
+    del grid
+    gc.collect()
+    assert reference() is None
+    assert len(released) == 1
