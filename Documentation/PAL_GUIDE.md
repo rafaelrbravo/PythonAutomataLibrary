@@ -20,6 +20,19 @@ This creates `PAL-Examples/` in your current directory. To select a different pa
 
 Then import it with `import PythonAutomataLibrary as pal`. Prebuilt platform wheels are intended to include the native C core, so users do not need to compile it separately. For source builds and release details, see [Distribution](DISTRIBUTION.md).
 
+## Numeric storage precision
+
+PAL grid constructors accept different storage types; the default and available options depend on the structure.
+
+| Structure | Storage dtype options | Default |
+| --- | --- | --- |
+| `pal.NewGrid(dimensions, dtype=...)` | `bool`; signed/unsigned 8-, 16-, 32-, 64-bit integers; `float32`; `float64` | Explicit `dtype` required |
+| `pal.NewPDEgrid(dimensions, dtype=...)` | `float32`, `float64` | `float64` |
+| `pal.NewAgentGrid(dimensions, ..., dtype=...)` | Public: `float64` only; internal float32 native backend is not yet API-complete | `float64` |
+| `pal.NewPopGrid(dimensions, dtype=...)` | `uint8`, `uint16`, `uint32`, `int64` | `int64` |
+
+For example, `pal.NewPDEgrid((32, 32), dtype=np.float32)` uses float32 field storage, while omitting `dtype` preserves float64 behavior. A float32 AgentGrid cannot yet be constructed through the public `NewAgentGrid` API; its Numba-facing methods remain under development. Existing tutorials intentionally use their established defaults. The standalone `Examples/DTypeConstructors.py` demonstrates the supported public constructor variants.
+
 ## Choose the right PAL structure
 
 | Need | PAL structure |
