@@ -90,7 +90,7 @@ def test_nonstackable_agentgrid_randomized_moves_match_reference(api):
 def test_popgrid_randomized_buffered_updates_match_numpy(api):
     rng = random.Random(21003)
     n, capacity = 29, 10_000
-    g = api.NewPopGrid((n,), capacity=capacity)
+    g = api.NewPopGrid((n,), dtype=np.uint16)
     ref = np.zeros(n, dtype=np.int64)
     for _ in range(300):
         # Generate a valid batch, maintaining nonnegative per-site values and
