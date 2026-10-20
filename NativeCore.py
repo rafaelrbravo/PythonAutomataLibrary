@@ -5173,6 +5173,21 @@ class _AgentGrid32Native:
     def __exit__(self, exc_type, exc_value, traceback):
         self.Close()
 
+    @property
+    def xDim(self):
+        if self.nDims < 1: raise ValueError("xDim requires a spatial grid")
+        return self.dimensions[0]
+
+    @property
+    def yDim(self):
+        if self.nDims < 2: raise ValueError("yDim requires a 2D or 3D grid")
+        return self.dimensions[1]
+
+    @property
+    def zDim(self):
+        if self.nDims < 3: raise ValueError("zDim requires a 3D grid")
+        return self.dimensions[2]
+
     def GetPop(self):
         return _ag32_population(self._ptr)
 
