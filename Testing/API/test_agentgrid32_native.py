@@ -1024,3 +1024,20 @@ def test_public_agentgrid32_iter_snapshot():
         assert list(grid.Iter()) == [agents[0], agents[2]]
     finally:
         grid.Close()
+
+
+def test_public_agentgrid32_alive_after_dispose_and_reuse():
+    grid = core.NewAgentGrid((4,), dtype=np.float32)
+    try:
+        with pytest.raises(ValueError):
+            grid.Alive(0)
+        agent = grid.NewAgentSQ(1)
+        assert grid.Alive(agent)
+        grid.Dispose(agent)
+        assert not grid.Alive(agent)
+        assert grid.NewAgentSQ(2) == agent
+        assert grid.Alive(agent)
+        with pytest.raises(ValueError):
+            grid.Alive(-1)
+    finally:
+        grid.Close()
