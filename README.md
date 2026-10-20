@@ -95,7 +95,7 @@ If you use PAL in your research, please cite:
 
 > Bravo, R. R. (2026). *Python Automata Library (PAL)* [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.23439298
 
-For reproducibility, cite the specific release you used: [PAL v1.0.0](https://doi.org/10.5281/zenodo.23439299).
+For reproducibility, report the specific PAL version used in your study.
 
 GitHub's **Cite this repository** button provides citation formats from [CITATION.cff](CITATION.cff).
 
