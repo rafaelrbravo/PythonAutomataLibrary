@@ -9,7 +9,7 @@ import pytest
     ((3, 4, 5), (1, 2, 4), 13),
 ])
 def test_scalar_index_and_coordinate_assignment_roundtrip(api, shape, key, value):
-    g = api.NewPopGrid(shape, capacity=100)
+    g = api.NewPopGrid(shape, dtype=np.uint8)
     g[key] = value
     assert g[key] == value
     assert g.GetPop() == value
@@ -17,7 +17,7 @@ def test_scalar_index_and_coordinate_assignment_roundtrip(api, shape, key, value
 
 @pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
 def test_slice_assignment_and_copy_semantics(api, shape):
-    g = api.NewPopGrid(shape, capacity=100)
+    g = api.NewPopGrid(shape, dtype=np.uint8)
     values = np.arange(len(g), dtype=np.int64).reshape(shape)
     key = slice(None) if len(shape) == 1 else tuple(slice(None) for _ in shape)
     g[key] = values
@@ -28,7 +28,7 @@ def test_slice_assignment_and_copy_semantics(api, shape):
     assert g[scalar_key] == 0
 
 def test_pending_add_does_not_change_all_until_update(api):
-    g = api.NewPopGrid((5,), capacity=100)
+    g = api.NewPopGrid((5,), dtype=np.uint8)
     g.Add(7, 2)
     assert len(g.All()) == 0
     assert g.GetPop() == 0
@@ -38,7 +38,7 @@ def test_pending_add_does_not_change_all_until_update(api):
 
 
 def test_reset_is_compilable_and_clears_pending_delta(api):
-    g = api.NewPopGrid((5,), capacity=100)
+    g = api.NewPopGrid((5,), dtype=np.uint8)
     g[1] = 8
 
     @api.njit
@@ -54,7 +54,7 @@ def test_reset_is_compilable_and_clears_pending_delta(api):
 
 
 def test_compiled_keyword_add_all_dimensions(api):
-    grids = [api.NewPopGrid((5,), capacity=100), api.NewPopGrid((4, 5), capacity=100), api.NewPopGrid((3, 4, 5), capacity=100)]
+    grids = [api.NewPopGrid((5,), dtype=np.uint8), api.NewPopGrid((4, 5), dtype=np.uint8), api.NewPopGrid((3, 4, 5), dtype=np.uint8)]
 
     @api.njit
     def one(g):
@@ -100,8 +100,8 @@ def test_safe_missing_dimension_wrap_methods_rejected(api, safe_mode, method):
 @pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
 def test_python_njit_popgrid_state_transition_parity(api, shape):
     """Run identical deterministic mutations in separate Python and compiled grids."""
-    py = api.NewPopGrid(shape, capacity=100)
-    jit = api.NewPopGrid(shape, capacity=100)
+    py = api.NewPopGrid(shape, dtype=np.uint8)
+    jit = api.NewPopGrid(shape, dtype=np.uint8)
     site = tuple(1 for _ in shape)
 
     def python_work(g):
@@ -155,8 +155,8 @@ def test_python_njit_popgrid_state_transition_parity(api, shape):
 @pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
 def test_python_njit_popgrid_reset_pending_delta_parity(api, shape):
     """Reset must discard both committed population and uncommitted additions."""
-    py = api.NewPopGrid(shape, capacity=100)
-    jit = api.NewPopGrid(shape, capacity=100)
+    py = api.NewPopGrid(shape, dtype=np.uint8)
+    jit = api.NewPopGrid(shape, dtype=np.uint8)
 
     def python_work(g):
         g.Add(5, *([1] * len(shape)))
@@ -206,7 +206,7 @@ def test_python_njit_popgrid_reset_pending_delta_parity(api, shape):
 @pytest.mark.parametrize("shape", [(7,), (4, 5), (3, 4, 5)])
 def test_python_njit_popgrid_coordinate_mapping_parity(api, shape):
     """Check ToI parity at boundary and interior sites."""
-    g = api.NewPopGrid(shape, capacity=100)
+    g = api.NewPopGrid(shape, dtype=np.uint8)
     if len(shape) == 1:
         sites = ((0,), (2,), (6,))
 
@@ -232,8 +232,8 @@ def test_python_njit_popgrid_coordinate_mapping_parity(api, shape):
 
 
 def test_python_njit_popgrid_slice_aliasing_parity(api):
-    py = api.NewPopGrid((6,), capacity=100)
-    jit = api.NewPopGrid((6,), capacity=100)
+    py = api.NewPopGrid((6,), dtype=np.uint8)
+    jit = api.NewPopGrid((6,), dtype=np.uint8)
     for g in (py, jit):
         g[1] = 3
         g[2] = 5
