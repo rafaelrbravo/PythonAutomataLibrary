@@ -774,3 +774,18 @@ def test_public_float32_agentgrid_wrapped_coordinate_accessors():
             grid.InWrapSQY(0)
         with pytest.raises(ValueError):
             grid.InWrapZ(0)
+
+
+def test_public_float32_agentgrid_periodic_displacement():
+    with core.NewAgentGrid((-10, 10, -8), dtype=np.float32) as grid:
+        assert grid.DispWrapX(9.0, 1.0) == 2.0
+        assert grid.DispWrapX(1.0, 9.0) == -2.0
+        assert grid.DispWrapY(9.0, 1.0) == -8.0
+        assert grid.DispWrapZ(7.0, 1.0) == 2.0
+        with pytest.raises(ValueError):
+            grid.DispWrapX(float("inf"), 0.0)
+    with core.NewAgentGrid((5,), dtype=np.float32) as grid:
+        with pytest.raises(ValueError):
+            grid.DispWrapY(0, 1)
+        with pytest.raises(ValueError):
+            grid.DispWrapZ(0, 1)
