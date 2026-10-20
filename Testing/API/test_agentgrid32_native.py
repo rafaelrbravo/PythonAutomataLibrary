@@ -642,9 +642,19 @@ def test_safe_public_agentgrid_requires_all_square_coordinates():
                     with pytest.raises(ValueError, match="all coordinates"):
                         grid.NewAgentSQ(1, 2)
                 if len(dims) == 2:
-                    assert grid.NewAgentSQ(1, 2) >= 0
+                    agent = grid.NewAgentSQ(1, 2)
                 else:
-                    assert grid.NewAgentSQ(1, 2, 1) >= 0
+                    agent = grid.NewAgentSQ(1, 2, 1)
+                assert agent >= 0
+                with pytest.raises(ValueError, match="all coordinates"):
+                    grid.MoveSQ(agent, 0)
+                if len(dims) == 3:
+                    with pytest.raises(ValueError, match="all coordinates"):
+                        grid.MoveSQ(agent, 0, 1)
+                if len(dims) == 2:
+                    grid.MoveSQ(agent, 0, 1)
+                else:
+                    grid.MoveSQ(agent, 0, 1, 2)
     finally:
         core._UseFastMode = original
 
