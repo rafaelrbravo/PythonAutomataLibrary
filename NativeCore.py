@@ -544,6 +544,7 @@ _ag32_at_i = _bind("pal_ag32_at_i", _I32, _PTR, _I32)
 _ag32_count_i = _bind("pal_ag32_count_i", _I32, _PTR, _I32)
 _ag32_prev_agent = _bind("pal_ag32_prev_agent", _I32, _PTR, _I32)
 _ag32_copy_alive = _bind("pal_ag32_copy_alive", _I32, _PTR, _I32_PTR, _I32)
+_ag32_alive = _bind("pal_ag32_alive", _I32, _PTR, _I32)
 _ag32_set_property = _bind("pal_ag32_set_property", _I32, _PTR, _I32, _I32, _F32)
 _ag32_get_property = _bind("pal_ag32_get_property", _F32, _PTR, _I32, _I32)
 _ag32_add_property = _bind("pal_ag32_add_property", _I32, _PTR, _I32, _I32, _F32)
@@ -5312,6 +5313,15 @@ class _AgentGrid32Native:
     def GetPop(self):
         self._RequireOpen()
         return _ag32_population(self._ptr)
+
+    def Alive(self, agent):
+        """Whether an allocated agent handle currently refers to a living agent."""
+        self._RequireOpen()
+        self._ValidateAgent(agent)
+        status = _ag32_alive(self._ptr, agent)
+        if status < 0:
+            raise ValueError("invalid agent id")
+        return bool(status)
 
     def All(self, shuffle=False):
         """Return a snapshot of living agent handles, optionally shuffled."""
