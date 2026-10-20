@@ -5259,6 +5259,8 @@ class _AgentGrid32Native:
 
     def _WrapPoint(self, value, axis):
         if axis >= self.nDims: raise ValueError("invalid AgentGrid dimension")
+        if not isinstance(value, (int, float, np.integer, np.floating)) or isinstance(value, (bool, np.bool_)):
+            raise ValueError("point coordinate must be numeric")
         if not np.isfinite(value): raise ValueError("point coordinate must be finite")
         dim = self.dimensions[axis]
         return float(value % dim) if self._wrapped[axis] else float(value)
