@@ -754,18 +754,23 @@ def test_public_float32_agentgrid_releases_native_allocation_on_gc(monkeypatch):
 
 def test_public_float32_agentgrid_wrapped_coordinate_accessors():
     with core.NewAgentGrid((-4, 3, -2), dtype=np.float32) as grid:
-        assert grid.InWrapX(-1) == 3
-        assert grid.InWrapX(4) == 0
-        assert grid.InWrapY(-1) == -2147483648
-        assert grid.InWrapY(2) == 2
-        assert grid.InWrapZ(-1) == 1
+        assert grid.InWrapSQX(-1) == 3
+        assert grid.InWrapSQX(4) == 0
+        assert grid.InWrapSQY(-1) == -1
+        assert grid.InWrapSQY(2) == 2
+        assert grid.InWrapSQZ(-1) == 1
+        assert grid.InWrapX(-0.5) == 3.5
+        assert grid.InWrapY(-0.5) == -0.5
+        assert grid.InWrapZ(-0.5) == 1.5
         with pytest.raises(ValueError):
-            grid.InWrapX(0.5)
+            grid.InWrapSQX(0.5)
         with pytest.raises(ValueError):
-            grid.InWrapX(2**40)
+            grid.InWrapSQX(2**40)
+        with pytest.raises(ValueError):
+            grid.InWrapX(float("nan"))
     with core.NewAgentGrid((4,), dtype=np.float32) as grid:
-        assert grid.InWrapX(-1) == -2147483648
+        assert grid.InWrapSQX(-1) == -1
         with pytest.raises(ValueError):
-            grid.InWrapY(0)
+            grid.InWrapSQY(0)
         with pytest.raises(ValueError):
             grid.InWrapZ(0)
