@@ -2289,7 +2289,9 @@ class _AgentGridSafePython:
         if not ok: raise ValueError("unable to move agent")
 
     def MoveSQ(self, agent, x, y=-1, z=-1):
-        self._MoveI(agent, x) if y==-1 and z==-1 else self._MoveI(agent, self.ToI(x, y, z))
+        if self._dimension==2 and y==-1 or self._dimension==3 and (y==-1 or z==-1):
+            raise ValueError("MoveSQ requires all coordinates for 2D or 3D grids")
+        self._MoveI(agent, x) if self._dimension==1 and y==-1 and z==-1 else self._MoveI(agent, self.ToI(x, y, z))
 
     def Move(self,agent,x,y=-1.0,z=-1.0):
         if self._dimension==0: raise ValueError("Move requires a spatial AgentGrid")
@@ -2341,8 +2343,9 @@ class _AgentGridFastPython:
         return agent
 
     def NewAgentSQ(self, x, y=-1, z=-1):
-        if y==-1 and z==-1:
-            if self._dimension!=1: raise ValueError("NewAgentSQ requires all coordinates for 2D or 3D grids")
+        if self._dimension==2 and y==-1 or self._dimension==3 and (y==-1 or z==-1):
+            raise ValueError("NewAgentSQ requires all coordinates for 2D or 3D grids")
+        if self._dimension==1 and y==-1 and z==-1:
             return self._NewAgentI(x)
         return _ag_new_sq_fast(self._ptr, x, y, z)
 
@@ -2391,7 +2394,9 @@ class _AgentGridFastPython:
         ok = _ag_move_i_fast(self._ptr, agent, i)
 
     def MoveSQ(self, agent, x, y=-1, z=-1):
-        self._MoveI(agent, x) if y==-1 and z==-1 else self._MoveI(agent, self.ToI(x, y, z))
+        if self._dimension==2 and y==-1 or self._dimension==3 and (y==-1 or z==-1):
+            raise ValueError("MoveSQ requires all coordinates for 2D or 3D grids")
+        self._MoveI(agent, x) if self._dimension==1 and y==-1 and z==-1 else self._MoveI(agent, self.ToI(x, y, z))
 
     def Move(self, agent, x, y=-1.0, z=-1.0):
         _ag_move_pt_fast(self._ptr, agent, x, y, z)
