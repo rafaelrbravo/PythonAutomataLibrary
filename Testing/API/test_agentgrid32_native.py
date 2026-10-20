@@ -691,3 +691,25 @@ def test_public_float32_agentgrid_python_constructor_and_properties(dims):
 def test_public_agentgrid_dtype_validation():
     with pytest.raises(ValueError, match="float32 or float64"):
         core.NewAgentGrid((4,), dtype=np.int32)
+
+
+@pytest.mark.parametrize("dims", [(5,), (3, 4), (-3, 4), (2, 3, 4)])
+def test_public_float32_agentgrid_coordinate_roundtrip_and_wrap_flags(dims):
+    with core.NewAgentGrid(dims, dtype=np.float32) as grid:
+        assert (grid.wrapX, grid.wrapY, grid.wrapZ) == tuple(
+            dims[axis] < 0 if axis < len(dims) else False for axis in range(3)
+        )
+        last = tuple(abs(d) - 1 for d in dims)
+        index = grid.ToI(*last)
+        assert index == len(grid) - 1
+        assert grid.ItoX(index) == last[0]
+        if len(dims) >= 2:
+            assert grid.ItoY(index) == last[1]
+        else:
+            with pytest.raises(ValueError):
+                grid.ItoY(index)
+        if len(dims) >= 3:
+            assert grid.ItoZ(index) == last[2]
+        else:
+            with pytest.raises(ValueError):
+                grid.ItoZ(index)
