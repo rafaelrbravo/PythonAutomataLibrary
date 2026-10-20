@@ -665,3 +665,23 @@ def test_agentgrid32_native_property_indexing_matches_explicit_access():
             grid[agent] = 1.0
         with pytest.raises(ValueError):
             grid[agent, 0] = float("inf")
+
+
+@pytest.mark.parametrize("dims", [(5,), (3, 4), (-3, 4), (2, 3, 4), ()])
+def test_public_float32_agentgrid_python_constructor_and_properties(dims):
+    with core.NewAgentGrid(dims, numAgentProps=2, dtype=np.float32) as grid:
+        assert grid.nDims == len(dims)
+        assert grid.GetPop() == 0
+        if dims:
+            agent = grid.NewAgentSQ(*([0] * len(dims)))
+            assert agent >= 0
+            grid[agent, 0] = 1.25
+            grid[agent, 1] = 2.5
+            assert grid[agent, 0] == pytest.approx(1.25)
+            assert grid[agent, 1] == pytest.approx(2.5)
+            assert grid.GetPop() == 1
+
+
+def test_public_agentgrid_dtype_validation():
+    with pytest.raises(ValueError, match="float32 or float64"):
+        core.NewAgentGrid((4,), dtype=np.int32)
