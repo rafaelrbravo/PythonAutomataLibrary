@@ -5222,6 +5222,7 @@ class _AgentGrid32Native:
         return self._SQToI(x, y, z)
 
     def ItoX(self, i):
+        if self.nDims == 0: raise ValueError("ItoX requires a spatial AgentGrid")
         self._CheckLocation(i)
         return i // (self.dimensions[1] * self.dimensions[2] if self.nDims == 3 else self.dimensions[1] if self.nDims == 2 else 1)
 
