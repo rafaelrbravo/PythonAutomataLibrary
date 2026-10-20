@@ -65,6 +65,7 @@ Curated one-page API map; see API Guide and API Reference for details.
 - `pop.Add(v,x,y,z) · Update() · Reset()`: Queue count deltas, apply, clear.
 - `pop.GetPop() · All()`: Total population; occupied indices.
 - `dtype: uint8 / uint16 / uint32 / int64`: Signed deltas: int16 / int32 / int64 / int64.
+- `dtype: uint8 / uint16 / uint32 / int64`: Signed deltas: int16 / int32 / int64 / int64.
 
 ## LISTS · NewIList() / SAMPLER · NewMultinomial()
 
