@@ -837,3 +837,13 @@ def test_public_float32_agentgrid_cannot_reenter_closed_context():
     grid.Close()
     with pytest.raises(RuntimeError, match="closed"):
         grid.__enter__()
+
+
+def test_public_float32_agentgrid_creation_reports_native_failure(monkeypatch):
+    with core.NewAgentGrid((4,), dtype=np.float32) as grid:
+        monkeypatch.setattr(core, "_ag32_new_i", lambda ptr, location: -1)
+        with pytest.raises(ValueError, match="unable to create agent"):
+            grid.NewAgentI(0)
+        monkeypatch.setattr(core, "_ag32_new_pt", lambda ptr, x, y, z: -1)
+        with pytest.raises(ValueError, match="unable to create agent"):
+            grid.NewAgentPT(0.5)
