@@ -1544,9 +1544,30 @@ PAL_API size_t pal_multi_snapshot_size(uintptr_t h){(void)h;return sizeof(PalSna
 PAL_API int32_t pal_multi_snapshot(uintptr_t h,uint8_t*out,size_t n){if(n<pal_multi_snapshot_size(h))return 0;Multinomial*m=(Multinomial*)h;uint8_t*p=out;pal_snap_header(&p,2);SNAP_PUT(p,m->nRemaining);SNAP_PUT(p,m->pRemaining);return 1;}
 PAL_API uintptr_t pal_multi_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,2)||n<sizeof(PalSnapHeader)+16)return 0;int64_t nr;double pr;SNAP_GET(p,nr);SNAP_GET(p,pr);uintptr_t h=pal_multi_new(0);if(!h)return 0;Multinomial*m=(Multinomial*)h;m->nRemaining=nr;m->pRemaining=pr;return h;}
 
-PAL_API size_t pal_pg_snapshot_size(uintptr_t h){PopGrid*g=(PopGrid*)h;return sizeof(PalSnapHeader)+sizeof(PopGrid)-2*sizeof(void*)+(size_t)g->length*(g->fieldType+g->deltaType);}
+#define PAL_PG_SNAP_META_BYTES (sizeof(PalSnapHeader)+sizeof(int32_t)+3*sizeof(int32_t)+3*sizeof(int32_t)+sizeof(int32_t)+2*sizeof(int64_t)+2*sizeof(uint8_t))
+PAL_API size_t pal_pg_snapshot_size(uintptr_t h){PopGrid*g=(PopGrid*)h;return PAL_PG_SNAP_META_BYTES+(size_t)g->length*((size_t)g->fieldType+g->deltaType);}
 PAL_API int32_t pal_pg_snapshot(uintptr_t h,uint8_t*out,size_t n){PopGrid*g=(PopGrid*)h;if(n<pal_pg_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,3);SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->capacity);SNAP_PUT(p,g->population);SNAP_PUT(p,g->fieldType);SNAP_PUT(p,g->deltaType);memcpy(p,g->field,(size_t)g->length*g->fieldType);p+=(size_t)g->length*g->fieldType;memcpy(p,g->deltas,(size_t)g->length*g->deltaType);return 1;}
-PAL_API uintptr_t pal_pg_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,3))return 0;int32_t dim,dims[3],wrap[3],len;int64_t cap,pop;uint8_t ft,dt;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,ft);SNAP_GET(p,dt);size_t need=sizeof(PalSnapHeader)+4+24+4+8+8+1+1+(size_t)len*(ft+dt);if(n<need||dim<1||dim>3)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_pg_new(sd,dim,ft);if(!h)return 0;PopGrid*g=(PopGrid*)h;if(g->length!=len||g->fieldType!=ft||g->deltaType!=dt){pal_pg_free(h);return 0;}g->population=pop;memcpy(g->field,p,(size_t)len*ft);p+=(size_t)len*ft;memcpy(g->deltas,p,(size_t)len*dt);return h;}
+PAL_API uintptr_t pal_pg_restore(const uint8_t*data,size_t n){
+    const uint8_t*p=data;
+    if(n<PAL_PG_SNAP_META_BYTES||!pal_snap_check(&p,n,3))return 0;
+    int32_t dim,dims[3],wrap[3],len;int64_t cap,pop;uint8_t ft,dt;
+    SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;
+    SNAP_GET(p,len);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,ft);SNAP_GET(p,dt);
+    if(dim<1||dim>3||len<=0||pop<0)return 0;
+    if(!((ft==1&&dt==2&&cap==UINT8_MAX)||(ft==2&&dt==4&&cap==UINT16_MAX)||
+         (ft==4&&dt==8&&cap==UINT32_MAX)||(ft==8&&dt==8&&cap==INT64_MAX)))return 0;
+    if((size_t)len>(SIZE_MAX-PAL_PG_SNAP_META_BYTES)/((size_t)ft+dt))return 0;
+    if(n<PAL_PG_SNAP_META_BYTES+(size_t)len*((size_t)ft+dt))return 0;
+    int32_t sd[3];
+    for(int d=0;d<dim;d++){if(dims[d]<=0||(wrap[d]!=0&&wrap[d]!=1))return 0;sd[d]=wrap[d]?-dims[d]:dims[d];}
+    uintptr_t h=pal_pg_new(sd,dim,ft);if(!h)return 0;
+    PopGrid*g=(PopGrid*)h;
+    if(g->length!=len||g->fieldType!=ft||g->deltaType!=dt){pal_pg_free(h);return 0;}
+    g->population=pop;
+    memcpy(g->field,p,(size_t)len*ft);p+=(size_t)len*ft;
+    memcpy(g->deltas,p,(size_t)len*dt);
+    return h;
+}
 
 PAL_API size_t pal_pd_snapshot_size(uintptr_t h){PDEGrid*g=(PDEGrid*)h;return sizeof(PalSnapHeader)+4+24+4+16+(size_t)g->length*16;}
 PAL_API int32_t pal_pd_snapshot(uintptr_t h,uint8_t*out,size_t n){PDEGrid*g=(PDEGrid*)h;if(n<pal_pd_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,4); ((PalSnapHeader*)out)->reserved=1;SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->dt);SNAP_PUT(p,g->dx);SNAP_PUT(p,g->dy);SNAP_PUT(p,g->dz);memcpy(p,g->field,(size_t)g->length*8);p+=(size_t)g->length*8;memcpy(p,g->deltas,(size_t)g->length*8);return 1;}
