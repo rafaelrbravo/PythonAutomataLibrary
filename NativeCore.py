@@ -5272,6 +5272,19 @@ class _AgentGrid32Native:
             raise ValueError("AgentGrid float32 property must be finite")
         return bool(_ag32_set_property(self._ptr, agent, self.nDims + prop, np.float32(value)))
 
+    def __getitem__(self, key):
+        """Read a float32 agent property using grid[agent, property]."""
+        if not isinstance(key, tuple) or len(key) != 2:
+            raise TypeError("AgentGrid properties require (agent, property) indexing")
+        return self.GetProperty(key[0], key[1])
+
+    def __setitem__(self, key, value):
+        """Write a float32 agent property using grid[agent, property]."""
+        if not isinstance(key, tuple) or len(key) != 2:
+            raise TypeError("AgentGrid properties require (agent, property) indexing")
+        if not self.SetProperty(key[0], key[1], value):
+            raise ValueError("invalid agent or property")
+
     def AddProperty(self, agent, prop, value):
         self._CheckProperty(prop)
         if not np.isfinite(value) or not np.isfinite(np.float32(value)):
