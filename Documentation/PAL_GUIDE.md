@@ -28,10 +28,10 @@ PAL grid constructors accept different storage types; the default and available 
 | --- | --- | --- |
 | `pal.NewGrid(dimensions, dtype=...)` | `bool`; signed/unsigned 8-, 16-, 32-, 64-bit integers; `float32`; `float64` | Explicit `dtype` required |
 | `pal.NewPDEgrid(dimensions, dtype=...)` | `float32`, `float64` | `float64` |
-| `pal.NewAgentGrid(dimensions, ..., dtype=...)` | Public: `float64` only; internal float32 native backend is not yet API-complete | `float64` |
+| `pal.NewAgentGrid(dimensions, ..., dtype=...)` | `float32` (Python API, Numba parity pending); `float64` (Python and Numba) | `float64` |
 | `pal.NewPopGrid(dimensions, dtype=...)` | `uint8`, `uint16`, `uint32`, `int64` | `int64` |
 
-For example, `pal.NewPDEgrid((32, 32), dtype=np.float32)` uses float32 field storage, while omitting `dtype` preserves float64 behavior. A float32 AgentGrid cannot yet be constructed through the public `NewAgentGrid` API; its Numba-facing methods remain under development. Existing tutorials intentionally use their established defaults. The standalone `Examples/DTypeConstructors.py` demonstrates the supported public constructor variants.
+For example, `pal.NewPDEgrid((32, 32), dtype=np.float32)` uses float32 field storage, while omitting `dtype` preserves float64 behavior. A float32 AgentGrid can be constructed through the public `NewAgentGrid` API for Python use; its Numba-facing methods and full float64 API parity remain under development. Existing tutorials intentionally use their established defaults. The standalone `Examples/DTypeConstructors.py` demonstrates the supported public constructor variants.
 
 ## Choose the right PAL structure
 
@@ -784,7 +784,7 @@ field = pal.NewPDEgrid((30, 30))
 field[10, 12] = 1.0
 ```
 
-`PDEgrid` stores a continuous `float32` scalar field. As with `PopGrid`, there are two ways to change it: **direct assignment** changes the current field immediately, while **`Add`** queues a change that becomes visible only after `Update()`. Continuing from the field created above:
+`PDEgrid` stores a continuous `float32` or `float64` scalar field, with `float64` as the default. As with `PopGrid`, there are two ways to change it: **direct assignment** changes the current field immediately, while **`Add`** queues a change that becomes visible only after `Update()`. Continuing from the field created above:
 
 ```python
 print(field[10, 12])  # 1.0
