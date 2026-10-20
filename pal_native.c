@@ -1129,8 +1129,8 @@ typedef struct {
     int32_t dimensions[3];
     int32_t wrap[3];
     int32_t length;
-    float *field;
-    float *deltas;
+    double *field;
+    double *deltas;
     float dt, dx, dy, dz;
     float scalarBC[6];
 } PDEGrid;
@@ -1165,8 +1165,8 @@ PAL_API uintptr_t pal_pd_new(const int32_t *dimensions, int32_t dimension) {
         grid->length *= grid->dimensions[d];
     }
 
-    grid->field = (float *)calloc((size_t)grid->length, sizeof(float));
-    grid->deltas = (float *)calloc((size_t)grid->length, sizeof(float));
+    grid->field = (double *)calloc((size_t)grid->length, sizeof(double));
+    grid->deltas = (double *)calloc((size_t)grid->length, sizeof(double));
     if (grid->field == NULL || grid->deltas == NULL) { pal_pd_free((uintptr_t)grid); return 0; }
     grid->dt = grid->dx = grid->dy = grid->dz = 1.0f;
     return (uintptr_t)grid;
@@ -1190,14 +1190,14 @@ PAL_API int32_t pal_pd_itox_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if
 PAL_API int32_t pal_pd_itoy_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<2||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_pd_itoz_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<3||i<0||i>=g->length)return PAL_BAD_I;return i%g->dimensions[2];}
 PAL_API int32_t pal_pd_toi(uintptr_t handle, int32_t x, int32_t y, int32_t z) { return PDEGrid_ToI((PDEGrid *)handle, x, y, z); }
-PAL_API float pal_pd_geti(uintptr_t handle, int32_t i) { PDEGrid*g=(PDEGrid*)handle; return i>=0&&i<g->length?g->field[i]:NAN; }
-PAL_API float pal_pd_get(uintptr_t handle,int32_t x,int32_t y,int32_t z) { PDEGrid *g=(PDEGrid *)handle; return g->field[PDEGrid_ToI(g,x,y,z)]; }
-PAL_API int32_t pal_pd_seti(uintptr_t handle, int32_t i, float value) { PDEGrid*g=(PDEGrid*)handle; if(i<0||i>=g->length||!isfinite(value))return 0;g->field[i]=value;return 1; }
-PAL_API float pal_pd_geti_(uintptr_t h,int32_t i){return ((PDEGrid*)h)->field[i];}
-PAL_API void pal_pd_seti_(uintptr_t h,int32_t i,float v){((PDEGrid*)h)->field[i]=v;}
-PAL_API void pal_pd_addi(uintptr_t handle, int32_t i, float value) { ((PDEGrid *)handle)->deltas[i] += value; }
-PAL_API void pal_pd_set(uintptr_t handle,int32_t x,int32_t y,int32_t z,float value) { PDEGrid *g=(PDEGrid *)handle; g->field[PDEGrid_ToI(g,x,y,z)]=value; }
-PAL_API void pal_pd_add(uintptr_t handle,int32_t x,int32_t y,int32_t z,float value) { PDEGrid *g=(PDEGrid *)handle; g->deltas[PDEGrid_ToI(g,x,y,z)]+=value; }
+PAL_API double pal_pd_geti(uintptr_t handle, int32_t i) { PDEGrid*g=(PDEGrid*)handle; return i>=0&&i<g->length?g->field[i]:NAN; }
+PAL_API double pal_pd_get(uintptr_t handle,int32_t x,int32_t y,int32_t z) { PDEGrid *g=(PDEGrid *)handle; return g->field[PDEGrid_ToI(g,x,y,z)]; }
+PAL_API int32_t pal_pd_seti(uintptr_t handle, int32_t i, double value) { PDEGrid*g=(PDEGrid*)handle; if(i<0||i>=g->length||!isfinite(value))return 0;g->field[i]=value;return 1; }
+PAL_API double pal_pd_geti_(uintptr_t h,int32_t i){return ((PDEGrid*)h)->field[i];}
+PAL_API void pal_pd_seti_(uintptr_t h,int32_t i,double v){((PDEGrid*)h)->field[i]=v;}
+PAL_API void pal_pd_addi(uintptr_t handle, int32_t i, double value) { ((PDEGrid *)handle)->deltas[i] += value; }
+PAL_API void pal_pd_set(uintptr_t handle,int32_t x,int32_t y,int32_t z,double value) { PDEGrid *g=(PDEGrid *)handle; g->field[PDEGrid_ToI(g,x,y,z)]=value; }
+PAL_API void pal_pd_add(uintptr_t handle,int32_t x,int32_t y,int32_t z,double value) { PDEGrid *g=(PDEGrid *)handle; g->deltas[PDEGrid_ToI(g,x,y,z)]+=value; }
 PAL_API void pal_pd_update(uintptr_t handle) {
     PDEGrid *grid = (PDEGrid *)handle;
     for (int32_t i = 0; i < grid->length; i++) {
@@ -1215,7 +1215,7 @@ PAL_API float pal_pd_voxel(uintptr_t handle) {
     if (grid->dimension == 2) return grid->dx * grid->dy;
     return grid->dx * grid->dy * grid->dz;
 }
-PAL_API void pal_pd_clear(uintptr_t handle, float value) {
+PAL_API void pal_pd_clear(uintptr_t handle, double value) {
     PDEGrid *grid = (PDEGrid *)handle;
     for (int32_t i = 0; i < grid->length; i++) { grid->field[i] = value; grid->deltas[i] = 0.0f; }
 }
@@ -1223,17 +1223,17 @@ PAL_API void pal_pd_clear(uintptr_t handle, float value) {
 /* Explicit diffusion with zero-flux boundaries on non-wrapped axes. */
 
 
-PAL_API void pal_pd_linear_get(uintptr_t h,int32_t i0,int32_t i1,float*out){PDEGrid*g=(PDEGrid*)h;memcpy(out,g->field+(size_t)i0,(size_t)(i1-i0)*sizeof(float));}
-PAL_API void pal_pd_linear_set_scalar(uintptr_t h,int32_t i0,int32_t i1,float v){PDEGrid*g=(PDEGrid*)h;for(int32_t i=i0;i<i1;i++)g->field[i]=v;}
-PAL_API void pal_pd_linear_set_array(uintptr_t h,int32_t i0,int32_t i1,const float*in){PDEGrid*g=(PDEGrid*)h;memcpy(g->field+(size_t)i0,in,(size_t)(i1-i0)*sizeof(float));}
-PAL_API void pal_pd_region_get(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,float*out){
+PAL_API void pal_pd_linear_get(uintptr_t h,int32_t i0,int32_t i1,double *out){PDEGrid*g=(PDEGrid*)h;memcpy(out,g->field+(size_t)i0,(size_t)(i1-i0)*sizeof(double));}
+PAL_API void pal_pd_linear_set_scalar(uintptr_t h,int32_t i0,int32_t i1,double v){PDEGrid*g=(PDEGrid*)h;for(int32_t i=i0;i<i1;i++)g->field[i]=v;}
+PAL_API void pal_pd_linear_set_array(uintptr_t h,int32_t i0,int32_t i1,const double *in){PDEGrid*g=(PDEGrid*)h;memcpy(g->field+(size_t)i0,in,(size_t)(i1-i0)*sizeof(double));}
+PAL_API void pal_pd_region_get(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,double *out){
     PDEGrid*g=(PDEGrid*)h;int32_t k=0;
     if(g->dimension==1){for(int32_t x=x0;x<x1;x++)out[k++]=g->field[x];return;}
     if(g->dimension==2){for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)out[k++]=g->field[PDEGrid_ToI(g,x,y,0)];return;}
     for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++)out[k++]=g->field[PDEGrid_ToI(g,x,y,z)];
 }
-PAL_API void pal_pd_region_set_scalar(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,float v){PDEGrid*g=(PDEGrid*)h;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++)g->field[PDEGrid_ToI(g,x,y,z)]=v;}
-PAL_API void pal_pd_region_set_array(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,const float*in){PDEGrid*g=(PDEGrid*)h;int32_t k=0;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++,k++)g->field[PDEGrid_ToI(g,x,y,z)]=in[k];}
+PAL_API void pal_pd_region_set_scalar(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,double v){PDEGrid*g=(PDEGrid*)h;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++)g->field[PDEGrid_ToI(g,x,y,z)]=v;}
+PAL_API void pal_pd_region_set_array(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,const double *in){PDEGrid*g=(PDEGrid*)h;int32_t k=0;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++,k++)g->field[PDEGrid_ToI(g,x,y,z)]=in[k];}
 PAL_API int32_t pal_pd_diffusion(uintptr_t handle, float rate) {
     PDEGrid *grid = (PDEGrid *)handle;
     float sx = grid->dt * rate / (grid->dx * grid->dx);
