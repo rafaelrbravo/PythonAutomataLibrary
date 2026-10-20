@@ -5360,9 +5360,12 @@ class _AgentGrid32Native:
         coords = (x, y, z)
         for axis in range(self.nDims):
             value = coords[axis]
+            if not isinstance(value, (int, float, np.integer, np.floating)) or isinstance(value, (bool, np.bool_)):
+                raise ValueError("AgentGrid point coordinates must be numeric")
             if not np.isfinite(value) or value < 0 or value >= self.dimensions[axis]:
                 raise IndexError("AgentGrid point coordinate out of bounds")
-            rounded = np.float32(value)
+            with np.errstate(over="ignore", invalid="ignore"):
+                rounded = np.float32(value)
             if not np.isfinite(rounded) or rounded < 0 or rounded >= self.dimensions[axis]:
                 raise IndexError("AgentGrid point coordinate not representable in float32 grid")
         for axis in range(self.nDims, 3):
