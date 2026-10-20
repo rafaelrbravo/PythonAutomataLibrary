@@ -996,3 +996,19 @@ def test_public_agentgrid32_stackable_agents_at_chain_mutations():
         assert grid.AgentsAt(2) == (agents[0], agents[3])
     finally:
         grid.Close()
+
+
+def test_public_agentgrid32_all_snapshot_and_shuffle():
+    grid = core.NewAgentGrid((8,), isStackable=True, dtype=np.float32)
+    try:
+        agents = [grid.NewAgentSQ(i % 4) for i in range(6)]
+        snapshot = grid.All()
+        assert snapshot.dtype == np.int32
+        assert snapshot.tolist() == agents
+        shuffled = grid.All(shuffle=True)
+        assert sorted(shuffled.tolist()) == agents
+        grid.Dispose(agents[2])
+        assert snapshot.tolist() == agents  # Snapshot remains stable after mutation.
+        assert sorted(grid.All().tolist()) == [0, 1, 3, 4, 5]
+    finally:
+        grid.Close()
