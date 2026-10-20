@@ -627,3 +627,21 @@ def test_float32_agentgrid_property_addition_overflow_is_atomic():
         assert grid.GetProperty(agent, 0) == pytest.approx(3e38, rel=1e-6)
         assert grid.AddProperty(agent, 0, -1e38)
         assert grid.GetProperty(agent, 0) == pytest.approx(2e38, rel=1e-6)
+
+
+def test_safe_public_agentgrid_requires_all_square_coordinates():
+    original = core._UseFastMode
+    core._UseFastMode = lambda: False
+    try:
+        for dims in ((3, 4), (2, 3, 4)):
+            grid = core.NewAgentGrid(dims, numAgentProps=1)
+            with pytest.raises(ValueError, match="all coordinates"):
+                grid.NewAgentSQ(1)
+            with pytest.raises(ValueError, match="all coordinates"):
+                grid.NewAgentSQ(1, 2) if len(dims) == 3 else grid.NewAgentSQ(1)
+            if len(dims) == 2:
+                assert grid.NewAgentSQ(1, 2) >= 0
+            else:
+                assert grid.NewAgentSQ(1, 2, 1) >= 0
+    finally:
+        core._UseFastMode = original
