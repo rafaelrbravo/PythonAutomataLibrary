@@ -750,3 +750,22 @@ def test_public_float32_agentgrid_releases_native_allocation_on_gc(monkeypatch):
     gc.collect()
     assert reference() is None
     assert len(released) == 1
+
+
+def test_public_float32_agentgrid_wrapped_coordinate_accessors():
+    with core.NewAgentGrid((-4, 3, -2), dtype=np.float32) as grid:
+        assert grid.InWrapX(-1) == 3
+        assert grid.InWrapX(4) == 0
+        assert grid.InWrapY(-1) == -2147483648
+        assert grid.InWrapY(2) == 2
+        assert grid.InWrapZ(-1) == 1
+        with pytest.raises(ValueError):
+            grid.InWrapX(0.5)
+        with pytest.raises(ValueError):
+            grid.InWrapX(2**40)
+    with core.NewAgentGrid((4,), dtype=np.float32) as grid:
+        assert grid.InWrapX(-1) == -2147483648
+        with pytest.raises(ValueError):
+            grid.InWrapY(0)
+        with pytest.raises(ValueError):
+            grid.InWrapZ(0)
