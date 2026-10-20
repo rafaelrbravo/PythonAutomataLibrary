@@ -508,6 +508,25 @@ def test_pdegrid32_safe_steps_reject_invalid_values():
         core._UseFastMode = original
 
 
+def test_pdegrid32_safe_steps_reject_underflow_without_mutating_configuration():
+    original = core._UseFastMode
+    core._UseFastMode = lambda: False
+    try:
+        grid = core.NewPDEgrid((2, 2), dtype=np.float32)
+        try:
+            grid.SetTimeSpaceStep(0.5, 2.0, 3.0)
+            before = (grid.Dt(), grid.Dx(), grid.Dy())
+            for step in (1e-100, -1.0, float("inf")):
+                for args in ((step, 2.0, 3.0), (0.5, step, 3.0), (0.5, 2.0, step)):
+                    with pytest.raises(ValueError):
+                        grid.SetTimeSpaceStep(*args)
+                    assert (grid.Dt(), grid.Dx(), grid.Dy()) == before
+        finally:
+            core._pd32_free(grid._ptr)
+    finally:
+        core._UseFastMode = original
+
+
 def test_pdegrid32_step_accessors_compiled_in_both_modes():
     from NativeCore import _NewPDEgrid32
 
