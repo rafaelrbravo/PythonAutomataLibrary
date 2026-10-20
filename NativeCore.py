@@ -5335,7 +5335,10 @@ class _AgentGrid32Native:
     def NewAgentI(self, location):
         self._RequireOpen()
         self._CheckLocation(location)
-        return _ag32_new_i(self._ptr, location)
+        agent = _ag32_new_i(self._ptr, location)
+        if agent < 0:
+            raise ValueError("unable to create agent at location")
+        return agent
 
     def NewAgent(self, location):
         if self.nDims != 1:
@@ -5361,7 +5364,10 @@ class _AgentGrid32Native:
     def NewAgentPT(self, x, y=0, z=0):
         self._RequireOpen()
         self._CheckPT(x, y, z)
-        return _ag32_new_pt(self._ptr, np.float32(x), np.float32(y), np.float32(z))
+        agent = _ag32_new_pt(self._ptr, np.float32(x), np.float32(y), np.float32(z))
+        if agent < 0:
+            raise ValueError("unable to create agent at point")
+        return agent
 
     def MoveI(self, agent, location):
         self._RequireOpen()
