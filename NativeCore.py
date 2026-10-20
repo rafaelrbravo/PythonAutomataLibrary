@@ -5154,7 +5154,7 @@ def _StaticGeometry(dims):
     return x,y,z,length,wrapX,wrapY,wrapZ
 
 class _AgentGrid32Native:
-    """Internal float32 native handle; not yet the public AgentGrid API."""
+    """Native-backed float32 AgentGrid Python API (Numba support pending)."""
 
     def __init__(self, ptr, dimensions, numAgentProps, stackable):
         self._ptr = ptr
@@ -5312,7 +5312,7 @@ class _AgentGrid32Native:
 
 
 def _NewAgentGrid32(dimensions, numAgentProps=0, isStackable=False):
-    """Internal float32 factory for native backend validation only."""
+    """Create a native float32 AgentGrid for Python-side use."""
     dims = _dimensions_array(dimensions, allowZero=True)
     if not isinstance(numAgentProps, (int, np.integer)) or isinstance(numAgentProps, (bool, np.bool_)) or numAgentProps < 0 or numAgentProps > np.iinfo(np.int32).max-len(dims):
         raise ValueError("numAgentProps must be a nonnegative int32")
@@ -5321,7 +5321,11 @@ def _NewAgentGrid32(dimensions, numAgentProps=0, isStackable=False):
     ptr = _ag32_new(dims.ctypes.data_as(_I32_PTR), len(dims), int(numAgentProps), int(isStackable))
     if not ptr:
         raise MemoryError("unable to allocate float32 AgentGrid")
-    return _AgentGrid32Native(ptr, dims, int(numAgentProps), bool(isStackable))
+    try:
+        return _AgentGrid32Native(ptr, dims, int(numAgentProps), bool(isStackable))
+    except Exception:
+        _ag32_free(ptr)
+        raise
 
 
 def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False, dtype=np.float64):
@@ -5557,7 +5561,7 @@ _PDEgrid32Safe=_jitclass(_PDEgrid32Spec)(_PDEgrid32SafePython)
 
 
 def _NewPDEgrid32(dimensions):
-    """Internal native float32 factory; public dispatch awaits API parity."""
+    """Construct a native float32 PDEgrid with the selected safety mode."""
     dims = _dimensions_array(dimensions)
     fast = _UseFastMode()
     x,y,z,n,wrapX,wrapY,wrapZ = _StaticGeometry(dims)
