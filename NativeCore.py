@@ -5487,8 +5487,8 @@ class _PDEgrid32SafePython:
     def SetTimeSpaceStep(self,dt,dx,dy=1.0,dz=1.0):
         if not np.isfinite(dt) or not np.isfinite(dx) or not np.isfinite(dy) or not np.isfinite(dz) or dt<=0 or dx<=0 or dy<=0 or dz<=0:
             raise ValueError("time and space steps must be finite and positive")
-        if max(dt,dx,dy,dz)>3.4028234663852886e38:
-            raise ValueError("time and space steps must be representable as float32")
+        if max(dt,dx,dy,dz)>3.4028234663852886e38 or min(dt,dx,dy,dz)<1.401298464324817e-45:
+            raise ValueError("time and space steps must be positive and representable as float32")
         _pd32_steps(self._ptr,dt,dx,dy,dz)
     def InWrapX(self,value):
         if not np.isfinite(value) or value!=int(value) or value<np.iinfo(np.int32).min or value>np.iinfo(np.int32).max: raise ValueError("index must be an int32 integer")
