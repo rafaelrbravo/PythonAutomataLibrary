@@ -17,19 +17,26 @@ def test_newagent_and_movesq_dimensional_forms(api, dims, sq, pt):
     assert got == target
 
 
-def test_newagentsq_linear_index_form_is_supported_for_all_dimensions(api):
-    for dims in ((5,), (3, 4), (3, 4, 5)):
-        g = api.NewAgentGrid(dims)
-        a = g.NewAgentSQ(3)
-        assert g.I(a) == 3
+def test_newagentsq_linear_index_form_is_one_dimensional_only(api):
+    g = api.NewAgentGrid((5,))
+    a = g.NewAgentSQ(3)
+    assert g.I(a) == 3
+    for dims in ((3, 4), (3, 4, 5)):
+        grid = api.NewAgentGrid(dims)
+        with pytest.raises(ValueError, match="all coordinates"):
+            grid.NewAgentSQ(3)
 
 
-def test_movesq_linear_index_form_is_supported_for_all_dimensions(api):
-    for dims in ((5,), (3, 4), (3, 4, 5)):
-        g = api.NewAgentGrid(dims)
-        a = g.NewAgentSQ(0)
-        g.MoveSQ(a, 1)
-        assert g.I(a) == 1
+def test_movesq_linear_index_form_is_one_dimensional_only(api):
+    g = api.NewAgentGrid((5,))
+    a = g.NewAgentSQ(0)
+    g.MoveSQ(a, 1)
+    assert g.I(a) == 1
+    for dims in ((3, 4), (3, 4, 5)):
+        grid = api.NewAgentGrid(dims)
+        agent = grid.NewAgentSQ(*((0,) * len(dims)))
+        with pytest.raises(ValueError):
+            grid.MoveSQ(agent, 1)
 
 
 def test_lastagent_empty_and_stack_semantics(api):
