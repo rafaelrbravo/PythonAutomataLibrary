@@ -80,7 +80,7 @@ def test_compiled_keyword_add_all_dimensions(api):
 def test_safe_delta_int64_overflow_is_atomic(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode intentionally omits PopGrid overflow validation")
-    g = api.NewPopGrid((2,), capacity=2**63 - 1)
+    g = api.NewPopGrid((2,), dtype=np.int64)
     g.Add(2**63 - 1, 0)
     with pytest.raises(OverflowError):
         g.Add(1, 0)
