@@ -671,6 +671,12 @@ def test_agentgrid32_native_property_indexing_matches_explicit_access():
 def test_public_float32_agentgrid_python_constructor_and_properties(dims):
     with core.NewAgentGrid(dims, numAgentProps=2, dtype=np.float32) as grid:
         assert grid.nDims == len(dims)
+        for axis, name in enumerate(("xDim", "yDim", "zDim")):
+            if axis < len(dims):
+                assert getattr(grid, name) == abs(dims[axis])
+            else:
+                with pytest.raises(ValueError):
+                    getattr(grid, name)
         assert grid.GetPop() == 0
         if dims:
             agent = grid.NewAgentSQ(*([0] * len(dims)))
