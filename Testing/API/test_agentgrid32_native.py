@@ -914,3 +914,20 @@ def test_float32_agentgrid_displacement_rejects_nonnumeric_values(bad_value):
         with pytest.raises(ValueError, match="numeric"):
             grid.DispWrapX(1.0, bad_value)
         assert grid.DispWrapX(3.5, 0.5) == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize("dims,point,site", [
+    ((5,), (1.25,), (1,)),
+    ((3, 4), (1.25, 2.5), (1, 2)),
+    ((2, 3, 4), (1.25, 2.5, 3.25), (1, 2, 3)),
+])
+def test_float32_agentgrid_agent_position_accessors(dims, point, site):
+    with core.NewAgentGrid(dims, dtype=np.float32) as grid:
+        agent = grid.NewAgentPT(*point)
+        for axis, name in enumerate(("X", "Y", "Z")[:len(dims)]):
+            assert getattr(grid, name)(agent) == pytest.approx(point[axis])
+            assert getattr(grid, name + "SQ")(agent) == site[axis]
+        assert grid.I(agent) == grid.ToI(*site)
+        for name in ("X", "Y", "Z")[len(dims):]:
+            with pytest.raises(ValueError):
+                getattr(grid, name)(agent)
