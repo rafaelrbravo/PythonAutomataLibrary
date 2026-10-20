@@ -705,3 +705,25 @@ def test_pdegrid32_safe_addition_checks_float32_rounding_boundary():
             core._pd32_free(grid._ptr)
     finally:
         core._UseFastMode = original
+
+
+def test_native_pdegrid32_coordinate_add_rejects_pending_overflow_atomically():
+    """Coordinate and linear native additions must share overflow protection."""
+    ptr, i32, f32 = ctypes.c_uint64, ctypes.c_int32, ctypes.c_float
+    new = _native("pal_pd32_new", ptr, ctypes.POINTER(i32), i32)
+    free = _native("pal_pd32_free", None, ptr)
+    seti = _native("pal_pd32_seti", i32, ptr, i32, f32)
+    add = _native("pal_pd32_add", i32, ptr, i32, i32, i32, f32)
+    update = _native("pal_pd32_update", None, ptr)
+    get = _native("pal_pd32_geti", f32, ptr, i32)
+    handle = new((i32 * 2)(2, 2), 2)
+    assert handle
+    try:
+        assert seti(handle, 0, f32(1e38)) == 1
+        assert add(handle, 0, 0, -1, f32(1e38)) == 1
+        assert add(handle, 0, 0, -1, f32(1e38)) == 1
+        assert add(handle, 0, 0, -1, f32(1e38)) == 0
+        update(handle)
+        assert get(handle, 0) == pytest.approx(3e38, rel=1e-6)
+    finally:
+        free(handle)
