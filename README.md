@@ -87,7 +87,7 @@ python -m pytest -q Testing
 
 ## Architecture
 
-`NativeCore.py` is the Python/Numba API and compilation layer. `pal_native.c` owns stable mutable simulation state and the workhorse native algorithms. Safe and fast PAL objects are selected at construction time, so compiled hot paths do not branch on safety mode.
+`NativeCore.py` is the Python/Numba API and compilation layer. `pal_native.c` owns stable mutable simulation state and the workhorse native algorithms. 
 
 The public API has dedicated regression coverage in `Testing/API/`; the full `Testing/` tree is the integration gate.
 
