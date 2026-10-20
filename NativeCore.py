@@ -5177,6 +5177,7 @@ class _AgentGrid32Native:
             self.Close()
 
     def __enter__(self):
+        self._RequireOpen()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -5289,6 +5290,10 @@ class _AgentGrid32Native:
         if not self._ptr:
             raise RuntimeError("AgentGrid has been closed")
 
+    def _ValidateAgent(self, agent):
+        if not isinstance(agent, (int, np.integer)) or isinstance(agent, (bool, np.bool_)) or agent < 0 or agent > np.iinfo(np.int32).max:
+            raise ValueError("agent id must be a nonnegative int32 integer")
+
     def GetPop(self):
         self._RequireOpen()
         return _ag32_population(self._ptr)
@@ -5360,6 +5365,7 @@ class _AgentGrid32Native:
 
     def MoveI(self, agent, location):
         self._RequireOpen()
+        self._ValidateAgent(agent)
         self._CheckLocation(location)
         return bool(_ag32_move_i(self._ptr, agent, location))
 
@@ -5373,11 +5379,13 @@ class _AgentGrid32Native:
 
     def MovePT(self, agent, x, y=0, z=0):
         self._RequireOpen()
+        self._ValidateAgent(agent)
         self._CheckPT(x, y, z)
         return bool(_ag32_move_pt(self._ptr, agent, np.float32(x), np.float32(y), np.float32(z)))
 
     def Dispose(self, agent):
         self._RequireOpen()
+        self._ValidateAgent(agent)
         return bool(_ag32_dispose(self._ptr, agent))
 
     def _CheckProperty(self, prop):
@@ -5386,11 +5394,13 @@ class _AgentGrid32Native:
 
     def GetProperty(self, agent, prop):
         self._RequireOpen()
+        self._ValidateAgent(agent)
         self._CheckProperty(prop)
         return _ag32_get_property(self._ptr, agent, self.nDims + prop)
 
     def SetProperty(self, agent, prop, value):
         self._RequireOpen()
+        self._ValidateAgent(agent)
         self._CheckProperty(prop)
         if not np.isfinite(value) or not np.isfinite(np.float32(value)):
             raise ValueError("AgentGrid float32 property must be finite")
@@ -5411,6 +5421,7 @@ class _AgentGrid32Native:
 
     def AddProperty(self, agent, prop, value):
         self._RequireOpen()
+        self._ValidateAgent(agent)
         self._CheckProperty(prop)
         if not np.isfinite(value) or not np.isfinite(np.float32(value)):
             raise ValueError("AgentGrid float32 property increment must be finite")
