@@ -1041,3 +1041,18 @@ def test_public_agentgrid32_alive_after_dispose_and_reuse():
             grid.Alive(-1)
     finally:
         grid.Close()
+
+
+def test_public_agentgrid32_last_agent_stackable():
+    grid = core.NewAgentGrid((4,), isStackable=True, dtype=np.float32)
+    try:
+        assert grid.LastAgent(2) == -1
+        first = grid.NewAgentSQ(2)
+        second = grid.NewAgentSQ(2)
+        assert grid.LastAgent(2) == second
+        grid.Dispose(second)
+        assert grid.LastAgent(2) == first
+        grid.Dispose(first)
+        assert grid.LastAgent(2) == -1
+    finally:
+        grid.Close()
