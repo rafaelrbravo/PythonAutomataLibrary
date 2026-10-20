@@ -896,3 +896,11 @@ def test_float32_nonspatial_agentgrid_rejects_index_to_x_conversion():
     with core.NewAgentGrid((), dtype=np.float32) as grid:
         with pytest.raises(ValueError, match="spatial"):
             grid.ItoX(-2147483648)
+
+
+@pytest.mark.parametrize("bad_value", ["1", None, True, complex(1, 0)])
+def test_float32_agentgrid_continuous_wrap_rejects_nonnumeric_values(bad_value):
+    with core.NewAgentGrid((-4,), dtype=np.float32) as grid:
+        with pytest.raises(ValueError, match="numeric"):
+            grid.InWrapX(bad_value)
+        assert grid.InWrapX(-0.25) == pytest.approx(3.75)
