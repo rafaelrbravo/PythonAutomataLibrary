@@ -5279,7 +5279,18 @@ class _AgentGrid32Native:
         dim = self.dimensions[axis]
         return int(value % dim) if self._wrapped[axis] else int(value)
 
+    @property
+    def capacity(self):
+        """Number of allocated native agent slots."""
+        self._RequireOpen()
+        return _ag32_capacity(self._ptr)
+
+    def _RequireOpen(self):
+        if not self._ptr:
+            raise RuntimeError("AgentGrid has been closed")
+
     def GetPop(self):
+        self._RequireOpen()
         return _ag32_population(self._ptr)
 
     @property
@@ -5317,6 +5328,7 @@ class _AgentGrid32Native:
             raise IndexError("AgentGrid location out of bounds")
 
     def NewAgentI(self, location):
+        self._RequireOpen()
         self._CheckLocation(location)
         return _ag32_new_i(self._ptr, location)
 
@@ -5342,10 +5354,12 @@ class _AgentGrid32Native:
             if coords[axis] != 0: raise ValueError("unexpected AgentGrid point coordinate")
 
     def NewAgentPT(self, x, y=0, z=0):
+        self._RequireOpen()
         self._CheckPT(x, y, z)
         return _ag32_new_pt(self._ptr, np.float32(x), np.float32(y), np.float32(z))
 
     def MoveI(self, agent, location):
+        self._RequireOpen()
         self._CheckLocation(location)
         return bool(_ag32_move_i(self._ptr, agent, location))
 
@@ -5358,10 +5372,12 @@ class _AgentGrid32Native:
         return self.MoveI(agent, self._SQToI(x, y, z))
 
     def MovePT(self, agent, x, y=0, z=0):
+        self._RequireOpen()
         self._CheckPT(x, y, z)
         return bool(_ag32_move_pt(self._ptr, agent, np.float32(x), np.float32(y), np.float32(z)))
 
     def Dispose(self, agent):
+        self._RequireOpen()
         return bool(_ag32_dispose(self._ptr, agent))
 
     def _CheckProperty(self, prop):
@@ -5369,10 +5385,12 @@ class _AgentGrid32Native:
             raise IndexError("AgentGrid property index out of bounds")
 
     def GetProperty(self, agent, prop):
+        self._RequireOpen()
         self._CheckProperty(prop)
         return _ag32_get_property(self._ptr, agent, self.nDims + prop)
 
     def SetProperty(self, agent, prop, value):
+        self._RequireOpen()
         self._CheckProperty(prop)
         if not np.isfinite(value) or not np.isfinite(np.float32(value)):
             raise ValueError("AgentGrid float32 property must be finite")
@@ -5392,6 +5410,7 @@ class _AgentGrid32Native:
             raise ValueError("invalid agent or property")
 
     def AddProperty(self, agent, prop, value):
+        self._RequireOpen()
         self._CheckProperty(prop)
         if not np.isfinite(value) or not np.isfinite(np.float32(value)):
             raise ValueError("AgentGrid float32 property increment must be finite")
@@ -5403,10 +5422,12 @@ class _AgentGrid32Native:
         return bool(_ag32_add_property(self._ptr, agent, self.nDims + prop, np.float32(value)))
 
     def AtI(self, location):
+        self._RequireOpen()
         self._CheckLocation(location)
         return _ag32_at_i(self._ptr, location)
 
     def CountI(self, location):
+        self._RequireOpen()
         self._CheckLocation(location)
         return _ag32_count_i(self._ptr, location)
 
