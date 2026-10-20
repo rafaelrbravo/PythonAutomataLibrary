@@ -5539,6 +5539,10 @@ class _AgentGrid32Native:
     def AtSQ(self, x, y=-1, z=-1):
         return self.AtI(self._SQToI(x, y, z))
 
+    def LastAgent(self, x, y=-1, z=-1):
+        """Return the most recently placed agent at a lattice site, or -1 if empty."""
+        return self.AtSQ(x, y, z)
+
     def CountSQ(self, x, y=-1, z=-1):
         return self.CountI(self._SQToI(x, y, z))
 
