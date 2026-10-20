@@ -1248,8 +1248,8 @@ PAL_API int32_t pal_pd_diffusion(uintptr_t handle, float rate) {
         for (int32_t y = 0; y < yMax; y++) {
             for (int32_t z = 0; z < zMax; z++) {
                 int32_t i = PDEGrid_ToI(grid, x, y, z);
-                float center = grid->field[i];
-                float delta = 0.0f;
+                double center = grid->field[i];
+                double delta = 0.0;
 
                 int32_t low = PDEGrid_Wrap(grid, x - 1, 0);
                 int32_t high = PDEGrid_Wrap(grid, x + 1, 0);
@@ -1303,7 +1303,7 @@ PAL_API float pal_pd_dx(uintptr_t h){return ((PDEGrid*)h)->dx;}
 PAL_API float pal_pd_dy(uintptr_t h){return ((PDEGrid*)h)->dy;}
 PAL_API float pal_pd_dz(uintptr_t h){return ((PDEGrid*)h)->dz;}
 PAL_API float pal_pd_dt(uintptr_t h){return ((PDEGrid*)h)->dt;}
-PAL_API void pal_pd_copy(uintptr_t h,float*out){PDEGrid*g=(PDEGrid*)h;memcpy(out,g->field,(size_t)g->length*sizeof(float));}
+PAL_API void pal_pd_copy(uintptr_t h,double*out){PDEGrid*g=(PDEGrid*)h;memcpy(out,g->field,(size_t)g->length*sizeof(double));}
 
 static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,float rate,const float*x0,const float*x1,const float*y0,const float*y1,const float*z0,const float*z1,int checked){
     const int D=g->dimension,X=g->dimensions[0],Y=D>1?g->dimensions[1]:1,Z=D>2?g->dimensions[2]:1;
@@ -1321,10 +1321,10 @@ static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,float rate,const float*x0,con
         }
         if(diffusionCourant>1.000001f)return 0;
     }
-    float *restrict f=g->field,*restrict d=g->deltas;
+    double *restrict f=g->field,*restrict d=g->deltas;
     if(D==1){
         for(int x=0;x<X;x++){
-            float c=f[x],v=0.0f;
+            double c=f[x],v=0.0f;
             if(x+1<X)v+=(f[x+1]-c)*sx;else if(g->wrap[0])v+=(f[0]-c)*sx;else if(x1)v+=2.0f*(PDEGrid_BC(g,x1,0)-c)*sx;
             if(x>0)v+=(f[x-1]-c)*sx;else if(g->wrap[0])v+=(f[X-1]-c)*sx;else if(x0)v+=2.0f*(PDEGrid_BC(g,x0,0)-c)*sx;
             d[x]+=v;
@@ -1335,7 +1335,7 @@ static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,float rate,const float*x0,con
         for(int x=0;x<X;x++){
             int row=x*Y;
             for(int y=0;y<Y;y++){
-                int i=row+y;float c=f[i],v=0.0f;
+                int i=row+y;double c=f[i],v=0.0f;
                 if(x+1<X)v+=(f[i+Y]-c)*sx;else if(g->wrap[0])v+=(f[y]-c)*sx;else if(x1)v+=2.0f*(PDEGrid_BC(g,x1,y)-c)*sx;
                 if(x>0)v+=(f[i-Y]-c)*sx;else if(g->wrap[0])v+=(f[(X-1)*Y+y]-c)*sx;else if(x0)v+=2.0f*(PDEGrid_BC(g,x0,y)-c)*sx;
                 if(y+1<Y)v+=(f[i+1]-c)*sy;else if(g->wrap[1])v+=(f[row]-c)*sy;else if(y1)v+=2.0f*(PDEGrid_BC(g,y1,x)-c)*sy;
@@ -1348,7 +1348,7 @@ static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,float rate,const float*x0,con
     for(int x=0;x<X;x++)for(int y=0;y<Y;y++){
         int base=(x*Y+y)*Z;
         for(int z=0;z<Z;z++){
-            int i=base+z;float c=f[i],v=0.0f;
+            int i=base+z;double c=f[i],v=0.0f;
             int xFace=y*Z+z,yFace=x*Z+z,zFace=x*Y+y;
             if(x+1<X)v+=(f[i+sxStride]-c)*sx;else if(g->wrap[0])v+=(f[y*Z+z]-c)*sx;else if(x1)v+=2.0f*(PDEGrid_BC(g,x1,xFace)-c)*sx;
             if(x>0)v+=(f[i-sxStride]-c)*sx;else if(g->wrap[0])v+=(f[((X-1)*Y+y)*Z+z]-c)*sx;else if(x0)v+=2.0f*(PDEGrid_BC(g,x0,xFace)-c)*sx;
@@ -1371,7 +1371,7 @@ static int32_t PDEGrid_DiffusionMask(PDEGrid*g,float rate,float*m,float*x0,float
     float s[3]={rate*g->dt/(g->dx*g->dx),rate*g->dt/(g->dy*g->dy),rate*g->dt/(g->dz*g->dz)};
     for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){
         int i=PDEGrid_ToI(g,x,y,z);if(m[i]<0)continue;
-        float c=g->field[i],v=0;int q[3]={x,y,z};
+        double c=g->field[i],v=0;int q[3]={x,y,z};
         for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){
             int t=PDEGrid_Wrap(g,q[a]+sg,a);
             if(t==PAL_NULL){
@@ -1398,7 +1398,7 @@ static int32_t PDEGrid_DiffusionField(PDEGrid*g,uintptr_t rh,uintptr_t x0h,uintp
         for(int32_t i=0;i<g->length;i++)if(r[i]<0||!isfinite(r[i]))return -1;
         for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};float sum=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a);float rr=0,mult=1.0f;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;int j=PDEGrid_ToI(g,xx,yy,zz);rr=PDEGrid_Harmonic(r[i],r[j]);}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;rr=r[i];mult=2.0f;}sum+=rr*ds[a]*mult;}if(sum>1.000001f)return 0;}
     }
-    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;float c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}float rr,nv,mult=1.0f;if(j>=0){rr=PDEGrid_Harmonic(r[i],r[j]);nv=g->field[j];}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;rr=r[i];nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0f;}v+=(nv-c)*rr*ds[a]*mult;}g->deltas[i]+=v;}return 1;
+    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;double c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}float rr,nv,mult=1.0f;if(j>=0){rr=PDEGrid_Harmonic(r[i],r[j]);nv=g->field[j];}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;rr=r[i];nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0f;}v+=(nv-c)*rr*ds[a]*mult;}g->deltas[i]+=v;}return 1;
 }
 PAL_API int32_t pal_pd_diffusion_field(uintptr_t h,uintptr_t rh,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){return PDEGrid_DiffusionField((PDEGrid*)h,rh,x0h,x1h,y0h,y1h,z0h,z1h,1);}
 PAL_API int32_t pal_pd_diffusion_field_fast(uintptr_t h,uintptr_t rh,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){return PDEGrid_DiffusionField((PDEGrid*)h,rh,x0h,x1h,y0h,y1h,z0h,z1h,0);}
@@ -1408,7 +1408,7 @@ static int32_t PDEGrid_DiffusionInterfaces(PDEGrid*g,uintptr_t rxh,uintptr_t ryh
         for(int a=0;a<g->dimension;a++){if(!rr[a])return -1;for(int32_t i=0;i<g->length;i++)if(rr[a][i]<0||!isfinite(rr[a][i]))return -1;}
         for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};float sum=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a),ri=i;float mult=1.0f;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;int j=PDEGrid_ToI(g,xx,yy,zz);if(sg<0)ri=j;}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;mult=2.0f;}sum+=rr[a][ri]*ds[a]*mult;}if(sum>1.000001f)return 0;}
     }
-    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;float c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,ri=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}float nv,mult=1.0f;if(j>=0){if(sg<0)ri=j;nv=g->field[j];}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0f;}float rate=rr[a][ri];v+=(nv-c)*rate*ds[a]*mult;}g->deltas[i]+=v;}return 1;
+    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;double c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,ri=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}float nv,mult=1.0f;if(j>=0){if(sg<0)ri=j;nv=g->field[j];}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0f;}float rate=rr[a][ri];v+=(nv-c)*rate*ds[a]*mult;}g->deltas[i]+=v;}return 1;
 }
 PAL_API int32_t pal_pd_diffusion_interfaces(uintptr_t h,uintptr_t rxh,uintptr_t ryh,uintptr_t rzh,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){return PDEGrid_DiffusionInterfaces((PDEGrid*)h,rxh,ryh,rzh,x0h,x1h,y0h,y1h,z0h,z1h,1);}
 PAL_API int32_t pal_pd_diffusion_interfaces_fast(uintptr_t h,uintptr_t rxh,uintptr_t ryh,uintptr_t rzh,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){return PDEGrid_DiffusionInterfaces((PDEGrid*)h,rxh,ryh,rzh,x0h,x1h,y0h,y1h,z0h,z1h,0);}
@@ -1437,11 +1437,11 @@ static int32_t PDEGrid_AdvectionUniform(PDEGrid*g,const float uv[3],float*bc0[3]
     const int D=g->dimension,X=g->dimensions[0],Y=D>1?g->dimensions[1]:1,Z=D>2?g->dimensions[2]:1;
     const int xs=Y*Z,ys=Z;const float ds[3]={g->dt/g->dx,g->dt/g->dy,g->dt/g->dz};
     if(checked){float cfl=0.0f;for(int a=0;a<D;a++){float v=uv[a];if(!isfinite(v))return -1;int n=g->dimensions[a];if(g->wrap[a]||n>1||(v>0.0f?bc1[a]:v<0.0f?bc0[a]:0))cfl+=fabsf(v)*ds[a];}if(cfl>1.000001f)return 0;}
-    float *restrict f=g->field,*restrict d=g->deltas;
+    double *restrict f=g->field,*restrict d=g->deltas;
     const float ax=uv[0]*ds[0],ay=D>1?uv[1]*ds[1]:0.0f,az=D>2?uv[2]*ds[2]:0.0f;
     if(D==1){
         for(int x=0;x<X;x++){
-            float c=f[x],dv=0.0f;
+            double c=f[x],dv=0.0f;
             if(ax>0.0f){
                 if(x>0)dv+=ax*f[x-1];else if(g->wrap[0])dv+=ax*f[X-1];else if(bc0[0])dv+=ax*PDEGrid_BC(g,bc0[0],0);
                 if(x+1<X||g->wrap[0]||bc1[0])dv-=ax*c;
@@ -1456,7 +1456,7 @@ static int32_t PDEGrid_AdvectionUniform(PDEGrid*g,const float uv[3],float*bc0[3]
     for(int x=0;x<X;x++)for(int y=0;y<Y;y++){
         int base=(x*Y+y)*Z;
         for(int z=0;z<Z;z++){
-            int i=base+z;float c=f[i],dv=0.0f,src;int face;
+            int i=base+z;double c=f[i],dv=0.0f,src;int face;
             /* Low x face: positive velocity is inflow, negative is outflow. */
             if(x>0)src=f[i-xs];else if(g->wrap[0])src=f[((X-1)*Y+y)*Z+z];else if(bc0[0]){face=D==1?0:(D==2?y:y*Z+z);src=PDEGrid_BC(g,bc0[0],face);}else src=NAN;
             if(ax>0.0f){if(!isnan(src))dv+=ax*src;}else if(ax<0.0f){if(!isnan(src))dv+=ax*c;}
@@ -1499,7 +1499,7 @@ static int32_t PDEGrid_Advection(PDEGrid*g,int mode,float uv[3],float*vf[3],floa
             for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};float localCourant=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a),j=-1,fi=i;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;j=PDEGrid_ToI(g,xx,yy,zz);if(sg<0)fi=j;}else if(!(sg<0?bc0[a]:bc1[a]))continue;float vel=mode==2?vf[a][fi]:(j>=0?.5f*(vf[a][i]+vf[a][j]):vf[a][i]);float oriented=sg*vel;if(oriented>0)localCourant+=oriented*ds[a];}if(localCourant>1.000001f)return 0;}
         }
     }
-    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;float c=g->field[i],delta=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,fi=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}if(j>=0){if(sg<0)fi=j;}else if(!(sg<0?bc0[a]:bc1[a]))continue;float vel=mode==2?vf[a][fi]:(j>=0?.5f*(vf[a][i]+vf[a][j]):vf[a][i]);float oriented=sg*vel;if(oriented>0)delta-=oriented*c*ds[a];else if(oriented<0){float src=j>=0?g->field[j]:PDEGrid_BC(g,(sg<0?bc0[a]:bc1[a]),PDEGrid_FaceIndex(g,a,x,y,z));delta+=(-oriented)*src*ds[a];}}g->deltas[i]+=delta;}return 1;
+    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;double c=g->field[i],delta=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,fi=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}if(j>=0){if(sg<0)fi=j;}else if(!(sg<0?bc0[a]:bc1[a]))continue;float vel=mode==2?vf[a][fi]:(j>=0?.5f*(vf[a][i]+vf[a][j]):vf[a][i]);float oriented=sg*vel;if(oriented>0)delta-=oriented*c*ds[a];else if(oriented<0){float src=j>=0?g->field[j]:PDEGrid_BC(g,(sg<0?bc0[a]:bc1[a]),PDEGrid_FaceIndex(g,a,x,y,z));delta+=(-oriented)*src*ds[a];}}g->deltas[i]+=delta;}return 1;
 }
 PAL_API int32_t pal_pd_advection(uintptr_t h,float vx,float vy,float vz,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){float u[3]={vx,vy,vz};float*b0[3]={(float*)x0,(float*)y0,(float*)z0},*b1[3]={(float*)x1,(float*)y1,(float*)z1};float*v[3]={0};return PDEGrid_Advection((PDEGrid*)h,0,u,v,b0,b1,1);}
 PAL_API int32_t pal_pd_advection_field(uintptr_t h,uintptr_t vx,uintptr_t vy,uintptr_t vz,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){float u[3]={0};float*v[3]={(float*)vx,(float*)vy,(float*)vz},*b0[3]={(float*)x0,(float*)y0,(float*)z0},*b1[3]={(float*)x1,(float*)y1,(float*)z1};return PDEGrid_Advection((PDEGrid*)h,1,u,v,b0,b1,1);}
@@ -1510,17 +1510,17 @@ PAL_API int32_t pal_pd_advection_field_fast(uintptr_t h,uintptr_t vx,uintptr_t v
 PAL_API int32_t pal_pd_advection_interfaces_fast(uintptr_t h,uintptr_t vx,uintptr_t vy,uintptr_t vz,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){float u[3]={0};float*v[3]={(float*)vx,(float*)vy,(float*)vz},*b0[3]={(float*)x0,(float*)y0,(float*)z0},*b1[3]={(float*)x1,(float*)y1,(float*)z1};return PDEGrid_Advection((PDEGrid*)h,2,u,v,b0,b1,0);}
 
 /* ADI: 1D Crank-Nicolson, 2D Peaceman-Rachford. 3D uses Douglas-Gunn directional solves. */
-static void PDEGrid_SolveTri(int n,float r,int wrap,int minSet,int maxSet,float minVal,float maxVal,int addBC,float*rhs,float*out,float*cp,float*dp,float*z,float*u,float*bb){
-    if(n==1){float diag=1;float d=rhs[0];if(!wrap&&minSet){diag+=r;d+=addBC?r*minVal:0;}if(!wrap&&maxSet){diag+=r;d+=addBC?r*maxVal:0;}out[0]=d/diag;return;}
+static void PDEGrid_SolveTri(int n,double r,int wrap,int minSet,int maxSet,double minVal,double maxVal,int addBC,double*rhs,double*out,double*cp,double*dp,double*z,double*u,double*bb){
+    if(n==1){float diag=1;double d=rhs[0];if(!wrap&&minSet){diag+=r;d+=addBC?r*minVal:0;}if(!wrap&&maxSet){diag+=r;d+=addBC?r*maxVal:0;}out[0]=d/diag;return;}
     float off=-r*.5f;
-    if(wrap){/* cyclic tridiagonal via Sherman-Morrison; work arrays are preallocated by the checked caller */float diag=1+r,gamma=-diag,alpha=off,beta=off;for(int i=0;i<n;i++){bb[i]=diag;u[i]=0.0f;}bb[0]-=gamma;bb[n-1]-=alpha*beta/gamma;u[0]=gamma;u[n-1]=alpha;cp[0]=off/bb[0];dp[0]=rhs[0]/bb[0];for(int i=1;i<n;i++){float den=bb[i]-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(rhs[i]-off*dp[i-1])/den;}out[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)out[i]=dp[i]-cp[i]*out[i+1];cp[0]=off/bb[0];dp[0]=u[0]/bb[0];for(int i=1;i<n;i++){float den=bb[i]-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(u[i]-off*dp[i-1])/den;}z[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)z[i]=dp[i]-cp[i]*z[i+1];float fact=(out[0]+beta*out[n-1]/gamma)/(1+z[0]+beta*z[n-1]/gamma);for(int i=0;i<n;i++)out[i]-=fact*z[i];return;}
-    float b=1+r+(minSet?r*.5f:-r*.5f);float d=rhs[0]+(minSet&&addBC?r*minVal:0);cp[0]=off/b;dp[0]=d/b;for(int i=1;i<n;i++){b=1+r;if(i==n-1)b+=maxSet?r*.5f:-r*.5f;d=rhs[i]+(i==n-1&&maxSet&&addBC?r*maxVal:0);float den=b-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(d-off*dp[i-1])/den;}out[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)out[i]=dp[i]-cp[i]*out[i+1];
+    if(wrap){/* cyclic tridiagonal via Sherman-Morrison; work arrays are preallocated by the checked caller */double diag=1+r,gamma=-diag,alpha=off,beta=off;for(int i=0;i<n;i++){bb[i]=diag;u[i]=0.0f;}bb[0]-=gamma;bb[n-1]-=alpha*beta/gamma;u[0]=gamma;u[n-1]=alpha;cp[0]=off/bb[0];dp[0]=rhs[0]/bb[0];for(int i=1;i<n;i++){double den=bb[i]-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(rhs[i]-off*dp[i-1])/den;}out[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)out[i]=dp[i]-cp[i]*out[i+1];cp[0]=off/bb[0];dp[0]=u[0]/bb[0];for(int i=1;i<n;i++){double den=bb[i]-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(u[i]-off*dp[i-1])/den;}z[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)z[i]=dp[i]-cp[i]*z[i+1];double fact=(out[0]+beta*out[n-1]/gamma)/(1+z[0]+beta*z[n-1]/gamma);for(int i=0;i<n;i++)out[i]-=fact*z[i];return;}
+    float b=1+r+(minSet?r*.5f:-r*.5f);double d=rhs[0]+(minSet&&addBC?r*minVal:0);cp[0]=off/b;dp[0]=d/b;for(int i=1;i<n;i++){b=1+r;if(i==n-1)b+=maxSet?r*.5f:-r*.5f;d=rhs[i]+(i==n-1&&maxSet&&addBC?r*maxVal:0);double den=b-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(d-off*dp[i-1])/den;}out[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)out[i]=dp[i]-cp[i]*out[i+1];
 }
 PAL_API int32_t pal_pd_diffusion_adi(uintptr_t h,float rate,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){
-    PDEGrid*g=(PDEGrid*)h;float*b0[3]={(float*)x0h,(float*)y0h,(float*)z0h},*b1[3]={(float*)x1h,(float*)y1h,(float*)z1h};int X=g->dimensions[0],Y=g->dimension>1?g->dimensions[1]:1,Z=g->dimension>2?g->dimensions[2]:1,N=g->length,M=X;if(Y>M)M=Y;if(Z>M)M=Z;float *s1=(float*)malloc((size_t)N*sizeof(float)),*s2=(float*)malloc((size_t)N*sizeof(float)),*rhs=(float*)malloc((size_t)M*sizeof(float)),*out=(float*)malloc((size_t)M*sizeof(float)),*cp=(float*)malloc((size_t)M*sizeof(float)),*dp=(float*)malloc((size_t)M*sizeof(float)),*zwork=(float*)malloc((size_t)M*sizeof(float)),*uwork=(float*)malloc((size_t)M*sizeof(float)),*bbwork=(float*)malloc((size_t)M*sizeof(float));if(!s1||!s2||!rhs||!out||!cp||!dp||!zwork||!uwork||!bbwork){free(s1);free(s2);free(rhs);free(out);free(cp);free(dp);free(zwork);free(uwork);free(bbwork);return -2;}float rx=rate*g->dt/(g->dx*g->dx),ry=rate*g->dt/(g->dy*g->dy),rz=rate*g->dt/(g->dz*g->dz);
-    if(g->dimension==1){for(int x=0;x<X;x++){float c=g->field[x],v=0;int n=PDEGrid_Wrap(g,x+1,0);if(n!=PAL_NULL)v+=g->field[n]-c;else if(b1[0])v+=2.0f*(PDEGrid_BC(g,b1[0],0)-c);n=PDEGrid_Wrap(g,x-1,0);if(n!=PAL_NULL)v+=g->field[n]-c;else if(b0[0])v+=2.0f*(PDEGrid_BC(g,b0[0],0)-c);rhs[x]=c+.5f*rx*v;}PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,b0[0]?PDEGrid_BC(g,b0[0],0):0,b1[0]?PDEGrid_BC(g,b1[0],0):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)g->deltas[x]+=out[x]-g->field[x];}
-    else if(g->dimension==2){for(int y=0;y<Y;y++){for(int x=0;x<X;x++){int i=x*Y+y;float c=g->field[i],v=0;int n=PDEGrid_Wrap(g,y+1,1);if(n!=PAL_NULL)v+=g->field[x*Y+n]-c;else if(b1[1])v+=2.0f*(PDEGrid_BC(g,b1[1],x)-c);n=PDEGrid_Wrap(g,y-1,1);if(n!=PAL_NULL)v+=g->field[x*Y+n]-c;else if(b0[1])v+=2.0f*(PDEGrid_BC(g,b0[1],x)-c);rhs[x]=c+.5f*ry*v;}PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,b0[0]?PDEGrid_BC(g,b0[0],y):0,b1[0]?PDEGrid_BC(g,b1[0],y):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)s1[x*Y+y]=out[x];}for(int x=0;x<X;x++){for(int y=0;y<Y;y++){int i=x*Y+y;float c=s1[i],v=0;int n=PDEGrid_Wrap(g,x+1,0);if(n!=PAL_NULL)v+=s1[n*Y+y]-c;else if(b1[0])v+=2.0f*(PDEGrid_BC(g,b1[0],y)-c);n=PDEGrid_Wrap(g,x-1,0);if(n!=PAL_NULL)v+=s1[n*Y+y]-c;else if(b0[0])v+=2.0f*(PDEGrid_BC(g,b0[0],y)-c);rhs[y]=c+.5f*rx*v;}PDEGrid_SolveTri(Y,ry,g->wrap[1],b0[1]!=0,b1[1]!=0,b0[1]?PDEGrid_BC(g,b0[1],x):0,b1[1]?PDEGrid_BC(g,b1[1],x):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int y=0;y<Y;y++){int i=x*Y+y;g->deltas[i]+=out[y]-g->field[i];}}}
-    else{/* Douglas-Gunn: explicit full increment followed by three implicit half-step solves */for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};float c=g->field[i],v=0,sc[3]={rx,ry,rz};for(int a=0;a<3;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a);if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;v+=(g->field[PDEGrid_ToI(g,xx,yy,zz)]-c)*sc[a];}else{float*bc=sg<0?b0[a]:b1[a];if(bc)v+=2.0f*(PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z))-c)*sc[a];}}s1[i]=v;}for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){for(int x=0;x<X;x++)rhs[x]=s1[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)s2[PDEGrid_ToI(g,x,y,z)]=out[x];}for(int x=0;x<X;x++)for(int z=0;z<Z;z++){for(int y=0;y<Y;y++)rhs[y]=s2[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(Y,ry,g->wrap[1],b0[1]!=0,b1[1]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int y=0;y<Y;y++)s1[PDEGrid_ToI(g,x,y,z)]=out[y];}for(int x=0;x<X;x++)for(int y=0;y<Y;y++){for(int z=0;z<Z;z++)rhs[z]=s1[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(Z,rz,g->wrap[2],b0[2]!=0,b1[2]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int z=0;z<Z;z++)g->deltas[PDEGrid_ToI(g,x,y,z)]+=out[z];}}
+    PDEGrid*g=(PDEGrid*)h;float*b0[3]={(float*)x0h,(float*)y0h,(float*)z0h},*b1[3]={(float*)x1h,(float*)y1h,(float*)z1h};int X=g->dimensions[0],Y=g->dimension>1?g->dimensions[1]:1,Z=g->dimension>2?g->dimensions[2]:1,N=g->length,M=X;if(Y>M)M=Y;if(Z>M)M=Z;double *s1=(double*)malloc((size_t)N*sizeof(double)),*s2=(double*)malloc((size_t)N*sizeof(double)),*rhs=(double*)malloc((size_t)M*sizeof(double)),*out=(double*)malloc((size_t)M*sizeof(double)),*cp=(double*)malloc((size_t)M*sizeof(double)),*dp=(double*)malloc((size_t)M*sizeof(double)),*zwork=(double*)malloc((size_t)M*sizeof(double)),*uwork=(double*)malloc((size_t)M*sizeof(double)),*bbwork=(double*)malloc((size_t)M*sizeof(double));if(!s1||!s2||!rhs||!out||!cp||!dp||!zwork||!uwork||!bbwork){free(s1);free(s2);free(rhs);free(out);free(cp);free(dp);free(zwork);free(uwork);free(bbwork);return -2;}float rx=rate*g->dt/(g->dx*g->dx),ry=rate*g->dt/(g->dy*g->dy),rz=rate*g->dt/(g->dz*g->dz);
+    if(g->dimension==1){for(int x=0;x<X;x++){double c=g->field[x],v=0;int n=PDEGrid_Wrap(g,x+1,0);if(n!=PAL_NULL)v+=g->field[n]-c;else if(b1[0])v+=2.0f*(PDEGrid_BC(g,b1[0],0)-c);n=PDEGrid_Wrap(g,x-1,0);if(n!=PAL_NULL)v+=g->field[n]-c;else if(b0[0])v+=2.0f*(PDEGrid_BC(g,b0[0],0)-c);rhs[x]=c+.5f*rx*v;}PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,b0[0]?PDEGrid_BC(g,b0[0],0):0,b1[0]?PDEGrid_BC(g,b1[0],0):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)g->deltas[x]+=out[x]-g->field[x];}
+    else if(g->dimension==2){for(int y=0;y<Y;y++){for(int x=0;x<X;x++){int i=x*Y+y;double c=g->field[i],v=0;int n=PDEGrid_Wrap(g,y+1,1);if(n!=PAL_NULL)v+=g->field[x*Y+n]-c;else if(b1[1])v+=2.0f*(PDEGrid_BC(g,b1[1],x)-c);n=PDEGrid_Wrap(g,y-1,1);if(n!=PAL_NULL)v+=g->field[x*Y+n]-c;else if(b0[1])v+=2.0f*(PDEGrid_BC(g,b0[1],x)-c);rhs[x]=c+.5f*ry*v;}PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,b0[0]?PDEGrid_BC(g,b0[0],y):0,b1[0]?PDEGrid_BC(g,b1[0],y):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)s1[x*Y+y]=out[x];}for(int x=0;x<X;x++){for(int y=0;y<Y;y++){int i=x*Y+y;double c=s1[i],v=0;int n=PDEGrid_Wrap(g,x+1,0);if(n!=PAL_NULL)v+=s1[n*Y+y]-c;else if(b1[0])v+=2.0f*(PDEGrid_BC(g,b1[0],y)-c);n=PDEGrid_Wrap(g,x-1,0);if(n!=PAL_NULL)v+=s1[n*Y+y]-c;else if(b0[0])v+=2.0f*(PDEGrid_BC(g,b0[0],y)-c);rhs[y]=c+.5f*rx*v;}PDEGrid_SolveTri(Y,ry,g->wrap[1],b0[1]!=0,b1[1]!=0,b0[1]?PDEGrid_BC(g,b0[1],x):0,b1[1]?PDEGrid_BC(g,b1[1],x):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int y=0;y<Y;y++){int i=x*Y+y;g->deltas[i]+=out[y]-g->field[i];}}}
+    else{/* Douglas-Gunn: explicit full increment followed by three implicit half-step solves */for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};double c=g->field[i],v=0,sc[3]={rx,ry,rz};for(int a=0;a<3;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a);if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;v+=(g->field[PDEGrid_ToI(g,xx,yy,zz)]-c)*sc[a];}else{float*bc=sg<0?b0[a]:b1[a];if(bc)v+=2.0f*(PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z))-c)*sc[a];}}s1[i]=v;}for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){for(int x=0;x<X;x++)rhs[x]=s1[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)s2[PDEGrid_ToI(g,x,y,z)]=out[x];}for(int x=0;x<X;x++)for(int z=0;z<Z;z++){for(int y=0;y<Y;y++)rhs[y]=s2[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(Y,ry,g->wrap[1],b0[1]!=0,b1[1]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int y=0;y<Y;y++)s1[PDEGrid_ToI(g,x,y,z)]=out[y];}for(int x=0;x<X;x++)for(int y=0;y<Y;y++){for(int z=0;z<Z;z++)rhs[z]=s1[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(Z,rz,g->wrap[2],b0[2]!=0,b1[2]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int z=0;z<Z;z++)g->deltas[PDEGrid_ToI(g,x,y,z)]+=out[z];}}
     free(s1);free(s2);free(rhs);free(out);free(cp);free(dp);free(zwork);free(uwork);free(bbwork);return 1;
 }
 PAL_API int32_t pal_pd_iswrap(uintptr_t h,int32_t d){PDEGrid*g=(PDEGrid*)h;return d>=0&&d<g->dimension?g->wrap[d]:0;}
