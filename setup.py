@@ -22,8 +22,9 @@ class BuildWithNative(build_py):
         docs_target = Path(self.build_lib) / "PythonAutomataLibrary" / "Documentation"
         if docs_source.is_dir():
             docs_target.mkdir(parents=True, exist_ok=True)
-            for pdf in docs_source.glob("*.pdf"):
-                shutil.copy2(pdf, docs_target / pdf.name)
+            for pattern in ("*.pdf", "*.md"):
+                for doc in docs_source.glob(pattern):
+                    shutil.copy2(doc, docs_target / doc.name)
         source = ROOT / "pal_native.c"
         destination = Path(self.build_lib) / "PythonAutomataLibrary"
         destination.mkdir(parents=True, exist_ok=True)
