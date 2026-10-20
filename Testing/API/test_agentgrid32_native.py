@@ -931,3 +931,18 @@ def test_float32_agentgrid_agent_position_accessors(dims, point, site):
         for name in ("X", "Y", "Z")[len(dims):]:
             with pytest.raises(ValueError):
                 getattr(grid, name)(agent)
+
+
+@pytest.mark.parametrize("dims,start,destination", [
+    ((5,), (0.25,), (3.75,)),
+    ((3, 4), (0.25, 1.5), (2.5, 3.25)),
+    ((2, 3, 4), (0.25, 1.5, 2.25), (1.5, 2.25, 3.75)),
+])
+def test_float32_agent_position_accessors_follow_native_moves(dims, start, destination):
+    with core.NewAgentGrid(dims, dtype=np.float32) as grid:
+        agent = grid.NewAgentPT(*start)
+        assert grid.MovePT(agent, *destination)
+        for axis, name in enumerate(("X", "Y", "Z")[:len(dims)]):
+            assert getattr(grid, name)(agent) == pytest.approx(destination[axis])
+            assert getattr(grid, name + "SQ")(agent) == int(destination[axis])
+        assert grid.I(agent) == grid.ToI(*(int(x) for x in destination))
