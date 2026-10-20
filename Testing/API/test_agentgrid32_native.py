@@ -857,3 +857,14 @@ def test_public_float32_agentgrid_creation_reports_native_failure(monkeypatch):
         monkeypatch.setattr(core, "_ag32_new_pt", lambda ptr, x, y, z: -1)
         with pytest.raises(ValueError, match="unable to create agent"):
             grid.NewAgentPT(0.5)
+
+
+def test_safe_nonspatial_agentgrid_rejects_coordinate_conversion():
+    original = core._UseFastMode
+    try:
+        core._UseFastMode = lambda: False
+        grid = core.NewAgentGrid((), numAgentProps=1)
+        with pytest.raises(ValueError, match="spatial"):
+            grid.ToI(0)
+    finally:
+        core._UseFastMode = original
