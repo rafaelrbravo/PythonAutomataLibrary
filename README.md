@@ -55,6 +55,17 @@ field32.Update()
 
 The float32 PDE backend is under active API-parity validation. The default float64 path remains unchanged.
 
+### Grid dtype availability
+
+| Constructor | Supported storage dtypes | Default |
+| --- | --- | --- |
+| `NewGrid` | `bool`, signed/unsigned 8–64-bit integers, `float32`, `float64` | Explicit `dtype` required |
+| `NewPDEgrid` | `float32`, `float64` | `float64` |
+| `NewAgentGrid` | `float64` (float32 native backend still internal) | `float64` |
+| `NewPopGrid` | `uint8`, `uint16`, `uint32`, `int64` | `int64` |
+
+Run `Examples/DTypeConstructors.py` for a compact demonstration of supported public constructors and basic storage operations. The float32 AgentGrid native backend is **not yet exposed** as a public constructor because its Numba-facing API remains incomplete.
+
 ## Documentation
 
 - [PAL Guide](Documentation/PAL_GUIDE.md) ([PDF](Documentation/PAL_GUIDE.pdf)) — first model, worked modeling workflows, and detailed API behavior.
