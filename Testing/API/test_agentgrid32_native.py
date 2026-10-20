@@ -946,3 +946,29 @@ def test_float32_agent_position_accessors_follow_native_moves(dims, start, desti
             assert getattr(grid, name)(agent) == pytest.approx(destination[axis])
             assert getattr(grid, name + "SQ")(agent) == int(destination[axis])
         assert grid.I(agent) == grid.ToI(*(int(x) for x in destination))
+
+
+def test_public_agentgrid32_agents_at_nonstackable():
+    grid = core.NewAgentGrid((3, 4), numAgentProps=1, dtype=np.float32)
+    try:
+        assert tuple(grid.AgentsAt(1, 2)) == ()
+        agent = grid.NewAgentSQ(1, 2)
+        assert tuple(grid.AgentsAt(1, 2)) == (agent,)
+        grid.MoveSQ(agent, 2, 3)
+        assert tuple(grid.AgentsAt(1, 2)) == ()
+        assert tuple(grid.AgentsAt(2, 3)) == (agent,)
+        grid.Dispose(agent)
+        assert tuple(grid.AgentsAt(2, 3)) == ()
+    finally:
+        grid.Close()
+
+
+def test_public_agentgrid32_agents_at_stackable_not_silently_truncated():
+    grid = core.NewAgentGrid((3,), isStackable=True, dtype=np.float32)
+    try:
+        grid.NewAgentSQ(1)
+        grid.NewAgentSQ(1)
+        with pytest.raises(NotImplementedError):
+            tuple(grid.AgentsAt(1))
+    finally:
+        grid.Close()
