@@ -1415,14 +1415,14 @@ PAL_API int32_t pal_pd_diffusion_interfaces_fast(uintptr_t h,uintptr_t rxh,uintp
 static int32_t PDEGrid_DiffusionRadial(PDEGrid*g,float rate,const float*outerBC,int dim,int checked){
     if(checked&&(g->dimension!=1||g->wrap[0]||g->length<2))return -1;
     if(checked&&(rate<0||!isfinite(rate)))return -2;
-    float base=rate*g->dt/(g->dx*g->dx),*f=g->field,*delta=g->deltas;int X=g->length;
+    float base=rate*g->dt/(g->dx*g->dx);double *f=g->field,*delta=g->deltas;int X=g->length;
     double worstGeom=dim==2?2.0:3.0;
     if(outerBC){double i=(double)(X-1),outer;if(dim==2)outer=(3.0*i+2.0)/(i+0.5);else outer=(i*i+2.0*(i+1.0)*(i+1.0))/(i*i+i+1.0/3.0);if(outer>worstGeom)worstGeom=outer;}
     if(checked&&(double)base*worstGeom>1.000001)return 0;
     if(dim==2){
-        for(int i=0;i<X;i++){float den=(float)i+0.5f,left=i>0?(float)i/den:0.0f,right=((float)i+1.0f)/den,v=0.0f;if(i>0)v+=base*left*(f[i-1]-f[i]);if(i<X-1)v+=base*right*(f[i+1]-f[i]);else if(outerBC)v+=2.0f*base*right*((*outerBC)-f[i]);delta[i]+=v;}
+        for(int i=0;i<X;i++){float den=(float)i+0.5f,left=i>0?(float)i/den:0.0f,right=((float)i+1.0f)/den;double v=0.0;if(i>0)v+=base*left*(f[i-1]-f[i]);if(i<X-1)v+=base*right*(f[i+1]-f[i]);else if(outerBC)v+=2.0f*base*right*((*outerBC)-f[i]);delta[i]+=v;}
     }else{
-        for(int i=0;i<X;i++){float fi=(float)i,den=fi*fi+fi+1.0f/3.0f,left=i>0?fi*fi/den:0.0f,fp=fi+1.0f,right=fp*fp/den,v=0.0f;if(i>0)v+=base*left*(f[i-1]-f[i]);if(i<X-1)v+=base*right*(f[i+1]-f[i]);else if(outerBC)v+=2.0f*base*right*((*outerBC)-f[i]);delta[i]+=v;}
+        for(int i=0;i<X;i++){float fi=(float)i,den=fi*fi+fi+1.0f/3.0f,left=i>0?fi*fi/den:0.0f,fp=fi+1.0f,right=fp*fp/den;double v=0.0;if(i>0)v+=base*left*(f[i-1]-f[i]);if(i<X-1)v+=base*right*(f[i+1]-f[i]);else if(outerBC)v+=2.0f*base*right*((*outerBC)-f[i]);delta[i]+=v;}
     }
     return 1;
 }
