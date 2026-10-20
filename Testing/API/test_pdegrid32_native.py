@@ -492,7 +492,7 @@ def test_pdegrid32_safe_steps_reject_invalid_values():
     try:
         grid = _NewPDEgrid32([4])
         try:
-            for invalid in (0.0, -1.0, np.nan, np.inf, 1e100):
+            for invalid in (0.0, -1.0, np.nan, np.inf, 1e100, 1e-100):
                 with pytest.raises(ValueError):
                     grid.SetTimeSpaceStep(1.0, invalid)
                 with pytest.raises(ValueError):
