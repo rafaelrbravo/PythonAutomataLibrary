@@ -975,3 +975,24 @@ def test_public_agentgrid32_agents_at_stackable_not_silently_truncated():
         assert tuple(grid.AgentsAt(1)) == ()
     finally:
         grid.Close()
+
+
+def test_public_agentgrid32_stackable_agents_at_chain_mutations():
+    grid = core.NewAgentGrid((4,), isStackable=True, dtype=np.float32)
+    try:
+        agents = [grid.NewAgentSQ(1) for _ in range(5)]
+        assert grid.AgentsAt(1) == tuple(reversed(agents))
+        grid.Dispose(agents[2])  # Remove a middle link.
+        assert grid.AgentsAt(1) == (agents[4], agents[3], agents[1], agents[0])
+        grid.MoveSQ(agents[3], 2)  # Unlink a second middle node.
+        assert grid.AgentsAt(1) == (agents[4], agents[1], agents[0])
+        assert grid.AgentsAt(2) == (agents[3],)
+        grid.MoveSQ(agents[0], 2)
+        assert grid.AgentsAt(1) == (agents[4], agents[1])
+        assert grid.AgentsAt(2) == (agents[0], agents[3])
+        grid.Dispose(agents[4])  # Remove head.
+        grid.Dispose(agents[1])  # Remove tail.
+        assert grid.AgentsAt(1) == ()
+        assert grid.AgentsAt(2) == (agents[0], agents[3])
+    finally:
+        grid.Close()
