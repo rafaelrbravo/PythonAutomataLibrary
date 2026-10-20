@@ -5523,6 +5523,7 @@ def _NewAgentGrid32(dimensions, numAgentProps=0, isStackable=False):
         raise ValueError("numAgentProps must be a nonnegative int32")
     if isStackable is not True and isStackable is not False and isStackable != 0 and isStackable != 1:
         raise ValueError("isStackable must be boolean")
+    _UseFastMode()  # Lock the global PAL safety mode before native allocation.
     ptr = _ag32_new(dims.ctypes.data_as(_I32_PTR), len(dims), int(numAgentProps), int(isStackable))
     if not ptr:
         raise MemoryError("unable to allocate float32 AgentGrid")
