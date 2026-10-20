@@ -102,7 +102,7 @@ def _md():
     lines = ["# PAL Cheatsheet", "", "Install (includes visualization): `python -m pip install PythonAutomataLibrary`", "", "Examples: `generate-pal-examples [parent-directory]` copies bundled programs to `PAL-Examples/` (no overwrite).", "", INTRO, "",
              "Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y and Z/z variants.", "",
              "Curated one-page API map; see API Guide and API Reference for details.", "",
-             "**Storage dtypes:** `NewGrid(dims, dtype)` requires an explicit bool/int/uint/float32/float64 dtype; `NewPDEgrid(dims, dtype=np.float64)` accepts float32 or float64; `NewAgentGrid(dims, ..., dtype=np.float64)` currently exposes float64 only (float32 native backend remains internal); `NewPopGrid(dims, dtype=np.int64)` accepts uint8/uint16/uint32/int64. See `Examples/DTypeConstructors.py`.", ""]
+             "**Storage dtypes:** `NewGrid(dims, dtype)` requires an explicit bool/int/uint/float32/float64 dtype; `NewPDEgrid(dims, dtype=np.float64)` accepts float32 or float64; `NewAgentGrid(dims, ..., dtype=np.float64)` accepts float32 for Python use or float64 (default); float32 Numba/API parity is pending; `NewPopGrid(dims, dtype=np.int64)` accepts uint8/uint16/uint32/int64. See `Examples/DTypeConstructors.py`.", ""]
     for title, rows in _api_entries():
         lines += ["## " + title, ""]
         for sig, description in rows:
