@@ -101,3 +101,28 @@ def test_snapshot_query_allows_disposal_and_popgrid_accumulation(api):
 
     assert cull(agents, removed) == (0, 6)
     assert list(map(int, removed.All())) == list(range(0, 12, 2))
+
+
+def test_agent_rgb_property_draws_without_explicit_cast(api):
+    """Packed RGB survives float64 agent storage and implicit uint32 drawing writes."""
+    from PythonAutomataLibrary.PixWindow import _PixSafe, _PixFast
+    from PythonAutomataLibrary.OpenGLWindow import OpenGLDraw
+
+    grid = api.NewAgentGrid((4, 4), numAgentProps=1)
+    pixels = _PixFast(np.zeros((4, 4), dtype=np.uint32))
+    draw = OpenGLDraw()
+
+    @api.njit
+    def render(agents, pix, gl):
+        agent = agents.NewAgentSQ(1, 2)
+        agents[agent, 0] = api.RGB(255, 127, 63)
+        pix[1, 2] = agents[agent, 0]
+        gl.Circle(0.5, agents[agent, 0], 1.0, 2.0)
+        return agents[agent, 0]
+
+    color = render(grid, pixels, draw)
+    expected = int(api.RGB(255, 127, 63))
+    assert color == expected
+    assert int(pixels._array[1, 2]) == expected
+    assert int(draw.color[0]) == expected
+    assert draw.count == 1
