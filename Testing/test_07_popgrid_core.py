@@ -22,7 +22,7 @@ def test_geometry_matches_c_order(api, shape):
 
 def test_set_add_update_matches_reference(api):
     shape = (4, 5)
-    g = api.NewPopGrid(shape, capacity=100)
+    g = api.NewPopGrid(shape, dtype=np.uint8)
     ref = np.zeros(shape, dtype=np.int64)
     g[1, 2] = 10
     g[3, 4] = 20
@@ -44,7 +44,7 @@ def test_set_add_update_matches_reference(api):
 
 
 def test_multiple_adds_accumulate_before_update(api):
-    g = api.NewPopGrid((5,), capacity=1000)
+    g = api.NewPopGrid((5,), dtype=np.uint16)
     g[2] = 50
     for delta in (1, 2, -3, 7):
         g.Add(delta, 2)
@@ -55,7 +55,7 @@ def test_multiple_adds_accumulate_before_update(api):
 
 
 def test_reset_clears_values_and_pending_deltas(api):
-    g = api.NewPopGrid((5,), capacity=100)
+    g = api.NewPopGrid((5,), dtype=np.uint8)
     g[1] = 10
     g.Add(5, 1)
     g.Add(7, 2)
@@ -67,7 +67,7 @@ def test_reset_clears_values_and_pending_deltas(api):
 
 
 def test_all_reports_occupied_indices(api):
-    g = api.NewPopGrid((3, 4), capacity=100)
+    g = api.NewPopGrid((3, 4), dtype=np.uint8)
     occupied = [(0, 0), (1, 3), (2, 2)]
     for n, xy in enumerate(occupied, start=1):
         g[xy] = n
@@ -86,7 +86,7 @@ def test_wrapping(api, dims, axis, size):
 def test_safe_update_is_atomic_on_underflow(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode omits population range checks")
-    g = api.NewPopGrid((4,), capacity=100)
+    g = api.NewPopGrid((4,), dtype=np.uint8)
     g[0] = 5
     g[1] = 6
     before = g[:]
@@ -100,10 +100,10 @@ def test_safe_update_is_atomic_on_underflow(api, safe_mode):
 def test_safe_update_is_atomic_on_storage_overflow(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode requires caller to preserve population bounds")
-    g = api.NewPopGrid((3,), capacity=10)
+    g = api.NewPopGrid((3,), dtype=np.uint8)
     g[0] = 7
     g[1] = 2
-    # capacity=10 selects uint8 storage (maximum 255), not a limit of 10.
+    # dtype=np.uint8 selects uint8 storage (maximum 255), not a limit of 10.
     g[2] = 250
     before = g[:]
     g.Add(11, 2)
@@ -115,7 +115,7 @@ def test_safe_update_is_atomic_on_storage_overflow(api, safe_mode):
 def test_safe_rejects_invalid_assignment(api, safe_mode):
     if not safe_mode:
         pytest.skip("Unchecked mode intentionally does not promise input validation")
-    g = api.NewPopGrid((3,), capacity=10)
+    g = api.NewPopGrid((3,), dtype=np.uint8)
     g[0] = 11  # Values above the capacity hint are allowed.
     assert g[0] == 11
     for value in (-1, 256, 1.5, float("nan")):
