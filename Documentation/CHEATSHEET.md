@@ -60,10 +60,11 @@ Curated one-page API map; see API Guide and API Reference for details.
 - `field.AdvectionInterfaces(vx,vy,vz,BC...)`: Face-centered velocity.
 - `BC... = xMinBC,xMaxBC,yMinBC,yMaxBC,zMinBC,zMaxBC`: Optional face boundary conditions.
 
-## POP GRID · NewPopGrid(dims,capacity=None)
+## POP GRID · NewPopGrid(dims,dtype=np.int64)
 
 - `pop.Add(v,x,y,z) · Update() · Reset()`: Queue count deltas, apply, clear.
 - `pop.GetPop() · All()`: Total population; occupied indices.
+- `dtype: uint8 / uint16 / uint32 / int64`: Signed deltas: int16 / int32 / int64 / int64.
 
 ## LISTS · NewIList() / SAMPLER · NewMultinomial()
 
