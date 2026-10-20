@@ -29,7 +29,7 @@ Install PAL:
 python -m pip install PythonAutomataLibrary
 ```
 
-Copy the bundled examples and PDF manuals to an editable `PAL-Examples/` folder in your current directory:
+Copy the bundled examples and PDF/Markdown documentation to an editable `PAL-Examples/` folder in your current directory:
 
 ```bash
 python -m PythonAutomataLibrary.ExampleInstaller
@@ -59,7 +59,7 @@ python -m pip install numpy numba
 
 Note that `--no-deps` skips *all* declared dependencies, not only visualization. As a result, `pip check` may report missing dependencies.
 
-To install examples in a different parent directory, pass its path, such as `python -m PythonAutomataLibrary.ExampleInstaller ~/Documents` or `python -m PythonAutomataLibrary.ExampleInstaller "C:\\Users\\YourName\\Documents"` on Windows. The installer creates `PAL-Examples/` with runnable scripts and a `Documentation/` directory of PDF manuals, without downloading from GitHub; it refuses to overwrite an existing `PAL-Examples/` folder. Graphical examples require a desktop display.
+To install examples in a different parent directory, pass its path, such as `python -m PythonAutomataLibrary.ExampleInstaller ~/Documents` or `python -m PythonAutomataLibrary.ExampleInstaller "C:\\Users\\YourName\\Documents"` on Windows. The installer creates `PAL-Examples/` with runnable scripts and a `Documentation/` directory of PDF and Markdown manuals, without downloading from GitHub; it refuses to overwrite an existing `PAL-Examples/` folder. Graphical examples require a desktop display.
 
 ## Build from source
 
