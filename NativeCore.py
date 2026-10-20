@@ -5276,8 +5276,11 @@ class _AgentGrid32Native:
 
     def _DispWrap(self, first, second, axis):
         if axis >= self.nDims: raise ValueError("invalid AgentGrid dimension")
-        if not np.isfinite(first) or not np.isfinite(second):
-            raise ValueError("displacement coordinates must be finite")
+        for value in (first, second):
+            if not isinstance(value, (int, float, np.integer, np.floating)) or isinstance(value, (bool, np.bool_)):
+                raise ValueError("displacement coordinates must be numeric")
+            if not np.isfinite(value):
+                raise ValueError("displacement coordinates must be finite")
         displacement = float(second) - float(first)
         if self._wrapped[axis]:
             dim = self.dimensions[axis]
