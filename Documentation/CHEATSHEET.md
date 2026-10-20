@@ -10,6 +10,8 @@ Axis shorthand: `...` after an X/x-specific API name denotes corresponding Y/y a
 
 Curated one-page API map; see API Guide and API Reference for details.
 
+**Storage dtypes:** `NewGrid(dims, dtype)` requires an explicit bool/int/uint/float32/float64 dtype; `NewPDEgrid(dims, dtype=np.float64)` accepts float32 or float64; `NewAgentGrid(dims, ..., dtype=np.float64)` currently exposes float64 only (float32 native backend remains internal); `NewPopGrid(dims, dtype=np.int64)` accepts uint8/uint16/uint32/int64. See `Examples/DTypeConstructors.py`.
+
 ## CONVENTIONS
 
 - `dims=(nx[,ny[,nz]]) · negative dimension = wrap`: 1D/2D/3D; omit unused axes. Negative sizes enable periodic boundaries.
