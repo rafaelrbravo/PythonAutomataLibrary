@@ -685,3 +685,23 @@ def test_pdegrid32_safe_repeated_pending_additions_do_not_overflow():
             core._pd32_free(grid._ptr)
     finally:
         core._UseFastMode = original
+
+
+def test_pdegrid32_safe_addition_checks_float32_rounding_boundary():
+    """A rounded pending delta must not push the stored field past FLT_MAX."""
+    original = core._UseFastMode
+    core._UseFastMode = lambda: False
+    try:
+        grid = core.NewPDEgrid((1,), dtype=np.float32)
+        try:
+            maximum = np.finfo(np.float32).max
+            grid.SetI(0, maximum)
+            with pytest.raises(ValueError, match="overflow"):
+                grid.AddI(1.0, 0)
+            assert grid.GetI(0) == maximum
+            grid.Update()
+            assert grid.GetI(0) == maximum
+        finally:
+            core._pd32_free(grid._ptr)
+    finally:
+        core._UseFastMode = original
