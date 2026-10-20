@@ -485,3 +485,24 @@ def test_python_njit_agentgrid_stacked_dispose_older_agent_parity(api):
 
     assert compiled_work(jit) == python_work(py)
     assert jit.GetPop() == py.GetPop() == 1
+
+
+def test_agent_float64_position_property_python_and_compiled(api):
+    value = 2.0 + 2.0 ** -40
+    g = api.NewAgentGrid((8,), numAgentProps=1)
+    a = g.NewAgent(value)
+    g[a, 0] = value
+    assert g.X(a) == value
+    assert g[a, 0] == value
+
+    @api.njit
+    def compiled(grid, agent, v):
+        grid.Move(agent, v)
+        grid[agent, 0] = v
+        return grid.X(agent), grid[agent, 0]
+
+    x, prop = compiled(g, a, value + 2.0 ** -39)
+    assert x == value + 2.0 ** -39
+    assert prop == value + 2.0 ** -39
+    assert g.X(a) == x
+    assert g[a, 0] == prop

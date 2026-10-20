@@ -126,7 +126,7 @@ def test_python_safe_grid_rejects_unrepresentable_assignments(api, safe_mode, dt
         assert g[1] == 1
 
 
-@pytest.mark.parametrize("factory,dtype", [("NewPopGrid", np.int64), ("NewPDEgrid", np.float32)])
+@pytest.mark.parametrize("factory,dtype", [("NewPopGrid", np.int64), ("NewPDEgrid", np.float64)])
 def test_population_and_pde_python_slices_return_detached_arrays(api, factory, dtype):
     grid = getattr(api, factory)((4, 5))
     grid[2, 3] = 7

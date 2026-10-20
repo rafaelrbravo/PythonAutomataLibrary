@@ -73,7 +73,7 @@ def test_popgrid_reaction_diffusion_coupling_conserves_cells(api):
     # A population field is immobile while its occupancy drives nutrient
     # consumption. This couples integer PopGrid and floating PDEGrid through
     # compiled spatial indexing without stochastic expectations.
-    pop = api.NewPopGrid((-16,), capacity=1000)
+    pop = api.NewPopGrid((-16,), dtype=np.uint16)
     nutrient = api.NewPDEgrid((-16,))
     for x, n in [(2, 3), (7, 5), (12, 2)]:
         pop[x] = n

@@ -1,4 +1,5 @@
 """Characterize PAL's source-line diagnostics for typed and untyped compiled calls."""
+import numpy as np
 import pytest
 
 # Marker names recognized by PAL's annotation-based AST transformer.
@@ -9,7 +10,7 @@ PDEgrid = object
 def test_annotated_popgrid_compiled_error_reports_line(api, safe_mode):
     if not safe_mode:
         pytest.skip('Fast mode omits validation diagnostics')
-    g = api.NewPopGrid((4,), capacity=10)
+    g = api.NewPopGrid((4,), dtype=np.uint8)
 
     @api.njit
     def invalid(grid: PopGrid):

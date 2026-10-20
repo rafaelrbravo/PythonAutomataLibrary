@@ -167,7 +167,7 @@ typedef struct {
     int32_t nDead;
     uint64_t generation;
 
-    float *floatProperties;
+    double *floatProperties;
     int32_t *intProperties;
     int32_t *aliveAgents;
     int32_t *deadAgents;
@@ -205,8 +205,8 @@ static int AgentGrid_Grow(AgentGrid *grid) {
     if (oldCapacity > INT32_MAX / 2) return 0;
     int32_t newCapacity = oldCapacity > 0 ? oldCapacity * 2 : 1000;
 
-    float *newFloatProperties = (float *)calloc(
-        (size_t)newCapacity * (size_t)grid->nFloatProperties, sizeof(float));
+    double *newFloatProperties = (double *)calloc(
+        (size_t)newCapacity * (size_t)grid->nFloatProperties, sizeof(double));
     int32_t *newIntProperties = (int32_t *)malloc(
         (size_t)newCapacity * N_AGENT_INT_PROPERTIES * sizeof(int32_t));
     int32_t *newAliveAgents = (int32_t *)malloc((size_t)newCapacity * sizeof(int32_t));
@@ -222,7 +222,7 @@ static int AgentGrid_Grow(AgentGrid *grid) {
     }
 
     memcpy(newFloatProperties, grid->floatProperties,
-           (size_t)oldCapacity * (size_t)grid->nFloatProperties * sizeof(float));
+           (size_t)oldCapacity * (size_t)grid->nFloatProperties * sizeof(double));
     memcpy(newIntProperties, grid->intProperties,
            (size_t)oldCapacity * N_AGENT_INT_PROPERTIES * sizeof(int32_t));
     memcpy(newAliveAgents, grid->aliveAgents, (size_t)grid->population * sizeof(int32_t));
@@ -315,28 +315,28 @@ static void AgentGrid_SetSquarePosition(AgentGrid *grid, int32_t agent, int32_t 
         z = location % grid->dimensions[2];
     }
 
-    grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)] = (float)x + 0.5f;
+    grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)] = (double)x + 0.5;
     if (grid->dimension > 1)
-        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)] = (float)y + 0.5f;
+        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)] = (double)y + 0.5;
     if (grid->dimension > 2)
-        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)] = (float)z + 0.5f;
+        grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)] = (double)z + 0.5;
 }
 
-static int32_t AgentGrid_PointToI(const AgentGrid *grid, float x, float y, float z) {
+static int32_t AgentGrid_PointToI(const AgentGrid *grid, double x, double y, double z) {
     int32_t xi = (int32_t)floorf(x);
     int32_t yi = grid->dimension > 1 ? (int32_t)floorf(y) : 0;
     int32_t zi = grid->dimension > 2 ? (int32_t)floorf(z) : 0;
     return AgentGrid_ToI(grid, xi, yi, zi);
 }
 
-static int AgentGrid_PointInBounds(const AgentGrid *grid, float x, float y, float z) {
-    if (!isfinite(x) || x < 0.0f || x >= (float)grid->dimensions[0]) return 0;
-    if (grid->dimension > 1 && (!isfinite(y) || y < 0.0f || y >= (float)grid->dimensions[1])) return 0;
-    if (grid->dimension > 2 && (!isfinite(z) || z < 0.0f || z >= (float)grid->dimensions[2])) return 0;
+static int AgentGrid_PointInBounds(const AgentGrid *grid, double x, double y, double z) {
+    if (!isfinite(x) || x < 0.0 || x >= (double)grid->dimensions[0]) return 0;
+    if (grid->dimension > 1 && (!isfinite(y) || y < 0.0 || y >= (double)grid->dimensions[1])) return 0;
+    if (grid->dimension > 2 && (!isfinite(z) || z < 0.0 || z >= (double)grid->dimensions[2])) return 0;
     return 1;
 }
 
-static void AgentGrid_SetPointPosition(AgentGrid *grid, int32_t agent, float x, float y, float z) {
+static void AgentGrid_SetPointPosition(AgentGrid *grid, int32_t agent, double x, double y, double z) {
     grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)] = x;
     if (grid->dimension > 1) grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)] = y;
     if (grid->dimension > 2) grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)] = z;
@@ -364,8 +364,8 @@ PAL_API uintptr_t pal_ag_new(const int32_t *dimensions, int32_t dimension,
         grid->length *= grid->dimensions[d];
     }
 
-    grid->floatProperties = (float *)calloc(
-        (size_t)grid->capacity * (size_t)grid->nFloatProperties, sizeof(float));
+    grid->floatProperties = (double *)calloc(
+        (size_t)grid->capacity * (size_t)grid->nFloatProperties, sizeof(double));
     grid->intProperties = (int32_t *)malloc(
         (size_t)grid->capacity * N_AGENT_INT_PROPERTIES * sizeof(int32_t));
     grid->aliveAgents = (int32_t *)malloc((size_t)grid->capacity * sizeof(int32_t));
@@ -444,11 +444,11 @@ PAL_API int32_t pal_ag_i_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;r
 PAL_API int32_t pal_ag_xsq_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||g->dimension<1)return PAL_BAD_I;int32_t i=g->intProperties[AgentGrid_IntIndex(a,AGENT_LOCATION)];return g->dimension==1?i:g->dimension==2?i/g->dimensions[1]:i/(g->dimensions[1]*g->dimensions[2]);}
 PAL_API int32_t pal_ag_ysq_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||g->dimension<2)return PAL_BAD_I;int32_t i=g->intProperties[AgentGrid_IntIndex(a,AGENT_LOCATION)];return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_ag_zsq_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||g->dimension<3)return PAL_BAD_I;return g->intProperties[AgentGrid_IntIndex(a,AGENT_LOCATION)]%g->dimensions[2];}
-PAL_API float pal_ag_x_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>0?g->floatProperties[AgentGrid_FloatIndex(g,a,0)]:NAN;}
-PAL_API float pal_ag_y_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>1?g->floatProperties[AgentGrid_FloatIndex(g,a,1)]:NAN;}
-PAL_API float pal_ag_z_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>2?g->floatProperties[AgentGrid_FloatIndex(g,a,2)]:NAN;}
-PAL_API float pal_ag_getp_safe(uintptr_t h,int32_t a,int32_t p){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&p>=0&&p<g->nFloatProperties-g->dimension?g->floatProperties[AgentGrid_FloatIndex(g,a,g->dimension+p)]:NAN;}
-PAL_API int32_t pal_ag_setp_safe(uintptr_t h,int32_t a,int32_t p,float v){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||p<0||p>=g->nFloatProperties-g->dimension||!isfinite(v))return 0;g->floatProperties[AgentGrid_FloatIndex(g,a,g->dimension+p)]=v;return 1;}
+PAL_API double pal_ag_x_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>0?g->floatProperties[AgentGrid_FloatIndex(g,a,0)]:NAN;}
+PAL_API double pal_ag_y_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>1?g->floatProperties[AgentGrid_FloatIndex(g,a,1)]:NAN;}
+PAL_API double pal_ag_z_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&g->dimension>2?g->floatProperties[AgentGrid_FloatIndex(g,a,2)]:NAN;}
+PAL_API double pal_ag_getp_safe(uintptr_t h,int32_t a,int32_t p){AgentGrid*g=(AgentGrid*)h;return AgentGrid_ValidAlive(g,a)&&p>=0&&p<g->nFloatProperties-g->dimension?g->floatProperties[AgentGrid_FloatIndex(g,a,g->dimension+p)]:NAN;}
+PAL_API int32_t pal_ag_setp_safe(uintptr_t h,int32_t a,int32_t p,double v){AgentGrid*g=(AgentGrid*)h;if(!AgentGrid_ValidAlive(g,a)||p<0||p>=g->nFloatProperties-g->dimension||!isfinite(v))return 0;g->floatProperties[AgentGrid_FloatIndex(g,a,g->dimension+p)]=v;return 1;}
 PAL_API double pal_ag_inwrap_safe(uintptr_t h,double v,int32_t d){AgentGrid*g=(AgentGrid*)h;if(d<0||d>=g->dimension||!isfinite(v))return NAN;return AgentGrid_InWrap(g,v,d);}
 PAL_API double pal_ag_dispwrap_safe(uintptr_t h,double a,double b,int32_t d){AgentGrid*g=(AgentGrid*)h;if(d<0||d>=g->dimension||!isfinite(a)||!isfinite(b)||a<0||b<0||a>=g->dimensions[d]||b>=g->dimensions[d])return NAN;return AgentGrid_DispWrap(g,a,b,d);}
 PAL_API int32_t pal_ag_inwrap_sq_safe(uintptr_t h,int32_t v,int32_t d){AgentGrid*g=(AgentGrid*)h;if(d<0||d>=g->dimension)return PAL_BAD_I;return AgentGrid_Wrap(g,v,d);}
@@ -498,7 +498,7 @@ PAL_API int32_t pal_ag_alive_safe(uintptr_t h,int32_t a){AgentGrid*g=(AgentGrid*
 PAL_API int32_t pal_ag_nagents(uintptr_t handle) { return ((AgentGrid *)handle)->nAgents; }
 PAL_API int32_t *pal_ag_grid_data(uintptr_t handle) { return ((AgentGrid *)handle)->grid; }
 PAL_API int32_t *pal_ag_int_data(uintptr_t handle) { return ((AgentGrid *)handle)->intProperties; }
-PAL_API float *pal_ag_float_data(uintptr_t handle) { return ((AgentGrid *)handle)->floatProperties; }
+PAL_API double *pal_ag_float_data(uintptr_t handle) { return ((AgentGrid *)handle)->floatProperties; }
 PAL_API int32_t pal_ag_nfloatprops(uintptr_t handle) { return ((AgentGrid *)handle)->nFloatProperties; }
 PAL_API int32_t pal_ag_stackable(uintptr_t handle) { return ((AgentGrid *)handle)->stackable; }
 PAL_API int32_t pal_ag_wrap(uintptr_t handle, int32_t dimension) { AgentGrid*g=(AgentGrid*)handle; return dimension>=0&&dimension<g->dimension?g->wrap[dimension]:0; }
@@ -530,7 +530,7 @@ PAL_API int32_t pal_ag_new_sq(uintptr_t handle, int32_t x, int32_t y, int32_t z)
     return pal_ag_new_i(handle, AgentGrid_ToI(grid, x, y, z));
 }
 
-PAL_API int32_t pal_ag_new_pt(uintptr_t handle, float x, float y, float z) {
+PAL_API int32_t pal_ag_new_pt(uintptr_t handle, double x, double y, double z) {
     AgentGrid *grid = (AgentGrid *)handle;
     if (grid->dimension == 0 || !AgentGrid_PointInBounds(grid, x, y, z)) return PAL_NULL;
     int32_t location = AgentGrid_PointToI(grid, x, y, z);
@@ -589,25 +589,25 @@ PAL_API int32_t pal_ag_zsq(uintptr_t handle, int32_t agent) {
     return pal_ag_i(handle, agent) % grid->dimensions[2];
 }
 
-PAL_API float pal_ag_x(uintptr_t handle, int32_t agent) {
+PAL_API double pal_ag_x(uintptr_t handle, int32_t agent) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 0)];
 }
-PAL_API float pal_ag_y(uintptr_t handle, int32_t agent) {
+PAL_API double pal_ag_y(uintptr_t handle, int32_t agent) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 1)];
 }
-PAL_API float pal_ag_z(uintptr_t handle, int32_t agent) {
+PAL_API double pal_ag_z(uintptr_t handle, int32_t agent) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, 2)];
 }
 
-PAL_API float pal_ag_getp(uintptr_t handle, int32_t agent, int32_t property) {
+PAL_API double pal_ag_getp(uintptr_t handle, int32_t agent, int32_t property) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, grid->dimension + property)];
 }
 
-PAL_API void pal_ag_setp(uintptr_t handle, int32_t agent, int32_t property, float value) {
+PAL_API void pal_ag_setp(uintptr_t handle, int32_t agent, int32_t property, double value) {
     AgentGrid *grid = (AgentGrid *)handle;
     grid->floatProperties[AgentGrid_FloatIndex(grid, agent, grid->dimension + property)] = value;
 }
@@ -644,7 +644,7 @@ PAL_API int32_t pal_ag_move_i(uintptr_t handle, int32_t agent, int32_t location)
     return 1;
 }
 
-PAL_API int32_t pal_ag_move_pt(uintptr_t handle, int32_t agent, float x, float y, float z) {
+PAL_API int32_t pal_ag_move_pt(uintptr_t handle, int32_t agent, double x, double y, double z) {
     AgentGrid *grid = (AgentGrid *)handle;
     if (!pal_ag_alive(handle, agent) || grid->dimension == 0 || !AgentGrid_PointInBounds(grid, x, y, z)) return 0;
     int32_t location = AgentGrid_PointToI(grid, x, y, z);
@@ -676,7 +676,7 @@ PAL_API int32_t pal_ag_new_sq_(uintptr_t handle, int32_t x, int32_t y, int32_t z
     return pal_ag_new_i_(handle, AgentGrid_ToI(grid, x, y, z));
 }
 
-PAL_API int32_t pal_ag_new_pt_(uintptr_t handle, float x, float y, float z) {
+PAL_API int32_t pal_ag_new_pt_(uintptr_t handle, double x, double y, double z) {
     AgentGrid *grid = (AgentGrid *)handle;
     int32_t location = AgentGrid_PointToI(grid, x, y, z);
     int32_t agent = AgentGrid_AllocateAgent(grid);
@@ -715,7 +715,7 @@ PAL_API int32_t pal_ag_move_i_(uintptr_t handle, int32_t agent, int32_t location
     return 1;
 }
 
-PAL_API int32_t pal_ag_move_pt_(uintptr_t handle, int32_t agent, float x, float y, float z) {
+PAL_API int32_t pal_ag_move_pt_(uintptr_t handle, int32_t agent, double x, double y, double z) {
     AgentGrid *grid = (AgentGrid *)handle;
     int32_t location = AgentGrid_PointToI(grid, x, y, z);
     int32_t oldLocation = grid->intProperties[AgentGrid_IntIndex(agent, AGENT_LOCATION)];
@@ -728,12 +728,12 @@ PAL_API int32_t pal_ag_move_pt_(uintptr_t handle, int32_t agent, float x, float 
     return 1;
 }
 
-PAL_API float pal_ag_getp_(uintptr_t handle, int32_t agent, int32_t property) {
+PAL_API double pal_ag_getp_(uintptr_t handle, int32_t agent, int32_t property) {
     AgentGrid *grid = (AgentGrid *)handle;
     return grid->floatProperties[AgentGrid_FloatIndex(grid, agent, grid->dimension + property)];
 }
 
-PAL_API void pal_ag_setp_(uintptr_t handle, int32_t agent, int32_t property, float value) {
+PAL_API void pal_ag_setp_(uintptr_t handle, int32_t agent, int32_t property, double value) {
     AgentGrid *grid = (AgentGrid *)handle;
     grid->floatProperties[AgentGrid_FloatIndex(grid, agent, grid->dimension + property)] = value;
 }
@@ -767,7 +767,7 @@ PAL_API int32_t pal_ag_add_q(uintptr_t gh,uintptr_t qh,int32_t x,int32_t y,int32
     if(g->dimension==2){if(z!=-1)return PAL_NULL;}else if(g->dimension==3&&(z<0||z>=g->dimensions[2]))return PAL_NULL;
     return AgentGrid_AddLocationToQuery(g,(IList*)qh,AgentGrid_ToI(g,x,y,z));}
 PAL_API int32_t pal_ag_get_q(uintptr_t gh,uintptr_t qh,int32_t x,int32_t y,int32_t z){IList*q=(IList*)qh;q->length=0;return pal_ag_add_q(gh,qh,x,y,z);}
-static float AgentGrid_WrappedDelta(float d,int32_t size,int32_t wrap){if(!wrap)return d;float half=0.5f*(float)size;if(d>half)d-=(float)size;else if(d<-half)d+=(float)size;return d;}
+static double AgentGrid_WrappedDelta(double d,int32_t size,int32_t wrap){if(!wrap)return d;double half=0.5*(double)size;if(d>half)d-=(double)size;else if(d<-half)d+=(double)size;return d;}
 PAL_API int32_t pal_ag_add_radius_q(uintptr_t gh,uintptr_t qh,double radius,double x,double y,double z,int32_t exclude){
     AgentGrid*g=(AgentGrid*)gh;IList*q=(IList*)qh;
     if(radius<0.0||!isfinite(radius)||!isfinite(x)||
@@ -787,7 +787,7 @@ PAL_API int32_t pal_ag_add_radius_q(uintptr_t gh,uintptr_t qh,double radius,doub
     for(int64_t xo=0;xo<nx;xo++){int32_t xi=(int32_t)((int64_t)x1+xo);int32_t xx=AgentGrid_Wrap(g,xi,0);if(xx==PAL_NULL)continue;
       for(int64_t yo=0;yo<ny;yo++){int32_t yi=(int32_t)((int64_t)y1+yo);int32_t yy=g->dimension>1?AgentGrid_Wrap(g,yi,1):0;if(yy==PAL_NULL)continue;
        for(int64_t zo=0;zo<nz;zo++){int32_t zi=(int32_t)((int64_t)z1+zo);int32_t zz=g->dimension>2?AgentGrid_Wrap(g,zi,2):0;if(zz==PAL_NULL)continue;int32_t loc=AgentGrid_ToI(g,xx,yy,zz);int32_t a=g->grid[loc];
-        if(a!=PAL_NULL){int32_t addCap=g->stackable?g->counts[loc]:1;if(addCap>INT32_MAX-q->length||!IList_Reserve(q,q->length+addCap))return PAL_NULL;}while(a!=PAL_NULL){float dx=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,0)]-(float)x,g->dimensions[0],g->wrap[0]);float dy=0, dz=0;if(g->dimension>1)dy=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,1)]-(float)y,g->dimensions[1],g->wrap[1]);if(g->dimension>2)dz=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,2)]-(float)z,g->dimensions[2],g->wrap[2]);if(a!=exclude && (double)dx*dx+(double)dy*dy+(double)dz*dz<=r2){q->items[q->length++]=a;}if(!g->stackable)break;a=g->intProperties[AgentGrid_IntIndex(a,AGENT_PREV)];}
+        if(a!=PAL_NULL){int32_t addCap=g->stackable?g->counts[loc]:1;if(addCap>INT32_MAX-q->length||!IList_Reserve(q,q->length+addCap))return PAL_NULL;}while(a!=PAL_NULL){double dx=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,0)]-(double)x,g->dimensions[0],g->wrap[0]);double dy=0, dz=0;if(g->dimension>1)dy=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,1)]-(double)y,g->dimensions[1],g->wrap[1]);if(g->dimension>2)dz=AgentGrid_WrappedDelta(g->floatProperties[AgentGrid_FloatIndex(g,a,2)]-(double)z,g->dimensions[2],g->wrap[2]);if(a!=exclude && (double)dx*dx+(double)dy*dy+(double)dz*dz<=r2){q->items[q->length++]=a;}if(!g->stackable)break;a=g->intProperties[AgentGrid_IntIndex(a,AGENT_PREV)];}
     }}}return q->length;
 }
 PAL_API int32_t pal_ag_get_radius_q(uintptr_t gh,uintptr_t qh,double radius,double x,double y,double z,int32_t exclude){((IList*)qh)->length=0;return pal_ag_add_radius_q(gh,qh,radius,x,y,z,exclude);}
@@ -1034,14 +1034,14 @@ static int PopGrid_DeltaFits(const PopGrid *g,int64_t current,int64_t add,int64_
     *out=v; return 1;
 }
 
-PAL_API uintptr_t pal_pg_new(const int32_t *dimensions, int32_t dimension, int64_t capacity) {
-    if (dimension < 1 || dimension > 3 || capacity < 0) return 0;
+PAL_API uintptr_t pal_pg_new(const int32_t *dimensions, int32_t dimension, int64_t dtype) {
+    if (dimension < 1 || dimension > 3 || (dtype!=1 && dtype!=2 && dtype!=4 && dtype!=8)) return 0;
     PopGrid *grid = (PopGrid *)calloc(1, sizeof(PopGrid)); if (!grid) return 0;
-    grid->dimension=dimension; grid->capacity=capacity; grid->length=1;
+    grid->dimension=dimension; grid->capacity=dtype==1?UINT8_MAX:dtype==2?UINT16_MAX:dtype==4?UINT32_MAX:INT64_MAX; grid->length=1;
     for(int32_t d=0;d<dimension;d++){int32_t value=dimensions[d];grid->wrap[d]=value<0;grid->dimensions[d]=value<0?-value:value;if(grid->dimensions[d]<=0){free(grid);return 0;}grid->length*=grid->dimensions[d];}
-    if(capacity<=UINT8_MAX){grid->fieldType=PG_FIELD_U8;grid->deltaType=PG_DELTA_I16;}
-    else if(capacity<=UINT16_MAX){grid->fieldType=PG_FIELD_U16;grid->deltaType=PG_DELTA_I32;}
-    else if((uint64_t)capacity<=UINT32_MAX){grid->fieldType=PG_FIELD_U32;grid->deltaType=PG_DELTA_I64;}
+    if(dtype==1){grid->fieldType=PG_FIELD_U8;grid->deltaType=PG_DELTA_I16;}
+    else if(dtype==2){grid->fieldType=PG_FIELD_U16;grid->deltaType=PG_DELTA_I32;}
+    else if(dtype==4){grid->fieldType=PG_FIELD_U32;grid->deltaType=PG_DELTA_I64;}
     else {grid->fieldType=PG_FIELD_I64;grid->deltaType=PG_DELTA_I64;}
     grid->field=calloc((size_t)grid->length,(size_t)grid->fieldType);
     grid->deltas=calloc((size_t)grid->length,(size_t)grid->deltaType);
@@ -1129,8 +1129,8 @@ typedef struct {
     int32_t dimensions[3];
     int32_t wrap[3];
     int32_t length;
-    float *field;
-    float *deltas;
+    double *field;
+    double *deltas;
     float dt, dx, dy, dz;
     float scalarBC[6];
 } PDEGrid;
@@ -1165,8 +1165,8 @@ PAL_API uintptr_t pal_pd_new(const int32_t *dimensions, int32_t dimension) {
         grid->length *= grid->dimensions[d];
     }
 
-    grid->field = (float *)calloc((size_t)grid->length, sizeof(float));
-    grid->deltas = (float *)calloc((size_t)grid->length, sizeof(float));
+    grid->field = (double *)calloc((size_t)grid->length, sizeof(double));
+    grid->deltas = (double *)calloc((size_t)grid->length, sizeof(double));
     if (grid->field == NULL || grid->deltas == NULL) { pal_pd_free((uintptr_t)grid); return 0; }
     grid->dt = grid->dx = grid->dy = grid->dz = 1.0f;
     return (uintptr_t)grid;
@@ -1190,14 +1190,14 @@ PAL_API int32_t pal_pd_itox_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if
 PAL_API int32_t pal_pd_itoy_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<2||i<0||i>=g->length)return PAL_BAD_I;return g->dimension==2?i%g->dimensions[1]:(i/g->dimensions[2])%g->dimensions[1];}
 PAL_API int32_t pal_pd_itoz_safe(uintptr_t h,int32_t i){PDEGrid*g=(PDEGrid*)h;if(g->dimension<3||i<0||i>=g->length)return PAL_BAD_I;return i%g->dimensions[2];}
 PAL_API int32_t pal_pd_toi(uintptr_t handle, int32_t x, int32_t y, int32_t z) { return PDEGrid_ToI((PDEGrid *)handle, x, y, z); }
-PAL_API float pal_pd_geti(uintptr_t handle, int32_t i) { PDEGrid*g=(PDEGrid*)handle; return i>=0&&i<g->length?g->field[i]:NAN; }
-PAL_API float pal_pd_get(uintptr_t handle,int32_t x,int32_t y,int32_t z) { PDEGrid *g=(PDEGrid *)handle; return g->field[PDEGrid_ToI(g,x,y,z)]; }
-PAL_API int32_t pal_pd_seti(uintptr_t handle, int32_t i, float value) { PDEGrid*g=(PDEGrid*)handle; if(i<0||i>=g->length||!isfinite(value))return 0;g->field[i]=value;return 1; }
-PAL_API float pal_pd_geti_(uintptr_t h,int32_t i){return ((PDEGrid*)h)->field[i];}
-PAL_API void pal_pd_seti_(uintptr_t h,int32_t i,float v){((PDEGrid*)h)->field[i]=v;}
-PAL_API void pal_pd_addi(uintptr_t handle, int32_t i, float value) { ((PDEGrid *)handle)->deltas[i] += value; }
-PAL_API void pal_pd_set(uintptr_t handle,int32_t x,int32_t y,int32_t z,float value) { PDEGrid *g=(PDEGrid *)handle; g->field[PDEGrid_ToI(g,x,y,z)]=value; }
-PAL_API void pal_pd_add(uintptr_t handle,int32_t x,int32_t y,int32_t z,float value) { PDEGrid *g=(PDEGrid *)handle; g->deltas[PDEGrid_ToI(g,x,y,z)]+=value; }
+PAL_API double pal_pd_geti(uintptr_t handle, int32_t i) { PDEGrid*g=(PDEGrid*)handle; return i>=0&&i<g->length?g->field[i]:NAN; }
+PAL_API double pal_pd_get(uintptr_t handle,int32_t x,int32_t y,int32_t z) { PDEGrid *g=(PDEGrid *)handle; return g->field[PDEGrid_ToI(g,x,y,z)]; }
+PAL_API int32_t pal_pd_seti(uintptr_t handle, int32_t i, double value) { PDEGrid*g=(PDEGrid*)handle; if(i<0||i>=g->length||!isfinite(value))return 0;g->field[i]=value;return 1; }
+PAL_API double pal_pd_geti_(uintptr_t h,int32_t i){return ((PDEGrid*)h)->field[i];}
+PAL_API void pal_pd_seti_(uintptr_t h,int32_t i,double v){((PDEGrid*)h)->field[i]=v;}
+PAL_API void pal_pd_addi(uintptr_t handle, int32_t i, double value) { ((PDEGrid *)handle)->deltas[i] += value; }
+PAL_API void pal_pd_set(uintptr_t handle,int32_t x,int32_t y,int32_t z,double value) { PDEGrid *g=(PDEGrid *)handle; g->field[PDEGrid_ToI(g,x,y,z)]=value; }
+PAL_API void pal_pd_add(uintptr_t handle,int32_t x,int32_t y,int32_t z,double value) { PDEGrid *g=(PDEGrid *)handle; g->deltas[PDEGrid_ToI(g,x,y,z)]+=value; }
 PAL_API void pal_pd_update(uintptr_t handle) {
     PDEGrid *grid = (PDEGrid *)handle;
     for (int32_t i = 0; i < grid->length; i++) {
@@ -1215,7 +1215,7 @@ PAL_API float pal_pd_voxel(uintptr_t handle) {
     if (grid->dimension == 2) return grid->dx * grid->dy;
     return grid->dx * grid->dy * grid->dz;
 }
-PAL_API void pal_pd_clear(uintptr_t handle, float value) {
+PAL_API void pal_pd_clear(uintptr_t handle, double value) {
     PDEGrid *grid = (PDEGrid *)handle;
     for (int32_t i = 0; i < grid->length; i++) { grid->field[i] = value; grid->deltas[i] = 0.0f; }
 }
@@ -1223,17 +1223,17 @@ PAL_API void pal_pd_clear(uintptr_t handle, float value) {
 /* Explicit diffusion with zero-flux boundaries on non-wrapped axes. */
 
 
-PAL_API void pal_pd_linear_get(uintptr_t h,int32_t i0,int32_t i1,float*out){PDEGrid*g=(PDEGrid*)h;memcpy(out,g->field+(size_t)i0,(size_t)(i1-i0)*sizeof(float));}
-PAL_API void pal_pd_linear_set_scalar(uintptr_t h,int32_t i0,int32_t i1,float v){PDEGrid*g=(PDEGrid*)h;for(int32_t i=i0;i<i1;i++)g->field[i]=v;}
-PAL_API void pal_pd_linear_set_array(uintptr_t h,int32_t i0,int32_t i1,const float*in){PDEGrid*g=(PDEGrid*)h;memcpy(g->field+(size_t)i0,in,(size_t)(i1-i0)*sizeof(float));}
-PAL_API void pal_pd_region_get(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,float*out){
+PAL_API void pal_pd_linear_get(uintptr_t h,int32_t i0,int32_t i1,double *out){PDEGrid*g=(PDEGrid*)h;memcpy(out,g->field+(size_t)i0,(size_t)(i1-i0)*sizeof(double));}
+PAL_API void pal_pd_linear_set_scalar(uintptr_t h,int32_t i0,int32_t i1,double v){PDEGrid*g=(PDEGrid*)h;for(int32_t i=i0;i<i1;i++)g->field[i]=v;}
+PAL_API void pal_pd_linear_set_array(uintptr_t h,int32_t i0,int32_t i1,const double *in){PDEGrid*g=(PDEGrid*)h;memcpy(g->field+(size_t)i0,in,(size_t)(i1-i0)*sizeof(double));}
+PAL_API void pal_pd_region_get(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,double *out){
     PDEGrid*g=(PDEGrid*)h;int32_t k=0;
     if(g->dimension==1){for(int32_t x=x0;x<x1;x++)out[k++]=g->field[x];return;}
     if(g->dimension==2){for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)out[k++]=g->field[PDEGrid_ToI(g,x,y,0)];return;}
     for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++)out[k++]=g->field[PDEGrid_ToI(g,x,y,z)];
 }
-PAL_API void pal_pd_region_set_scalar(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,float v){PDEGrid*g=(PDEGrid*)h;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++)g->field[PDEGrid_ToI(g,x,y,z)]=v;}
-PAL_API void pal_pd_region_set_array(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,const float*in){PDEGrid*g=(PDEGrid*)h;int32_t k=0;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++,k++)g->field[PDEGrid_ToI(g,x,y,z)]=in[k];}
+PAL_API void pal_pd_region_set_scalar(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,double v){PDEGrid*g=(PDEGrid*)h;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++)g->field[PDEGrid_ToI(g,x,y,z)]=v;}
+PAL_API void pal_pd_region_set_array(uintptr_t h,int32_t x0,int32_t x1,int32_t y0,int32_t y1,int32_t z0,int32_t z1,const double *in){PDEGrid*g=(PDEGrid*)h;int32_t k=0;for(int32_t x=x0;x<x1;x++)for(int32_t y=y0;y<y1;y++)for(int32_t z=z0;z<z1;z++,k++)g->field[PDEGrid_ToI(g,x,y,z)]=in[k];}
 PAL_API int32_t pal_pd_diffusion(uintptr_t handle, float rate) {
     PDEGrid *grid = (PDEGrid *)handle;
     float sx = grid->dt * rate / (grid->dx * grid->dx);
@@ -1248,8 +1248,8 @@ PAL_API int32_t pal_pd_diffusion(uintptr_t handle, float rate) {
         for (int32_t y = 0; y < yMax; y++) {
             for (int32_t z = 0; z < zMax; z++) {
                 int32_t i = PDEGrid_ToI(grid, x, y, z);
-                float center = grid->field[i];
-                float delta = 0.0f;
+                double center = grid->field[i];
+                double delta = 0.0;
 
                 int32_t low = PDEGrid_Wrap(grid, x - 1, 0);
                 int32_t high = PDEGrid_Wrap(grid, x + 1, 0);
@@ -1303,7 +1303,7 @@ PAL_API float pal_pd_dx(uintptr_t h){return ((PDEGrid*)h)->dx;}
 PAL_API float pal_pd_dy(uintptr_t h){return ((PDEGrid*)h)->dy;}
 PAL_API float pal_pd_dz(uintptr_t h){return ((PDEGrid*)h)->dz;}
 PAL_API float pal_pd_dt(uintptr_t h){return ((PDEGrid*)h)->dt;}
-PAL_API void pal_pd_copy(uintptr_t h,float*out){PDEGrid*g=(PDEGrid*)h;memcpy(out,g->field,(size_t)g->length*sizeof(float));}
+PAL_API void pal_pd_copy(uintptr_t h,double*out){PDEGrid*g=(PDEGrid*)h;memcpy(out,g->field,(size_t)g->length*sizeof(double));}
 
 static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,float rate,const float*x0,const float*x1,const float*y0,const float*y1,const float*z0,const float*z1,int checked){
     const int D=g->dimension,X=g->dimensions[0],Y=D>1?g->dimensions[1]:1,Z=D>2?g->dimensions[2]:1;
@@ -1321,10 +1321,10 @@ static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,float rate,const float*x0,con
         }
         if(diffusionCourant>1.000001f)return 0;
     }
-    float *restrict f=g->field,*restrict d=g->deltas;
+    double *restrict f=g->field,*restrict d=g->deltas;
     if(D==1){
         for(int x=0;x<X;x++){
-            float c=f[x],v=0.0f;
+            double c=f[x],v=0.0f;
             if(x+1<X)v+=(f[x+1]-c)*sx;else if(g->wrap[0])v+=(f[0]-c)*sx;else if(x1)v+=2.0f*(PDEGrid_BC(g,x1,0)-c)*sx;
             if(x>0)v+=(f[x-1]-c)*sx;else if(g->wrap[0])v+=(f[X-1]-c)*sx;else if(x0)v+=2.0f*(PDEGrid_BC(g,x0,0)-c)*sx;
             d[x]+=v;
@@ -1335,7 +1335,7 @@ static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,float rate,const float*x0,con
         for(int x=0;x<X;x++){
             int row=x*Y;
             for(int y=0;y<Y;y++){
-                int i=row+y;float c=f[i],v=0.0f;
+                int i=row+y;double c=f[i],v=0.0f;
                 if(x+1<X)v+=(f[i+Y]-c)*sx;else if(g->wrap[0])v+=(f[y]-c)*sx;else if(x1)v+=2.0f*(PDEGrid_BC(g,x1,y)-c)*sx;
                 if(x>0)v+=(f[i-Y]-c)*sx;else if(g->wrap[0])v+=(f[(X-1)*Y+y]-c)*sx;else if(x0)v+=2.0f*(PDEGrid_BC(g,x0,y)-c)*sx;
                 if(y+1<Y)v+=(f[i+1]-c)*sy;else if(g->wrap[1])v+=(f[row]-c)*sy;else if(y1)v+=2.0f*(PDEGrid_BC(g,y1,x)-c)*sy;
@@ -1348,7 +1348,7 @@ static int32_t PDEGrid_DiffusionConstant(PDEGrid*g,float rate,const float*x0,con
     for(int x=0;x<X;x++)for(int y=0;y<Y;y++){
         int base=(x*Y+y)*Z;
         for(int z=0;z<Z;z++){
-            int i=base+z;float c=f[i],v=0.0f;
+            int i=base+z;double c=f[i],v=0.0f;
             int xFace=y*Z+z,yFace=x*Z+z,zFace=x*Y+y;
             if(x+1<X)v+=(f[i+sxStride]-c)*sx;else if(g->wrap[0])v+=(f[y*Z+z]-c)*sx;else if(x1)v+=2.0f*(PDEGrid_BC(g,x1,xFace)-c)*sx;
             if(x>0)v+=(f[i-sxStride]-c)*sx;else if(g->wrap[0])v+=(f[((X-1)*Y+y)*Z+z]-c)*sx;else if(x0)v+=2.0f*(PDEGrid_BC(g,x0,xFace)-c)*sx;
@@ -1371,7 +1371,7 @@ static int32_t PDEGrid_DiffusionMask(PDEGrid*g,float rate,float*m,float*x0,float
     float s[3]={rate*g->dt/(g->dx*g->dx),rate*g->dt/(g->dy*g->dy),rate*g->dt/(g->dz*g->dz)};
     for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){
         int i=PDEGrid_ToI(g,x,y,z);if(m[i]<0)continue;
-        float c=g->field[i],v=0;int q[3]={x,y,z};
+        double c=g->field[i],v=0;int q[3]={x,y,z};
         for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){
             int t=PDEGrid_Wrap(g,q[a]+sg,a);
             if(t==PAL_NULL){
@@ -1398,7 +1398,7 @@ static int32_t PDEGrid_DiffusionField(PDEGrid*g,uintptr_t rh,uintptr_t x0h,uintp
         for(int32_t i=0;i<g->length;i++)if(r[i]<0||!isfinite(r[i]))return -1;
         for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};float sum=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a);float rr=0,mult=1.0f;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;int j=PDEGrid_ToI(g,xx,yy,zz);rr=PDEGrid_Harmonic(r[i],r[j]);}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;rr=r[i];mult=2.0f;}sum+=rr*ds[a]*mult;}if(sum>1.000001f)return 0;}
     }
-    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;float c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}float rr,nv,mult=1.0f;if(j>=0){rr=PDEGrid_Harmonic(r[i],r[j]);nv=g->field[j];}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;rr=r[i];nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0f;}v+=(nv-c)*rr*ds[a]*mult;}g->deltas[i]+=v;}return 1;
+    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;double c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}float rr,mult=1.0f;double nv;if(j>=0){rr=PDEGrid_Harmonic(r[i],r[j]);nv=g->field[j];}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;rr=r[i];nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0f;}v+=(nv-c)*rr*ds[a]*mult;}g->deltas[i]+=v;}return 1;
 }
 PAL_API int32_t pal_pd_diffusion_field(uintptr_t h,uintptr_t rh,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){return PDEGrid_DiffusionField((PDEGrid*)h,rh,x0h,x1h,y0h,y1h,z0h,z1h,1);}
 PAL_API int32_t pal_pd_diffusion_field_fast(uintptr_t h,uintptr_t rh,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){return PDEGrid_DiffusionField((PDEGrid*)h,rh,x0h,x1h,y0h,y1h,z0h,z1h,0);}
@@ -1408,21 +1408,21 @@ static int32_t PDEGrid_DiffusionInterfaces(PDEGrid*g,uintptr_t rxh,uintptr_t ryh
         for(int a=0;a<g->dimension;a++){if(!rr[a])return -1;for(int32_t i=0;i<g->length;i++)if(rr[a][i]<0||!isfinite(rr[a][i]))return -1;}
         for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};float sum=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a),ri=i;float mult=1.0f;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;int j=PDEGrid_ToI(g,xx,yy,zz);if(sg<0)ri=j;}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;mult=2.0f;}sum+=rr[a][ri]*ds[a]*mult;}if(sum>1.000001f)return 0;}
     }
-    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;float c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,ri=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}float nv,mult=1.0f;if(j>=0){if(sg<0)ri=j;nv=g->field[j];}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0f;}float rate=rr[a][ri];v+=(nv-c)*rate*ds[a]*mult;}g->deltas[i]+=v;}return 1;
+    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;double c=g->field[i],v=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,ri=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}float mult=1.0f;double nv;if(j>=0){if(sg<0)ri=j;nv=g->field[j];}else{float*bc=sg<0?bc0[a]:bc1[a];if(!bc)continue;nv=PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z));mult=2.0f;}float rate=rr[a][ri];v+=(nv-c)*rate*ds[a]*mult;}g->deltas[i]+=v;}return 1;
 }
 PAL_API int32_t pal_pd_diffusion_interfaces(uintptr_t h,uintptr_t rxh,uintptr_t ryh,uintptr_t rzh,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){return PDEGrid_DiffusionInterfaces((PDEGrid*)h,rxh,ryh,rzh,x0h,x1h,y0h,y1h,z0h,z1h,1);}
 PAL_API int32_t pal_pd_diffusion_interfaces_fast(uintptr_t h,uintptr_t rxh,uintptr_t ryh,uintptr_t rzh,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){return PDEGrid_DiffusionInterfaces((PDEGrid*)h,rxh,ryh,rzh,x0h,x1h,y0h,y1h,z0h,z1h,0);}
 static int32_t PDEGrid_DiffusionRadial(PDEGrid*g,float rate,const float*outerBC,int dim,int checked){
     if(checked&&(g->dimension!=1||g->wrap[0]||g->length<2))return -1;
     if(checked&&(rate<0||!isfinite(rate)))return -2;
-    float base=rate*g->dt/(g->dx*g->dx),*f=g->field,*delta=g->deltas;int X=g->length;
+    float base=rate*g->dt/(g->dx*g->dx);double *f=g->field,*delta=g->deltas;int X=g->length;
     double worstGeom=dim==2?2.0:3.0;
     if(outerBC){double i=(double)(X-1),outer;if(dim==2)outer=(3.0*i+2.0)/(i+0.5);else outer=(i*i+2.0*(i+1.0)*(i+1.0))/(i*i+i+1.0/3.0);if(outer>worstGeom)worstGeom=outer;}
     if(checked&&(double)base*worstGeom>1.000001)return 0;
     if(dim==2){
-        for(int i=0;i<X;i++){float den=(float)i+0.5f,left=i>0?(float)i/den:0.0f,right=((float)i+1.0f)/den,v=0.0f;if(i>0)v+=base*left*(f[i-1]-f[i]);if(i<X-1)v+=base*right*(f[i+1]-f[i]);else if(outerBC)v+=2.0f*base*right*((*outerBC)-f[i]);delta[i]+=v;}
+        for(int i=0;i<X;i++){float den=(float)i+0.5f,left=i>0?(float)i/den:0.0f,right=((float)i+1.0f)/den;double v=0.0;if(i>0)v+=base*left*(f[i-1]-f[i]);if(i<X-1)v+=base*right*(f[i+1]-f[i]);else if(outerBC)v+=2.0f*base*right*((*outerBC)-f[i]);delta[i]+=v;}
     }else{
-        for(int i=0;i<X;i++){float fi=(float)i,den=fi*fi+fi+1.0f/3.0f,left=i>0?fi*fi/den:0.0f,fp=fi+1.0f,right=fp*fp/den,v=0.0f;if(i>0)v+=base*left*(f[i-1]-f[i]);if(i<X-1)v+=base*right*(f[i+1]-f[i]);else if(outerBC)v+=2.0f*base*right*((*outerBC)-f[i]);delta[i]+=v;}
+        for(int i=0;i<X;i++){float fi=(float)i,den=fi*fi+fi+1.0f/3.0f,left=i>0?fi*fi/den:0.0f,fp=fi+1.0f,right=fp*fp/den;double v=0.0;if(i>0)v+=base*left*(f[i-1]-f[i]);if(i<X-1)v+=base*right*(f[i+1]-f[i]);else if(outerBC)v+=2.0f*base*right*((*outerBC)-f[i]);delta[i]+=v;}
     }
     return 1;
 }
@@ -1437,11 +1437,11 @@ static int32_t PDEGrid_AdvectionUniform(PDEGrid*g,const float uv[3],float*bc0[3]
     const int D=g->dimension,X=g->dimensions[0],Y=D>1?g->dimensions[1]:1,Z=D>2?g->dimensions[2]:1;
     const int xs=Y*Z,ys=Z;const float ds[3]={g->dt/g->dx,g->dt/g->dy,g->dt/g->dz};
     if(checked){float cfl=0.0f;for(int a=0;a<D;a++){float v=uv[a];if(!isfinite(v))return -1;int n=g->dimensions[a];if(g->wrap[a]||n>1||(v>0.0f?bc1[a]:v<0.0f?bc0[a]:0))cfl+=fabsf(v)*ds[a];}if(cfl>1.000001f)return 0;}
-    float *restrict f=g->field,*restrict d=g->deltas;
+    double *restrict f=g->field,*restrict d=g->deltas;
     const float ax=uv[0]*ds[0],ay=D>1?uv[1]*ds[1]:0.0f,az=D>2?uv[2]*ds[2]:0.0f;
     if(D==1){
         for(int x=0;x<X;x++){
-            float c=f[x],dv=0.0f;
+            double c=f[x],dv=0.0f;
             if(ax>0.0f){
                 if(x>0)dv+=ax*f[x-1];else if(g->wrap[0])dv+=ax*f[X-1];else if(bc0[0])dv+=ax*PDEGrid_BC(g,bc0[0],0);
                 if(x+1<X||g->wrap[0]||bc1[0])dv-=ax*c;
@@ -1456,7 +1456,7 @@ static int32_t PDEGrid_AdvectionUniform(PDEGrid*g,const float uv[3],float*bc0[3]
     for(int x=0;x<X;x++)for(int y=0;y<Y;y++){
         int base=(x*Y+y)*Z;
         for(int z=0;z<Z;z++){
-            int i=base+z;float c=f[i],dv=0.0f,src;int face;
+            int i=base+z;double c=f[i],dv=0.0f,src;int face;
             /* Low x face: positive velocity is inflow, negative is outflow. */
             if(x>0)src=f[i-xs];else if(g->wrap[0])src=f[((X-1)*Y+y)*Z+z];else if(bc0[0]){face=D==1?0:(D==2?y:y*Z+z);src=PDEGrid_BC(g,bc0[0],face);}else src=NAN;
             if(ax>0.0f){if(!isnan(src))dv+=ax*src;}else if(ax<0.0f){if(!isnan(src))dv+=ax*c;}
@@ -1499,7 +1499,7 @@ static int32_t PDEGrid_Advection(PDEGrid*g,int mode,float uv[3],float*vf[3],floa
             for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};float localCourant=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a),j=-1,fi=i;if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;j=PDEGrid_ToI(g,xx,yy,zz);if(sg<0)fi=j;}else if(!(sg<0?bc0[a]:bc1[a]))continue;float vel=mode==2?vf[a][fi]:(j>=0?.5f*(vf[a][i]+vf[a][j]):vf[a][i]);float oriented=sg*vel;if(oriented>0)localCourant+=oriented*ds[a];}if(localCourant>1.000001f)return 0;}
         }
     }
-    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;float c=g->field[i],delta=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,fi=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}if(j>=0){if(sg<0)fi=j;}else if(!(sg<0?bc0[a]:bc1[a]))continue;float vel=mode==2?vf[a][fi]:(j>=0?.5f*(vf[a][i]+vf[a][j]):vf[a][i]);float oriented=sg*vel;if(oriented>0)delta-=oriented*c*ds[a];else if(oriented<0){float src=j>=0?g->field[j]:PDEGrid_BC(g,(sg<0?bc0[a]:bc1[a]),PDEGrid_FaceIndex(g,a,x,y,z));delta+=(-oriented)*src*ds[a];}}g->deltas[i]+=delta;}return 1;
+    for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=(x*Y+y)*Z+z;double c=g->field[i],delta=0;for(int a=0;a<g->dimension;a++)for(int sg=-1;sg<=1;sg+=2){int j=-1,fi=i;if(a==0){if(sg<0){if(x>0)j=i-Y*Z;else if(g->wrap[0])j=i+(X-1)*Y*Z;}else{if(x+1<X)j=i+Y*Z;else if(g->wrap[0])j=i-(X-1)*Y*Z;}}else if(a==1){if(sg<0){if(y>0)j=i-Z;else if(g->wrap[1])j=i+(Y-1)*Z;}else{if(y+1<Y)j=i+Z;else if(g->wrap[1])j=i-(Y-1)*Z;}}else{if(sg<0){if(z>0)j=i-1;else if(g->wrap[2])j=i+Z-1;}else{if(z+1<Z)j=i+1;else if(g->wrap[2])j=i-Z+1;}}if(j>=0){if(sg<0)fi=j;}else if(!(sg<0?bc0[a]:bc1[a]))continue;float vel=mode==2?vf[a][fi]:(j>=0?.5f*(vf[a][i]+vf[a][j]):vf[a][i]);float oriented=sg*vel;if(oriented>0)delta-=oriented*c*ds[a];else if(oriented<0){double src=j>=0?g->field[j]:PDEGrid_BC(g,(sg<0?bc0[a]:bc1[a]),PDEGrid_FaceIndex(g,a,x,y,z));delta+=(-oriented)*src*ds[a];}}g->deltas[i]+=delta;}return 1;
 }
 PAL_API int32_t pal_pd_advection(uintptr_t h,float vx,float vy,float vz,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){float u[3]={vx,vy,vz};float*b0[3]={(float*)x0,(float*)y0,(float*)z0},*b1[3]={(float*)x1,(float*)y1,(float*)z1};float*v[3]={0};return PDEGrid_Advection((PDEGrid*)h,0,u,v,b0,b1,1);}
 PAL_API int32_t pal_pd_advection_field(uintptr_t h,uintptr_t vx,uintptr_t vy,uintptr_t vz,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){float u[3]={0};float*v[3]={(float*)vx,(float*)vy,(float*)vz},*b0[3]={(float*)x0,(float*)y0,(float*)z0},*b1[3]={(float*)x1,(float*)y1,(float*)z1};return PDEGrid_Advection((PDEGrid*)h,1,u,v,b0,b1,1);}
@@ -1510,17 +1510,17 @@ PAL_API int32_t pal_pd_advection_field_fast(uintptr_t h,uintptr_t vx,uintptr_t v
 PAL_API int32_t pal_pd_advection_interfaces_fast(uintptr_t h,uintptr_t vx,uintptr_t vy,uintptr_t vz,uintptr_t x0,uintptr_t x1,uintptr_t y0,uintptr_t y1,uintptr_t z0,uintptr_t z1){float u[3]={0};float*v[3]={(float*)vx,(float*)vy,(float*)vz},*b0[3]={(float*)x0,(float*)y0,(float*)z0},*b1[3]={(float*)x1,(float*)y1,(float*)z1};return PDEGrid_Advection((PDEGrid*)h,2,u,v,b0,b1,0);}
 
 /* ADI: 1D Crank-Nicolson, 2D Peaceman-Rachford. 3D uses Douglas-Gunn directional solves. */
-static void PDEGrid_SolveTri(int n,float r,int wrap,int minSet,int maxSet,float minVal,float maxVal,int addBC,float*rhs,float*out,float*cp,float*dp,float*z,float*u,float*bb){
-    if(n==1){float diag=1;float d=rhs[0];if(!wrap&&minSet){diag+=r;d+=addBC?r*minVal:0;}if(!wrap&&maxSet){diag+=r;d+=addBC?r*maxVal:0;}out[0]=d/diag;return;}
-    float off=-r*.5f;
-    if(wrap){/* cyclic tridiagonal via Sherman-Morrison; work arrays are preallocated by the checked caller */float diag=1+r,gamma=-diag,alpha=off,beta=off;for(int i=0;i<n;i++){bb[i]=diag;u[i]=0.0f;}bb[0]-=gamma;bb[n-1]-=alpha*beta/gamma;u[0]=gamma;u[n-1]=alpha;cp[0]=off/bb[0];dp[0]=rhs[0]/bb[0];for(int i=1;i<n;i++){float den=bb[i]-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(rhs[i]-off*dp[i-1])/den;}out[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)out[i]=dp[i]-cp[i]*out[i+1];cp[0]=off/bb[0];dp[0]=u[0]/bb[0];for(int i=1;i<n;i++){float den=bb[i]-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(u[i]-off*dp[i-1])/den;}z[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)z[i]=dp[i]-cp[i]*z[i+1];float fact=(out[0]+beta*out[n-1]/gamma)/(1+z[0]+beta*z[n-1]/gamma);for(int i=0;i<n;i++)out[i]-=fact*z[i];return;}
-    float b=1+r+(minSet?r*.5f:-r*.5f);float d=rhs[0]+(minSet&&addBC?r*minVal:0);cp[0]=off/b;dp[0]=d/b;for(int i=1;i<n;i++){b=1+r;if(i==n-1)b+=maxSet?r*.5f:-r*.5f;d=rhs[i]+(i==n-1&&maxSet&&addBC?r*maxVal:0);float den=b-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(d-off*dp[i-1])/den;}out[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)out[i]=dp[i]-cp[i]*out[i+1];
+static void PDEGrid_SolveTri(int n,double r,int wrap,int minSet,int maxSet,double minVal,double maxVal,int addBC,double*rhs,double*out,double*cp,double*dp,double*z,double*u,double*bb){
+    if(n==1){double diag=1;double d=rhs[0];if(!wrap&&minSet){diag+=r;d+=addBC?r*minVal:0;}if(!wrap&&maxSet){diag+=r;d+=addBC?r*maxVal:0;}out[0]=d/diag;return;}
+    double off=-r*.5;
+    if(wrap){/* cyclic tridiagonal via Sherman-Morrison; work arrays are preallocated by the checked caller */double diag=1+r,gamma=-diag,alpha=off,beta=off;for(int i=0;i<n;i++){bb[i]=diag;u[i]=0.0f;}bb[0]-=gamma;bb[n-1]-=alpha*beta/gamma;u[0]=gamma;u[n-1]=alpha;cp[0]=off/bb[0];dp[0]=rhs[0]/bb[0];for(int i=1;i<n;i++){double den=bb[i]-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(rhs[i]-off*dp[i-1])/den;}out[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)out[i]=dp[i]-cp[i]*out[i+1];cp[0]=off/bb[0];dp[0]=u[0]/bb[0];for(int i=1;i<n;i++){double den=bb[i]-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(u[i]-off*dp[i-1])/den;}z[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)z[i]=dp[i]-cp[i]*z[i+1];double fact=(out[0]+beta*out[n-1]/gamma)/(1+z[0]+beta*z[n-1]/gamma);for(int i=0;i<n;i++)out[i]-=fact*z[i];return;}
+    double b=1+r+(minSet?r*.5f:-r*.5f);double d=rhs[0]+(minSet&&addBC?r*minVal:0);cp[0]=off/b;dp[0]=d/b;for(int i=1;i<n;i++){b=1+r;if(i==n-1)b+=maxSet?r*.5f:-r*.5f;d=rhs[i]+(i==n-1&&maxSet&&addBC?r*maxVal:0);double den=b-off*cp[i-1];cp[i]=i<n-1?off/den:0;dp[i]=(d-off*dp[i-1])/den;}out[n-1]=dp[n-1];for(int i=n-2;i>=0;i--)out[i]=dp[i]-cp[i]*out[i+1];
 }
 PAL_API int32_t pal_pd_diffusion_adi(uintptr_t h,float rate,uintptr_t x0h,uintptr_t x1h,uintptr_t y0h,uintptr_t y1h,uintptr_t z0h,uintptr_t z1h){
-    PDEGrid*g=(PDEGrid*)h;float*b0[3]={(float*)x0h,(float*)y0h,(float*)z0h},*b1[3]={(float*)x1h,(float*)y1h,(float*)z1h};int X=g->dimensions[0],Y=g->dimension>1?g->dimensions[1]:1,Z=g->dimension>2?g->dimensions[2]:1,N=g->length,M=X;if(Y>M)M=Y;if(Z>M)M=Z;float *s1=(float*)malloc((size_t)N*sizeof(float)),*s2=(float*)malloc((size_t)N*sizeof(float)),*rhs=(float*)malloc((size_t)M*sizeof(float)),*out=(float*)malloc((size_t)M*sizeof(float)),*cp=(float*)malloc((size_t)M*sizeof(float)),*dp=(float*)malloc((size_t)M*sizeof(float)),*zwork=(float*)malloc((size_t)M*sizeof(float)),*uwork=(float*)malloc((size_t)M*sizeof(float)),*bbwork=(float*)malloc((size_t)M*sizeof(float));if(!s1||!s2||!rhs||!out||!cp||!dp||!zwork||!uwork||!bbwork){free(s1);free(s2);free(rhs);free(out);free(cp);free(dp);free(zwork);free(uwork);free(bbwork);return -2;}float rx=rate*g->dt/(g->dx*g->dx),ry=rate*g->dt/(g->dy*g->dy),rz=rate*g->dt/(g->dz*g->dz);
-    if(g->dimension==1){for(int x=0;x<X;x++){float c=g->field[x],v=0;int n=PDEGrid_Wrap(g,x+1,0);if(n!=PAL_NULL)v+=g->field[n]-c;else if(b1[0])v+=2.0f*(PDEGrid_BC(g,b1[0],0)-c);n=PDEGrid_Wrap(g,x-1,0);if(n!=PAL_NULL)v+=g->field[n]-c;else if(b0[0])v+=2.0f*(PDEGrid_BC(g,b0[0],0)-c);rhs[x]=c+.5f*rx*v;}PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,b0[0]?PDEGrid_BC(g,b0[0],0):0,b1[0]?PDEGrid_BC(g,b1[0],0):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)g->deltas[x]+=out[x]-g->field[x];}
-    else if(g->dimension==2){for(int y=0;y<Y;y++){for(int x=0;x<X;x++){int i=x*Y+y;float c=g->field[i],v=0;int n=PDEGrid_Wrap(g,y+1,1);if(n!=PAL_NULL)v+=g->field[x*Y+n]-c;else if(b1[1])v+=2.0f*(PDEGrid_BC(g,b1[1],x)-c);n=PDEGrid_Wrap(g,y-1,1);if(n!=PAL_NULL)v+=g->field[x*Y+n]-c;else if(b0[1])v+=2.0f*(PDEGrid_BC(g,b0[1],x)-c);rhs[x]=c+.5f*ry*v;}PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,b0[0]?PDEGrid_BC(g,b0[0],y):0,b1[0]?PDEGrid_BC(g,b1[0],y):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)s1[x*Y+y]=out[x];}for(int x=0;x<X;x++){for(int y=0;y<Y;y++){int i=x*Y+y;float c=s1[i],v=0;int n=PDEGrid_Wrap(g,x+1,0);if(n!=PAL_NULL)v+=s1[n*Y+y]-c;else if(b1[0])v+=2.0f*(PDEGrid_BC(g,b1[0],y)-c);n=PDEGrid_Wrap(g,x-1,0);if(n!=PAL_NULL)v+=s1[n*Y+y]-c;else if(b0[0])v+=2.0f*(PDEGrid_BC(g,b0[0],y)-c);rhs[y]=c+.5f*rx*v;}PDEGrid_SolveTri(Y,ry,g->wrap[1],b0[1]!=0,b1[1]!=0,b0[1]?PDEGrid_BC(g,b0[1],x):0,b1[1]?PDEGrid_BC(g,b1[1],x):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int y=0;y<Y;y++){int i=x*Y+y;g->deltas[i]+=out[y]-g->field[i];}}}
-    else{/* Douglas-Gunn: explicit full increment followed by three implicit half-step solves */for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};float c=g->field[i],v=0,sc[3]={rx,ry,rz};for(int a=0;a<3;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a);if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;v+=(g->field[PDEGrid_ToI(g,xx,yy,zz)]-c)*sc[a];}else{float*bc=sg<0?b0[a]:b1[a];if(bc)v+=2.0f*(PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z))-c)*sc[a];}}s1[i]=v;}for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){for(int x=0;x<X;x++)rhs[x]=s1[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)s2[PDEGrid_ToI(g,x,y,z)]=out[x];}for(int x=0;x<X;x++)for(int z=0;z<Z;z++){for(int y=0;y<Y;y++)rhs[y]=s2[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(Y,ry,g->wrap[1],b0[1]!=0,b1[1]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int y=0;y<Y;y++)s1[PDEGrid_ToI(g,x,y,z)]=out[y];}for(int x=0;x<X;x++)for(int y=0;y<Y;y++){for(int z=0;z<Z;z++)rhs[z]=s1[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(Z,rz,g->wrap[2],b0[2]!=0,b1[2]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int z=0;z<Z;z++)g->deltas[PDEGrid_ToI(g,x,y,z)]+=out[z];}}
+    PDEGrid*g=(PDEGrid*)h;float*b0[3]={(float*)x0h,(float*)y0h,(float*)z0h},*b1[3]={(float*)x1h,(float*)y1h,(float*)z1h};int X=g->dimensions[0],Y=g->dimension>1?g->dimensions[1]:1,Z=g->dimension>2?g->dimensions[2]:1,N=g->length,M=X;if(Y>M)M=Y;if(Z>M)M=Z;double *s1=(double*)malloc((size_t)N*sizeof(double)),*s2=(double*)malloc((size_t)N*sizeof(double)),*rhs=(double*)malloc((size_t)M*sizeof(double)),*out=(double*)malloc((size_t)M*sizeof(double)),*cp=(double*)malloc((size_t)M*sizeof(double)),*dp=(double*)malloc((size_t)M*sizeof(double)),*zwork=(double*)malloc((size_t)M*sizeof(double)),*uwork=(double*)malloc((size_t)M*sizeof(double)),*bbwork=(double*)malloc((size_t)M*sizeof(double));if(!s1||!s2||!rhs||!out||!cp||!dp||!zwork||!uwork||!bbwork){free(s1);free(s2);free(rhs);free(out);free(cp);free(dp);free(zwork);free(uwork);free(bbwork);return -2;}float rx=rate*g->dt/(g->dx*g->dx),ry=rate*g->dt/(g->dy*g->dy),rz=rate*g->dt/(g->dz*g->dz);
+    if(g->dimension==1){for(int x=0;x<X;x++){double c=g->field[x],v=0;int n=PDEGrid_Wrap(g,x+1,0);if(n!=PAL_NULL)v+=g->field[n]-c;else if(b1[0])v+=2.0f*(PDEGrid_BC(g,b1[0],0)-c);n=PDEGrid_Wrap(g,x-1,0);if(n!=PAL_NULL)v+=g->field[n]-c;else if(b0[0])v+=2.0f*(PDEGrid_BC(g,b0[0],0)-c);rhs[x]=c+.5f*rx*v;}PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,b0[0]?PDEGrid_BC(g,b0[0],0):0,b1[0]?PDEGrid_BC(g,b1[0],0):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)g->deltas[x]+=out[x]-g->field[x];}
+    else if(g->dimension==2){for(int y=0;y<Y;y++){for(int x=0;x<X;x++){int i=x*Y+y;double c=g->field[i],v=0;int n=PDEGrid_Wrap(g,y+1,1);if(n!=PAL_NULL)v+=g->field[x*Y+n]-c;else if(b1[1])v+=2.0f*(PDEGrid_BC(g,b1[1],x)-c);n=PDEGrid_Wrap(g,y-1,1);if(n!=PAL_NULL)v+=g->field[x*Y+n]-c;else if(b0[1])v+=2.0f*(PDEGrid_BC(g,b0[1],x)-c);rhs[x]=c+.5f*ry*v;}PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,b0[0]?PDEGrid_BC(g,b0[0],y):0,b1[0]?PDEGrid_BC(g,b1[0],y):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)s1[x*Y+y]=out[x];}for(int x=0;x<X;x++){for(int y=0;y<Y;y++){int i=x*Y+y;double c=s1[i],v=0;int n=PDEGrid_Wrap(g,x+1,0);if(n!=PAL_NULL)v+=s1[n*Y+y]-c;else if(b1[0])v+=2.0f*(PDEGrid_BC(g,b1[0],y)-c);n=PDEGrid_Wrap(g,x-1,0);if(n!=PAL_NULL)v+=s1[n*Y+y]-c;else if(b0[0])v+=2.0f*(PDEGrid_BC(g,b0[0],y)-c);rhs[y]=c+.5f*rx*v;}PDEGrid_SolveTri(Y,ry,g->wrap[1],b0[1]!=0,b1[1]!=0,b0[1]?PDEGrid_BC(g,b0[1],x):0,b1[1]?PDEGrid_BC(g,b1[1],x):0,1,rhs,out,cp,dp,zwork,uwork,bbwork);for(int y=0;y<Y;y++){int i=x*Y+y;g->deltas[i]+=out[y]-g->field[i];}}}
+    else{/* Douglas-Gunn: explicit full increment followed by three implicit half-step solves */for(int x=0;x<X;x++)for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){int i=PDEGrid_ToI(g,x,y,z),q[3]={x,y,z};double c=g->field[i],v=0,sc[3]={rx,ry,rz};for(int a=0;a<3;a++)for(int sg=-1;sg<=1;sg+=2){int t=PDEGrid_Wrap(g,q[a]+sg,a);if(t!=PAL_NULL){int xx=x,yy=y,zz=z;if(a==0)xx=t;else if(a==1)yy=t;else zz=t;v+=(g->field[PDEGrid_ToI(g,xx,yy,zz)]-c)*sc[a];}else{float*bc=sg<0?b0[a]:b1[a];if(bc)v+=2.0f*(PDEGrid_BC(g,bc,PDEGrid_FaceIndex(g,a,x,y,z))-c)*sc[a];}}s1[i]=v;}for(int y=0;y<Y;y++)for(int z=0;z<Z;z++){for(int x=0;x<X;x++)rhs[x]=s1[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(X,rx,g->wrap[0],b0[0]!=0,b1[0]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int x=0;x<X;x++)s2[PDEGrid_ToI(g,x,y,z)]=out[x];}for(int x=0;x<X;x++)for(int z=0;z<Z;z++){for(int y=0;y<Y;y++)rhs[y]=s2[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(Y,ry,g->wrap[1],b0[1]!=0,b1[1]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int y=0;y<Y;y++)s1[PDEGrid_ToI(g,x,y,z)]=out[y];}for(int x=0;x<X;x++)for(int y=0;y<Y;y++){for(int z=0;z<Z;z++)rhs[z]=s1[PDEGrid_ToI(g,x,y,z)];PDEGrid_SolveTri(Z,rz,g->wrap[2],b0[2]!=0,b1[2]!=0,0,0,0,rhs,out,cp,dp,zwork,uwork,bbwork);for(int z=0;z<Z;z++)g->deltas[PDEGrid_ToI(g,x,y,z)]+=out[z];}}
     free(s1);free(s2);free(rhs);free(out);free(cp);free(dp);free(zwork);free(uwork);free(bbwork);return 1;
 }
 PAL_API int32_t pal_pd_iswrap(uintptr_t h,int32_t d){PDEGrid*g=(PDEGrid*)h;return d>=0&&d<g->dimension?g->wrap[d]:0;}
@@ -1544,17 +1544,38 @@ PAL_API size_t pal_multi_snapshot_size(uintptr_t h){(void)h;return sizeof(PalSna
 PAL_API int32_t pal_multi_snapshot(uintptr_t h,uint8_t*out,size_t n){if(n<pal_multi_snapshot_size(h))return 0;Multinomial*m=(Multinomial*)h;uint8_t*p=out;pal_snap_header(&p,2);SNAP_PUT(p,m->nRemaining);SNAP_PUT(p,m->pRemaining);return 1;}
 PAL_API uintptr_t pal_multi_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,2)||n<sizeof(PalSnapHeader)+16)return 0;int64_t nr;double pr;SNAP_GET(p,nr);SNAP_GET(p,pr);uintptr_t h=pal_multi_new(0);if(!h)return 0;Multinomial*m=(Multinomial*)h;m->nRemaining=nr;m->pRemaining=pr;return h;}
 
-PAL_API size_t pal_pg_snapshot_size(uintptr_t h){PopGrid*g=(PopGrid*)h;return sizeof(PalSnapHeader)+sizeof(PopGrid)-2*sizeof(void*)+(size_t)g->length*(g->fieldType+g->deltaType);}
+#define PAL_PG_SNAP_META_BYTES (sizeof(PalSnapHeader)+sizeof(int32_t)+3*sizeof(int32_t)+3*sizeof(int32_t)+sizeof(int32_t)+2*sizeof(int64_t)+2*sizeof(uint8_t))
+PAL_API size_t pal_pg_snapshot_size(uintptr_t h){PopGrid*g=(PopGrid*)h;return PAL_PG_SNAP_META_BYTES+(size_t)g->length*((size_t)g->fieldType+g->deltaType);}
 PAL_API int32_t pal_pg_snapshot(uintptr_t h,uint8_t*out,size_t n){PopGrid*g=(PopGrid*)h;if(n<pal_pg_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,3);SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->capacity);SNAP_PUT(p,g->population);SNAP_PUT(p,g->fieldType);SNAP_PUT(p,g->deltaType);memcpy(p,g->field,(size_t)g->length*g->fieldType);p+=(size_t)g->length*g->fieldType;memcpy(p,g->deltas,(size_t)g->length*g->deltaType);return 1;}
-PAL_API uintptr_t pal_pg_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,3))return 0;int32_t dim,dims[3],wrap[3],len;int64_t cap,pop;uint8_t ft,dt;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,ft);SNAP_GET(p,dt);size_t need=sizeof(PalSnapHeader)+4+24+4+8+8+1+1+(size_t)len*(ft+dt);if(n<need||dim<1||dim>3)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_pg_new(sd,dim,cap);if(!h)return 0;PopGrid*g=(PopGrid*)h;if(g->length!=len||g->fieldType!=ft||g->deltaType!=dt){pal_pg_free(h);return 0;}g->population=pop;memcpy(g->field,p,(size_t)len*ft);p+=(size_t)len*ft;memcpy(g->deltas,p,(size_t)len*dt);return h;}
+PAL_API uintptr_t pal_pg_restore(const uint8_t*data,size_t n){
+    const uint8_t*p=data;
+    if(n<PAL_PG_SNAP_META_BYTES||!pal_snap_check(&p,n,3))return 0;
+    int32_t dim,dims[3],wrap[3],len;int64_t cap,pop;uint8_t ft,dt;
+    SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;
+    SNAP_GET(p,len);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,ft);SNAP_GET(p,dt);
+    if(dim<1||dim>3||len<=0||pop<0)return 0;
+    if(!((ft==1&&dt==2&&cap==UINT8_MAX)||(ft==2&&dt==4&&cap==UINT16_MAX)||
+         (ft==4&&dt==8&&cap==UINT32_MAX)||(ft==8&&dt==8&&cap==INT64_MAX)))return 0;
+    if((size_t)len>(SIZE_MAX-PAL_PG_SNAP_META_BYTES)/((size_t)ft+dt))return 0;
+    if(n<PAL_PG_SNAP_META_BYTES+(size_t)len*((size_t)ft+dt))return 0;
+    int32_t sd[3];
+    for(int d=0;d<dim;d++){if(dims[d]<=0||(wrap[d]!=0&&wrap[d]!=1))return 0;sd[d]=wrap[d]?-dims[d]:dims[d];}
+    uintptr_t h=pal_pg_new(sd,dim,ft);if(!h)return 0;
+    PopGrid*g=(PopGrid*)h;
+    if(g->length!=len||g->fieldType!=ft||g->deltaType!=dt){pal_pg_free(h);return 0;}
+    g->population=pop;
+    memcpy(g->field,p,(size_t)len*ft);p+=(size_t)len*ft;
+    memcpy(g->deltas,p,(size_t)len*dt);
+    return h;
+}
 
-PAL_API size_t pal_pd_snapshot_size(uintptr_t h){PDEGrid*g=(PDEGrid*)h;return sizeof(PalSnapHeader)+4+24+4+16+(size_t)g->length*8;}
-PAL_API int32_t pal_pd_snapshot(uintptr_t h,uint8_t*out,size_t n){PDEGrid*g=(PDEGrid*)h;if(n<pal_pd_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,4);SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->dt);SNAP_PUT(p,g->dx);SNAP_PUT(p,g->dy);SNAP_PUT(p,g->dz);memcpy(p,g->field,(size_t)g->length*4);p+=(size_t)g->length*4;memcpy(p,g->deltas,(size_t)g->length*4);return 1;}
-PAL_API uintptr_t pal_pd_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,4))return 0;int32_t dim,dims[3],wrap[3],len;float dt,dx,dy,dz;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,dt);SNAP_GET(p,dx);SNAP_GET(p,dy);SNAP_GET(p,dz);size_t need=sizeof(PalSnapHeader)+4+24+4+16+(size_t)len*8;if(n<need||dim<1||dim>3)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_pd_new(sd,dim);if(!h)return 0;PDEGrid*g=(PDEGrid*)h;if(g->length!=len){pal_pd_free(h);return 0;}g->dt=dt;g->dx=dx;g->dy=dy;g->dz=dz;memcpy(g->field,p,(size_t)len*4);p+=(size_t)len*4;memcpy(g->deltas,p,(size_t)len*4);return h;}
+PAL_API size_t pal_pd_snapshot_size(uintptr_t h){PDEGrid*g=(PDEGrid*)h;return sizeof(PalSnapHeader)+4+24+4+16+(size_t)g->length*16;}
+PAL_API int32_t pal_pd_snapshot(uintptr_t h,uint8_t*out,size_t n){PDEGrid*g=(PDEGrid*)h;if(n<pal_pd_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,4); ((PalSnapHeader*)out)->reserved=1;SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->dt);SNAP_PUT(p,g->dx);SNAP_PUT(p,g->dy);SNAP_PUT(p,g->dz);memcpy(p,g->field,(size_t)g->length*8);p+=(size_t)g->length*8;memcpy(p,g->deltas,(size_t)g->length*8);return 1;}
+PAL_API uintptr_t pal_pd_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,4)||((const PalSnapHeader*)data)->reserved!=1||n<sizeof(PalSnapHeader)+4+24+4+16)return 0;int32_t dim,dims[3],wrap[3],len;float dt,dx,dy,dz;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,dt);SNAP_GET(p,dx);SNAP_GET(p,dy);SNAP_GET(p,dz);size_t need=sizeof(PalSnapHeader)+4+24+4+16+(size_t)len*16;if(n<need||dim<1||dim>3||len<=0||!isfinite(dt)||!isfinite(dx)||!isfinite(dy)||!isfinite(dz))return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_pd_new(sd,dim);if(!h)return 0;PDEGrid*g=(PDEGrid*)h;if(g->length!=len){pal_pd_free(h);return 0;}g->dt=dt;g->dx=dx;g->dy=dy;g->dz=dz;memcpy(g->field,p,(size_t)len*8);p+=(size_t)len*8;memcpy(g->deltas,p,(size_t)len*8);return h;}
 
-PAL_API size_t pal_ag_snapshot_size(uintptr_t h){AgentGrid*g=(AgentGrid*)h;size_t s=sizeof(PalSnapHeader)+4+24+4*8; s+=(size_t)g->capacity*g->nFloatProperties*4+(size_t)g->capacity*N_AGENT_INT_PROPERTIES*4+(size_t)g->population*4+(size_t)g->nDead*4;if(g->dimension>0){s+=(size_t)g->length*4;if(g->stackable)s+=(size_t)g->length*4;}return s;}
-PAL_API int32_t pal_ag_snapshot(uintptr_t h,uint8_t*out,size_t n){AgentGrid*g=(AgentGrid*)h;if(n<pal_ag_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,5);SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->stackable);SNAP_PUT(p,g->nUserProperties);SNAP_PUT(p,g->nFloatProperties);SNAP_PUT(p,g->capacity);SNAP_PUT(p,g->population);SNAP_PUT(p,g->nAgents);SNAP_PUT(p,g->nDead);size_t nf=(size_t)g->capacity*g->nFloatProperties*4,ni=(size_t)g->capacity*N_AGENT_INT_PROPERTIES*4;memcpy(p,g->floatProperties,nf);p+=nf;memcpy(p,g->intProperties,ni);p+=ni;memcpy(p,g->aliveAgents,(size_t)g->population*4);p+=(size_t)g->population*4;memcpy(p,g->deadAgents,(size_t)g->nDead*4);p+=(size_t)g->nDead*4;if(g->dimension>0){memcpy(p,g->grid,(size_t)g->length*4);p+=(size_t)g->length*4;if(g->stackable)memcpy(p,g->counts,(size_t)g->length*4);}return 1;}
-PAL_API uintptr_t pal_ag_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,5))return 0;int32_t dim,dims[3],wrap[3],len,stack,nup,nfp,cap,pop,na,nd;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,stack);SNAP_GET(p,nup);SNAP_GET(p,nfp);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,na);SNAP_GET(p,nd);if(dim<0||dim>3||cap<0||pop<0||nd<0)return 0;size_t need=sizeof(PalSnapHeader)+4+24+32+(size_t)cap*nfp*4+(size_t)cap*N_AGENT_INT_PROPERTIES*4+(size_t)(pop+nd)*4+(dim>0?(size_t)len*4:0)+(dim>0&&stack?(size_t)len*4:0);if(n<need)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_ag_new(sd,dim,nup,stack);if(!h)return 0;AgentGrid*g=(AgentGrid*)h;if(g->capacity<cap){while(g->capacity<cap)if(!AgentGrid_Grow(g)){pal_ag_free(h);return 0;}}g->population=pop;g->nAgents=na;g->nDead=nd;size_t nf=(size_t)cap*nfp*4,ni=(size_t)cap*N_AGENT_INT_PROPERTIES*4;memcpy(g->floatProperties,p,nf);p+=nf;memcpy(g->intProperties,p,ni);p+=ni;memcpy(g->aliveAgents,p,(size_t)pop*4);p+=(size_t)pop*4;memcpy(g->deadAgents,p,(size_t)nd*4);p+=(size_t)nd*4;if(dim>0){memcpy(g->grid,p,(size_t)len*4);p+=(size_t)len*4;if(stack)memcpy(g->counts,p,(size_t)len*4);}return h;}
+PAL_API size_t pal_ag_snapshot_size(uintptr_t h){AgentGrid*g=(AgentGrid*)h;size_t s=sizeof(PalSnapHeader)+4+24+4*8; s+=(size_t)g->capacity*g->nFloatProperties*8+(size_t)g->capacity*N_AGENT_INT_PROPERTIES*4+(size_t)g->population*4+(size_t)g->nDead*4;if(g->dimension>0){s+=(size_t)g->length*4;if(g->stackable)s+=(size_t)g->length*4;}return s;}
+PAL_API int32_t pal_ag_snapshot(uintptr_t h,uint8_t*out,size_t n){AgentGrid*g=(AgentGrid*)h;if(n<pal_ag_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,5); ((PalSnapHeader*)out)->reserved=1;SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->stackable);SNAP_PUT(p,g->nUserProperties);SNAP_PUT(p,g->nFloatProperties);SNAP_PUT(p,g->capacity);SNAP_PUT(p,g->population);SNAP_PUT(p,g->nAgents);SNAP_PUT(p,g->nDead);size_t nf=(size_t)g->capacity*g->nFloatProperties*8,ni=(size_t)g->capacity*N_AGENT_INT_PROPERTIES*4;memcpy(p,g->floatProperties,nf);p+=nf;memcpy(p,g->intProperties,ni);p+=ni;memcpy(p,g->aliveAgents,(size_t)g->population*4);p+=(size_t)g->population*4;memcpy(p,g->deadAgents,(size_t)g->nDead*4);p+=(size_t)g->nDead*4;if(g->dimension>0){memcpy(p,g->grid,(size_t)g->length*4);p+=(size_t)g->length*4;if(g->stackable)memcpy(p,g->counts,(size_t)g->length*4);}return 1;}
+PAL_API uintptr_t pal_ag_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,5)||((const PalSnapHeader*)data)->reserved!=1||n<sizeof(PalSnapHeader)+4+24+32)return 0;int32_t dim,dims[3],wrap[3],len,stack,nup,nfp,cap,pop,na,nd;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,stack);SNAP_GET(p,nup);SNAP_GET(p,nfp);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,na);SNAP_GET(p,nd);if(dim<0||dim>3||cap<0||pop<0||nd<0||nfp<0||nup<0||pop>cap||na>cap||na<0||nd>cap||nfp!=dim+nup||len<0)return 0;size_t need=sizeof(PalSnapHeader)+4+24+32+(size_t)cap*nfp*8+(size_t)cap*N_AGENT_INT_PROPERTIES*4+(size_t)(pop+nd)*4+(dim>0?(size_t)len*4:0)+(dim>0&&stack?(size_t)len*4:0);if(n<need)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_ag_new(sd,dim,nup,stack);if(!h)return 0;AgentGrid*g=(AgentGrid*)h;if(g->length!=len||g->nFloatProperties!=nfp){pal_ag_free(h);return 0;}if(g->capacity<cap){while(g->capacity<cap)if(!AgentGrid_Grow(g)){pal_ag_free(h);return 0;}}g->population=pop;g->nAgents=na;g->nDead=nd;size_t nf=(size_t)cap*nfp*8,ni=(size_t)cap*N_AGENT_INT_PROPERTIES*4;memcpy(g->floatProperties,p,nf);p+=nf;memcpy(g->intProperties,p,ni);p+=ni;memcpy(g->aliveAgents,p,(size_t)pop*4);p+=(size_t)pop*4;memcpy(g->deadAgents,p,(size_t)nd*4);p+=(size_t)nd*4;if(dim>0){memcpy(g->grid,p,(size_t)len*4);p+=(size_t)len*4;if(stack)memcpy(g->counts,p,(size_t)len*4);}return h;}
 PAL_API int32_t pal_pg_all_count(uintptr_t h){PopGrid*g=(PopGrid*)h;int32_t n=0;for(int32_t i=0;i<g->length;i++)if(PopGrid_FieldGet(g,i)!=0)n++;return n;}
 PAL_API int32_t pal_pg_all_copy(uintptr_t h,int32_t*out){PopGrid*g=(PopGrid*)h;int32_t n=0;for(int32_t i=0;i<g->length;i++)if(PopGrid_FieldGet(g,i)!=0)out[n++]=i;return n;}
 

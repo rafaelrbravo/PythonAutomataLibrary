@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - fix/diffusion-mask-boundary-conditions
+      - refactor/agent-pde-float64
     paths:
       - 'Documentation/*.md'
       - 'Documentation/generators/*.py'

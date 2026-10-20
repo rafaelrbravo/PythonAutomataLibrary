@@ -7,7 +7,7 @@ import PythonAutomataLibrary as pal
 def test_agent_query_ilist_popgrid_pde_pipeline(api):
     agents = api.NewAgentGrid((-8, -8), numAgentProps=1)
     selected = api.NewIList()
-    pop = api.NewPopGrid((-8, -8), capacity=100)
+    pop = api.NewPopGrid((-8, -8), dtype=np.uint8)
     field = api.NewPDEgrid((-8, -8))
     hood = api.VonNeumannHood(2, True)
     for x, y in ((0, 0), (1, 0), (7, 0), (0, 7), (4, 4)):
@@ -62,7 +62,7 @@ def test_rng_multinomial_agentgrid_composition_is_reproducible(api):
 
 
 def test_popgrid_to_pdegrid_to_agentgrid_feedback(api):
-    pop = api.NewPopGrid((-10,), capacity=100)
+    pop = api.NewPopGrid((-10,), dtype=np.uint8)
     field = api.NewPDEgrid((-10,))
     agents = api.NewAgentGrid((-10,))
     pop[2] = 3; pop[7] = 2
@@ -85,7 +85,7 @@ def test_popgrid_to_pdegrid_to_agentgrid_feedback(api):
 
 def test_snapshot_query_allows_disposal_and_popgrid_accumulation(api):
     agents = api.NewAgentGrid((12,))
-    removed = api.NewPopGrid((12,), capacity=100)
+    removed = api.NewPopGrid((12,), dtype=np.uint8)
     for x in range(0, 12, 2):
         agents.NewAgentSQ(x)
 

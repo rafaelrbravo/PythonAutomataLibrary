@@ -18,7 +18,7 @@ def test_annotated_grid_augassign_preserves_value(api):
 
 
 def test_annotated_popgrid_augassign_is_immediate_value_write(api):
-    g = api.NewPopGrid((4,), capacity=100)
+    g = api.NewPopGrid((4,), dtype=np.uint8)
     g[1] = 5
 
     @api.njit
