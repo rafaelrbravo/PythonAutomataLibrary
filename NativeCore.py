@@ -2340,7 +2340,9 @@ class _AgentGridFastPython:
         return agent
 
     def NewAgentSQ(self, x, y=-1, z=-1):
-        if y==-1 and z==-1: return self._NewAgentI(x)
+        if y==-1 and z==-1:
+            if self._dimension!=1: raise ValueError("NewAgentSQ requires all coordinates for 2D or 3D grids")
+            return self._NewAgentI(x)
         return _ag_new_sq_fast(self._ptr, x, y, z)
 
     def NewAgent(self, x=-1.0, y=-1.0, z=-1.0):
