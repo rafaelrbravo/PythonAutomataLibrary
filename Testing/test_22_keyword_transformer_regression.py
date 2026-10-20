@@ -17,7 +17,7 @@ def test_compiled_grid_toi_keywords(api):
 
 
 def test_compiled_pop_toi_add_keywords(api):
-    g = api.NewPopGrid((4, 5), capacity=100)
+    g = api.NewPopGrid((4, 5), dtype=np.uint8)
     @api.njit
     def f(grid):
         i = grid.ToI(x=2, y=3)
