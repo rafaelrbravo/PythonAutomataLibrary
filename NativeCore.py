@@ -2139,8 +2139,9 @@ class _AgentGridSafePython:
 
     def NewAgentSQ(self, x, y=-1, z=-1):
         if self._dimension==0: raise ValueError("NewAgentSQ requires a spatial AgentGrid")
-        if y==-1 and z==-1:
-            if self._dimension!=1: raise ValueError("NewAgentSQ requires all coordinates for 2D or 3D grids")
+        if self._dimension==2 and y==-1 or self._dimension==3 and (y==-1 or z==-1):
+            raise ValueError("NewAgentSQ requires all coordinates for 2D or 3D grids")
+        if self._dimension==1 and y==-1 and z==-1:
             return self._NewAgentI(x)
         self._CheckCoords(x,y,z)
         agent = _ag_new_sq(self._ptr, x, y, z)
