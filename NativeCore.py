@@ -1476,7 +1476,7 @@ def _make_getslice_overload(dtype,linearFn,regionFn):
     return ol
 
 @overload(_PDEGetSlice)
-def _olPDEGetSlice(grid,key,safe): return _make_getslice_overload(np.float32,_pd_linear_get,_pd_region_get)(grid,key,safe)
+def _olPDEGetSlice(grid,key,safe): return _make_getslice_overload(np.float64,_pd_linear_get,_pd_region_get)(grid,key,safe)
 @overload(_PopGetSlice)
 def _olPopGetSlice(grid,key,safe): return _make_getslice_overload(np.int64,_pg_linear_get,_pg_region_get)(grid,key,safe)
 @overload(_CountsGetSlice)
