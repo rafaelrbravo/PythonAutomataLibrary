@@ -1419,6 +1419,15 @@ PAL_API int32_t pal_ag32_dispose(uintptr_t handle,int32_t agent) {
 #undef PAL_AG_PREFIX
 #undef PAL_AG_TYPE
 
+/* Traverse float32 stackable occupancy without exposing internal storage. */
+PAL_API int32_t pal_ag32_prev_agent(uintptr_t handle, int32_t agent) {
+    AgentGrid32 *g=(AgentGrid32 *)handle;
+    if (!g || agent<0 || agent>=g->nAgents) return PAL_NULL;
+    size_t base=(size_t)agent*N_AGENT_INT_PROPERTIES;
+    if (!g->intProperties[base+AGENT_ALIVE]) return PAL_NULL;
+    return g->intProperties[base+AGENT_PREV];
+}
+
 /* First precision instantiation; float64 will migrate to the same template. */
 #define PAL_AG_TYPE AgentGrid32
 #define PAL_AG_FLOAT float
