@@ -348,8 +348,9 @@ def test_python_njit_pdegrid_advection_parity(api, shape, velocities):
 def test_float64_scalar_and_python_slice_precision(api, shape):
     g = api.NewPDEgrid(shape)
     value = 1.0 + 2.0**-40
-    g[0] = value if len(shape) == 1 else 0.0
-    if len(shape) == 2:
+    if len(shape) == 1:
+        g[0] = value
+    else:
         g[0, 0] = value
     result = np.asarray(g[:])
     assert result.dtype == np.float64
