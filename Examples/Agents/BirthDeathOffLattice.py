@@ -54,7 +54,7 @@ def Step(grid:pal.AgentGrid):
 def Draw(grid:pal.AgentGrid,draw:pal.OpenGLDraw):
     draw.Clear()
     for agent in grid.All():
-        draw.Circle(0.5,np.uint32(grid[agent,COLOR]),grid.X(agent),grid.Y(agent))
+        draw.Circle(0.5,grid[agent,COLOR],grid.X(agent),grid.Y(agent))
 
 
 def main():
