@@ -5515,6 +5515,14 @@ class _AgentGrid32Native:
     def CountSQ(self, x, y=-1, z=-1):
         return self.CountI(self._SQToI(x, y, z))
 
+    def AgentsAt(self, x, y=-1, z=-1):
+        """Return agent IDs at a lattice site for nonstackable float32 grids."""
+        if self.stackable:
+            raise NotImplementedError("float32 stackable AgentGrid iteration is not yet supported")
+        agent = self.AtSQ(x, y, z)
+        return () if agent < 0 else (agent,)
+
+
 
 def _NewAgentGrid32(dimensions, numAgentProps=0, isStackable=False):
     """Create a native float32 AgentGrid for Python-side use."""
