@@ -8,7 +8,7 @@ PDEgrid = object
 
 
 def test_compiled_popgrid_add_update_and_all(api):
-    g = api.NewPopGrid((8,), capacity=100)
+    g = api.NewPopGrid((8,), dtype=np.uint8)
 
     @api.njit
     def step(grid):
@@ -78,7 +78,7 @@ def test_compiled_pde_advection_keyword_arguments_match_python(api):
 def test_compiled_safe_popgrid_error_contains_source_line(api, safe_mode):
     if not safe_mode:
         pytest.skip("Fast mode omits validation diagnostics")
-    g = api.NewPopGrid((4,), capacity=10)
+    g = api.NewPopGrid((4,), dtype=np.uint8)
 
     @api.njit
     def invalid(grid: PopGrid):
