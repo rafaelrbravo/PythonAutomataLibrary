@@ -79,3 +79,34 @@ def test_agentgrid_pickle_preserves_lifecycle_links_and_properties(api):
     new_agent = restored.NewAgentSQ(4, 3)
     assert restored.Alive(new_agent)
     assert restored.GetPop() == 3
+
+
+@pytest.mark.parametrize("dtype,large", [
+    (np.uint8, 201),
+    (np.uint16, 50_001),
+    (np.uint32, 3_000_000_001),
+    (np.int64, 2**50 + 17),
+])
+def test_popgrid_pickle_preserves_each_storage_dtype_and_pending_deltas(api, dtype, large):
+    g = api.NewPopGrid((-3, 2), dtype=dtype)
+    g[1, 0] = large
+    g.Add(7, 1, 0)
+    g.Add(3, 2, 1)
+    restored = pickle.loads(pickle.dumps(g))
+    np.testing.assert_array_equal(restored[:, :], g[:, :])
+    assert restored.GetPop() == large
+    restored.Update()
+    assert restored[1, 0] == large + 7
+    assert restored[2, 1] == 3
+    assert restored.GetPop() == large + 10
+
+
+def test_pdegrid_pickle_preserves_values_beyond_float32_precision(api):
+    g = api.NewPDEgrid((3,))
+    value = 1.0 + 2**-40
+    g[1] = value
+    g.Add(2**-42, 1)
+    restored = pickle.loads(pickle.dumps(g))
+    assert restored[1] == value
+    restored.Update()
+    assert restored[1] == value + 2**-42
