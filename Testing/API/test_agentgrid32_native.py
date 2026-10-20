@@ -868,3 +868,13 @@ def test_safe_nonspatial_agentgrid_rejects_coordinate_conversion():
             grid.ToI(0)
     finally:
         core._UseFastMode = original
+
+
+@pytest.mark.parametrize("coordinate", ["1", None, True, complex(1, 0)])
+def test_public_float32_agentgrid_rejects_nonnumeric_points(coordinate):
+    with core.NewAgentGrid((4,), dtype=np.float32) as grid:
+        with pytest.raises(ValueError, match="numeric"):
+            grid.NewAgentPT(coordinate)
+        agent = grid.NewAgentPT(0.5)
+        with pytest.raises(ValueError, match="numeric"):
+            grid.MovePT(agent, coordinate)
