@@ -30,7 +30,7 @@ def test_multinomial_pickle_preserves_remaining_state(api):
 
 
 def test_popgrid_pickle_preserves_field_and_pending_deltas(api):
-    g = api.NewPopGrid((5,), capacity=100)
+    g = api.NewPopGrid((5,), dtype=np.uint8)
     g[1] = 10
     g.Add(7, 1)
     g.Add(3, 4)
