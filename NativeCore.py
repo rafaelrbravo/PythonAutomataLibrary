@@ -5333,9 +5333,11 @@ def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False, dtype=np.float6
     try:
         requested_dtype = np.dtype(dtype)
     except (TypeError, ValueError):
-        raise ValueError('AgentGrid dtype must be float64') from None
+        raise ValueError('AgentGrid dtype must be float32 or float64') from None
+    if requested_dtype == np.dtype(np.float32):
+        return _NewAgentGrid32(dimensions, numAgentProps, isStackable)
     if requested_dtype != np.dtype(np.float64):
-        raise ValueError('AgentGrid currently supports only float64; float32 native backend is not yet implemented')
+        raise ValueError('AgentGrid dtype must be float32 or float64')
     dims = _dimensions_array(dimensions,allowZero=True)
     try: props=float(numAgentProps)
     except (TypeError,ValueError,OverflowError): raise ValueError("numAgentProps must be a nonnegative int32")
