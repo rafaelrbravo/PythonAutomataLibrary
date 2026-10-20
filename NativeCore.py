@@ -5078,7 +5078,8 @@ def NewPopGrid(dimensions, dtype=np.int64):
     Deltas use int16, int32, int64, or int64 respectively.
     """
     dims = _dimensions_array(dimensions)
-    dt = np.dtype(dtype)
+    try: dt = np.dtype(dtype)
+    except TypeError as exc: raise ValueError("PopGrid dtype must be uint8, uint16, uint32, or int64") from exc
     fieldTypes = {np.dtype(np.uint8): 1, np.dtype(np.uint16): 2, np.dtype(np.uint32): 4, np.dtype(np.int64): 8}
     if dt not in fieldTypes: raise ValueError("PopGrid dtype must be uint8, uint16, uint32, or int64")
     fast = _UseFastMode()
