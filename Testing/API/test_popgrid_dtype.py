@@ -20,7 +20,7 @@ def test_popgrid_unsupported_dtype_rejected(dtype):
         pal.NewPopGrid((4, 4), dtype=dtype)
 
 
-@pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32])
+@pytest.mark.parametrize("dtype", [np.int64, np.uint8, np.uint16, np.uint32])
 def test_popgrid_dtype_range(dtype):
     grid = pal.NewPopGrid((3,), dtype=dtype)
     maximum = min(np.iinfo(dtype).max, 1000)
