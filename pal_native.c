@@ -1034,14 +1034,14 @@ static int PopGrid_DeltaFits(const PopGrid *g,int64_t current,int64_t add,int64_
     *out=v; return 1;
 }
 
-PAL_API uintptr_t pal_pg_new(const int32_t *dimensions, int32_t dimension, int64_t capacity) {
-    if (dimension < 1 || dimension > 3 || capacity < 0) return 0;
+PAL_API uintptr_t pal_pg_new(const int32_t *dimensions, int32_t dimension, int64_t dtype) {
+    if (dimension < 1 || dimension > 3 || (dtype!=1 && dtype!=2 && dtype!=4 && dtype!=8)) return 0;
     PopGrid *grid = (PopGrid *)calloc(1, sizeof(PopGrid)); if (!grid) return 0;
-    grid->dimension=dimension; grid->capacity=capacity; grid->length=1;
+    grid->dimension=dimension; grid->capacity=dtype==1?UINT8_MAX:dtype==2?UINT16_MAX:dtype==4?UINT32_MAX:INT64_MAX; grid->length=1;
     for(int32_t d=0;d<dimension;d++){int32_t value=dimensions[d];grid->wrap[d]=value<0;grid->dimensions[d]=value<0?-value:value;if(grid->dimensions[d]<=0){free(grid);return 0;}grid->length*=grid->dimensions[d];}
-    if(capacity<=UINT8_MAX){grid->fieldType=PG_FIELD_U8;grid->deltaType=PG_DELTA_I16;}
-    else if(capacity<=UINT16_MAX){grid->fieldType=PG_FIELD_U16;grid->deltaType=PG_DELTA_I32;}
-    else if((uint64_t)capacity<=UINT32_MAX){grid->fieldType=PG_FIELD_U32;grid->deltaType=PG_DELTA_I64;}
+    if(dtype==1){grid->fieldType=PG_FIELD_U8;grid->deltaType=PG_DELTA_I16;}
+    else if(dtype==2){grid->fieldType=PG_FIELD_U16;grid->deltaType=PG_DELTA_I32;}
+    else if(dtype==4){grid->fieldType=PG_FIELD_U32;grid->deltaType=PG_DELTA_I64;}
     else {grid->fieldType=PG_FIELD_I64;grid->deltaType=PG_DELTA_I64;}
     grid->field=calloc((size_t)grid->length,(size_t)grid->fieldType);
     grid->deltas=calloc((size_t)grid->length,(size_t)grid->deltaType);
@@ -1546,7 +1546,7 @@ PAL_API uintptr_t pal_multi_restore(const uint8_t*data,size_t n){const uint8_t*p
 
 PAL_API size_t pal_pg_snapshot_size(uintptr_t h){PopGrid*g=(PopGrid*)h;return sizeof(PalSnapHeader)+sizeof(PopGrid)-2*sizeof(void*)+(size_t)g->length*(g->fieldType+g->deltaType);}
 PAL_API int32_t pal_pg_snapshot(uintptr_t h,uint8_t*out,size_t n){PopGrid*g=(PopGrid*)h;if(n<pal_pg_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,3);SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->capacity);SNAP_PUT(p,g->population);SNAP_PUT(p,g->fieldType);SNAP_PUT(p,g->deltaType);memcpy(p,g->field,(size_t)g->length*g->fieldType);p+=(size_t)g->length*g->fieldType;memcpy(p,g->deltas,(size_t)g->length*g->deltaType);return 1;}
-PAL_API uintptr_t pal_pg_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,3))return 0;int32_t dim,dims[3],wrap[3],len;int64_t cap,pop;uint8_t ft,dt;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,ft);SNAP_GET(p,dt);size_t need=sizeof(PalSnapHeader)+4+24+4+8+8+1+1+(size_t)len*(ft+dt);if(n<need||dim<1||dim>3)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_pg_new(sd,dim,cap);if(!h)return 0;PopGrid*g=(PopGrid*)h;if(g->length!=len||g->fieldType!=ft||g->deltaType!=dt){pal_pg_free(h);return 0;}g->population=pop;memcpy(g->field,p,(size_t)len*ft);p+=(size_t)len*ft;memcpy(g->deltas,p,(size_t)len*dt);return h;}
+PAL_API uintptr_t pal_pg_restore(const uint8_t*data,size_t n){const uint8_t*p=data;if(!pal_snap_check(&p,n,3))return 0;int32_t dim,dims[3],wrap[3],len;int64_t cap,pop;uint8_t ft,dt;SNAP_GET(p,dim);memcpy(dims,p,12);p+=12;memcpy(wrap,p,12);p+=12;SNAP_GET(p,len);SNAP_GET(p,cap);SNAP_GET(p,pop);SNAP_GET(p,ft);SNAP_GET(p,dt);size_t need=sizeof(PalSnapHeader)+4+24+4+8+8+1+1+(size_t)len*(ft+dt);if(n<need||dim<1||dim>3)return 0;int32_t sd[3];for(int d=0;d<dim;d++)sd[d]=wrap[d]?-dims[d]:dims[d];uintptr_t h=pal_pg_new(sd,dim,ft);if(!h)return 0;PopGrid*g=(PopGrid*)h;if(g->length!=len||g->fieldType!=ft||g->deltaType!=dt){pal_pg_free(h);return 0;}g->population=pop;memcpy(g->field,p,(size_t)len*ft);p+=(size_t)len*ft;memcpy(g->deltas,p,(size_t)len*dt);return h;}
 
 PAL_API size_t pal_pd_snapshot_size(uintptr_t h){PDEGrid*g=(PDEGrid*)h;return sizeof(PalSnapHeader)+4+24+4+16+(size_t)g->length*16;}
 PAL_API int32_t pal_pd_snapshot(uintptr_t h,uint8_t*out,size_t n){PDEGrid*g=(PDEGrid*)h;if(n<pal_pd_snapshot_size(h))return 0;uint8_t*p=out;pal_snap_header(&p,4); ((PalSnapHeader*)out)->reserved=1;SNAP_PUT(p,g->dimension);memcpy(p,g->dimensions,12);p+=12;memcpy(p,g->wrap,12);p+=12;SNAP_PUT(p,g->length);SNAP_PUT(p,g->dt);SNAP_PUT(p,g->dx);SNAP_PUT(p,g->dy);SNAP_PUT(p,g->dz);memcpy(p,g->field,(size_t)g->length*8);p+=(size_t)g->length*8;memcpy(p,g->deltas,(size_t)g->length*8);return 1;}
