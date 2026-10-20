@@ -5,6 +5,7 @@ on:
       - main
       - pal-audit-ci-fix
       - fix/diffusion-mask-boundary-conditions
+      - refactor/agent-pde-float64
     paths-ignore:
       - 'Documentation/generators/**'
       - '.github/workflows/refresh-documentation-pdfs.yml'
