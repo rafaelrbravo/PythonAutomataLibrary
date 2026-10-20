@@ -251,3 +251,29 @@ def test_python_njit_popgrid_slice_aliasing_parity(api):
 
     assert compiled_work(jit) == python_work(py)
     np.testing.assert_array_equal(jit[:], py[:])
+
+
+@pytest.mark.parametrize("dtype,maximum", [
+    (np.uint8, 255),
+    (np.uint16, 65535),
+    (np.uint32, 2**32 - 1),
+    (np.int64, 2**63 - 1),
+])
+def test_popgrid_dtype_maximum_and_negative_delta_python_compiled(api, dtype, maximum):
+    """Each storage width must preserve its maximum and support signed subtraction."""
+    py = api.NewPopGrid((3,), dtype=dtype)
+    jit = api.NewPopGrid((3,), dtype=dtype)
+    py[1] = maximum
+    jit[1] = maximum
+    py.Add(-1, 1)
+    py.Update()
+
+    @api.njit
+    def subtract_one(grid):
+        grid.Add(-1, 1)
+        grid.Update()
+        return grid[1]
+
+    assert subtract_one(jit) == maximum - 1
+    assert py[1] == jit[1] == maximum - 1
+    assert py.GetPop() == jit.GetPop() == maximum - 1
