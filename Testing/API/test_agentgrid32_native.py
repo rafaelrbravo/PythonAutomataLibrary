@@ -647,3 +647,21 @@ def test_safe_public_agentgrid_requires_all_square_coordinates():
                     assert grid.NewAgentSQ(1, 2, 1) >= 0
     finally:
         core._UseFastMode = original
+
+
+def test_agentgrid32_native_property_indexing_matches_explicit_access():
+    with core._NewAgentGrid32((4,), numAgentProps=2) as grid:
+        agent = grid.NewAgent(1)
+        assert agent >= 0
+        grid[agent, 0] = 1.25
+        grid[agent, 1] = -2.5
+        assert grid[agent, 0] == pytest.approx(1.25)
+        assert grid.GetProperty(agent, 1) == pytest.approx(-2.5)
+        grid.AddProperty(agent, 0, 0.5)
+        assert grid[agent, 0] == pytest.approx(1.75)
+        with pytest.raises(IndexError):
+            grid[agent, 2] = 0.0
+        with pytest.raises(TypeError):
+            grid[agent] = 1.0
+        with pytest.raises(ValueError):
+            grid[agent, 0] = float("inf")
