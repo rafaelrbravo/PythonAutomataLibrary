@@ -2502,6 +2502,33 @@ def _olAgentToIAt(grid,x,y,z,sourceLine):
         def impl(grid,x,y,z,sourceLine): return _ag_toi(grid._ptr,x,y,z)
         return impl
 
+def _AgentSnapshotPair(grid,shuffle):
+    ids=np.empty(grid.GetPop(),dtype=np.int32)
+    serials=np.empty(len(ids),dtype=np.uint64)
+    _ag_all_copy_serial(grid._ptr,ids.ctypes.data_as(_I32_PTR),
+                        serials.ctypes.data_as(_U64_PTR),int(shuffle))
+    return ids,serials
+
+@overload(_AgentSnapshotPair)
+def _olAgentSnapshotPair(grid,shuffle):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,shuffle):
+            ids=np.empty(_ag_pop(grid._ptr),dtype=np.int32)
+            serials=np.empty(len(ids),dtype=np.uint64)
+            _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
+            return ids,serials
+        return impl
+
+def _AgentIsOriginal(grid,agent,serial):
+    return _ag_is_original_alive(grid._ptr,int(agent),int(serial))!=0
+
+@overload(_AgentIsOriginal,inline='always')
+def _olAgentIsOriginal(grid,agent,serial):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,agent,serial):
+            return _ag_is_original_alive(grid._ptr,agent,serial)!=0
+        return impl
+
 def _AgentIterAt(grid,shuffle,sourceLine):
     ids=np.empty(grid.GetPop(),dtype=np.int32)
     serials=np.empty(len(ids),dtype=np.uint64)
@@ -5041,6 +5068,45 @@ class _HoodExpander(ast.NodeTransformer):
     def visit_For(self,node):
         node=self.generic_visit(node)
         call=node.iter
+        def inline_agent_loop(grid,ids,serials,setup):
+            self.serial+=1
+            tag=self.serial
+            index=f'__pal_ai{tag}'
+            agent=f'__pal_agent{tag}'
+            ids_name=f'__pal_ids{tag}'
+            serial_name=f'__pal_serials{tag}'
+            statements=list(setup)
+            statements.extend([
+                ast.Assign([ast.Name(ids_name,ast.Store())],ids),
+                ast.Assign([ast.Name(serial_name,ast.Store())],serials),
+            ])
+            check=self._call('_AgentIsOriginal',[
+                copy.deepcopy(grid),ast.Name(agent,ast.Load()),
+                ast.Subscript(ast.Name(serial_name,ast.Load()),ast.Name(index,ast.Load()),ast.Load())])
+            body=[
+                ast.Assign([ast.Name(agent,ast.Store())],
+                    ast.Subscript(ast.Name(ids_name,ast.Load()),ast.Name(index,ast.Load()),ast.Load())),
+                ast.If(ast.UnaryOp(ast.Not(),check),[ast.Continue()],[]),
+                ast.Assign([copy.deepcopy(node.target)],ast.Name(agent,ast.Load())),
+            ]+node.body
+            loop=ast.For(target=ast.Name(index,ast.Store()),
+                iter=ast.Call(ast.Name('range',ast.Load()),[
+                    ast.Call(ast.Name('len',ast.Load()),[ast.Name(ids_name,ast.Load())],[])],[]),
+                body=body,orelse=node.orelse,type_comment=None)
+            statements.append(loop)
+            return statements
+        if isinstance(call,ast.Name) and call.id in self.agentSnapshots:
+            grid,serialName=self.agentSnapshots[call.id]
+            return inline_agent_loop(grid,copy.deepcopy(call),
+                ast.Name(serialName,ast.Load()),[])
+        if isinstance(call,ast.Call) and isinstance(call.func,ast.Name) and call.func.id=='_AgentAllAt':
+            grid,shuffle=call.args[:2]
+            self.serial+=1
+            pair=f'__pal_pair{self.serial}'
+            pair_call=self._call('_AgentSnapshotPair',[copy.deepcopy(grid),copy.deepcopy(shuffle)])
+            setup=[ast.Assign([ast.Name(pair,ast.Store())],pair_call)]
+            return inline_agent_loop(grid,ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(0),ast.Load()),
+                ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(1),ast.Load()),setup)
         if isinstance(call,ast.Name) and call.id in self.agentSnapshots:
             grid,serialName=self.agentSnapshots[call.id]
             node.iter=ast.copy_location(self._call('_AgentSnapshotIter',
