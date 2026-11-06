@@ -2464,6 +2464,19 @@ def _AgentIterAt(grid,shuffle,sourceLine):
             yield ids[i]
 
 
+@overload(_AgentIterAt,inline='never')
+def _olAgentIterAt(grid,shuffle,sourceLine):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,shuffle,sourceLine):
+            ids=np.empty(_ag_pop(grid._ptr),dtype=np.int32)
+            serials=np.empty(len(ids),dtype=np.uint64)
+            _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
+            for i in range(len(ids)):
+                agent=ids[i]
+                if _ag_alive(grid._ptr,agent)!=0 and _ag_birth_serial(grid._ptr,agent)==serials[i]:
+                    yield agent
+        return impl
+
 def _AgentAllAt(grid,shuffle,sourceLine): return grid.All(shuffle)
 @overload(_AgentAllAt,inline="never",prefer_literal=True)
 def _olAgentAllAt(grid,shuffle,sourceLine):
