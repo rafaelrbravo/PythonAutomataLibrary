@@ -259,6 +259,7 @@ _I64 = ctypes.c_int64
 _F32 = ctypes.c_float
 _I32_PTR = ctypes.POINTER(_I32)
 _I64_PTR = ctypes.POINTER(_I64)
+_U64_PTR = ctypes.POINTER(_PTR)
 _F32_PTR = ctypes.POINTER(_F32)
 _F64_PTR = ctypes.POINTER(ctypes.c_double)
 _U32 = ctypes.c_uint32
@@ -301,6 +302,7 @@ def _NumbaCType(cType):
     if cType is _U8: return types.uint8
     if cType is _SIZE: return types.uintp
     if cType is _I32_PTR: return types.CPointer(types.int32)
+    if cType is _U64_PTR: return types.CPointer(types.uint64)
     if cType is _I64_PTR: return types.CPointer(types.int64)
     if cType is _F32_PTR: return types.CPointer(types.float32)
     if cType is _F64_PTR: return types.CPointer(types.float64)
@@ -411,6 +413,8 @@ _ag_itox = _bind("pal_ag_itox", _I32, _PTR, _I32)
 _ag_itoy = _bind("pal_ag_itoy", _I32, _PTR, _I32)
 _ag_itoz = _bind("pal_ag_itoz", _I32, _PTR, _I32)
 _ag_all_copy = _bind("pal_ag_all_copy", _I32, _PTR, _I32_PTR, _I32)
+_ag_all_copy_serial = _bind("pal_ag_all_copy_serial", _I32, _PTR, _I32_PTR, _U64_PTR, _I32)
+_ag_birth_serial = _bind("pal_ag_birth_serial", _PTR, _PTR, _I32)
 _ag_alive = _bind("pal_ag_alive", _I32, _PTR, _I32)
 _ag_alive_safe = _bind("pal_ag_alive_safe", _I32, _PTR, _I32)
 _ag_nagents = _bind("pal_ag_nagents", _I32, _PTR)
