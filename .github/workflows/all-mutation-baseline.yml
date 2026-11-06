@@ -1,0 +1,29 @@
+name: Mutation-safe All baseline regression
+on:
+  push:
+    branches:
+      - feature/mutation-safe-all
+    paths:
+      - 'Testing/test_27_all_mutation_safe.py'
+      - '.github/workflows/all-mutation-baseline.yml'
+      - 'NativeCore.py'
+      - 'pal_native.c'
+jobs:
+  reproduce-current-bug:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [safe, fast]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -U pip pytest numpy numba pillow
+      - run: gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
+      - name: Run baseline regression tests (failures expected before fix)
+        env:
+          PAL_TEST_MODE: ${{ matrix.mode }}
+          NUMBA_DISABLE_CACHE: '1'
+        run: python -u -m pytest -vv Testing/test_27_all_mutation_safe.py
