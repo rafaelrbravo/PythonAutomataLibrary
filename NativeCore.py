@@ -2515,6 +2515,13 @@ def _olAgentIterAt(grid,shuffle,sourceLine):
                 if _ag_alive(grid._ptr,agent)!=0 and _ag_birth_serial(grid._ptr,agent)==serials[i]:
                     yield agent
         return impl
+    # Other PAL collections also expose All(), but are not agent snapshots.
+    # Preserve their ordinary array iteration when the AST sees an inferred parameter.
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,shuffle,sourceLine):
+            return grid.All()
+        return impl
 
 def _AgentAllAt(grid,shuffle,sourceLine): return grid.All(shuffle)
 @overload(_AgentAllAt,inline="never",prefer_literal=True)
