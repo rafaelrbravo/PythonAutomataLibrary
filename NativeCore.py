@@ -4918,6 +4918,10 @@ class _HoodExpander(ast.NodeTransformer):
             node.iter=ast.copy_location(self._call('_AgentIterAt',call.args),call)
             return node
         if isinstance(call,ast.Call) and isinstance(call.func,ast.Attribute):
+            if call.func.attr=='All' and len(call.args)<=1 and all(k.arg=='shuffle' for k in call.keywords):
+                shuffle=call.args[0] if call.args else next((k.value for k in call.keywords if k.arg=='shuffle'),ast.Constant(False))
+                node.iter=ast.copy_location(self._call('_AgentIterAt',[call.func.value,shuffle,ast.Constant(node.lineno)]),call)
+                return node
             if call.func.attr=='Box': return self._expand_box(node,call)
             if call.func.attr=='AgentsAt': return self._expand_agents_at(node,call)
             if call.func.attr=='AgentsInRadius' and isinstance(node.target,(ast.Tuple,ast.List)):
