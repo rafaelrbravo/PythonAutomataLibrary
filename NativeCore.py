@@ -2039,7 +2039,8 @@ class _AgentAllSnapshot:
 def _AgentAllSnapshotPython(grid, shuffle=False):
     ids = np.empty(grid.GetPop(), dtype=np.int32)
     serials = np.empty(len(ids), dtype=np.uint64)
-    _ag_all_copy_serial(grid._ptr, ids.ctypes, serials.ctypes, int(shuffle))
+    _ag_all_copy_serial(grid._ptr, ids.ctypes.data_as(_I32_PTR),
+                        serials.ctypes.data_as(_U64_PTR), int(shuffle))
     return _AgentAllSnapshot(grid._ptr, ids, serials)
 
 
