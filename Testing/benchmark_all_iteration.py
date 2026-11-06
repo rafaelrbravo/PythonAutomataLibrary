@@ -63,3 +63,25 @@ for n in (1000, 10000, 100000):
         "compiled_iteration_ms": measure(lambda: compiled_sum(g), reps),
     }
     print("BENCH_RESULT " + json.dumps(results), flush=True)
+
+# Diagnostic: inspect the actual compiled kernel, not just wall-clock timings.
+# Keep the emitted output small enough for GitHub Actions logs.
+if os.environ.get("PAL_INSPECT_COMPILED", "1") == "1":
+    try:
+        sig = compiled_sum.signatures[-1]
+        llvm_ir = compiled_sum.inspect_llvm(sig)
+        asm = compiled_sum.inspect_asm(sig)
+        import re
+        details = {
+            "branch": os.environ.get("BENCH_REVISION", "unknown"),
+            "mode": mode,
+            "llvm_bytes": len(llvm_ir),
+            "assembly_bytes": len(asm),
+            "llvm_calls": len(re.findall(r"\\bcall\\b", llvm_ir)),
+            "llvm_conditional_branches": len(re.findall(r"\\bbr i1\\b", llvm_ir)),
+            "native_validation_references": llvm_ir.count("pal_ag_is_original_alive"),
+            "epoch_load_references": llvm_ir.count("pal_ag_generation_address"),
+        }
+        print("BENCH_CODEGEN " + json.dumps(details), flush=True)
+    except Exception as exc:
+        print("BENCH_CODEGEN_ERROR " + repr(exc), flush=True)
