@@ -2030,9 +2030,15 @@ class _AgentAllSnapshot:
         return result
 
     def __iter__(self):
-        for agent, serial in zip(self._ids, self._serials):
-            if _ag_is_original_alive(self._ptr, int(agent), int(serial)):
-                yield agent
+        # The native grid handle remains stable while this grid exists. Read
+        # its mutation epoch directly to avoid a ctypes function call per agent
+        # in the overwhelmingly common mutation-free traversal.
+        epoch = ctypes.c_uint64.from_address(_ag_generation_address(self._ptr))
+        initial = epoch.value
+        for i in range(len(self._ids)):
+            if epoch.value == initial or _ag_is_original_alive(
+                    self._ptr, int(self._ids[i]), int(self._serials[i])):
+                yield self._ids[i]
 
     def __repr__(self):
         return repr(self._ids)
