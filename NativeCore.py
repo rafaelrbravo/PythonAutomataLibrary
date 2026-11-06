@@ -2455,6 +2455,15 @@ def _olAgentToIAt(grid,x,y,z,sourceLine):
         def impl(grid,x,y,z,sourceLine): return _ag_toi(grid._ptr,x,y,z)
         return impl
 
+def _AgentIterAt(grid,shuffle,sourceLine):
+    ids=np.empty(grid.GetPop(),dtype=np.int32)
+    serials=np.empty(len(ids),dtype=np.uint64)
+    _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
+    for i in range(len(ids)):
+        if grid.Alive(ids[i]) and _ag_birth_serial(grid._ptr,ids[i])==serials[i]:
+            yield ids[i]
+
+
 def _AgentAllAt(grid,shuffle,sourceLine): return grid.All(shuffle)
 @overload(_AgentAllAt,inline="never",prefer_literal=True)
 def _olAgentAllAt(grid,shuffle,sourceLine):
@@ -4905,6 +4914,9 @@ class _HoodExpander(ast.NodeTransformer):
     def visit_For(self,node):
         node=self.generic_visit(node)
         call=node.iter
+        if isinstance(call,ast.Call) and isinstance(call.func,ast.Name) and call.func.id=='_AgentAllAt':
+            node.iter=ast.copy_location(self._call('_AgentIterAt',call.args),call)
+            return node
         if isinstance(call,ast.Call) and isinstance(call.func,ast.Attribute):
             if call.func.attr=='Box': return self._expand_box(node,call)
             if call.func.attr=='AgentsAt': return self._expand_agents_at(node,call)
