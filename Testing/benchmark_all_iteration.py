@@ -83,5 +83,10 @@ if os.environ.get("PAL_INSPECT_COMPILED", "1") == "1":
             "epoch_load_references": llvm_ir.count("pal_ag_generation_address"),
         }
         print("BENCH_CODEGEN " + json.dumps(details), flush=True)
+        for line in llvm_ir.splitlines():
+            if ("pal_ag_generation_address" in line or
+                    "pal_ag_all_copy_serial" in line or
+                    "pal_ag_is_original_alive" in line):
+                print("BENCH_LLVM_SYMBOL " + line[:240], flush=True)
     except Exception as exc:
         print("BENCH_CODEGEN_ERROR " + repr(exc), flush=True)
