@@ -2373,6 +2373,13 @@ class _AgentGridFastPython:
 
 _AgentGridFast=_jitclass([("_ptr",uint64),("_dimension",int32),("_xDim",int32),("_yDim",int32),("_zDim",int32),("_length",int32),("_wrapX",types.boolean),("_wrapY",types.boolean),("_wrapZ",types.boolean)])(_AgentGridFastPython)
 
+# The Python proxy method is separate from Numba's compiled jitclass method.
+# Keep the compiled method ndarray-compatible; expose an incarnation-aware
+# iterable only when called from ordinary Python.
+_AgentGridSafe.All = _AgentAllSnapshotPython
+_AgentGridFast.All = _AgentAllSnapshotPython
+
+
 
 def _AgentNewSQTrustedAt(grid,x,y,z,sourceLine): return grid.NewAgentSQ(x,y,z)
 @overload(_AgentNewSQTrustedAt,inline="never",prefer_literal=True)
