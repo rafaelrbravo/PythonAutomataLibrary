@@ -5102,7 +5102,7 @@ class _HoodExpander(ast.NodeTransformer):
     def visit_For(self,node):
         node=self.generic_visit(node)
         call=node.iter
-        def inline_agent_loop(grid,ids,serials,setup):
+        def inline_agent_loop(grid,ids,serials,setup,always_check=False):
             self.serial+=1
             tag=self.serial
             index=f'__pal_ai{tag}'
@@ -5126,6 +5126,10 @@ class _HoodExpander(ast.NodeTransformer):
                 ast.UnaryOp(ast.Not(),self._call('_AgentIsOriginal',[
                     copy.deepcopy(grid),ast.Name(agent,ast.Load()),
                     ast.Subscript(ast.Name(serial_name,ast.Load()),ast.Name(index,ast.Load()),ast.Load())]))])
+            if always_check:
+                check=ast.UnaryOp(ast.Not(),self._call('_AgentIsOriginal',[
+                    copy.deepcopy(grid),ast.Name(agent,ast.Load()),
+                    ast.Subscript(ast.Name(serial_name,ast.Load()),ast.Name(index,ast.Load()),ast.Load())]))
             body=[
                 ast.Assign([ast.Name(agent,ast.Store())],
                     ast.Subscript(ast.Name(ids_name,ast.Load()),ast.Name(index,ast.Load()),ast.Load())),
@@ -5141,7 +5145,7 @@ class _HoodExpander(ast.NodeTransformer):
         if isinstance(call,ast.Name) and call.id in self.agentSnapshots:
             grid,serialName=self.agentSnapshots[call.id]
             return inline_agent_loop(grid,copy.deepcopy(call),
-                ast.Name(serialName,ast.Load()),[])
+                ast.Name(serialName,ast.Load()),[],always_check=True)
         if isinstance(call,ast.Call) and isinstance(call.func,ast.Name) and call.func.id=='_AgentAllAt':
             grid,shuffle=call.args[:2]
             self.serial+=1
