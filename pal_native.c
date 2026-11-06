@@ -501,6 +501,13 @@ PAL_API uint64_t pal_ag_birth_serial(uintptr_t handle, int32_t agent) {
     if (agent < 0 || agent >= grid->nAgents) return 0;
     return grid->birthSerial[agent];
 }
+/* One native boundary crossing for incarnation and liveness validation. */
+PAL_API int32_t pal_ag_is_original_alive(uintptr_t handle, int32_t agent, uint64_t serial) {
+    AgentGrid *grid = (AgentGrid *)handle;
+    if (agent < 0 || agent >= grid->nAgents) return 0;
+    return grid->intProperties[AgentGrid_IntIndex(agent, AGENT_ALIVE)] != 0
+        && grid->birthSerial[agent] == serial;
+}
 PAL_API int32_t pal_ag_all_copy_serial(uintptr_t handle, int32_t *out, uint64_t *serials, int32_t shuffle) {
     AgentGrid *grid = (AgentGrid *)handle;
     int32_t n = pal_ag_all_copy(handle, out, shuffle);
