@@ -2004,6 +2004,45 @@ def _olPopSetItem(grid,key,value,safe):
     return impl
 
 
+class _AgentAllSnapshot:
+    """Detached agent IDs with incarnation-aware iteration.
+
+    Indexing and NumPy conversion expose the original snapshot; iteration
+    excludes agents disposed or reincarnated after the snapshot was captured.
+    """
+    def __init__(self, ptr, ids, serials):
+        self._ptr = ptr
+        self._ids = ids
+        self._serials = serials
+
+    def __len__(self):
+        return len(self._ids)
+
+    def __getitem__(self, key):
+        return self._ids[key]
+
+    def __array__(self, dtype=None, copy=None):
+        result = np.asarray(self._ids, dtype=dtype)
+        if copy:
+            return result.copy()
+        return result
+
+    def __iter__(self):
+        for agent, serial in zip(self._ids, self._serials):
+            if _ag_alive(self._ptr, int(agent)) and _ag_birth_serial(self._ptr, int(agent)) == int(serial):
+                yield agent
+
+    def __repr__(self):
+        return repr(self._ids)
+
+
+def _AgentAllSnapshotPython(grid, shuffle=False):
+    ids = np.empty(grid.GetPop(), dtype=np.int32)
+    serials = np.empty(len(ids), dtype=np.uint64)
+    _ag_all_copy_serial(grid._ptr, ids.ctypes, serials.ctypes, int(shuffle))
+    return _AgentAllSnapshot(grid._ptr, ids, serials)
+
+
 class _AgentGridSafePython:
     """Tiny JIT-compatible handle for the native AgentGrid."""
 
@@ -2229,9 +2268,7 @@ class _AgentGridSafePython:
         raise RuntimeError("AgentsAt is direct-iteration syntax and must be used in a for loop inside @pal.njit")
 
     def All(self, shuffle=False):
-        out = np.empty(self.GetPop(), dtype=np.int32)
-        _ag_all_copy(self._ptr, out.ctypes, int(shuffle))
-        return out
+        return _AgentAllSnapshotPython(self, shuffle)
 
 
 
@@ -2326,9 +2363,7 @@ class _AgentGridFastPython:
         raise RuntimeError("AgentsAt is direct-iteration syntax and must be used in a for loop inside @pal.njit")
 
     def All(self, shuffle=False):
-        out = np.empty(self.GetPop(), dtype=np.int32)
-        _ag_all_copy(self._ptr, out.ctypes, int(shuffle))
-        return out
+        return _AgentAllSnapshotPython(self, shuffle)
 
 
 
