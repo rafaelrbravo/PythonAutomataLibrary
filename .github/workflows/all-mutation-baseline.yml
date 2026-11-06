@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python -m pip install -U pip pytest numpy numba pillow
+      - run: python -m pip install -U pip pytest numpy numba pillow reportlab
       - run: gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
       - name: Run mutation-safe All regression tests
         env:
