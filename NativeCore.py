@@ -2538,6 +2538,11 @@ def _olAgentSnapshotSerials(grid,ids):
                 serials[i]=_ag_birth_serial(grid._ptr,ids[i])
             return serials
         return impl
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,ids):
+            return np.empty(0,dtype=np.uint64)
+        return impl
 
 def _AgentSnapshotIter(grid,ids,serials):
     for i in range(len(ids)):
@@ -2553,6 +2558,12 @@ def _olAgentSnapshotIter(grid,ids,serials):
                 agent=ids[i]
                 if _ag_alive(grid._ptr,agent)!=0 and _ag_birth_serial(grid._ptr,agent)==serials[i]:
                     yield agent
+        return impl
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,ids,serials):
+            for i in range(len(ids)):
+                yield ids[i]
         return impl
 
 def _AgentAllAt(grid,shuffle,sourceLine): return grid.All(shuffle)
