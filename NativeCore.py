@@ -2523,6 +2523,38 @@ def _olAgentIterAt(grid,shuffle,sourceLine):
             return grid.All()
         return impl
 
+def _AgentSnapshotSerials(grid, ids):
+    serials=np.empty(len(ids),dtype=np.uint64)
+    for i in range(len(ids)):
+        serials[i]=_ag_birth_serial(grid._ptr,int(ids[i]))
+    return serials
+
+@overload(_AgentSnapshotSerials)
+def _olAgentSnapshotSerials(grid,ids):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,ids):
+            serials=np.empty(len(ids),dtype=np.uint64)
+            for i in range(len(ids)):
+                serials[i]=_ag_birth_serial(grid._ptr,ids[i])
+            return serials
+        return impl
+
+def _AgentSnapshotIter(grid,ids,serials):
+    for i in range(len(ids)):
+        agent=int(ids[i])
+        if _ag_alive(grid._ptr,agent) and _ag_birth_serial(grid._ptr,agent)==int(serials[i]):
+            yield agent
+
+@overload(_AgentSnapshotIter,inline='never')
+def _olAgentSnapshotIter(grid,ids,serials):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,ids,serials):
+            for i in range(len(ids)):
+                agent=ids[i]
+                if _ag_alive(grid._ptr,agent)!=0 and _ag_birth_serial(grid._ptr,agent)==serials[i]:
+                    yield agent
+        return impl
+
 def _AgentAllAt(grid,shuffle,sourceLine): return grid.All(shuffle)
 @overload(_AgentAllAt,inline="never",prefer_literal=True)
 def _olAgentAllAt(grid,shuffle,sourceLine):
@@ -4499,6 +4531,7 @@ class _HoodExpander(ast.NodeTransformer):
     def __init__(self,namespace):
         self.namespace=namespace
         self.palVars={}
+        self.agentSnapshots={}
         self.serial=0
 
     def _hood_value(self,node):
@@ -4825,6 +4858,19 @@ class _HoodExpander(ast.NodeTransformer):
 
     def visit_Assign(self,node):
         node=self.generic_visit(node)
+        if len(node.targets)==1 and isinstance(node.targets[0],ast.Name):
+            target=node.targets[0].id
+            value=node.value
+            if isinstance(value,ast.Call) and isinstance(value.func,ast.Attribute) and value.func.attr=='All':
+                # Keep the original ndarray for len/index operations; capture
+                # incarnation tokens immediately for any later iteration.
+                grid=value.func.value
+                serialName='_pal_all_serials_'+target
+                self.agentSnapshots[target]=(copy.deepcopy(grid),serialName)
+                capture=ast.Assign(targets=[ast.Name(id=serialName,ctx=ast.Store())],
+                    value=self._call('_AgentSnapshotSerials',[copy.deepcopy(grid),ast.Name(id=target,ctx=ast.Load())]))
+                return [node,ast.copy_location(capture,node)]
+            self.agentSnapshots.pop(target,None)
         if len(node.targets)==1 and isinstance(node.targets[0],ast.Subscript) and isinstance(node.targets[0].value,ast.Name):
             sub=node.targets[0]; kind=self.palVars.get(sub.value.id)
             if kind=='Grid': return ast.copy_location(ast.Expr(self._call('_GridSetAt',[sub.value,sub.slice,node.value,ast.Constant(' at source line '+str(node.lineno))])),node)
@@ -4973,6 +5019,11 @@ class _HoodExpander(ast.NodeTransformer):
     def visit_For(self,node):
         node=self.generic_visit(node)
         call=node.iter
+        if isinstance(call,ast.Name) and call.id in self.agentSnapshots:
+            grid,serialName=self.agentSnapshots[call.id]
+            node.iter=ast.copy_location(self._call('_AgentSnapshotIter',
+                [grid,copy.deepcopy(call),ast.Name(id=serialName,ctx=ast.Load())]),call)
+            return node
         if isinstance(call,ast.Call) and isinstance(call.func,ast.Name) and call.func.id=='_AgentAllAt':
             node.iter=ast.copy_location(self._call('_AgentIterAt',call.args),call)
             return node
@@ -5026,7 +5077,7 @@ def _ExpandHoods(fn):
     namespace=dict(fn.__globals__);namespace.update(closure.globals);namespace.update(closure.nonlocals)
     tree=_HoodExpander(namespace).visit(tree);ast.fix_missing_locations(tree)
     env=dict(namespace)
-    env.update({name:globals()[name] for name in ('_AgentIterGeneration','_AgentIterCheck','_AgentIterCheckAt','_AgentIterValidateRadius','_AgentIterValidateRadiusAt','_AgentRadiusWrapJit','_ag_grid_data','_ag_int_data','_ag_float_data','_ag_nfloatprops','_ag_wrap','_ag_toi','_ag_count_i','_BoxWrapX','_BoxWrapY','_BoxWrapZ','_IListAppendInline','_IListAppendAt','_MultinomialSampleAt','_AgentCountsItem','_AgentCountsItemAt','_AgentItemAt','_AgentSetItemAt','_AgentNewSQAt','_AgentNewSQTrustedAt','_AgentDisposeAt','_AgentCoordAt','_AgentToIAt','_AgentAllAt','_AgentIterAt','_IListClearAt','_IListRandomAt','_IListItemAt','_IListOpAt','_IListArrayAt','_MultiBinomialAt','_MultiSetupAt','_AgentPopAt','_AgentValueAt','_AgentIndexAt','_AgentWrapAt','_AgentDispAt','_AgentNewAt','_AgentLastAt','_AgentMoveAt','_PDEAddAt','_PDEBasicAt','_PDEDiffusionAt','_PDEScalarTransportAt','_PDERadialAt','_SpatialIndexAt','_SpatialWrapAt','_PopAddAt','_PopBasicAt','_PopAllAt','_PDEItemAt','_PopItemAt','_PDESetItemAt','_PopSetItemAt','_GridGetAt','_GridSetAt','_GridToIAt','_GridItoAt','_GridWrapAt','np')})
+    env.update({name:globals()[name] for name in ('_AgentIterGeneration','_AgentIterCheck','_AgentIterCheckAt','_AgentIterValidateRadius','_AgentIterValidateRadiusAt','_AgentRadiusWrapJit','_ag_grid_data','_ag_int_data','_ag_float_data','_ag_nfloatprops','_ag_wrap','_ag_toi','_ag_count_i','_BoxWrapX','_BoxWrapY','_BoxWrapZ','_IListAppendInline','_IListAppendAt','_MultinomialSampleAt','_AgentCountsItem','_AgentCountsItemAt','_AgentItemAt','_AgentSetItemAt','_AgentNewSQAt','_AgentNewSQTrustedAt','_AgentDisposeAt','_AgentCoordAt','_AgentToIAt','_AgentAllAt','_AgentIterAt','_AgentSnapshotSerials','_AgentSnapshotIter','_IListClearAt','_IListRandomAt','_IListItemAt','_IListOpAt','_IListArrayAt','_MultiBinomialAt','_MultiSetupAt','_AgentPopAt','_AgentValueAt','_AgentIndexAt','_AgentWrapAt','_AgentDispAt','_AgentNewAt','_AgentLastAt','_AgentMoveAt','_PDEAddAt','_PDEBasicAt','_PDEDiffusionAt','_PDEScalarTransportAt','_PDERadialAt','_SpatialIndexAt','_SpatialWrapAt','_PopAddAt','_PopBasicAt','_PopAllAt','_PDEItemAt','_PopItemAt','_PDESetItemAt','_PopSetItemAt','_GridGetAt','_GridSetAt','_GridToIAt','_GridItoAt','_GridWrapAt','np')})
     code=compile(tree,inspect.getsourcefile(fn) or '<pal.njit>','exec')
     exec(code,env)
     out=env[fn.__name__]
