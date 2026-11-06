@@ -2376,8 +2376,7 @@ _AgentGridFast=_jitclass([("_ptr",uint64),("_dimension",int32),("_xDim",int32),(
 # The Python proxy method is separate from Numba's compiled jitclass method.
 # Keep the compiled method ndarray-compatible; expose an incarnation-aware
 # iterable only when called from ordinary Python.
-_AgentGridSafe.All = _AgentAllSnapshotPython
-_AgentGridFast.All = _AgentAllSnapshotPython
+# The boxed instance method is installed when the first grid is created.
 
 
 
@@ -5219,7 +5218,10 @@ def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
     ptr = _ag_new(dims.ctypes.data_as(_I32_PTR), len(dims), numAgentProps, int(isStackable))
     if not ptr: raise MemoryError("unable to allocate AgentGrid")
     x,y,z,n,wrapX,wrapY,wrapZ=_StaticGeometry(dims)
-    return _AgentGridFast(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ) if fast else _AgentGridSafe(ptr,len(dims),numAgentProps,x,y,z,n,wrapX,wrapY,wrapZ)
+    grid = (_AgentGridFast(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ)
+            if fast else _AgentGridSafe(ptr,len(dims),numAgentProps,x,y,z,n,wrapX,wrapY,wrapZ))
+    type(grid).All = _AgentAllSnapshotPython
+    return grid
 
 
 
@@ -5296,7 +5298,10 @@ def _RestoreAgentGrid(data,safe):
     if not ptr: raise ValueError("invalid PAL AgentGrid pickle")
     dim,x,y,z,length,wrapX,wrapY,wrapZ=_SnapshotGeometry(data)
     nProps=int.from_bytes(data[52:56],byteorder=sys.byteorder,signed=True)
-    return _AgentGridSafe(ptr,dim,nProps,x,y,z,length,wrapX,wrapY,wrapZ) if safe else _AgentGridFast(ptr,dim,x,y,z,length,wrapX,wrapY,wrapZ)
+    grid = (_AgentGridSafe(ptr,dim,nProps,x,y,z,length,wrapX,wrapY,wrapZ)
+            if safe else _AgentGridFast(ptr,dim,x,y,z,length,wrapX,wrapY,wrapZ))
+    type(grid).All = _AgentAllSnapshotPython
+    return grid
 
 def _RestorePopGrid(data,safe):
     b=_BytesPtr(data); ptr=_pg_restore(b,len(data))
