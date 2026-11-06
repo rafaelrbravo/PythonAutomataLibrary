@@ -2268,7 +2268,9 @@ class _AgentGridSafePython:
         raise RuntimeError("AgentsAt is direct-iteration syntax and must be used in a for loop inside @pal.njit")
 
     def All(self, shuffle=False):
-        return _AgentAllSnapshotPython(self, shuffle)
+        out = np.empty(self.GetPop(), dtype=np.int32)
+        _ag_all_copy(self._ptr, out.ctypes, int(shuffle))
+        return out
 
 
 
@@ -2363,7 +2365,9 @@ class _AgentGridFastPython:
         raise RuntimeError("AgentsAt is direct-iteration syntax and must be used in a for loop inside @pal.njit")
 
     def All(self, shuffle=False):
-        return _AgentAllSnapshotPython(self, shuffle)
+        out = np.empty(self.GetPop(), dtype=np.int32)
+        _ag_all_copy(self._ptr, out.ctypes, int(shuffle))
+        return out
 
 
 
