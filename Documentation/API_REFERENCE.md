@@ -78,7 +78,7 @@ Axis shorthand: `...` after an X/x-specific name includes its Y/y and Z/z varian
 | method | `Move(self, agent: int, x: float, y: float=-1.0, z: float=-1.0)` | Move an agent to continuous coordinates; use `MoveSQ` when movement should target a lattice site. |
 | method | `AgentsAt(self, x: int, y: int=-1, z: int=-1)` | Return the agent handle or handles occupying the specified lattice site. |
 | method | `AgentsInRadius(self, rad: float, x: float, y: float=-1.0, z: float=-1.0, *, exclude: int=None)` | Return agents within radius `rad` of a continuous position; `exclude` can omit one agent from the results. |
-| method | `All(self, shuffle: bool=False) -> np.ndarray` | Return a snapshot of living agent handles, optionally shuffled. The snapshot fixes membership, not later world state or occupancy queries. |
+| method | `All(self, shuffle: bool=False)` | Capture living agent IDs, optionally shuffled. Python returns a snapshot wrapper whose iteration skips originals disposed or recycled after capture; indexing, length and NumPy conversion retain the original IDs. Direct `@pal.njit` iteration also skips disposed/recycled originals. A compiled snapshot returned as an ndarray is a detached ID array and does not dynamically filter when iterated afterward. Occupancy and agent state are not frozen. |
 
 ## Grid
 

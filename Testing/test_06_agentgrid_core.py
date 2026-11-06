@@ -165,6 +165,9 @@ def test_all_snapshot_is_stable_across_agent_lifecycle_changes(api):
     g.Dispose(original[1])
     replacement = g.NewAgentSQ(6)
     g.MoveSQ(original[0], 7)
-    assert set(map(int, snapshot)) == set(original)
+    # The captured IDs remain available as detached array data, but iterating
+    # the snapshot must skip a disposed incarnation even if its ID is reused.
+    assert set(map(int, np.asarray(snapshot))) == set(original)
+    assert set(map(int, snapshot)) == set(original) - {original[1]}
     assert set(map(int, g.All())) == set(original) - {original[1]} | {replacement}
     assert g.GetPop() == 4

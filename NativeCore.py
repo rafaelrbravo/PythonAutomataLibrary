@@ -259,6 +259,7 @@ _I64 = ctypes.c_int64
 _F32 = ctypes.c_float
 _I32_PTR = ctypes.POINTER(_I32)
 _I64_PTR = ctypes.POINTER(_I64)
+_U64_PTR = ctypes.POINTER(_PTR)
 _F32_PTR = ctypes.POINTER(_F32)
 _F64_PTR = ctypes.POINTER(ctypes.c_double)
 _U32 = ctypes.c_uint32
@@ -301,6 +302,7 @@ def _NumbaCType(cType):
     if cType is _U8: return types.uint8
     if cType is _SIZE: return types.uintp
     if cType is _I32_PTR: return types.CPointer(types.int32)
+    if cType is _U64_PTR: return types.CPointer(types.uint64)
     if cType is _I64_PTR: return types.CPointer(types.int64)
     if cType is _F32_PTR: return types.CPointer(types.float32)
     if cType is _F64_PTR: return types.CPointer(types.float64)
@@ -411,6 +413,9 @@ _ag_itox = _bind("pal_ag_itox", _I32, _PTR, _I32)
 _ag_itoy = _bind("pal_ag_itoy", _I32, _PTR, _I32)
 _ag_itoz = _bind("pal_ag_itoz", _I32, _PTR, _I32)
 _ag_all_copy = _bind("pal_ag_all_copy", _I32, _PTR, _I32_PTR, _I32)
+_ag_all_copy_serial = _bind("pal_ag_all_copy_serial", _I32, _PTR, _I32_PTR, _U64_PTR, _I32)
+_ag_birth_serial = _bind("pal_ag_birth_serial", _PTR, _PTR, _I32)
+_ag_is_original_alive = _bind("pal_ag_is_original_alive", _I32, _PTR, _I32, ctypes.c_uint64)
 _ag_alive = _bind("pal_ag_alive", _I32, _PTR, _I32)
 _ag_alive_safe = _bind("pal_ag_alive_safe", _I32, _PTR, _I32)
 _ag_nagents = _bind("pal_ag_nagents", _I32, _PTR)
@@ -421,6 +426,7 @@ _ag_nfloatprops = _bind("pal_ag_nfloatprops", _I32, _PTR)
 _ag_stackable = _bind("pal_ag_stackable", _I32, _PTR)
 _ag_wrap = _bind("pal_ag_wrap", _I32, _PTR, _I32)
 _ag_generation = _bind("pal_ag_generation", _PTR, _PTR)
+_ag_generation_address = _bind("pal_ag_generation_address", _PTR, _PTR)
 _ag_new_i = _bind("pal_ag_new_i", _I32, _PTR, _I32)
 _ag_new_sq = _bind("pal_ag_new_sq", _I32, _PTR, _I32, _I32, _I32)
 _ag_new_pt = _bind("pal_ag_new_pt", _I32, _PTR, _F64, _F64, _F64)
@@ -2000,6 +2006,54 @@ def _olPopSetItem(grid,key,value,safe):
     return impl
 
 
+class _AgentAllSnapshot:
+    """Detached agent IDs with incarnation-aware iteration.
+
+    Indexing and NumPy conversion expose the original snapshot; iteration
+    excludes agents disposed or reincarnated after the snapshot was captured.
+    """
+    def __init__(self, ptr, ids, serials):
+        self._ptr = ptr
+        self._ids = ids
+        self._serials = serials
+        self._epoch = ctypes.c_uint64.from_address(_ag_generation_address(ptr))
+        self._initial_epoch = self._epoch.value
+
+    def __len__(self):
+        return len(self._ids)
+
+    def __getitem__(self, key):
+        return self._ids[key]
+
+    def __array__(self, dtype=None, copy=None):
+        result = np.asarray(self._ids, dtype=dtype)
+        if copy:
+            return result.copy()
+        return result
+
+    def __iter__(self):
+        # The native grid handle remains stable while this grid exists. Read
+        # its mutation epoch directly to avoid a ctypes function call per agent
+        # in the overwhelmingly common mutation-free traversal.
+        epoch = self._epoch
+        initial = self._initial_epoch
+        for i in range(len(self._ids)):
+            if epoch.value == initial or _ag_is_original_alive(
+                    self._ptr, int(self._ids[i]), int(self._serials[i])):
+                yield self._ids[i]
+
+    def __repr__(self):
+        return repr(self._ids)
+
+
+def _AgentAllSnapshotPython(grid, shuffle=False):
+    ids = np.empty(grid.GetPop(), dtype=np.int32)
+    serials = np.empty(len(ids), dtype=np.uint64)
+    _ag_all_copy_serial(grid._ptr, ids.ctypes.data_as(_I32_PTR),
+                        serials.ctypes.data_as(_U64_PTR), int(shuffle))
+    return _AgentAllSnapshot(grid._ptr, ids, serials)
+
+
 class _AgentGridSafePython:
     """Tiny JIT-compatible handle for the native AgentGrid."""
 
@@ -2330,6 +2384,12 @@ class _AgentGridFastPython:
 
 _AgentGridFast=_jitclass([("_ptr",uint64),("_dimension",int32),("_xDim",int32),("_yDim",int32),("_zDim",int32),("_length",int32),("_wrapX",types.boolean),("_wrapY",types.boolean),("_wrapZ",types.boolean)])(_AgentGridFastPython)
 
+# The Python proxy method is separate from Numba's compiled jitclass method.
+# Keep the compiled method ndarray-compatible; expose an incarnation-aware
+# iterable only when called from ordinary Python.
+# The boxed instance method is installed when the first grid is created.
+
+
 
 def _AgentNewSQTrustedAt(grid,x,y,z,sourceLine): return grid.NewAgentSQ(x,y,z)
 @overload(_AgentNewSQTrustedAt,inline="never",prefer_literal=True)
@@ -2449,6 +2509,138 @@ def _olAgentToIAt(grid,x,y,z,sourceLine):
         return impl
     if grid==_AgentGridFast.class_type.instance_type:
         def impl(grid,x,y,z,sourceLine): return _ag_toi(grid._ptr,x,y,z)
+        return impl
+
+def _AgentSnapshotPair(grid,shuffle):
+    ids=np.empty(grid.GetPop(),dtype=np.int32)
+    serials=np.empty(len(ids),dtype=np.uint64)
+    _ag_all_copy_serial(grid._ptr,ids.ctypes.data_as(_I32_PTR),
+                        serials.ctypes.data_as(_U64_PTR),int(shuffle))
+    return ids,serials
+
+@overload(_AgentSnapshotPair)
+def _olAgentSnapshotPair(grid,shuffle):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,shuffle):
+            ids=np.empty(_ag_pop(grid._ptr),dtype=np.int32)
+            serials=np.empty(len(ids),dtype=np.uint64)
+            _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
+            return ids,serials
+        return impl
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,shuffle):
+            return grid.All(),np.empty(0,dtype=np.uint64)
+        return impl
+
+@intrinsic
+def _PALLoadEpoch(typingctx,address):
+    if not isinstance(address,types.Integer): return None
+    def codegen(context,builder,signature,args):
+        ptr=builder.inttoptr(args[0],lir.IntType(64).as_pointer())
+        return builder.load(ptr)
+    return types.uint64(address),codegen
+
+def _AgentEpochAddress(grid):
+    return _ag_generation_address(grid._ptr)
+
+@overload(_AgentEpochAddress,inline='always')
+def _olAgentEpochAddress(grid):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid):
+            return _ag_generation_address(grid._ptr)
+        return impl
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid):
+            return np.uint64(0)
+        return impl
+
+def _AgentIsOriginal(grid,agent,serial):
+    return _ag_is_original_alive(grid._ptr,int(agent),int(serial))!=0
+
+@overload(_AgentIsOriginal,inline='always')
+def _olAgentIsOriginal(grid,agent,serial):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,agent,serial):
+            return _ag_is_original_alive(grid._ptr,agent,serial)!=0
+        return impl
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,agent,serial):
+            return True
+        return impl
+
+def _AgentIterAt(grid,shuffle,sourceLine):
+    ids=np.empty(grid.GetPop(),dtype=np.int32)
+    serials=np.empty(len(ids),dtype=np.uint64)
+    _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
+    for i in range(len(ids)):
+        if _ag_is_original_alive(grid._ptr,int(ids[i]),int(serials[i])):
+            yield ids[i]
+
+
+@overload(_AgentIterAt,inline='never')
+def _olAgentIterAt(grid,shuffle,sourceLine):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,shuffle,sourceLine):
+            ids=np.empty(_ag_pop(grid._ptr),dtype=np.int32)
+            serials=np.empty(len(ids),dtype=np.uint64)
+            _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
+            for i in range(len(ids)):
+                agent=ids[i]
+                if _ag_is_original_alive(grid._ptr,agent,serials[i])!=0:
+                    yield agent
+        return impl
+    # Other PAL collections also expose All(), but are not agent snapshots.
+    # Preserve their ordinary array iteration when the AST sees an inferred parameter.
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,shuffle,sourceLine):
+            return grid.All()
+        return impl
+
+def _AgentSnapshotSerials(grid, ids):
+    serials=np.empty(len(ids),dtype=np.uint64)
+    for i in range(len(ids)):
+        serials[i]=_ag_birth_serial(grid._ptr,int(ids[i]))
+    return serials
+
+@overload(_AgentSnapshotSerials)
+def _olAgentSnapshotSerials(grid,ids):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,ids):
+            serials=np.empty(len(ids),dtype=np.uint64)
+            for i in range(len(ids)):
+                serials[i]=_ag_birth_serial(grid._ptr,ids[i])
+            return serials
+        return impl
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,ids):
+            return np.empty(0,dtype=np.uint64)
+        return impl
+
+def _AgentSnapshotIter(grid,ids,serials):
+    for i in range(len(ids)):
+        agent=int(ids[i])
+        if _ag_is_original_alive(grid._ptr,agent,int(serials[i])):
+            yield agent
+
+@overload(_AgentSnapshotIter,inline='never')
+def _olAgentSnapshotIter(grid,ids,serials):
+    if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
+        def impl(grid,ids,serials):
+            for i in range(len(ids)):
+                agent=ids[i]
+                if _ag_alive(grid._ptr,agent)!=0 and _ag_birth_serial(grid._ptr,agent)==serials[i]:
+                    yield agent
+        return impl
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,ids,serials):
+            for i in range(len(ids)):
+                yield ids[i]
         return impl
 
 def _AgentAllAt(grid,shuffle,sourceLine): return grid.All(shuffle)
@@ -4427,6 +4619,7 @@ class _HoodExpander(ast.NodeTransformer):
     def __init__(self,namespace):
         self.namespace=namespace
         self.palVars={}
+        self.agentSnapshots={}
         self.serial=0
 
     def _hood_value(self,node):
@@ -4753,6 +4946,22 @@ class _HoodExpander(ast.NodeTransformer):
 
     def visit_Assign(self,node):
         node=self.generic_visit(node)
+        if len(node.targets)==1 and isinstance(node.targets[0],ast.Name):
+            target=node.targets[0].id
+            value=node.value
+            if (isinstance(value,ast.Call) and isinstance(value.func,ast.Attribute)
+                    and value.func.attr=='All'
+                    and not (isinstance(value.func.value,ast.Name)
+                             and self.palVars.get(value.func.value.id) in {'IList','PopGrid','Grid','PDEgrid','Multinomial'})):
+                # Keep the original ndarray for len/index operations; capture
+                # incarnation tokens immediately for any later iteration.
+                grid=value.func.value
+                serialName='_pal_all_serials_'+target
+                self.agentSnapshots[target]=(copy.deepcopy(grid),serialName)
+                capture=ast.Assign(targets=[ast.Name(id=serialName,ctx=ast.Store())],
+                    value=self._call('_AgentSnapshotSerials',[copy.deepcopy(grid),ast.Name(id=target,ctx=ast.Load())]))
+                return [node,ast.copy_location(capture,node)]
+            self.agentSnapshots.pop(target,None)
         if len(node.targets)==1 and isinstance(node.targets[0],ast.Subscript) and isinstance(node.targets[0].value,ast.Name):
             sub=node.targets[0]; kind=self.palVars.get(sub.value.id)
             if kind=='Grid': return ast.copy_location(ast.Expr(self._call('_GridSetAt',[sub.value,sub.slice,node.value,ast.Constant(' at source line '+str(node.lineno))])),node)
@@ -4901,7 +5110,80 @@ class _HoodExpander(ast.NodeTransformer):
     def visit_For(self,node):
         node=self.generic_visit(node)
         call=node.iter
+        def inline_agent_loop(grid,ids,serials,setup,always_check=False):
+            self.serial+=1
+            tag=self.serial
+            index=f'__pal_ai{tag}'
+            agent=f'__pal_agent{tag}'
+            ids_name=f'__pal_ids{tag}'
+            serial_name=f'__pal_serials{tag}'
+            statements=list(setup)
+            statements.extend([
+                ast.Assign([ast.Name(ids_name,ast.Store())],ids),
+                ast.Assign([ast.Name(serial_name,ast.Store())],serials),
+            ])
+            epoch_name=f'__pal_epoch{tag}'
+            initial_name=f'__pal_initial_epoch{tag}'
+            statements.append(ast.Assign([ast.Name(epoch_name,ast.Store())],
+                self._call('_AgentEpochAddress',[copy.deepcopy(grid)])))
+            statements.append(ast.Assign([ast.Name(initial_name,ast.Store())],
+                self._call('_PALLoadEpoch',[ast.Name(epoch_name,ast.Load())])))
+            check=ast.BoolOp(ast.And(),[
+                ast.Compare(self._call('_PALLoadEpoch',[ast.Name(epoch_name,ast.Load())]),
+                    [ast.NotEq()],[ast.Name(initial_name,ast.Load())]),
+                ast.UnaryOp(ast.Not(),self._call('_AgentIsOriginal',[
+                    copy.deepcopy(grid),ast.Name(agent,ast.Load()),
+                    ast.Subscript(ast.Name(serial_name,ast.Load()),ast.Name(index,ast.Load()),ast.Load())]))])
+            if always_check:
+                check=ast.UnaryOp(ast.Not(),self._call('_AgentIsOriginal',[
+                    copy.deepcopy(grid),ast.Name(agent,ast.Load()),
+                    ast.Subscript(ast.Name(serial_name,ast.Load()),ast.Name(index,ast.Load()),ast.Load())]))
+            body=[
+                ast.Assign([ast.Name(agent,ast.Store())],
+                    ast.Subscript(ast.Name(ids_name,ast.Load()),ast.Name(index,ast.Load()),ast.Load())),
+                ast.If(check,[ast.Continue()],[]),
+                ast.Assign([copy.deepcopy(node.target)],ast.Name(agent,ast.Load())),
+            ]+node.body
+            loop=ast.For(target=ast.Name(index,ast.Store()),
+                iter=ast.Call(ast.Name('range',ast.Load()),[
+                    ast.Call(ast.Name('len',ast.Load()),[ast.Name(ids_name,ast.Load())],[])],[]),
+                body=body,orelse=node.orelse,type_comment=None)
+            statements.append(loop)
+            return statements
+        if isinstance(call,ast.Name) and call.id in self.agentSnapshots:
+            grid,serialName=self.agentSnapshots[call.id]
+            return inline_agent_loop(grid,copy.deepcopy(call),
+                ast.Name(serialName,ast.Load()),[],always_check=True)
+        if isinstance(call,ast.Call) and isinstance(call.func,ast.Name) and call.func.id=='_AgentAllAt':
+            grid,shuffle=call.args[:2]
+            self.serial+=1
+            pair=f'__pal_pair{self.serial}'
+            pair_call=self._call('_AgentSnapshotPair',[copy.deepcopy(grid),copy.deepcopy(shuffle)])
+            setup=[ast.Assign([ast.Name(pair,ast.Store())],pair_call)]
+            return inline_agent_loop(grid,ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(0),ast.Load()),
+                ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(1),ast.Load()),setup)
+        if isinstance(call,ast.Call) and isinstance(call.func,ast.Attribute) and call.func.attr=='All' and len(call.args)<=1 and all(k.arg=='shuffle' for k in call.keywords):
+            grid=call.func.value
+            shuffle=call.args[0] if call.args else next((k.value for k in call.keywords if k.arg=='shuffle'),ast.Constant(False))
+            self.serial+=1
+            pair=f'__pal_pair{self.serial}'
+            setup=[ast.Assign([ast.Name(pair,ast.Store())],
+                self._call('_AgentSnapshotPair',[copy.deepcopy(grid),shuffle]))]
+            return inline_agent_loop(grid,ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(0),ast.Load()),
+                ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(1),ast.Load()),setup)
+        if isinstance(call,ast.Name) and call.id in self.agentSnapshots:
+            grid,serialName=self.agentSnapshots[call.id]
+            node.iter=ast.copy_location(self._call('_AgentSnapshotIter',
+                [grid,copy.deepcopy(call),ast.Name(id=serialName,ctx=ast.Load())]),call)
+            return node
+        if isinstance(call,ast.Call) and isinstance(call.func,ast.Name) and call.func.id=='_AgentAllAt':
+            node.iter=ast.copy_location(self._call('_AgentIterAt',call.args),call)
+            return node
         if isinstance(call,ast.Call) and isinstance(call.func,ast.Attribute):
+            if call.func.attr=='All' and len(call.args)<=1 and all(k.arg=='shuffle' for k in call.keywords):
+                shuffle=call.args[0] if call.args else next((k.value for k in call.keywords if k.arg=='shuffle'),ast.Constant(False))
+                node.iter=ast.copy_location(self._call('_AgentIterAt',[call.func.value,shuffle,ast.Constant(node.lineno)]),call)
+                return node
             if call.func.attr=='Box': return self._expand_box(node,call)
             if call.func.attr=='AgentsAt': return self._expand_agents_at(node,call)
             if call.func.attr=='AgentsInRadius' and isinstance(node.target,(ast.Tuple,ast.List)):
@@ -4947,7 +5229,7 @@ def _ExpandHoods(fn):
     namespace=dict(fn.__globals__);namespace.update(closure.globals);namespace.update(closure.nonlocals)
     tree=_HoodExpander(namespace).visit(tree);ast.fix_missing_locations(tree)
     env=dict(namespace)
-    env.update({name:globals()[name] for name in ('_AgentIterGeneration','_AgentIterCheck','_AgentIterCheckAt','_AgentIterValidateRadius','_AgentIterValidateRadiusAt','_AgentRadiusWrapJit','_ag_grid_data','_ag_int_data','_ag_float_data','_ag_nfloatprops','_ag_wrap','_ag_toi','_ag_count_i','_BoxWrapX','_BoxWrapY','_BoxWrapZ','_IListAppendInline','_IListAppendAt','_MultinomialSampleAt','_AgentCountsItem','_AgentCountsItemAt','_AgentItemAt','_AgentSetItemAt','_AgentNewSQAt','_AgentNewSQTrustedAt','_AgentDisposeAt','_AgentCoordAt','_AgentToIAt','_AgentAllAt','_IListClearAt','_IListRandomAt','_IListItemAt','_IListOpAt','_IListArrayAt','_MultiBinomialAt','_MultiSetupAt','_AgentPopAt','_AgentValueAt','_AgentIndexAt','_AgentWrapAt','_AgentDispAt','_AgentNewAt','_AgentLastAt','_AgentMoveAt','_PDEAddAt','_PDEBasicAt','_PDEDiffusionAt','_PDEScalarTransportAt','_PDERadialAt','_SpatialIndexAt','_SpatialWrapAt','_PopAddAt','_PopBasicAt','_PopAllAt','_PDEItemAt','_PopItemAt','_PDESetItemAt','_PopSetItemAt','_GridGetAt','_GridSetAt','_GridToIAt','_GridItoAt','_GridWrapAt','np')})
+    env.update({name:globals()[name] for name in ('_AgentIterGeneration','_AgentIterCheck','_AgentIterCheckAt','_AgentIterValidateRadius','_AgentIterValidateRadiusAt','_AgentRadiusWrapJit','_ag_grid_data','_ag_int_data','_ag_float_data','_ag_nfloatprops','_ag_wrap','_ag_toi','_ag_count_i','_BoxWrapX','_BoxWrapY','_BoxWrapZ','_IListAppendInline','_IListAppendAt','_MultinomialSampleAt','_AgentCountsItem','_AgentCountsItemAt','_AgentItemAt','_AgentSetItemAt','_AgentNewSQAt','_AgentNewSQTrustedAt','_AgentDisposeAt','_AgentCoordAt','_AgentToIAt','_AgentAllAt','_AgentIterAt','_AgentSnapshotPair','_AgentIsOriginal','_AgentEpochAddress','_PALLoadEpoch','_AgentSnapshotSerials','_AgentSnapshotIter','_IListClearAt','_IListRandomAt','_IListItemAt','_IListOpAt','_IListArrayAt','_MultiBinomialAt','_MultiSetupAt','_AgentPopAt','_AgentValueAt','_AgentIndexAt','_AgentWrapAt','_AgentDispAt','_AgentNewAt','_AgentLastAt','_AgentMoveAt','_PDEAddAt','_PDEBasicAt','_PDEDiffusionAt','_PDEScalarTransportAt','_PDERadialAt','_SpatialIndexAt','_SpatialWrapAt','_PopAddAt','_PopBasicAt','_PopAllAt','_PDEItemAt','_PopItemAt','_PDESetItemAt','_PopSetItemAt','_GridGetAt','_GridSetAt','_GridToIAt','_GridItoAt','_GridWrapAt','np')})
     code=compile(tree,inspect.getsourcefile(fn) or '<pal.njit>','exec')
     exec(code,env)
     out=env[fn.__name__]
@@ -5068,7 +5350,10 @@ def NewAgentGrid(dimensions, numAgentProps=0, isStackable=False):
     ptr = _ag_new(dims.ctypes.data_as(_I32_PTR), len(dims), numAgentProps, int(isStackable))
     if not ptr: raise MemoryError("unable to allocate AgentGrid")
     x,y,z,n,wrapX,wrapY,wrapZ=_StaticGeometry(dims)
-    return _AgentGridFast(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ) if fast else _AgentGridSafe(ptr,len(dims),numAgentProps,x,y,z,n,wrapX,wrapY,wrapZ)
+    grid = (_AgentGridFast(ptr,len(dims),x,y,z,n,wrapX,wrapY,wrapZ)
+            if fast else _AgentGridSafe(ptr,len(dims),numAgentProps,x,y,z,n,wrapX,wrapY,wrapZ))
+    type(grid).All = _AgentAllSnapshotPython
+    return grid
 
 
 
@@ -5145,7 +5430,10 @@ def _RestoreAgentGrid(data,safe):
     if not ptr: raise ValueError("invalid PAL AgentGrid pickle")
     dim,x,y,z,length,wrapX,wrapY,wrapZ=_SnapshotGeometry(data)
     nProps=int.from_bytes(data[52:56],byteorder=sys.byteorder,signed=True)
-    return _AgentGridSafe(ptr,dim,nProps,x,y,z,length,wrapX,wrapY,wrapZ) if safe else _AgentGridFast(ptr,dim,x,y,z,length,wrapX,wrapY,wrapZ)
+    grid = (_AgentGridSafe(ptr,dim,nProps,x,y,z,length,wrapX,wrapY,wrapZ)
+            if safe else _AgentGridFast(ptr,dim,x,y,z,length,wrapX,wrapY,wrapZ))
+    type(grid).All = _AgentAllSnapshotPython
+    return grid
 
 def _RestorePopGrid(data,safe):
     b=_BytesPtr(data); ptr=_pg_restore(b,len(data))

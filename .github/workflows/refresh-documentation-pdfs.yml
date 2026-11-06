@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - feature/mutation-safe-all
       - fix/diffusion-mask-boundary-conditions
       - refactor/agent-pde-float64
     paths:

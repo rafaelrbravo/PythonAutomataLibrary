@@ -1,5 +1,6 @@
 """AgentGrid public API dimensional, movement, wrapping, and compiled parity."""
 import pytest
+import numpy as np
 
 
 @pytest.mark.parametrize("dims,sq,pt", [
@@ -70,7 +71,10 @@ def test_all_snapshot_survives_disposal(api):
     snapshot = g.All()
     for a in agents:
         g.Dispose(a)
-    assert set(map(int, snapshot)) == set(agents)
+    # The detached ID snapshot is still available for indexing/NumPy, but
+    # iteration must skip originals disposed since capture.
+    assert set(map(int, np.asarray(snapshot))) == set(agents)
+    assert list(snapshot) == []
     assert len(g.All()) == 0
 
 
@@ -364,7 +368,7 @@ def test_python_njit_agent_dead_access_failure_atomic_parity(api, safe_mode):
 
 
 def test_python_njit_agent_all_snapshot_survives_disposal_parity(api):
-    """All() must snapshot IDs independently of later agent disposal."""
+    """Python iteration skips disposed agents; compiled detached IDs remain readable."""
     py = api.NewAgentGrid((8,))
     jit = api.NewAgentGrid((8,))
 
@@ -387,7 +391,11 @@ def test_python_njit_agent_all_snapshot_survives_disposal_parity(api):
 
     python_snapshot, python_pop = python_work(py)
     compiled_snapshot, compiled_pop = compiled_work(jit)
-    assert list(compiled_snapshot) == list(python_snapshot)
+    # Compiled All() returns detached IDs, while Python's snapshot wrapper
+    # filters dead originals during iteration. Both preserve the captured IDs
+    # for explicit NumPy conversion / indexing.
+    assert list(compiled_snapshot) == list(np.asarray(python_snapshot))
+    assert list(python_snapshot) == []
     assert compiled_pop == python_pop == 0
     assert list(py.All()) == list(jit.All()) == []
 

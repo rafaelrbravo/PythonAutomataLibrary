@@ -1,0 +1,35 @@
+name: AgentGrid All comparative benchmark
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/mutation-safe-all]
+    paths:
+      - 'Testing/benchmark_all_iteration.py'
+      - 'NativeCore.py'
+      - 'pal_native.c'
+      - '.github/workflows/all-performance-benchmark.yml'
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/mutation-safe-all
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -U numpy numba pillow
+      - name: Save benchmark and compare revisions sequentially
+        shell: bash
+        run: |
+          cp Testing/benchmark_all_iteration.py /tmp/benchmark_all_iteration.py
+          for revision in main feature/mutation-safe-all; do
+            git checkout "$revision"
+            gcc -std=c11 -O3 -fPIC -shared -o libpal_native.so pal_native.c -lm
+            for mode in safe fast; do
+              echo "=== $revision / $mode ==="
+              PAL_TEST_MODE="$mode" BENCH_REVISION="$revision" python -u /tmp/benchmark_all_iteration.py
+            done
+          done
