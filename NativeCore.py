@@ -2518,6 +2518,11 @@ def _olAgentSnapshotPair(grid,shuffle):
             _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
             return ids,serials
         return impl
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,shuffle):
+            return grid.All(),np.empty(0,dtype=np.uint64)
+        return impl
 
 def _AgentIsOriginal(grid,agent,serial):
     return _ag_is_original_alive(grid._ptr,int(agent),int(serial))!=0
@@ -2527,6 +2532,11 @@ def _olAgentIsOriginal(grid,agent,serial):
     if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
         def impl(grid,agent,serial):
             return _ag_is_original_alive(grid._ptr,agent,serial)!=0
+        return impl
+    if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
+                _PopGridSafe.class_type.instance_type, _PopGridFast.class_type.instance_type):
+        def impl(grid,agent,serial):
+            return True
         return impl
 
 def _AgentIterAt(grid,shuffle,sourceLine):
