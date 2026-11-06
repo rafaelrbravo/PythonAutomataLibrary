@@ -4861,7 +4861,10 @@ class _HoodExpander(ast.NodeTransformer):
         if len(node.targets)==1 and isinstance(node.targets[0],ast.Name):
             target=node.targets[0].id
             value=node.value
-            if isinstance(value,ast.Call) and isinstance(value.func,ast.Attribute) and value.func.attr=='All':
+            if (isinstance(value,ast.Call) and isinstance(value.func,ast.Attribute)
+                    and value.func.attr=='All'
+                    and not (isinstance(value.func.value,ast.Name)
+                             and self.palVars.get(value.func.value.id) in {'IList','PopGrid','Grid','PDEgrid','Multinomial'})):
                 # Keep the original ndarray for len/index operations; capture
                 # incarnation tokens immediately for any later iteration.
                 grid=value.func.value
