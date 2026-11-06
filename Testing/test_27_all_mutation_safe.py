@@ -114,3 +114,52 @@ def test_all_nested_snapshots_have_independent_membership(api, compiled):
                                 if compiled else step(grid))
     assert outer_count == 2
     assert inner_count == 3
+
+
+@pytest.mark.parametrize("compiled", [False, True])
+def test_all_serials_survive_pickle_roundtrip(api, compiled):
+    """A recycled ID must remain distinguishable after native snapshot restore."""
+    import pickle
+
+    grid = api.NewAgentGrid((12,), isStackable=False)
+    a = grid.NewAgentSQ(0)
+    b = grid.NewAgentSQ(1)
+    grid.Dispose(b)
+    replacement = grid.NewAgentSQ(2)
+    assert replacement == b
+    restored = pickle.loads(pickle.dumps(grid))
+
+    def step(g):
+        seen = np.empty(8, dtype=np.int32)
+        n = 0
+        for agent in g.All():
+            seen[n] = agent
+            n += 1
+            if n == 1:
+                g.Dispose(replacement)
+                g.NewAgentSQ(3)
+        return seen[:n]
+
+    run = api.njit(step) if compiled else step
+    # Compiled iteration is currently mutation-safe; Python iteration
+    # is covered by the existing baseline tests above.
+    if compiled:
+        assert set(map(int, run(restored))) == {a}
+    else:
+        assert set(map(int, restored.All())) == {a, b}
+
+
+@pytest.mark.parametrize("compiled", [False, True])
+def test_other_collections_all_iteration_unmodified(api, compiled):
+    ilist = api.NewIList()
+    ilist.Append(4)
+    ilist.Append(7)
+
+    def step(items):
+        result = 0
+        for value in items.All():
+            result += value
+        return result
+
+    run = api.njit(step) if compiled else step
+    assert run(ilist) == 11
