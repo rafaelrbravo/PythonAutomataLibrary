@@ -416,8 +416,6 @@ _ag_all_copy = _bind("pal_ag_all_copy", _I32, _PTR, _I32_PTR, _I32)
 _ag_all_copy_serial = _bind("pal_ag_all_copy_serial", _I32, _PTR, _I32_PTR, _U64_PTR, _I32)
 _ag_birth_serial = _bind("pal_ag_birth_serial", _PTR, _PTR, _I32)
 _ag_is_original_alive = _bind("pal_ag_is_original_alive", _I32, _PTR, _I32, ctypes.c_uint64)
-_ag_generation_ptr = _bind("pal_ag_generation_ptr", ctypes.POINTER(ctypes.c_uint64), _PTR)
-_ag_serial_data = _bind("pal_ag_serial_data", ctypes.POINTER(ctypes.c_uint64), _PTR)
 _ag_alive = _bind("pal_ag_alive", _I32, _PTR, _I32)
 _ag_alive_safe = _bind("pal_ag_alive_safe", _I32, _PTR, _I32)
 _ag_nagents = _bind("pal_ag_nagents", _I32, _PTR)
@@ -2520,17 +2518,9 @@ def _olAgentIterAt(grid,shuffle,sourceLine):
             ids=np.empty(_ag_pop(grid._ptr),dtype=np.int32)
             serials=np.empty(len(ids),dtype=np.uint64)
             _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
-            epoch_ptr=nb.carray(_ag_generation_ptr(grid._ptr),(1,))
-            epoch=epoch_ptr[0]
-            live=nb.carray(_ag_int_data(grid._ptr),(_ag_nagents(grid._ptr)*5,))
-            births=nb.carray(_ag_serial_data(grid._ptr),(_ag_nagents(grid._ptr),))
             for i in range(len(ids)):
                 agent=ids[i]
-                if epoch_ptr[0]!=epoch:
-                    epoch=epoch_ptr[0]
-                    live=nb.carray(_ag_int_data(grid._ptr),(_ag_nagents(grid._ptr)*5,))
-                    births=nb.carray(_ag_serial_data(grid._ptr),(_ag_nagents(grid._ptr),))
-                if agent<len(births) and live[agent*5]!=0 and births[agent]==serials[i]:
+                if _ag_is_original_alive(grid._ptr,agent,serials[i])!=0:
                     yield agent
         return impl
     # Other PAL collections also expose All(), but are not agent snapshots.
@@ -2572,17 +2562,9 @@ def _AgentSnapshotIter(grid,ids,serials):
 def _olAgentSnapshotIter(grid,ids,serials):
     if grid==_AgentGridSafe.class_type.instance_type or grid==_AgentGridFast.class_type.instance_type:
         def impl(grid,ids,serials):
-            epoch_ptr=nb.carray(_ag_generation_ptr(grid._ptr),(1,))
-            epoch=epoch_ptr[0]
-            live=nb.carray(_ag_int_data(grid._ptr),(_ag_nagents(grid._ptr)*5,))
-            births=nb.carray(_ag_serial_data(grid._ptr),(_ag_nagents(grid._ptr),))
             for i in range(len(ids)):
                 agent=ids[i]
-                if epoch_ptr[0]!=epoch:
-                    epoch=epoch_ptr[0]
-                    live=nb.carray(_ag_int_data(grid._ptr),(_ag_nagents(grid._ptr)*5,))
-                    births=nb.carray(_ag_serial_data(grid._ptr),(_ag_nagents(grid._ptr),))
-                if agent<len(births) and live[agent*5]!=0 and births[agent]==serials[i]:
+                if _ag_alive(grid._ptr,agent)!=0 and _ag_birth_serial(grid._ptr,agent)==serials[i]:
                     yield agent
         return impl
     if grid in (_IListSafe.class_type.instance_type, _IListFast.class_type.instance_type,
