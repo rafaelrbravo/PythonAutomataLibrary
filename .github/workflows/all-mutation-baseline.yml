@@ -5,6 +5,7 @@ on:
       - feature/mutation-safe-all
     paths:
       - 'Testing/test_27_all_mutation_safe.py'
+      - 'Testing/API/test_agentgrid_api.py'
       - '.github/workflows/all-mutation-baseline.yml'
       - 'NativeCore.py'
       - 'pal_native.c'
