@@ -502,14 +502,6 @@ PAL_API uint64_t pal_ag_birth_serial(uintptr_t handle, int32_t agent) {
     return grid->birthSerial[agent];
 }
 /* One native boundary crossing for incarnation and liveness validation. */
-/* Stable pointer to the grid's mutation epoch; array pointers are reacquired
-   after any mutation because agent storage may have been reallocated. */
-PAL_API uint64_t *pal_ag_generation_ptr(uintptr_t handle) {
-    return &((AgentGrid *)handle)->generation;
-}
-PAL_API uint64_t *pal_ag_serial_data(uintptr_t handle) {
-    return ((AgentGrid *)handle)->birthSerial;
-}
 PAL_API int32_t pal_ag_is_original_alive(uintptr_t handle, int32_t agent, uint64_t serial) {
     AgentGrid *grid = (AgentGrid *)handle;
     if (agent < 0 || agent >= grid->nAgents) return 0;
