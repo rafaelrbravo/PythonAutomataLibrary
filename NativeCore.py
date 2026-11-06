@@ -5107,6 +5107,15 @@ class _HoodExpander(ast.NodeTransformer):
             setup=[ast.Assign([ast.Name(pair,ast.Store())],pair_call)]
             return inline_agent_loop(grid,ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(0),ast.Load()),
                 ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(1),ast.Load()),setup)
+        if isinstance(call,ast.Call) and isinstance(call.func,ast.Attribute) and call.func.attr=='All' and len(call.args)<=1 and all(k.arg=='shuffle' for k in call.keywords):
+            grid=call.func.value
+            shuffle=call.args[0] if call.args else next((k.value for k in call.keywords if k.arg=='shuffle'),ast.Constant(False))
+            self.serial+=1
+            pair=f'__pal_pair{self.serial}'
+            setup=[ast.Assign([ast.Name(pair,ast.Store())],
+                self._call('_AgentSnapshotPair',[copy.deepcopy(grid),shuffle]))]
+            return inline_agent_loop(grid,ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(0),ast.Load()),
+                ast.Subscript(ast.Name(pair,ast.Load()),ast.Constant(1),ast.Load()),setup)
         if isinstance(call,ast.Name) and call.id in self.agentSnapshots:
             grid,serialName=self.agentSnapshots[call.id]
             node.iter=ast.copy_location(self._call('_AgentSnapshotIter',
