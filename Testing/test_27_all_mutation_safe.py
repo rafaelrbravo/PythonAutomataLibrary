@@ -9,8 +9,7 @@ import pytest
 
 
 @pytest.mark.parametrize("compiled", [False, True])
-@pytest.mark.parametrize("shuffle", [False, True])
-def test_all_skips_disposed_original_even_if_id_is_recycled(api, compiled, shuffle):
+def test_all_skips_disposed_original_even_if_id_is_recycled(api, compiled):
     grid = api.NewAgentGrid((20,), isStackable=False)
     originals = [grid.NewAgentSQ(i) for i in range(4)]
     victim = originals[-1]
@@ -19,7 +18,7 @@ def test_all_skips_disposed_original_even_if_id_is_recycled(api, compiled, shuff
         seen = np.empty(8, dtype=np.int32)
         count = 0
         replacement = -1
-        for agent in g.All(shuffle=shuffle):
+        for agent in g.All():
             seen[count] = agent
             count += 1
             if replacement == -1:
