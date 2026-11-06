@@ -38,7 +38,7 @@ Curated one-page API map; see API Guide and API Reference for details.
 - `agents[a,p] · agents.counts`: Agent properties; read-only occupancy.
 - `agents.AgentsAt(x,y,z) · LastAgent(x,y,z)`: Site occupants / last occupant.
 - `agents.AgentsInRadius(rad,x,y,z,exclude=None)`: Nearby agents; periodic-aware.
-- `agents.All(shuffle=False)`: Mutation-safe snapshot iteration (skip disposed/recycled originals; never visit newborns). Python indexing/NumPy conversion retain captured IDs.
+- `agents.All(shuffle=False)`: Snapshot of living agent IDs.
 - `agents.InWrapSQX...(x) · DispWrapX...(p1,p2)`: Wrap lattice coordinate; shortest displacement.
 
 ## START / UTILITIES
