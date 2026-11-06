@@ -11,6 +11,7 @@ on:
 jobs:
   reproduce-current-bug:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -33,4 +34,4 @@ jobs:
         env:
           PAL_TEST_MODE: ${{ matrix.mode }}
           NUMBA_DISABLE_CACHE: '1'
-        run: python -u -m pytest -q Testing --ignore=Testing/test_27_all_mutation_safe.py
+        run: python -u -m pytest -q Testing --ignore=Testing/test_27_all_mutation_safe.py --maxfail=5
