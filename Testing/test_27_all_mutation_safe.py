@@ -163,3 +163,55 @@ def test_other_collections_all_iteration_unmodified(api, compiled):
 
     run = api.njit(step) if compiled else step
     assert run(ilist) == 11
+
+
+@pytest.mark.parametrize("compiled", [False, True])
+def test_all_self_disposal_and_recycled_id(api, compiled):
+    grid = api.NewAgentGrid((20,), isStackable=False)
+    originals = [grid.NewAgentSQ(i) for i in range(4)]
+
+    def step(g):
+        seen = np.empty(8, dtype=np.int32)
+        count = 0
+        for agent in g.All():
+            seen[count] = agent
+            count += 1
+            g.Dispose(agent)
+            g.NewAgentSQ(10 + count)
+        return seen[:count]
+
+    run = api.njit(step) if compiled else step
+    assert set(map(int, run(grid))) == set(originals)
+
+
+@pytest.mark.parametrize("compiled", [False, True])
+def test_all_shuffle_keeps_original_membership(api, compiled):
+    grid = api.NewAgentGrid((20,), isStackable=False)
+    originals = [grid.NewAgentSQ(i) for i in range(5)]
+
+    def step(g):
+        seen = np.empty(8, dtype=np.int32)
+        count = 0
+        for agent in g.All(shuffle=True):
+            seen[count] = agent
+            count += 1
+            if count == 1:
+                g.Dispose(agent)
+                g.NewAgentSQ(12)
+        return seen[:count]
+
+    run = api.njit(step) if compiled else step
+    assert set(map(int, run(grid))) == set(originals)
+
+
+def test_all_python_snapshot_array_index_and_iteration(api):
+    grid = api.NewAgentGrid((12,), isStackable=False)
+    original = [grid.NewAgentSQ(i) for i in range(3)]
+    snapshot = grid.All()
+    assert len(snapshot) == 3
+    assert int(snapshot[0]) == original[0]
+    grid.Dispose(original[-1])
+    grid.NewAgentSQ(6)
+    assert np.asarray(snapshot).dtype == np.int32
+    assert set(map(int, np.asarray(snapshot))) == set(original)
+    assert set(map(int, snapshot)) == set(original[:-1])
