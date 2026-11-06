@@ -5,6 +5,8 @@ on:
     branches: [feature/mutation-safe-all]
     paths:
       - 'Testing/benchmark_all_iteration.py'
+      - 'NativeCore.py'
+      - 'pal_native.c'
       - '.github/workflows/all-performance-benchmark.yml'
 jobs:
   benchmark:
