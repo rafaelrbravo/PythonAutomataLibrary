@@ -1,5 +1,6 @@
 """AgentGrid public API dimensional, movement, wrapping, and compiled parity."""
 import pytest
+import numpy as np
 
 
 @pytest.mark.parametrize("dims,sq,pt", [
