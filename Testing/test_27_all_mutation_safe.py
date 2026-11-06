@@ -215,3 +215,52 @@ def test_all_python_snapshot_array_index_and_iteration(api):
     assert np.asarray(snapshot).dtype == np.int32
     assert set(map(int, np.asarray(snapshot))) == set(original)
     assert set(map(int, snapshot)) == set(original[:-1])
+
+
+@pytest.mark.parametrize("compiled", [False, True])
+def test_all_assigned_snapshot_survives_reuse_before_iteration(api, compiled):
+    grid = api.NewAgentGrid((20,), isStackable=False)
+    originals = [grid.NewAgentSQ(i) for i in range(4)]
+
+    def step(g):
+        snapshot = g.All()
+        g.Dispose(originals[-1])
+        g.NewAgentSQ(10)
+        seen = np.empty(8, dtype=np.int32)
+        count = 0
+        for agent in snapshot:
+            seen[count] = agent
+            count += 1
+        return seen[:count]
+
+    # Numba cannot close over Python lists in compiled code; use an ID scalar.
+    victim = originals[-1]
+
+    def compiled_step(g, target):
+        snapshot = g.All()
+        g.Dispose(target)
+        g.NewAgentSQ(10)
+        seen = np.empty(8, dtype=np.int32)
+        count = 0
+        for agent in snapshot:
+            seen[count] = agent
+            count += 1
+        return seen[:count]
+
+    seen = api.njit(compiled_step)(grid, victim) if compiled else step(grid)
+    assert set(map(int, seen)) == set(originals[:-1])
+
+
+@pytest.mark.parametrize("compiled", [False, True])
+def test_all_empty_grid_and_empty_snapshot(api, compiled):
+    grid = api.NewAgentGrid((10,), isStackable=False)
+
+    def step(g):
+        snapshot = g.All()
+        count = 0
+        for agent in snapshot:
+            count += 1
+        return len(snapshot), count
+
+    run = api.njit(step) if compiled else step
+    assert run(grid) == (0, 0)
