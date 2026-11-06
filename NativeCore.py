@@ -415,6 +415,7 @@ _ag_itoz = _bind("pal_ag_itoz", _I32, _PTR, _I32)
 _ag_all_copy = _bind("pal_ag_all_copy", _I32, _PTR, _I32_PTR, _I32)
 _ag_all_copy_serial = _bind("pal_ag_all_copy_serial", _I32, _PTR, _I32_PTR, _U64_PTR, _I32)
 _ag_birth_serial = _bind("pal_ag_birth_serial", _PTR, _PTR, _I32)
+_ag_is_original_alive = _bind("pal_ag_is_original_alive", _I32, _PTR, _I32, ctypes.c_uint64)
 _ag_alive = _bind("pal_ag_alive", _I32, _PTR, _I32)
 _ag_alive_safe = _bind("pal_ag_alive_safe", _I32, _PTR, _I32)
 _ag_nagents = _bind("pal_ag_nagents", _I32, _PTR)
@@ -2029,7 +2030,7 @@ class _AgentAllSnapshot:
 
     def __iter__(self):
         for agent, serial in zip(self._ids, self._serials):
-            if _ag_alive(self._ptr, int(agent)) and _ag_birth_serial(self._ptr, int(agent)) == int(serial):
+            if _ag_is_original_alive(self._ptr, int(agent), int(serial)):
                 yield agent
 
     def __repr__(self):
@@ -2506,7 +2507,7 @@ def _AgentIterAt(grid,shuffle,sourceLine):
     serials=np.empty(len(ids),dtype=np.uint64)
     _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
     for i in range(len(ids)):
-        if grid.Alive(ids[i]) and _ag_birth_serial(grid._ptr,ids[i])==serials[i]:
+        if _ag_is_original_alive(grid._ptr,int(ids[i]),int(serials[i])):
             yield ids[i]
 
 
@@ -2519,7 +2520,7 @@ def _olAgentIterAt(grid,shuffle,sourceLine):
             _ag_all_copy_serial(grid._ptr,ids.ctypes,serials.ctypes,int(shuffle))
             for i in range(len(ids)):
                 agent=ids[i]
-                if _ag_alive(grid._ptr,agent)!=0 and _ag_birth_serial(grid._ptr,agent)==serials[i]:
+                if _ag_is_original_alive(grid._ptr,agent,serials[i])!=0:
                     yield agent
         return impl
     # Other PAL collections also expose All(), but are not agent snapshots.
@@ -2554,7 +2555,7 @@ def _olAgentSnapshotSerials(grid,ids):
 def _AgentSnapshotIter(grid,ids,serials):
     for i in range(len(ids)):
         agent=int(ids[i])
-        if _ag_alive(grid._ptr,agent) and _ag_birth_serial(grid._ptr,agent)==int(serials[i]):
+        if _ag_is_original_alive(grid._ptr,agent,int(serials[i])):
             yield agent
 
 @overload(_AgentSnapshotIter,inline='never')
