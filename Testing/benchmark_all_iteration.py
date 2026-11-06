@@ -77,8 +77,8 @@ if os.environ.get("PAL_INSPECT_COMPILED", "1") == "1":
             "mode": mode,
             "llvm_bytes": len(llvm_ir),
             "assembly_bytes": len(asm),
-            "llvm_calls": len(re.findall(r"\\bcall\\b", llvm_ir)),
-            "llvm_conditional_branches": len(re.findall(r"\\bbr i1\\b", llvm_ir)),
+            "llvm_calls": len(re.findall(r"\bcall\b", llvm_ir)),
+            "llvm_conditional_branches": len(re.findall(r"\bbr i1\b", llvm_ir)),
             "native_validation_references": llvm_ir.count("pal_ag_is_original_alive"),
             "epoch_load_references": llvm_ir.count("pal_ag_generation_address"),
         }
