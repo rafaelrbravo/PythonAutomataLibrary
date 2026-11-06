@@ -529,6 +529,9 @@ PAL_API double *pal_ag_float_data(uintptr_t handle) { return ((AgentGrid *)handl
 PAL_API int32_t pal_ag_nfloatprops(uintptr_t handle) { return ((AgentGrid *)handle)->nFloatProperties; }
 PAL_API int32_t pal_ag_stackable(uintptr_t handle) { return ((AgentGrid *)handle)->stackable; }
 PAL_API int32_t pal_ag_wrap(uintptr_t handle, int32_t dimension) { AgentGrid*g=(AgentGrid*)handle; return dimension>=0&&dimension<g->dimension?g->wrap[dimension]:0; }
+PAL_API uintptr_t pal_ag_generation_address(uintptr_t handle) {
+    return (uintptr_t)&((AgentGrid *)handle)->generation;
+}
 PAL_API uint64_t pal_ag_generation(uintptr_t handle) { return ((AgentGrid *)handle)->generation; }
 
 PAL_API int32_t pal_ag_new_i(uintptr_t handle, int32_t location) {
